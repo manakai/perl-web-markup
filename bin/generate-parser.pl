@@ -88,6 +88,7 @@ if ($LANG eq 'XML') {
   $Vars->{AllDeclsProcessed} = {save => 1, type => 'boolean'};
   $Vars->{XMLStandalone} = {save => 1, type => 'boolean'};
   $Vars->{OriginalState} = {save => 1, type => 'enum'};
+  $Vars->{SC} = {input => 1, from_method => 1};
 }
 
 ## ------ Input byte stream ------
@@ -1230,7 +1231,6 @@ sub serialize_actions ($;%) {
                               type => 'WFC:No Recursion',
                               value => $Temp,
                               di => $DI, index => $TempIndex};
-              last REF;
             } elsif (defined $ent->{public_identifier} and
                      $Web::HTML::_SyntaxDefs->{charrefs_pubids}->{$ent->{public_identifier}}) {
               ## Public identifier normalization is intentionally not
@@ -1250,11 +1250,18 @@ sub serialize_actions ($;%) {
               $return = 1;
               last REF;
             }
+          } else {
+            push @$Errors, {type => 'entity not declared', value => $Temp,
+                            level => 'm',
+                            di => $DI, index => $TempIndex};
           }
 
-          push @$Errors, {type => 'entity not declared', value => $Temp,
-                          level => 'm',
-                          di => $DI, index => $TempIndex};
+          if (not $StopProcessing and not $XMLStandalone) {
+            push @$Errors, {level => 'i',
+                            type => 'stop processing',
+                            di => $DI, index => $TempIndex};
+            $StopProcessing = 1;
+          }
         } # REF
       };
       $return = '1 if $return';
@@ -1269,14 +1276,12 @@ sub serialize_actions ($;%) {
                               type => 'WFC:No Recursion',
                               value => $Temp,
                               di => $DI, index => $TempIndex};
-              last REF;
             } elsif ($DTDMode eq 'internal subset') {
               ## In a markup declaration in internal subset
               push @$Errors, {level => 'm',
                               type => 'WFC:PEs in Internal Subset',
                               value => $Temp,
                               di => $DI, index => $TempIndex};
-              last REF;
             } else {
               push @$Callbacks, [$OnEntityValueEntityReference,
                                  {entity => $ent}];
@@ -1285,11 +1290,18 @@ sub serialize_actions ($;%) {
               $return = 1;
               last REF;
             }
+          } else {
+            push @$Errors, {type => 'entity not declared', value => $Temp,
+                            level => 'm',
+                            di => $DI, index => $TempIndex};
           }
 
-          push @$Errors, {type => 'entity not declared', value => $Temp,
-                          level => 'm',
-                          di => $DI, index => $TempIndex};
+          if (not $StopProcessing and not $XMLStandalone) {
+            push @$Errors, {level => 'i',
+                            type => 'stop processing',
+                            di => $DI, index => $TempIndex};
+            $StopProcessing = 1;
+          }
         } # REF
       };
       $return = '1 if $return';
@@ -1304,14 +1316,12 @@ sub serialize_actions ($;%) {
                               type => 'WFC:No Recursion',
                               value => $Temp,
                               di => $DI, index => $TempIndex};
-              last REF;
             } elsif ($DTDMode eq 'internal subset') {
               ## In a markup declaration in internal subset
               push @$Errors, {level => 'm',
                               type => 'WFC:PEs in Internal Subset',
                               value => $Temp,
                               di => $DI, index => $TempIndex};
-              last REF;
             } else {
               push @$Callbacks, [$OnMDEntityReference,
                                  {entity => $ent}];
@@ -1320,11 +1330,18 @@ sub serialize_actions ($;%) {
               $return = 1;
               last REF;
             }
+          } else {
+            push @$Errors, {type => 'entity not declared', value => $Temp,
+                            level => 'm',
+                            di => $DI, index => $TempIndex};
           }
 
-          push @$Errors, {type => 'entity not declared', value => $Temp,
-                          level => 'm',
-                          di => $DI, index => $TempIndex};
+          if (not $StopProcessing and not $XMLStandalone) {
+            push @$Errors, {level => 'i',
+                            type => 'stop processing',
+                            di => $DI, index => $TempIndex};
+            $StopProcessing = 1;
+          }
         } # REF
       };
       $return = '1 if $return';
@@ -1607,6 +1624,24 @@ sub _tokenize_attr_value ($) { # IndexedString
   return 1;
 } # _tokenize_attr_value
 
+  } if $LANG eq 'XML';
+
+  push @def_code, q{
+
+sub strict_checker ($;$) {
+  if (@_ > 1) {
+    $_[0]->{strict_checker} = $_[1];
+  }
+  return $_[0]->{strict_checker} || 'Web::XML::Parser::MinimumChecker';
+} # strict_checker
+
+sub _sc ($) {
+  return $_[0]->{_sc} ||= do {
+    my $sc = $_[0]->strict_checker;
+    eval qq{ require $sc } or die $@;
+    $sc;
+  };
+} # _sc
   } if $LANG eq 'XML';
 
   my $def_code = join "\n", @def_code;
@@ -2320,9 +2355,8 @@ sub actions_to_code ($;%) {
           et => %s->{$token->{tag_name}} || %s->{'*'} || 0,
           aet => %s->{$token->{tag_name}} || %s->{'*'} || 0,
         };
-        #XXX
-        #$self->{el_ncnames}->{$prefix} ||= $self->{t} if defined $prefix;
-        #$self->{el_ncnames}->{$ln} ||= $self->{t} if defined $ln;
+        $DTDDefs->{el_ncnames}->{$prefix} ||= $token if defined $prefix;
+        $DTDDefs->{el_ncnames}->{$ln} ||= $token if defined $ln;
 
         my $has_attr;
         for my $attr (@{$node->{attr_list}}) {
@@ -2353,9 +2387,8 @@ sub actions_to_code ($;%) {
           }
 
           $attr->{name_args} = [$ns, [$p, $l]];
-          #XXX
-          #$self->{el_ncnames}->{$p} ||= $attr_t if defined $p;
-          #$self->{el_ncnames}->{$l} ||= $attr_t if defined $l;
+          $DTDDefs->{el_ncnames}->{$p} ||= $attr if defined $p;
+          $DTDDefs->{el_ncnames}->{$l} ||= $attr if defined $l;
           if (defined $attr->{declared_type}) {
             #
           } elsif ($AllDeclsProcessed) {
@@ -2475,6 +2508,15 @@ sub actions_to_code ($;%) {
         push @code, sprintf q{
           push @$OP, ['%s', $token => $OE->[-1]->{id}];
         }, $type;
+      }
+      if ($type eq 'pi') {
+        push @code, sprintf q{
+          $SC->check_pi_target
+              (name => $token->{target},
+               onerror => sub {
+                 push @$Errors, {@_, di => $DI, index => $Offset + pos $Input};
+               });
+        };
       }
     } elsif ($act->{type} eq 'insert-chars') {
       my $value_code;
@@ -3004,7 +3046,11 @@ sub actions_to_code ($;%) {
           $pos += $+[0] - $-[0];
           $req_sp = not length $3;
           if (defined $CONTEXT) { # text declaration
-            # XXX hidden XML version validation
+            $SC->check_hidden_version
+                (name => $v,
+                 onerror => sub {
+                   push @$Errors, {@_, di => $DI, index => $p};
+                 });
           } else { # XML declaration
             push @$OP, ['xml-version', $v];
           }
@@ -3028,10 +3074,11 @@ sub actions_to_code ($;%) {
           $pos += $+[0] - $-[0];
           $req_sp = not length $3;
           if (defined $CONTEXT) { # text declaration
-          #XXX$self->_sc->check_hidden_encoding
-          #      (name => $v, onerror => sub {
-          #         $onerror->(token => $self->{t}, %$p, @_);
-          #       });
+            $SC->check_hidden_encoding
+                (name => $v,
+                 onerror => sub {
+                   push @$Errors, {@_, di => $DI, index => $p};
+                 });
           } else { # XML declaration
             push @$OP, ['xml-encoding', $v];
           }
@@ -3082,10 +3129,11 @@ sub actions_to_code ($;%) {
                           type => 'xml:dtd:ext decl',
                           di => $DI, index => $Offset + pos $Input}
               unless $DTDMode eq 'internal subset'; # not in parameter entity
-          #XXX$self->_sc->check_hidden_name
-          #    (name => $self->{t}->{name},
-          #    onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
-
+          $SC->check_hidden_name
+              (name => $token->{name},
+               onerror => sub {
+                 push @$Errors, {@_, di => $DI, index => $Offset + pos $Input};
+               });
           my $def = $DTDDefs->{elements}->{$token->{name}};
           for (qw(name di index content_keyword cmgroup)) {
             $def->{$_} = $token->{$_};
@@ -3101,9 +3149,11 @@ sub actions_to_code ($;%) {
       };
     } elsif ($act->{type} eq 'process an ATTLIST token') {
       push @code, q{
-        #XXX$self->_sc->check_hidden_name
-        #    (name => $self->{t}->{name},
-        #     onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
+        $SC->check_hidden_name
+            (name => $token->{name},
+             onerror => sub {
+               push @$Errors, {@_, di => $DI, index => $Offset + pos $Input};
+             });
         if ($StopProcessing) {
           push @$Errors, {level => 'w',
                           type => 'xml:dtd:attlist ignored',
@@ -3196,15 +3246,23 @@ sub actions_to_code ($;%) {
                               value => $at->{name},
                               di => $DI, index => $Offset + pos $Input};
               if ($at->{declared_type} == 10) { # ENUMERATION
-                #XXXfor (@{$at->{tokens} or []}) {
-                #  $self->_sc->check_hidden_nmtoken
-                #      (name => $_, onerror => $onerror);
-                #}
+                for (@{$at->{allowed_tokens} or []}) {
+                  $SC->check_hidden_nmtoken
+                      (name => $_,
+                       onerror => sub {
+                         push @$Errors, {@_, di => $DI,
+                                         index => $Offset + pos $Input};
+                       });
+                }
               } elsif ($at->{declared_type} == 9) { # NOTATION
-                #XXXfor (@{$at->{tokens} or []}) {
-                #  $self->_sc->check_hidden_name
-                #      (name => $_, onerror => $onerror);
-                #}
+                for (@{$at->{allowed_tokens} or []}) {
+                  $SC->check_hidden_name
+                      (name => $_,
+                       onerror => sub {
+                         push @$Errors, {@_, di => $DI,
+                                         index => $Offset + pos $Input};
+                       });
+                }
               }
             }
           } # not $StopProcessing
@@ -3216,20 +3274,24 @@ sub actions_to_code ($;%) {
           push @$Errors, {level => 'w',
                           type => 'xml:dtd:entity ignored',
                           di => $DI, index => $Offset + pos $Input};
-          #XXX$self->_sc->check_hidden_name
-          #    (name => $self->{t}->{name},
-          #    onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
+          $SC->check_hidden_name
+              (name => $token->{name},
+               onerror => sub {
+                 push @$Errors, {@_, di => $DI, index => $Offset + pos $Input};
+               });
         } else { # not stop processing
           if ($token->{is_parameter_entity_flag}) {
             if (not $DTDDefs->{pe}->{'%'.$token->{name} . ';'}) {
               push @$Errors, {level => 'w',
                               type => 'xml:dtd:ext decl',
                               di => $DI, index => $Offset + pos $Input}
-                unless $DTDMode eq 'internal subset'; # and not in param entity
-              #XXX$self->_sc->check_hidden_name
-              #  (name => $self->{t}->{name},
-              #onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
-
+                  unless $DTDMode eq 'internal subset'; # and not in param entity
+              $SC->check_hidden_name
+                  (name => $token->{name},
+                   onerror => sub {
+                     push @$Errors, {@_, di => $DI,
+                                     index => $Offset + pos $Input};
+                   });
               $DTDDefs->{pe}->{'%'.$token->{name} . ';'} = $token;
             } else {
               push @$Errors, {level => 'w',
@@ -3268,15 +3330,16 @@ sub actions_to_code ($;%) {
               };
             } elsif (not $DTDDefs->{ge}->{'&'.$token->{name}.';'}) {
               my $is_external = not $DTDMode eq 'internal subset';
-                           #XXXnot ($self->{in_subset}->{internal_subset} and
-                              #not $self->{in_subset}->{param_entity});
               push @$Errors, {level => 'w',
                               type => 'xml:dtd:ext decl',
                               di => $DI, index => $Offset + pos $Input}
                   if $is_external;
-              #XXX$self->_sc->check_hidden_name
-              #(name => $self->{t}->{name},
-              #onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
+              $SC->check_hidden_name
+                  (name => $token->{name},
+                   onerror => sub {
+                     push @$Errors, {@_, di => $DI,
+                                     index => $Offset + pos $Input};
+                   });
 
               $DTDDefs->{ge}->{'&'.$token->{name}.';'} = $token;
               if (defined $token->{value} and # IndexedString
@@ -3292,21 +3355,30 @@ sub actions_to_code ($;%) {
             }
           }
 
-          #XXXif (defined $self->{t}->{pubid}) {
-          #  $self->_sc->check_hidden_pubid
-          #      (name => $self->{t}->{pubid},
-          #     onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
-          #}
-          #if (defined $self->{t}->{sysid}) {
-          #    $self->_sc->check_hidden_sysid
-          #    (name => $self->{t}->{sysid},
-          #     onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
-          #}
-          #if (defined $self->{t}->{notation}) {
-          #  $self->_sc->check_hidden_name
-          #    (name => $self->{t}->{notation},
-          #     onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
-          #}
+          if (defined $token->{public_identifier}) {
+            $SC->check_hidden_pubid
+                (name => $token->{public_identifier},
+                 onerror => sub {
+                   push @$Errors, {@_, di => $DI,
+                                   index => $Offset + pos $Input};
+                 });
+          }
+          if (defined $token->{system_identifier}) {
+            $SC->check_hidden_sysid
+                (name => $token->{system_identifier},
+                 onerror => sub {
+                   push @$Errors, {@_, di => $DI,
+                                   index => $Offset + pos $Input};
+                 });
+          }
+          if (defined $token->{notation_name}) {
+            $SC->check_hidden_name
+                (name => $token->{notation},
+                 onerror => sub {
+                   push @$Errors, {@_, di => $DI,
+                                   index => $Offset + pos $Input};
+                 });
+          }
         } # not stop processing
       };
     } elsif ($act->{type} eq 'process a NOTATION token') {
@@ -3321,23 +3393,31 @@ sub actions_to_code ($;%) {
                           type => 'xml:dtd:ext decl',
                           di => $DI, index => $Offset + pos $Input}
               unless $DTDMode eq 'internal subset'; # not in param entity
-          #XXX$self->_sc->check_hidden_name
-          #    (name => $self->{t}->{name},
-          #     onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
+          $SC->check_hidden_name
+              (name => $token->{name},
+               onerror => sub {
+                 push @$Errors, {@_, di => $DI,
+                                 index => $Offset + pos $Input};
+               });
           # XXX $token->{base_url}
           $DTDDefs->{notations}->{$token->{name}} = $token;
         }
-        #XXX
-        #if (defined $self->{t}->{pubid}) {
-        #  $self->_sc->check_hidden_pubid
-        #      (name => $self->{t}->{pubid},
-        #       onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
-        #}
-        #if (defined $self->{t}->{sysid}) {
-        #  $self->_sc->check_hidden_sysid
-        #      (name => $self->{t}->{sysid},
-        #       onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
-        #}
+        if (defined $token->{public_identifier}) {
+          $SC->check_hidden_pubid
+              (name => $token->{public_identifier},
+               onerror => sub {
+                 push @$Errors, {@_, di => $DI,
+                                 index => $Offset + pos $Input};
+               });
+        }
+        if (defined $token->{system_identifier}) {
+          $SC->check_hidden_sysid
+              (name => $token->{system_identifier},
+               onerror => sub {
+                 push @$Errors, {@_, di => $DI,
+                                 index => $Offset + pos $Input};
+               });
+        }
       };
 
     } elsif ($act->{type} eq 'process the external subset') { # XML
@@ -4347,6 +4427,8 @@ sub generate_api ($) {
       if (defined $Vars->{$_}->{default}) {
         sprintf q{$%s = defined $self->{%s} ? $self->{%s} : %s;},
             $_, $_, $_, $Vars->{$_}->{default};
+      } elsif ($Vars->{$_}->{from_method}) {
+        sprintf q{$%s = $self->%s;}, $_, '_' . lc $_;
       } else {
         sprintf q{$%s = $self->{%s};}, $_, $_;
       }
@@ -4445,6 +4527,15 @@ sub generate_api ($) {
       }
       if ($EOF) {
         $self->onparsed->($self);
+        unless ($self->{is_sub_parser}) {
+          $SC->check_ncnames (names => $DTDDefs->{el_ncnames} || {},
+                              onerror => sub { $self->onerrors->($self, [{@_}]) });
+          for my $en (keys %{$DTDDefs->{entity_names} || {}}) {
+            $SC->check_hidden_name (name => $en, onerror => sub {
+              $self->onerrors->($self, [{%{$self->{entity_names}->{$en}}, @_}]);
+            });
+          }
+        }
         $self->_cleanup_states;
       }
       return 1;
@@ -5022,6 +5113,7 @@ sub generate_api ($) {
 
     $Attr = $main->{saved_states}->{Attr};
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
+    $self->{is_sub_parser} = 1;
 
     $self->_run or die "Can't restart";
     $self->_feed_eof or die "Can't restart";
@@ -5067,6 +5159,7 @@ sub generate_api ($) {
     $dids->[$DI]->{map} = [[0, -1, 0]]; # the input stream # XXX
 
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
+    $self->{is_sub_parser} = 1;
 
     my $root = $doc->create_element_ns (undef, 'dummy');
     @$OE = ({id => $NEXT_ID++,
@@ -5139,6 +5232,7 @@ sub generate_api ($) {
     $dids->[$DI]->{map} = [[0, -1, 0]]; # the input stream # XXX
 
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
+    $self->{is_sub_parser} = 1;
 
     my $root = $doc->create_element_ns (undef, 'dummy');
     @$OE = ({id => $NEXT_ID++,
@@ -5189,6 +5283,7 @@ sub generate_api ($) {
     $dids->[$DI]->{map} = [[0, -1, 0]]; # the input stream # XXX
 
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
+    $self->{is_sub_parser} = 1;
 
     $NEXT_ID++;
     $self->{nodes}->[$CONTEXT = 1] = $main->{nodes}->[1]; # DOCTYPE
@@ -5252,6 +5347,7 @@ sub generate_api ($) {
     $dids->[$DI]->{map} = [[0, -1, 0]]; # the input stream # XXX
 
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
+    $self->{is_sub_parser} = 1;
 
     $NEXT_ID++;
     $self->{nodes}->[$CONTEXT = 1] = $main->{nodes}->[1]; # DOCTYPE
@@ -5294,6 +5390,7 @@ sub generate_api ($) {
 
     $Token = $main->{saved_states}->{Token};
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
+    $self->{is_sub_parser} = 1;
 
     $NEXT_ID++;
     $self->{nodes}->[$CONTEXT = 1] = $main->{nodes}->[1]; # DOCTYPE
@@ -5358,6 +5455,7 @@ sub generate_api ($) {
 
     $Token = $main->{saved_states}->{Token};
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
+    $self->{is_sub_parser} = 1;
 
     $NEXT_ID++;
     $self->{nodes}->[$CONTEXT = 1] = $main->{nodes}->[1]; # DOCTYPE
@@ -5400,6 +5498,7 @@ sub generate_api ($) {
 
     $Token = $main->{saved_states}->{Token};
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
+    $self->{is_sub_parser} = 1;
 
     $NEXT_ID++;
     $self->{nodes}->[$CONTEXT = 1] = $main->{nodes}->[1]; # DOCTYPE
@@ -5464,6 +5563,7 @@ sub generate_api ($) {
 
     $Token = $main->{saved_states}->{Token};
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
+    $self->{is_sub_parser} = 1;
 
     $NEXT_ID++;
     $self->{nodes}->[$CONTEXT = 1] = $main->{nodes}->[1]; # DOCTYPE

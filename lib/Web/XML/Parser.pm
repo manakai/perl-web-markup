@@ -354,7 +354,7 @@ sub onrestartwithencoding ($;$) {
     } # _cleanup_states
 
     ## ------ Common defs ------
-    our $AFE;our $AllDeclsProcessed;our $AnchoredIndex;our $Attr;our $CONTEXT;our $Callbacks;our $Confident;our $DI;our $DTDDefs;our $DTDMode;our $EOF;our $Errors;our $FORM_ELEMENT;our $FRAMESET_OK;our $HEAD_ELEMENT;our $IM;our $IframeSrcdoc;our $InForeign;our $Input;our $LastStartTagName;our $NEXT_ID;our $OE;our $OP;our $ORIGINAL_IM;our $Offset;our $OpenCMGroups;our $OpenMarkedSections;our $OriginalState;our $QUIRKS;our $Scripting;our $State;our $StopProcessing;our $TABLE_CHARS;our $TEMPLATE_IMS;our $Temp;our $TempIndex;our $Token;our $Tokens;our $XMLStandalone;
+    our $AFE;our $AllDeclsProcessed;our $AnchoredIndex;our $Attr;our $CONTEXT;our $Callbacks;our $Confident;our $DI;our $DTDDefs;our $DTDMode;our $EOF;our $Errors;our $FORM_ELEMENT;our $FRAMESET_OK;our $HEAD_ELEMENT;our $IM;our $IframeSrcdoc;our $InForeign;our $Input;our $LastStartTagName;our $NEXT_ID;our $OE;our $OP;our $ORIGINAL_IM;our $Offset;our $OpenCMGroups;our $OpenMarkedSections;our $OriginalState;our $QUIRKS;our $SC;our $Scripting;our $State;our $StopProcessing;our $TABLE_CHARS;our $TEMPLATE_IMS;our $Temp;our $TempIndex;our $Token;our $Tokens;our $XMLStandalone;
     ## ------ Tokenizer defs ------
     my $InvalidCharRefs = $Web::HTML::_SyntaxDefs->{xml_charref_invalid};
 sub ATTLIST_TOKEN () { 1 }
@@ -831,6 +831,23 @@ sub _tokenize_attr_value ($) { # IndexedString
 } # _tokenize_attr_value
 
   
+
+
+sub strict_checker ($;$) {
+  if (@_ > 1) {
+    $_[0]->{strict_checker} = $_[1];
+  }
+  return $_[0]->{strict_checker} || 'Web::XML::Parser::MinimumChecker';
+} # strict_checker
+
+sub _sc ($) {
+  return $_[0]->{_sc} ||= do {
+    my $sc = $_[0]->strict_checker;
+    eval qq{ require $sc } or die $@;
+    $sc;
+  };
+} # _sc
+  
     ## ------ Tree constructor defs ------
     my $Element2Type = {};
 my $ProcessIM = [];
@@ -971,6 +988,13 @@ return;
 
             push @$OP, ['pi', $token => 0];
           
+
+          $SC->check_pi_target
+              (name => $token->{target},
+               onerror => sub {
+                 push @$Errors, {@_, di => $DI, index => $Offset + pos $Input};
+               });
+        
         },
       ,
         ## [11] after root element;START-ELSE
@@ -1119,6 +1143,13 @@ push @$OP, ['construct-doctype'];
 
             push @$OP, ['pi', $token => 0];
           
+
+          $SC->check_pi_target
+              (name => $token->{target},
+               onerror => sub {
+                 push @$Errors, {@_, di => $DI, index => $Offset + pos $Input};
+               });
+        
         },
       ,
         ## [23] before DOCTYPE;START-ELSE
@@ -1320,7 +1351,11 @@ push @$OP, ['construct-doctype'];
           $pos += $+[0] - $-[0];
           $req_sp = not length $3;
           if (defined $CONTEXT) { # text declaration
-            # XXX hidden XML version validation
+            $SC->check_hidden_version
+                (name => $v,
+                 onerror => sub {
+                   push @$Errors, {@_, di => $DI, index => $p};
+                 });
           } else { # XML declaration
             push @$OP, ['xml-version', $v];
           }
@@ -1344,10 +1379,11 @@ push @$OP, ['construct-doctype'];
           $pos += $+[0] - $-[0];
           $req_sp = not length $3;
           if (defined $CONTEXT) { # text declaration
-          #XXX$self->_sc->check_hidden_encoding
-          #      (name => $v, onerror => sub {
-          #         $onerror->(token => $self->{t}, %$p, @_);
-          #       });
+            $SC->check_hidden_encoding
+                (name => $v,
+                 onerror => sub {
+                   push @$Errors, {@_, di => $DI, index => $p};
+                 });
           } else { # XML declaration
             push @$OP, ['xml-encoding', $v];
           }
@@ -1614,7 +1650,11 @@ push @$OP, ['construct-doctype'];
           $pos += $+[0] - $-[0];
           $req_sp = not length $3;
           if (defined $CONTEXT) { # text declaration
-            # XXX hidden XML version validation
+            $SC->check_hidden_version
+                (name => $v,
+                 onerror => sub {
+                   push @$Errors, {@_, di => $DI, index => $p};
+                 });
           } else { # XML declaration
             push @$OP, ['xml-version', $v];
           }
@@ -1638,10 +1678,11 @@ push @$OP, ['construct-doctype'];
           $pos += $+[0] - $-[0];
           $req_sp = not length $3;
           if (defined $CONTEXT) { # text declaration
-          #XXX$self->_sc->check_hidden_encoding
-          #      (name => $v, onerror => sub {
-          #         $onerror->(token => $self->{t}, %$p, @_);
-          #       });
+            $SC->check_hidden_encoding
+                (name => $v,
+                 onerror => sub {
+                   push @$Errors, {@_, di => $DI, index => $p};
+                 });
           } else { # XML declaration
             push @$OP, ['xml-encoding', $v];
           }
@@ -1908,7 +1949,11 @@ push @$OP, ['construct-doctype'];
           $pos += $+[0] - $-[0];
           $req_sp = not length $3;
           if (defined $CONTEXT) { # text declaration
-            # XXX hidden XML version validation
+            $SC->check_hidden_version
+                (name => $v,
+                 onerror => sub {
+                   push @$Errors, {@_, di => $DI, index => $p};
+                 });
           } else { # XML declaration
             push @$OP, ['xml-version', $v];
           }
@@ -1932,10 +1977,11 @@ push @$OP, ['construct-doctype'];
           $pos += $+[0] - $-[0];
           $req_sp = not length $3;
           if (defined $CONTEXT) { # text declaration
-          #XXX$self->_sc->check_hidden_encoding
-          #      (name => $v, onerror => sub {
-          #         $onerror->(token => $self->{t}, %$p, @_);
-          #       });
+            $SC->check_hidden_encoding
+                (name => $v,
+                 onerror => sub {
+                   push @$Errors, {@_, di => $DI, index => $p};
+                 });
           } else { # XML declaration
             push @$OP, ['xml-encoding', $v];
           }
@@ -2127,6 +2173,13 @@ push @$OP, ['stop-parsing'];
 
             push @$OP, ['pi', $token => 0];
           
+
+          $SC->check_pi_target
+              (name => $token->{target},
+               onerror => sub {
+                 push @$Errors, {@_, di => $DI, index => $Offset + pos $Input};
+               });
+        
         },
       ,
         ## [73] before root element;START-ELSE
@@ -2232,9 +2285,8 @@ push @$OP, ['stop-parsing'];
           et => $Element2Type->{($nse)}->{$token->{tag_name}} || $Element2Type->{($nse)}->{'*'} || 0,
           aet => $Element2Type->{($nse)}->{$token->{tag_name}} || $Element2Type->{($nse)}->{'*'} || 0,
         };
-        #XXX
-        #$self->{el_ncnames}->{$prefix} ||= $self->{t} if defined $prefix;
-        #$self->{el_ncnames}->{$ln} ||= $self->{t} if defined $ln;
+        $DTDDefs->{el_ncnames}->{$prefix} ||= $token if defined $prefix;
+        $DTDDefs->{el_ncnames}->{$ln} ||= $token if defined $ln;
 
         my $has_attr;
         for my $attr (@{$node->{attr_list}}) {
@@ -2265,9 +2317,8 @@ push @$OP, ['stop-parsing'];
           }
 
           $attr->{name_args} = [$ns, [$p, $l]];
-          #XXX
-          #$self->{el_ncnames}->{$p} ||= $attr_t if defined $p;
-          #$self->{el_ncnames}->{$l} ||= $attr_t if defined $l;
+          $DTDDefs->{el_ncnames}->{$p} ||= $attr if defined $p;
+          $DTDDefs->{el_ncnames}->{$l} ||= $attr if defined $l;
           if (defined $attr->{declared_type}) {
             #
           } elsif ($AllDeclsProcessed) {
@@ -2393,6 +2444,17 @@ return;
           push @$OP, ['popped', \@popped];
         }
 return;
+          } else {
+            
+          if ($_node eq $OE->[0]) {
+            push @$Errors, {type => 'in-element-end-else-3',
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
+return;
+return;
+          }
+        
           }
         
           }
@@ -2443,6 +2505,13 @@ push @$OP, ['stop-parsing'];
           my $token = $_;
 
           push @$OP, ['pi', $token => $OE->[-1]->{id}];
+        
+
+          $SC->check_pi_target
+              (name => $token->{target},
+               onerror => sub {
+                 push @$Errors, {@_, di => $DI, index => $Offset + pos $Input};
+               });
         
         },
       ,
@@ -2549,9 +2618,8 @@ push @$OP, ['stop-parsing'];
           et => $Element2Type->{($nse)}->{$token->{tag_name}} || $Element2Type->{($nse)}->{'*'} || 0,
           aet => $Element2Type->{($nse)}->{$token->{tag_name}} || $Element2Type->{($nse)}->{'*'} || 0,
         };
-        #XXX
-        #$self->{el_ncnames}->{$prefix} ||= $self->{t} if defined $prefix;
-        #$self->{el_ncnames}->{$ln} ||= $self->{t} if defined $ln;
+        $DTDDefs->{el_ncnames}->{$prefix} ||= $token if defined $prefix;
+        $DTDDefs->{el_ncnames}->{$ln} ||= $token if defined $ln;
 
         my $has_attr;
         for my $attr (@{$node->{attr_list}}) {
@@ -2582,9 +2650,8 @@ push @$OP, ['stop-parsing'];
           }
 
           $attr->{name_args} = [$ns, [$p, $l]];
-          #XXX
-          #$self->{el_ncnames}->{$p} ||= $attr_t if defined $p;
-          #$self->{el_ncnames}->{$l} ||= $attr_t if defined $l;
+          $DTDDefs->{el_ncnames}->{$p} ||= $attr if defined $p;
+          $DTDDefs->{el_ncnames}->{$l} ||= $attr if defined $l;
           if (defined $attr->{declared_type}) {
             #
           } elsif ($AllDeclsProcessed) {
@@ -2853,9 +2920,11 @@ return;
         sub {
           my $token = $_;
 
-        #XXX$self->_sc->check_hidden_name
-        #    (name => $self->{t}->{name},
-        #     onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
+        $SC->check_hidden_name
+            (name => $token->{name},
+             onerror => sub {
+               push @$Errors, {@_, di => $DI, index => $Offset + pos $Input};
+             });
         if ($StopProcessing) {
           push @$Errors, {level => 'w',
                           type => 'xml:dtd:attlist ignored',
@@ -2948,15 +3017,23 @@ return;
                               value => $at->{name},
                               di => $DI, index => $Offset + pos $Input};
               if ($at->{declared_type} == 10) { # ENUMERATION
-                #XXXfor (@{$at->{tokens} or []}) {
-                #  $self->_sc->check_hidden_nmtoken
-                #      (name => $_, onerror => $onerror);
-                #}
+                for (@{$at->{allowed_tokens} or []}) {
+                  $SC->check_hidden_nmtoken
+                      (name => $_,
+                       onerror => sub {
+                         push @$Errors, {@_, di => $DI,
+                                         index => $Offset + pos $Input};
+                       });
+                }
               } elsif ($at->{declared_type} == 9) { # NOTATION
-                #XXXfor (@{$at->{tokens} or []}) {
-                #  $self->_sc->check_hidden_name
-                #      (name => $_, onerror => $onerror);
-                #}
+                for (@{$at->{allowed_tokens} or []}) {
+                  $SC->check_hidden_name
+                      (name => $_,
+                       onerror => sub {
+                         push @$Errors, {@_, di => $DI,
+                                         index => $Offset + pos $Input};
+                       });
+                }
               }
             }
           } # not $StopProcessing
@@ -2983,10 +3060,11 @@ return;
                           type => 'xml:dtd:ext decl',
                           di => $DI, index => $Offset + pos $Input}
               unless $DTDMode eq 'internal subset'; # not in parameter entity
-          #XXX$self->_sc->check_hidden_name
-          #    (name => $self->{t}->{name},
-          #    onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
-
+          $SC->check_hidden_name
+              (name => $token->{name},
+               onerror => sub {
+                 push @$Errors, {@_, di => $DI, index => $Offset + pos $Input};
+               });
           my $def = $DTDDefs->{elements}->{$token->{name}};
           for (qw(name di index content_keyword cmgroup)) {
             $def->{$_} = $token->{$_};
@@ -3015,20 +3093,24 @@ return;
           push @$Errors, {level => 'w',
                           type => 'xml:dtd:entity ignored',
                           di => $DI, index => $Offset + pos $Input};
-          #XXX$self->_sc->check_hidden_name
-          #    (name => $self->{t}->{name},
-          #    onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
+          $SC->check_hidden_name
+              (name => $token->{name},
+               onerror => sub {
+                 push @$Errors, {@_, di => $DI, index => $Offset + pos $Input};
+               });
         } else { # not stop processing
           if ($token->{is_parameter_entity_flag}) {
             if (not $DTDDefs->{pe}->{'%'.$token->{name} . ';'}) {
               push @$Errors, {level => 'w',
                               type => 'xml:dtd:ext decl',
                               di => $DI, index => $Offset + pos $Input}
-                unless $DTDMode eq 'internal subset'; # and not in param entity
-              #XXX$self->_sc->check_hidden_name
-              #  (name => $self->{t}->{name},
-              #onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
-
+                  unless $DTDMode eq 'internal subset'; # and not in param entity
+              $SC->check_hidden_name
+                  (name => $token->{name},
+                   onerror => sub {
+                     push @$Errors, {@_, di => $DI,
+                                     index => $Offset + pos $Input};
+                   });
               $DTDDefs->{pe}->{'%'.$token->{name} . ';'} = $token;
             } else {
               push @$Errors, {level => 'w',
@@ -3067,15 +3149,16 @@ return;
               };
             } elsif (not $DTDDefs->{ge}->{'&'.$token->{name}.';'}) {
               my $is_external = not $DTDMode eq 'internal subset';
-                           #XXXnot ($self->{in_subset}->{internal_subset} and
-                              #not $self->{in_subset}->{param_entity});
               push @$Errors, {level => 'w',
                               type => 'xml:dtd:ext decl',
                               di => $DI, index => $Offset + pos $Input}
                   if $is_external;
-              #XXX$self->_sc->check_hidden_name
-              #(name => $self->{t}->{name},
-              #onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
+              $SC->check_hidden_name
+                  (name => $token->{name},
+                   onerror => sub {
+                     push @$Errors, {@_, di => $DI,
+                                     index => $Offset + pos $Input};
+                   });
 
               $DTDDefs->{ge}->{'&'.$token->{name}.';'} = $token;
               if (defined $token->{value} and # IndexedString
@@ -3091,21 +3174,30 @@ return;
             }
           }
 
-          #XXXif (defined $self->{t}->{pubid}) {
-          #  $self->_sc->check_hidden_pubid
-          #      (name => $self->{t}->{pubid},
-          #     onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
-          #}
-          #if (defined $self->{t}->{sysid}) {
-          #    $self->_sc->check_hidden_sysid
-          #    (name => $self->{t}->{sysid},
-          #     onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
-          #}
-          #if (defined $self->{t}->{notation}) {
-          #  $self->_sc->check_hidden_name
-          #    (name => $self->{t}->{notation},
-          #     onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
-          #}
+          if (defined $token->{public_identifier}) {
+            $SC->check_hidden_pubid
+                (name => $token->{public_identifier},
+                 onerror => sub {
+                   push @$Errors, {@_, di => $DI,
+                                   index => $Offset + pos $Input};
+                 });
+          }
+          if (defined $token->{system_identifier}) {
+            $SC->check_hidden_sysid
+                (name => $token->{system_identifier},
+                 onerror => sub {
+                   push @$Errors, {@_, di => $DI,
+                                   index => $Offset + pos $Input};
+                 });
+          }
+          if (defined $token->{notation_name}) {
+            $SC->check_hidden_name
+                (name => $token->{notation},
+                 onerror => sub {
+                   push @$Errors, {@_, di => $DI,
+                                   index => $Offset + pos $Input};
+                 });
+          }
         } # not stop processing
       
         },
@@ -3158,23 +3250,31 @@ push @$OP, ['stop-parsing'];
                           type => 'xml:dtd:ext decl',
                           di => $DI, index => $Offset + pos $Input}
               unless $DTDMode eq 'internal subset'; # not in param entity
-          #XXX$self->_sc->check_hidden_name
-          #    (name => $self->{t}->{name},
-          #     onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
+          $SC->check_hidden_name
+              (name => $token->{name},
+               onerror => sub {
+                 push @$Errors, {@_, di => $DI,
+                                 index => $Offset + pos $Input};
+               });
           # XXX $token->{base_url}
           $DTDDefs->{notations}->{$token->{name}} = $token;
         }
-        #XXX
-        #if (defined $self->{t}->{pubid}) {
-        #  $self->_sc->check_hidden_pubid
-        #      (name => $self->{t}->{pubid},
-        #       onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
-        #}
-        #if (defined $self->{t}->{sysid}) {
-        #  $self->_sc->check_hidden_sysid
-        #      (name => $self->{t}->{sysid},
-        #       onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
-        #}
+        if (defined $token->{public_identifier}) {
+          $SC->check_hidden_pubid
+              (name => $token->{public_identifier},
+               onerror => sub {
+                 push @$Errors, {@_, di => $DI,
+                                 index => $Offset + pos $Input};
+               });
+        }
+        if (defined $token->{system_identifier}) {
+          $SC->check_hidden_sysid
+              (name => $token->{system_identifier},
+               onerror => sub {
+                 push @$Errors, {@_, di => $DI,
+                                 index => $Offset + pos $Input};
+               });
+        }
       
         },
       ,
@@ -3184,6 +3284,13 @@ push @$OP, ['stop-parsing'];
 
             push @$OP, ['pi', $token => 1];
           
+
+          $SC->check_pi_target
+              (name => $token->{target},
+               onerror => sub {
+                 push @$Errors, {@_, di => $DI, index => $Offset + pos $Input};
+               });
+        
         },
       ,
         ## [133] in subset;START-ELSE
@@ -3385,7 +3492,11 @@ push @$OP, ['stop-parsing'];
           $pos += $+[0] - $-[0];
           $req_sp = not length $3;
           if (defined $CONTEXT) { # text declaration
-            # XXX hidden XML version validation
+            $SC->check_hidden_version
+                (name => $v,
+                 onerror => sub {
+                   push @$Errors, {@_, di => $DI, index => $p};
+                 });
           } else { # XML declaration
             push @$OP, ['xml-version', $v];
           }
@@ -3409,10 +3520,11 @@ push @$OP, ['stop-parsing'];
           $pos += $+[0] - $-[0];
           $req_sp = not length $3;
           if (defined $CONTEXT) { # text declaration
-          #XXX$self->_sc->check_hidden_encoding
-          #      (name => $v, onerror => sub {
-          #         $onerror->(token => $self->{t}, %$p, @_);
-          #       });
+            $SC->check_hidden_encoding
+                (name => $v,
+                 onerror => sub {
+                   push @$Errors, {@_, di => $DI, index => $p};
+                 });
           } else { # XML declaration
             push @$OP, ['xml-encoding', $v];
           }
@@ -12177,7 +12289,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -12231,7 +12342,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -12289,7 +12399,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -12343,7 +12452,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -12401,7 +12509,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -12531,7 +12638,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -12582,7 +12688,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -12629,7 +12734,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -12680,7 +12784,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -16918,7 +17021,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -16995,7 +17097,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -17205,7 +17306,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -17253,7 +17353,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -17301,7 +17400,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -17349,7 +17447,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -17411,7 +17508,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -17459,7 +17555,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -17507,7 +17602,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -17555,7 +17649,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -17603,7 +17696,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -17665,7 +17757,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -17730,7 +17821,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -17799,7 +17889,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -17851,7 +17940,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -17908,7 +17996,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -18139,7 +18226,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -37533,7 +37619,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -37598,7 +37683,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -37820,7 +37904,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -37885,7 +37968,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -40875,7 +40957,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -40936,7 +41017,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -54198,33 +54278,25 @@ $State = TAG_NAME_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                          value => q@</@,
-                          di => $DI, index => $AnchoredIndex};
-        
-$State = DATA_STATE;
-
-          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                          value => $1,
-                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
-        
+        $Token = {type => COMMENT_TOKEN, tn => 0,
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = '';
+$State = BOGUS_COMMENT_STATE;
+$Token->{q<data>} .= $1;
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'end-tag-open-ws', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                          value => q@</@,
-                          di => $DI, index => $AnchoredIndex};
-        
-
-          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                          value => q@
-@,
-                          di => $DI, index => $Offset + (pos $Input) - (length $1) - 0};
-        
-$State = DATA_STATE_CR;
+        $Token = {type => COMMENT_TOKEN, tn => 0,
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = '';
+$Token->{q<data>} .= q@
+@;
+$State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'empty end tag', level => 'm',
@@ -54276,11 +54348,18 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                          value => q@</@,
-                          di => $DI, index => $AnchoredIndex};
-        
-$State = DATA_STATE;
+        $Token = {type => COMMENT_TOKEN, tn => 0,
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = '';
+push @$Tokens, $Token;
+
+            if ($DTDMode eq 'N/A') {
+              $State = DATA_STATE;
+            } else {
+              $State = DTD_STATE;
+            }
+          
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -55946,14 +56025,12 @@ $Temp .= $1;
                               type => 'WFC:No Recursion',
                               value => $Temp,
                               di => $DI, index => $TempIndex};
-              last REF;
             } elsif ($DTDMode eq 'internal subset') {
               ## In a markup declaration in internal subset
               push @$Errors, {level => 'm',
                               type => 'WFC:PEs in Internal Subset',
                               value => $Temp,
                               di => $DI, index => $TempIndex};
-              last REF;
             } else {
               push @$Callbacks, [$OnMDEntityReference,
                                  {entity => $ent}];
@@ -55962,11 +56039,18 @@ $Temp .= $1;
               $return = 1;
               last REF;
             }
+          } else {
+            push @$Errors, {type => 'entity not declared', value => $Temp,
+                            level => 'm',
+                            di => $DI, index => $TempIndex};
           }
 
-          push @$Errors, {type => 'entity not declared', value => $Temp,
-                          level => 'm',
-                          di => $DI, index => $TempIndex};
+          if (not $StopProcessing and not $XMLStandalone) {
+            push @$Errors, {level => 'i',
+                            type => 'stop processing',
+                            di => $DI, index => $TempIndex};
+            $StopProcessing = 1;
+          }
         } # REF
       
 return 1 if $return;
@@ -56066,14 +56150,12 @@ $Temp .= $1;
                               type => 'WFC:No Recursion',
                               value => $Temp,
                               di => $DI, index => $TempIndex};
-              last REF;
             } elsif ($DTDMode eq 'internal subset') {
               ## In a markup declaration in internal subset
               push @$Errors, {level => 'm',
                               type => 'WFC:PEs in Internal Subset',
                               value => $Temp,
                               di => $DI, index => $TempIndex};
-              last REF;
             } else {
               push @$Callbacks, [$OnMDEntityReference,
                                  {entity => $ent}];
@@ -56082,11 +56164,18 @@ $Temp .= $1;
               $return = 1;
               last REF;
             }
+          } else {
+            push @$Errors, {type => 'entity not declared', value => $Temp,
+                            level => 'm',
+                            di => $DI, index => $TempIndex};
           }
 
-          push @$Errors, {type => 'entity not declared', value => $Temp,
-                          level => 'm',
-                          di => $DI, index => $TempIndex};
+          if (not $StopProcessing and not $XMLStandalone) {
+            push @$Errors, {level => 'i',
+                            type => 'stop processing',
+                            di => $DI, index => $TempIndex};
+            $StopProcessing = 1;
+          }
         } # REF
       
 return 1 if $return;
@@ -56248,7 +56337,6 @@ $Temp .= $1;
                               type => 'WFC:No Recursion',
                               value => $Temp,
                               di => $DI, index => $TempIndex};
-              last REF;
             } elsif (defined $ent->{public_identifier} and
                      $Web::HTML::_SyntaxDefs->{charrefs_pubids}->{$ent->{public_identifier}}) {
               ## Public identifier normalization is intentionally not
@@ -56268,11 +56356,18 @@ $Temp .= $1;
               $return = 1;
               last REF;
             }
+          } else {
+            push @$Errors, {type => 'entity not declared', value => $Temp,
+                            level => 'm',
+                            di => $DI, index => $TempIndex};
           }
 
-          push @$Errors, {type => 'entity not declared', value => $Temp,
-                          level => 'm',
-                          di => $DI, index => $TempIndex};
+          if (not $StopProcessing and not $XMLStandalone) {
+            push @$Errors, {level => 'i',
+                            type => 'stop processing',
+                            di => $DI, index => $TempIndex};
+            $StopProcessing = 1;
+          }
         } # REF
       
 $State = DTD_STATE;
@@ -56425,14 +56520,12 @@ $Temp .= $1;
                               type => 'WFC:No Recursion',
                               value => $Temp,
                               di => $DI, index => $TempIndex};
-              last REF;
             } elsif ($DTDMode eq 'internal subset') {
               ## In a markup declaration in internal subset
               push @$Errors, {level => 'm',
                               type => 'WFC:PEs in Internal Subset',
                               value => $Temp,
                               di => $DI, index => $TempIndex};
-              last REF;
             } else {
               push @$Callbacks, [$OnEntityValueEntityReference,
                                  {entity => $ent}];
@@ -56441,11 +56534,18 @@ $Temp .= $1;
               $return = 1;
               last REF;
             }
+          } else {
+            push @$Errors, {type => 'entity not declared', value => $Temp,
+                            level => 'm',
+                            di => $DI, index => $TempIndex};
           }
 
-          push @$Errors, {type => 'entity not declared', value => $Temp,
-                          level => 'm',
-                          di => $DI, index => $TempIndex};
+          if (not $StopProcessing and not $XMLStandalone) {
+            push @$Errors, {level => 'i',
+                            type => 'stop processing',
+                            di => $DI, index => $TempIndex};
+            $StopProcessing = 1;
+          }
         } # REF
       
 $State = ENT_VALUE__DQ__STATE;
@@ -56598,14 +56698,12 @@ $Temp .= $1;
                               type => 'WFC:No Recursion',
                               value => $Temp,
                               di => $DI, index => $TempIndex};
-              last REF;
             } elsif ($DTDMode eq 'internal subset') {
               ## In a markup declaration in internal subset
               push @$Errors, {level => 'm',
                               type => 'WFC:PEs in Internal Subset',
                               value => $Temp,
                               di => $DI, index => $TempIndex};
-              last REF;
             } else {
               push @$Callbacks, [$OnEntityValueEntityReference,
                                  {entity => $ent}];
@@ -56614,11 +56712,18 @@ $Temp .= $1;
               $return = 1;
               last REF;
             }
+          } else {
+            push @$Errors, {type => 'entity not declared', value => $Temp,
+                            level => 'm',
+                            di => $DI, index => $TempIndex};
           }
 
-          push @$Errors, {type => 'entity not declared', value => $Temp,
-                          level => 'm',
-                          di => $DI, index => $TempIndex};
+          if (not $StopProcessing and not $XMLStandalone) {
+            push @$Errors, {level => 'i',
+                            type => 'stop processing',
+                            di => $DI, index => $TempIndex};
+            $StopProcessing = 1;
+          }
         } # REF
       
 $State = ENT_VALUE__SQ__STATE;
@@ -56771,14 +56876,12 @@ $Temp .= $1;
                               type => 'WFC:No Recursion',
                               value => $Temp,
                               di => $DI, index => $TempIndex};
-              last REF;
             } elsif ($DTDMode eq 'internal subset') {
               ## In a markup declaration in internal subset
               push @$Errors, {level => 'm',
                               type => 'WFC:PEs in Internal Subset',
                               value => $Temp,
                               di => $DI, index => $TempIndex};
-              last REF;
             } else {
               push @$Callbacks, [$OnEntityValueEntityReference,
                                  {entity => $ent}];
@@ -56787,11 +56890,18 @@ $Temp .= $1;
               $return = 1;
               last REF;
             }
+          } else {
+            push @$Errors, {type => 'entity not declared', value => $Temp,
+                            level => 'm',
+                            di => $DI, index => $TempIndex};
           }
 
-          push @$Errors, {type => 'entity not declared', value => $Temp,
-                          level => 'm',
-                          di => $DI, index => $TempIndex};
+          if (not $StopProcessing and not $XMLStandalone) {
+            push @$Errors, {level => 'i',
+                            type => 'stop processing',
+                            di => $DI, index => $TempIndex};
+            $StopProcessing = 1;
+          }
         } # REF
       
 $State = ENT_VALUE_IN_ENT_STATE;
@@ -56949,14 +57059,12 @@ $Temp .= $1;
                               type => 'WFC:No Recursion',
                               value => $Temp,
                               di => $DI, index => $TempIndex};
-              last REF;
             } elsif ($DTDMode eq 'internal subset') {
               ## In a markup declaration in internal subset
               push @$Errors, {level => 'm',
                               type => 'WFC:PEs in Internal Subset',
                               value => $Temp,
                               di => $DI, index => $TempIndex};
-              last REF;
             } else {
               push @$Callbacks, [$OnMDEntityReference,
                                  {entity => $ent}];
@@ -56965,11 +57073,18 @@ $Temp .= $1;
               $return = 1;
               last REF;
             }
+          } else {
+            push @$Errors, {type => 'entity not declared', value => $Temp,
+                            level => 'm',
+                            di => $DI, index => $TempIndex};
           }
 
-          push @$Errors, {type => 'entity not declared', value => $Temp,
-                          level => 'm',
-                          di => $DI, index => $TempIndex};
+          if (not $StopProcessing and not $XMLStandalone) {
+            push @$Errors, {level => 'i',
+                            type => 'stop processing',
+                            di => $DI, index => $TempIndex};
+            $StopProcessing = 1;
+          }
         } # REF
       
 return 1 if $return;
@@ -58276,6 +58391,15 @@ sub dom_tree ($$) {
       }
       if ($EOF) {
         $self->onparsed->($self);
+        unless ($self->{is_sub_parser}) {
+          $SC->check_ncnames (names => $DTDDefs->{el_ncnames} || {},
+                              onerror => sub { $self->onerrors->($self, [{@_}]) });
+          for my $en (keys %{$DTDDefs->{entity_names} || {}}) {
+            $SC->check_hidden_name (name => $en, onerror => sub {
+              $self->onerrors->($self, [{%{$self->{entity_names}->{$en}}, @_}]);
+            });
+          }
+        }
         $self->_cleanup_states;
       }
       return 1;
@@ -58326,7 +58450,7 @@ sub dom_tree ($$) {
       $doc->manakai_compat_mode ('no quirks');
       $doc->remove_child ($_) for $doc->child_nodes->to_list;
       $self->{nodes} = [$doc];
-      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
       $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
 $NEXT_ID = 1;
@@ -58335,6 +58459,7 @@ $DTDMode = q{N/A};
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
       $IframeSrcdoc = $self->{IframeSrcdoc};
+$SC = $self->_sc;
 $Scripting = $self->{Scripting};
       $Confident = 1; # irrelevant
       $State = DATA_STATE;;
@@ -58365,7 +58490,7 @@ $Scripting = $self->{Scripting};
       $doc->remove_child ($_) for $doc->child_nodes->to_list;
       $self->{nodes} = [$doc];
 
-      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
       $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
 $NEXT_ID = 1;
@@ -58374,6 +58499,7 @@ $DTDMode = q{N/A};
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
       $IframeSrcdoc = $self->{IframeSrcdoc};
+$SC = $self->_sc;
 $Scripting = $self->{Scripting};
       $Confident = 1; # irrelevant
       $State = DATA_STATE;;
@@ -58395,8 +58521,9 @@ $Scripting = $self->{Scripting};
       my $self = $_[0];
       my $input = [$_[1]]; # string copy
 
-      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
       $IframeSrcdoc = $self->{IframeSrcdoc};
+$SC = $self->_sc;
 $Scripting = $self->{Scripting};
       ($AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $StopProcessing, $Temp, $TempIndex, $Token, $XMLStandalone) = @{$self->{saved_states}}{qw(AllDeclsProcessed AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State StopProcessing Temp TempIndex Token XMLStandalone)};
 ($AFE, $Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP OpenCMGroups OpenMarkedSections TABLE_CHARS TEMPLATE_IMS Tokens)};
@@ -58410,8 +58537,9 @@ $Scripting = $self->{Scripting};
 
     sub parse_chars_end ($) {
       my $self = $_[0];
-      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
       $IframeSrcdoc = $self->{IframeSrcdoc};
+$SC = $self->_sc;
 $Scripting = $self->{Scripting};
       ($AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $StopProcessing, $Temp, $TempIndex, $Token, $XMLStandalone) = @{$self->{saved_states}}{qw(AllDeclsProcessed AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State StopProcessing Temp TempIndex Token XMLStandalone)};
 ($AFE, $Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP OpenCMGroups OpenMarkedSections TABLE_CHARS TEMPLATE_IMS Tokens)};
@@ -58450,7 +58578,7 @@ $Scripting = $self->{Scripting};
         $self->{nodes} = [$doc];
         $doc->remove_child ($_) for $doc->child_nodes->to_list;
 
-        local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+        local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
         $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
 $NEXT_ID = 1;
@@ -58459,6 +58587,7 @@ $DTDMode = q{N/A};
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
         $IframeSrcdoc = $self->{IframeSrcdoc};
+$SC = $self->_sc;
 $Scripting = $self->{Scripting};
 
         my $inputref = \($_[2]);
@@ -58505,6 +58634,7 @@ $DTDMode = q{N/A};
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
       $IframeSrcdoc = $self->{IframeSrcdoc};
+$SC = $self->_sc;
 $Scripting = $self->{Scripting};
       $State = DATA_STATE;;
       $IM = BEFORE_XML_DECLARATION_IM;
@@ -58553,7 +58683,7 @@ $Scripting = $self->{Scripting};
       $doc->manakai_is_html (0);
       $self->{can_restart} = 1;
 
-      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
       PARSER: {
         $self->_parse_bytes_init;
         $self->_parse_bytes_start_parsing (no_body_data_yet => 1) or do {
@@ -58573,8 +58703,9 @@ $Scripting = $self->{Scripting};
     sub parse_bytes_feed ($$;%) {
       my ($self, undef, %args) = @_;
 
-      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
       $IframeSrcdoc = $self->{IframeSrcdoc};
+$SC = $self->_sc;
 $Scripting = $self->{Scripting};
       ($AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $StopProcessing, $Temp, $TempIndex, $Token, $XMLStandalone) = @{$self->{saved_states}}{qw(AllDeclsProcessed AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State StopProcessing Temp TempIndex Token XMLStandalone)};
 ($AFE, $Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP OpenCMGroups OpenMarkedSections TABLE_CHARS TEMPLATE_IMS Tokens)};
@@ -58612,8 +58743,9 @@ $Scripting = $self->{Scripting};
 
     sub parse_bytes_end ($) {
       my $self = $_[0];
-      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
       $IframeSrcdoc = $self->{IframeSrcdoc};
+$SC = $self->_sc;
 $Scripting = $self->{Scripting};
       ($AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $StopProcessing, $Temp, $TempIndex, $Token, $XMLStandalone) = @{$self->{saved_states}}{qw(AllDeclsProcessed AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State StopProcessing Temp TempIndex Token XMLStandalone)};
 ($AFE, $Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP OpenCMGroups OpenMarkedSections TABLE_CHARS TEMPLATE_IMS Tokens)};
@@ -58656,7 +58788,7 @@ $Scripting = $self->{Scripting};
   sub parse ($$$) {
     my ($self, $main, $in) = @_;
 
-    local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+    local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
     $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
 $NEXT_ID = 1;
@@ -58665,6 +58797,7 @@ $DTDMode = q{N/A};
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
     $IframeSrcdoc = $self->{IframeSrcdoc};
+$SC = $self->_sc;
 $Scripting = $self->{Scripting};
     $Confident = 1; # irrelevant
     {
@@ -58696,6 +58829,7 @@ $Scripting = $self->{Scripting};
 
     $Attr = $main->{saved_states}->{Attr};
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
+    $self->{is_sub_parser} = 1;
 
     $self->_run or die "Can't restart";
     $self->_feed_eof or die "Can't restart";
@@ -58713,7 +58847,7 @@ $Scripting = $self->{Scripting};
   sub parse ($$$) {
     my ($self, $main, $in) = @_;
 
-    local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+    local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
     $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
 $NEXT_ID = 1;
@@ -58722,6 +58856,7 @@ $DTDMode = q{N/A};
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
     $IframeSrcdoc = $self->{IframeSrcdoc};
+$SC = $self->_sc;
 $Scripting = $self->{Scripting};
     $Confident = 1; # irrelevant
     {
@@ -58748,6 +58883,7 @@ $Scripting = $self->{Scripting};
     $dids->[$DI]->{map} = [[0, -1, 0]]; # the input stream # XXX
 
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
+    $self->{is_sub_parser} = 1;
 
     my $root = $doc->create_element_ns (undef, 'dummy');
     @$OE = ({id => $NEXT_ID++,
@@ -58775,7 +58911,7 @@ $Scripting = $self->{Scripting};
       $self->{main_parser} = $_[2];
       $self->{can_restart} = 1;
 
-      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
       PARSER: {
         $self->_parse_bytes_init;
         $self->_parse_bytes_start_parsing (no_body_data_yet => 1) or do {
@@ -58802,6 +58938,7 @@ $DTDMode = q{N/A};
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
     $IframeSrcdoc = $self->{IframeSrcdoc};
+$SC = $self->_sc;
 $Scripting = $self->{Scripting};
     {
       package Web::XML::Parser;
@@ -58827,6 +58964,7 @@ $Scripting = $self->{Scripting};
     $dids->[$DI]->{map} = [[0, -1, 0]]; # the input stream # XXX
 
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
+    $self->{is_sub_parser} = 1;
 
     my $root = $doc->create_element_ns (undef, 'dummy');
     @$OE = ({id => $NEXT_ID++,
@@ -58849,7 +58987,7 @@ $Scripting = $self->{Scripting};
   sub parse ($$$) {
     my ($self, $main, $in) = @_;
 
-    local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+    local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
     $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
 $NEXT_ID = 1;
@@ -58858,6 +58996,7 @@ $DTDMode = q{N/A};
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
     $IframeSrcdoc = $self->{IframeSrcdoc};
+$SC = $self->_sc;
 $Scripting = $self->{Scripting};
     $Confident = 1; # irrelevant
     {
@@ -58884,6 +59023,7 @@ $Scripting = $self->{Scripting};
     $dids->[$DI]->{map} = [[0, -1, 0]]; # the input stream # XXX
 
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
+    $self->{is_sub_parser} = 1;
 
     $NEXT_ID++;
     $self->{nodes}->[$CONTEXT = 1] = $main->{nodes}->[1]; # DOCTYPE
@@ -58902,7 +59042,7 @@ $Scripting = $self->{Scripting};
       $self->{main_parser} = $_[2];
       $self->{can_restart} = 1;
 
-      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
       PARSER: {
         $self->_parse_bytes_init;
         $self->_parse_bytes_start_parsing (no_body_data_yet => 1) or do {
@@ -58929,6 +59069,7 @@ $DTDMode = q{N/A};
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
     $IframeSrcdoc = $self->{IframeSrcdoc};
+$SC = $self->_sc;
 $Scripting = $self->{Scripting};
     {
       package Web::XML::Parser;
@@ -58954,6 +59095,7 @@ $Scripting = $self->{Scripting};
     $dids->[$DI]->{map} = [[0, -1, 0]]; # the input stream # XXX
 
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
+    $self->{is_sub_parser} = 1;
 
     $NEXT_ID++;
     $self->{nodes}->[$CONTEXT = 1] = $main->{nodes}->[1]; # DOCTYPE
@@ -58967,7 +59109,7 @@ $Scripting = $self->{Scripting};
   sub parse ($$$) {
     my ($self, $main, $in) = @_;
 
-    local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+    local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
     $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
 $NEXT_ID = 1;
@@ -58976,6 +59118,7 @@ $DTDMode = q{N/A};
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
     $IframeSrcdoc = $self->{IframeSrcdoc};
+$SC = $self->_sc;
 $Scripting = $self->{Scripting};
     $Confident = 1; # irrelevant
     {
@@ -59003,6 +59146,7 @@ $Scripting = $self->{Scripting};
 
     $Token = $main->{saved_states}->{Token};
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
+    $self->{is_sub_parser} = 1;
 
     $NEXT_ID++;
     $self->{nodes}->[$CONTEXT = 1] = $main->{nodes}->[1]; # DOCTYPE
@@ -59021,7 +59165,7 @@ $Scripting = $self->{Scripting};
       $self->{main_parser} = $_[2];
       $self->{can_restart} = 1;
 
-      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
       PARSER: {
         $self->_parse_bytes_init;
         $self->_parse_bytes_start_parsing (no_body_data_yet => 1) or do {
@@ -59048,6 +59192,7 @@ $DTDMode = q{N/A};
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
     $IframeSrcdoc = $self->{IframeSrcdoc};
+$SC = $self->_sc;
 $Scripting = $self->{Scripting};
     {
       package Web::XML::Parser;
@@ -59074,6 +59219,7 @@ $Scripting = $self->{Scripting};
 
     $Token = $main->{saved_states}->{Token};
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
+    $self->{is_sub_parser} = 1;
 
     $NEXT_ID++;
     $self->{nodes}->[$CONTEXT = 1] = $main->{nodes}->[1]; # DOCTYPE
@@ -59087,7 +59233,7 @@ $Scripting = $self->{Scripting};
   sub parse ($$$) {
     my ($self, $main, $in) = @_;
 
-    local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+    local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
     $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
 $NEXT_ID = 1;
@@ -59096,6 +59242,7 @@ $DTDMode = q{N/A};
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
     $IframeSrcdoc = $self->{IframeSrcdoc};
+$SC = $self->_sc;
 $Scripting = $self->{Scripting};
     $Confident = 1; # irrelevant
     {
@@ -59123,6 +59270,7 @@ $Scripting = $self->{Scripting};
 
     $Token = $main->{saved_states}->{Token};
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
+    $self->{is_sub_parser} = 1;
 
     $NEXT_ID++;
     $self->{nodes}->[$CONTEXT = 1] = $main->{nodes}->[1]; # DOCTYPE
@@ -59141,7 +59289,7 @@ $Scripting = $self->{Scripting};
       $self->{main_parser} = $_[2];
       $self->{can_restart} = 1;
 
-      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
       PARSER: {
         $self->_parse_bytes_init;
         $self->_parse_bytes_start_parsing (no_body_data_yet => 1) or do {
@@ -59168,6 +59316,7 @@ $DTDMode = q{N/A};
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
     $IframeSrcdoc = $self->{IframeSrcdoc};
+$SC = $self->_sc;
 $Scripting = $self->{Scripting};
     {
       package Web::XML::Parser;
@@ -59194,6 +59343,7 @@ $Scripting = $self->{Scripting};
 
     $Token = $main->{saved_states}->{Token};
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
+    $self->{is_sub_parser} = 1;
 
     $NEXT_ID++;
     $self->{nodes}->[$CONTEXT = 1] = $main->{nodes}->[1]; # DOCTYPE
@@ -59209,8 +59359,9 @@ $Scripting = $self->{Scripting};
 
     sub _parse_sub_done ($) {
       my $self = $_[0];
-      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
       $IframeSrcdoc = $self->{IframeSrcdoc};
+$SC = $self->_sc;
 $Scripting = $self->{Scripting};
       ($AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $StopProcessing, $Temp, $TempIndex, $Token, $XMLStandalone) = @{$self->{saved_states}}{qw(AllDeclsProcessed AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State StopProcessing Temp TempIndex Token XMLStandalone)};
 ($AFE, $Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP OpenCMGroups OpenMarkedSections TABLE_CHARS TEMPLATE_IMS Tokens)};
