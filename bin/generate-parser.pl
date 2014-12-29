@@ -569,17 +569,7 @@ sub serialize_actions ($;%) {
       }
     } elsif ($type eq 'switch') {
       if (not defined $_->{if}) {
-        if (defined $_->{dtd_state}) {
-          push @result, sprintf q{
-            if ($DTDMode eq 'N/A') {
-              %s
-            } else {
-              %s
-            }
-          }, switch_state_code $_->{state}, switch_state_code $_->{dtd_state};
-        } else {
-          push @result, switch_state_code $_->{state};
-        }
+        push @result, switch_state_code $_->{state};
       } elsif ($_->{if} eq 'appropriate end tag') {
         die unless $_->{break};
         push @result, sprintf q[
@@ -689,6 +679,12 @@ sub serialize_actions ($;%) {
             return 1 if @$OE <= 1;
           }
         };
+      }
+      if ($_->{possible_token_types}->{'ENTITY token'} or
+          $_->{possible_token_types}->{'NOTATION token'} or
+          $_->{possible_token_types}->{'ATTLIST token'} or
+          $_->{possible_token_types}->{'ELEMENT token'}) {
+        push @result, q{$Token->{StopProcessing} = 1 if $StopProcessing;};
       }
       if ($_->{possible_token_types}->{'DOCTYPE token'} and
           $LANG eq 'XML') {
@@ -1376,9 +1372,12 @@ sub serialize_actions ($;%) {
       push @result, q{push @$OpenMarkedSections, 'INCLUDE';};
     } elsif ($type eq 'pop-section') {
       push @result, q{pop @$OpenMarkedSections;};
-    } elsif ($type eq 'insert-attrdef') {
+    } elsif ($type eq 'create-attrdef') {
       push @result, q[
         $Attr = {di => $DI, index => $Offset + pos $Input};
+      ];
+    } elsif ($type eq 'insert-attrdef') {
+      push @result, q[
         push @{$Token->{attr_list} ||= []}, $Attr;
       ];
     } elsif ($type eq 'insert-allowed-token') {
@@ -3123,7 +3122,9 @@ sub actions_to_code ($;%) {
 
     } elsif ($act->{type} eq 'process an ELEMENT token') {
       push @code, q{
-        unless ($DTDDefs->{elements}->{$token->{name}}->{has_element_decl}) {
+        if (not defined $token->{name}) {
+          #
+        } elsif (not $DTDDefs->{elements}->{$token->{name}}->{has_element_decl}) {
           push @$Errors, {level => 'w',
                           type => 'xml:dtd:ext decl',
                           di => $DI, index => $Offset + pos $Input}
@@ -3148,128 +3149,132 @@ sub actions_to_code ($;%) {
       };
     } elsif ($act->{type} eq 'process an ATTLIST token') {
       push @code, q{
-        $SC->check_hidden_name
-            (name => $token->{name},
-             onerror => sub {
-               push @$Errors, {@_, di => $DI, index => $Offset + pos $Input};
-             });
-        if ($StopProcessing) {
-          push @$Errors, {level => 'w',
-                          type => 'xml:dtd:attlist ignored',
-                          di => $DI, index => $Offset + pos $Input};
-        } else { # not $StopProcessing
-          push @$Errors, {level => 'w',
-                          type => 'xml:dtd:ext decl',
-                          di => $DI, index => $Offset + pos $Input}
-              unless $DTDMode eq 'internal subset'; # not in parameter entity
-
-          if (not defined $DTDDefs->{elements}->{$token->{name}}) {
-            $DTDDefs->{elements}->{$token->{name}}->{name} = $token->{name};
-            $DTDDefs->{elements}->{$token->{name}}->{di} = $token->{di};
-            $DTDDefs->{elements}->{$token->{name}}->{index} = $token->{index};
-          } elsif ($DTDDefs->{elements}->{$token->{name}}->{has_attlist}) {
+        if (defined $token->{name}) {
+          $SC->check_hidden_name
+              (name => $token->{name},
+               onerror => sub {
+                 push @$Errors, {@_, di => $DI, index => $Offset + pos $Input};
+               });
+          if ($token->{StopProcessing}) {
             push @$Errors, {level => 'w',
-                            type => 'duplicate attlist decl', ## TODO: type
-                            value => $token->{name},
+                            type => 'xml:dtd:attlist ignored',
                             di => $DI, index => $Offset + pos $Input};
-          }
-          $DTDDefs->{elements}->{$token->{name}}->{has_attlist} = 1;
-
-          unless (@{$token->{attr_list} or []}) {
+          } else { # not $StopProcessing
             push @$Errors, {level => 'w',
-                            type => 'empty attlist decl', ## TODO: type
-                            value => $token->{name},
-                            di => $DI, index => $Offset + pos $Input};
-          }
-        } # not $StopProcessing
-        
-        for my $at (@{$token->{attr_list} or []}) {
-          my $type = defined $at->{declared_type} ? {
-            CDATA => 1, ID => 2, IDREF => 3, IDREFS => 4, ENTITY => 5,
-            ENTITIES => 6, NMTOKEN => 7, NMTOKENS => 8, NOTATION => 9,
-          }->{$at->{declared_type}} : 10;
-          if (defined $type) {
-            $at->{declared_type} = $type;
-          } else {
-            $at->{declared_type} = $type = 0;
-            push @$Errors, {level => 'm',
-                            type => 'unknown declared type', ## TODO: type
-                            value => $at->{declared_type},
-                            di => $DI, index => $Offset + pos $Input};
-          }
-          
-          my $default = defined $at->{default_type} ? {
-            FIXED => 1, REQUIRED => 2, IMPLIED => 3,
-          }->{$at->{default_type}} : 4;
-          if (defined $default) {
-            $at->{default_type} = $default;
-            if (defined $at->{value}) { # XXX IndexedString
-              if ($default == 1 or $default == 4) {
-                #
-              } elsif (length $at->{value}) {
-                push @$Errors, {level => 'm',
-                                type => 'default value not allowed',
-                                di => $DI, index => $Offset + pos $Input};
-              }
-            } else {
-              if ($default == 1 or $default == 4) {
-                push @$Errors, {level => 'm',
-                                type => 'default value not provided',
-                                di => $DI, index => $Offset + pos $Input};
-              }
-            }
-          } else {
-            $at->{default_type} = 0;
-            push @$Errors, {level => 'm',
-                            type => 'unknown default type', ## TODO: type
-                            value => $at->{default_type},
-                            di => $DI, index => $Offset + pos $Input};
-          }
-          $at->{value} = ($at->{default_type} and ($at->{default_type} == 1 or $at->{default_type} == 4))
-              ? defined $at->{value} ? $at->{value} : '' : undef;
+                            type => 'xml:dtd:ext decl',
+                            di => $DI, index => $Offset + pos $Input}
+                unless $DTDMode eq 'internal subset'; # not in parameter entity
 
-          $at->{tokenize} = (2 <= $type and $type <= 10);
-
-          if (defined $at->{value}) {
-            _tokenize_attr_value $at if $at->{tokenize};
-          }
-
-          if (not $StopProcessing) {
-            if (not defined $DTDDefs->{attrdef_by_name}->{$token->{name}}->{$at->{name}}) {
-              $DTDDefs->{attrdef_by_name}->{$token->{name}}->{$at->{name}} = $at;
-              push @{$DTDDefs->{attrdefs}->{$token->{name}} ||= []}, $at;
-              $at->{external} = {} unless $DTDMode eq 'internal subset'; # not in parameter entity
-            } else {
+            if (not defined $DTDDefs->{elements}->{$token->{name}}) {
+              $DTDDefs->{elements}->{$token->{name}}->{name} = $token->{name};
+              $DTDDefs->{elements}->{$token->{name}}->{di} = $token->{di};
+              $DTDDefs->{elements}->{$token->{name}}->{index} = $token->{index};
+            } elsif ($DTDDefs->{elements}->{$token->{name}}->{has_attlist}) {
               push @$Errors, {level => 'w',
-                              type => 'duplicate attrdef', ## TODO: type
-                              value => $at->{name},
+                              type => 'duplicate attlist decl', ## TODO: type
+                              value => $token->{name},
                               di => $DI, index => $Offset + pos $Input};
-              if ($at->{declared_type} == 10) { # ENUMERATION
-                for (@{$at->{allowed_tokens} or []}) {
-                  $SC->check_hidden_nmtoken
-                      (name => $_,
-                       onerror => sub {
-                         push @$Errors, {@_, di => $DI,
-                                         index => $Offset + pos $Input};
-                       });
-                }
-              } elsif ($at->{declared_type} == 9) { # NOTATION
-                for (@{$at->{allowed_tokens} or []}) {
-                  $SC->check_hidden_name
-                      (name => $_,
-                       onerror => sub {
-                         push @$Errors, {@_, di => $DI,
-                                         index => $Offset + pos $Input};
-                       });
-                }
-              }
+            }
+            $DTDDefs->{elements}->{$token->{name}}->{has_attlist} = 1;
+
+            unless (@{$token->{attr_list} or []}) {
+              push @$Errors, {level => 'w',
+                              type => 'empty attlist decl', ## TODO: type
+                              value => $token->{name},
+                              di => $DI, index => $Offset + pos $Input};
             }
           } # not $StopProcessing
-        } # attr_list
+          
+          for my $at (@{$token->{attr_list} or []}) {
+            my $type = defined $at->{declared_type} ? {
+              CDATA => 1, ID => 2, IDREF => 3, IDREFS => 4, ENTITY => 5,
+              ENTITIES => 6, NMTOKEN => 7, NMTOKENS => 8, NOTATION => 9,
+            }->{$at->{declared_type}} : 10;
+            if (defined $type) {
+              $at->{declared_type} = $type;
+            } else {
+              $at->{declared_type} = $type = 0;
+              push @$Errors, {level => 'm',
+                              type => 'unknown declared type', ## TODO: type
+                              value => $at->{declared_type},
+                              di => $DI, index => $Offset + pos $Input};
+            }
+            
+            my $default = defined $at->{default_type} ? {
+              FIXED => 1, REQUIRED => 2, IMPLIED => 3,
+            }->{$at->{default_type}} : 4;
+            if (defined $default) {
+              $at->{default_type} = $default;
+              if (defined $at->{value}) { # XXX IndexedString
+                if ($default == 1 or $default == 4) {
+                  #
+                } elsif (length $at->{value}) {
+                  push @$Errors, {level => 'm',
+                                  type => 'default value not allowed',
+                                  di => $DI, index => $Offset + pos $Input};
+                }
+              } else {
+                if ($default == 1 or $default == 4) {
+                  push @$Errors, {level => 'm',
+                                  type => 'default value not provided',
+                                  di => $DI, index => $Offset + pos $Input};
+                }
+              }
+            } else {
+              $at->{default_type} = 0;
+              push @$Errors, {level => 'm',
+                              type => 'unknown default type', ## TODO: type
+                              value => $at->{default_type},
+                              di => $DI, index => $Offset + pos $Input};
+            }
+            $at->{value} = ($at->{default_type} and ($at->{default_type} == 1 or $at->{default_type} == 4))
+                ? defined $at->{value} ? $at->{value} : '' : undef;
+
+            $at->{tokenize} = (2 <= $type and $type <= 10);
+
+            if (defined $at->{value}) {
+              _tokenize_attr_value $at if $at->{tokenize};
+            }
+
+            if (not $token->{StopProcessing}) {
+              if (not defined $DTDDefs->{attrdef_by_name}->{$token->{name}}->{$at->{name}}) {
+                $DTDDefs->{attrdef_by_name}->{$token->{name}}->{$at->{name}} = $at;
+                push @{$DTDDefs->{attrdefs}->{$token->{name}} ||= []}, $at;
+                $at->{external} = {} unless $DTDMode eq 'internal subset'; # not in parameter entity
+              } else {
+                push @$Errors, {level => 'w',
+                                type => 'duplicate attrdef', ## TODO: type
+                                value => $at->{name},
+                                di => $DI, index => $Offset + pos $Input};
+                if ($at->{declared_type} == 10) { # ENUMERATION
+                  for (@{$at->{allowed_tokens} or []}) {
+                    $SC->check_hidden_nmtoken
+                        (name => $_,
+                         onerror => sub {
+                           push @$Errors, {@_, di => $DI,
+                                           index => $Offset + pos $Input};
+                         });
+                  }
+                } elsif ($at->{declared_type} == 9) { # NOTATION
+                  for (@{$at->{allowed_tokens} or []}) {
+                    $SC->check_hidden_name
+                        (name => $_,
+                         onerror => sub {
+                           push @$Errors, {@_, di => $DI,
+                                           index => $Offset + pos $Input};
+                         });
+                  }
+                }
+              }
+            } # not $StopProcessing
+          } # attr_list
+        }
       };
     } elsif ($act->{type} eq 'process an ENTITY token') {
       push @code, q{
-        if ($StopProcessing) {
+        if (not defined $token->{name}) {
+          #
+        } elsif ($token->{StopProcessing}) {
           push @$Errors, {level => 'w',
                           type => 'xml:dtd:entity ignored',
                           di => $DI, index => $Offset + pos $Input};
@@ -3382,40 +3387,42 @@ sub actions_to_code ($;%) {
       };
     } elsif ($act->{type} eq 'process a NOTATION token') {
       push @code, q{
-        if (defined $DTDDefs->{notations}->{$token->{name}}) {
-          push @$Errors, {level => 'm',
-                          type => 'duplicate notation decl', ## TODO: type
-                          value => $token->{name},
-                          di => $DI, index => $Offset + pos $Input};
-        } else {
-          push @$Errors, {level => 'w',
-                          type => 'xml:dtd:ext decl',
-                          di => $DI, index => $Offset + pos $Input}
-              unless $DTDMode eq 'internal subset'; # not in param entity
-          $SC->check_hidden_name
-              (name => $token->{name},
-               onerror => sub {
-                 push @$Errors, {@_, di => $DI,
-                                 index => $Offset + pos $Input};
-               });
-          # XXX $token->{base_url}
-          $DTDDefs->{notations}->{$token->{name}} = $token;
-        }
-        if (defined $token->{public_identifier}) {
-          $SC->check_hidden_pubid
-              (name => $token->{public_identifier},
-               onerror => sub {
-                 push @$Errors, {@_, di => $DI,
-                                 index => $Offset + pos $Input};
-               });
-        }
-        if (defined $token->{system_identifier}) {
-          $SC->check_hidden_sysid
-              (name => $token->{system_identifier},
-               onerror => sub {
-                 push @$Errors, {@_, di => $DI,
-                                 index => $Offset + pos $Input};
-               });
+        if (defined $token->{name}) {
+          if (defined $DTDDefs->{notations}->{$token->{name}}) {
+            push @$Errors, {level => 'm',
+                            type => 'duplicate notation decl', ## TODO: type
+                            value => $token->{name},
+                            di => $DI, index => $Offset + pos $Input};
+          } else {
+            push @$Errors, {level => 'w',
+                            type => 'xml:dtd:ext decl',
+                            di => $DI, index => $Offset + pos $Input}
+                unless $DTDMode eq 'internal subset'; # not in param entity
+            $SC->check_hidden_name
+                (name => $token->{name},
+                 onerror => sub {
+                   push @$Errors, {@_, di => $DI,
+                                   index => $Offset + pos $Input};
+                 });
+            # XXX $token->{base_url}
+            $DTDDefs->{notations}->{$token->{name}} = $token;
+          }
+          if (defined $token->{public_identifier}) {
+            $SC->check_hidden_pubid
+                (name => $token->{public_identifier},
+                 onerror => sub {
+                   push @$Errors, {@_, di => $DI,
+                                   index => $Offset + pos $Input};
+                 });
+          }
+          if (defined $token->{system_identifier}) {
+            $SC->check_hidden_sysid
+                (name => $token->{system_identifier},
+                 onerror => sub {
+                   push @$Errors, {@_, di => $DI,
+                                   index => $Offset + pos $Input};
+                 });
+          }
         }
       };
 
@@ -4332,8 +4339,7 @@ sub dom_tree ($$) {
           $node->declared_type ($data->{declared_type} || 0);
           push @{$node->allowed_tokens}, @{$data->{allowed_tokens} or []};
           $node->default_type ($data->{default_type} || 0);
-          #XXX$node->manakai_append_indexed_string ($data->{value})
-          $node->node_value (join '', map { $_->[0] } @{$data->{value}})
+          $node->manakai_append_indexed_string ($data->{value})
               if defined $data->{value};
           $et->set_attribute_definition_node ($node);
           $node->manakai_set_source_location
