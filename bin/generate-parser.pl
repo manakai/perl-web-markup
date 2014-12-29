@@ -4828,6 +4828,8 @@ sub generate_api ($) {
       $dids->[$source_di] ||= {} if $source_di >= 0; # the main data source of the input stream
       $dids->[$DI]->{map} = [[0, $source_di, 0]]; # the input stream
       $doc->manakai_set_source_location (['', $DI, 0]);
+      ## Note that $DI != $source_di to support document.write()'s
+      ## insertion.
 
       VARS::SAVE;
       return;
@@ -4941,6 +4943,8 @@ sub generate_api ($) {
       $dids->[$DI]->{map} = [[0, $source_di, 0]]; # the input stream
       $dids->[$source_di] ||= {} if $source_di >= 0; # the main data source of the input stream
       $doc->manakai_set_source_location (['', $DI, 0]);
+      ## Note that $DI != $source_di to support document.write()'s
+      ## insertion.
     } # _parse_bytes_init
   };
 
@@ -5097,10 +5101,11 @@ sub generate_api ($) {
     my $doc = $self->{document} = $main->{document}->implementation->create_document;
     $doc->manakai_is_html ($main->{document}->manakai_is_html);
     $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
-    for (qw(onerror onerrors onextentref entity_expansion_count
+    for (qw(onerrors onextentref entity_expansion_count
             max_entity_depth max_entity_expansions)) {
       $self->{$_} = $main->{$_};
     }
+    $self->{onerror} = $main->onerror;
     $self->{nodes} = [$doc];
 
     $self->{entity_depth} = ($main->{entity_depth} || 0) + 1;
@@ -5108,8 +5113,8 @@ sub generate_api ($) {
 
     $self->{input_stream} = [@{$in->{entity}->{value}}];
     $self->{di_data_set} = my $dids = $main->di_data_set;
-    $DI = $self->{di} = @$dids;
-    $dids->[$DI]->{map} = [[0, -1, 0]]; # the input stream # XXX
+    $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
+    $dids->[$DI] ||= {name => '&'.$in->{entity}->{name}.';'} if $DI >= 0;
 
     $Attr = $main->{saved_states}->{Attr};
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
@@ -5144,10 +5149,11 @@ sub generate_api ($) {
     my $doc = $self->{document} = $main->{document}->implementation->create_document;
     $doc->manakai_is_html ($main->{document}->manakai_is_html);
     $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
-    for (qw(onerror onerrors onextentref entity_expansion_count
+    for (qw(onerrors onextentref entity_expansion_count
             max_entity_depth max_entity_expansions)) {
       $self->{$_} = $main->{$_};
     }
+    $self->{onerror} = $main->onerror;
     $self->{nodes} = [$doc];
 
     $self->{entity_depth} = ($main->{entity_depth} || 0) + 1;
@@ -5155,8 +5161,8 @@ sub generate_api ($) {
 
     $self->{input_stream} = [@{$in->{entity}->{value}}];
     $self->{di_data_set} = my $dids = $main->di_data_set;
-    $DI = $self->{di} = @$dids;
-    $dids->[$DI]->{map} = [[0, -1, 0]]; # the input stream # XXX
+    $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
+    $dids->[$DI] ||= {name => '&'.$in->{entity}->{name}.';'} if $DI >= 0;
 
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
     $self->{is_sub_parser} = 1;
@@ -5217,10 +5223,11 @@ sub generate_api ($) {
     my $doc = $self->{document} = $main->{document}->implementation->create_document;
     $doc->manakai_is_html ($main->{document}->manakai_is_html);
     $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
-    for (qw(onerror onerrors onextentref entity_expansion_count
+    for (qw(onerrors onextentref entity_expansion_count
             max_entity_depth max_entity_expansions)) {
       $self->{$_} = $main->{$_};
     }
+    $self->{onerror} = $main->onerror;
     $self->{nodes} = [$doc];
 
     $self->{entity_depth} = ($main->{entity_depth} || 0) + 1;
@@ -5228,8 +5235,8 @@ sub generate_api ($) {
 
     $self->{input_stream} = [];
     $self->{di_data_set} = my $dids = $main->di_data_set;
-    $DI = $self->{di} = @$dids;
-    $dids->[$DI]->{map} = [[0, -1, 0]]; # the input stream # XXX
+    $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
+    $dids->[$DI] ||= {} if $DI >= 0;
 
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
     $self->{is_sub_parser} = 1;
@@ -5268,10 +5275,11 @@ sub generate_api ($) {
     my $doc = $self->{document} = $main->{document}->implementation->create_document;
     $doc->manakai_is_html ($main->{document}->manakai_is_html);
     $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
-    for (qw(onerror onerrors onextentref entity_expansion_count
+    for (qw(onerrors onextentref entity_expansion_count
             max_entity_depth max_entity_expansions)) {
       $self->{$_} = $main->{$_};
     }
+    $self->{onerror} = $main->onerror;
     $self->{nodes} = [$doc];
 
     $self->{entity_depth} = ($main->{entity_depth} || 0) + 1;
@@ -5279,8 +5287,8 @@ sub generate_api ($) {
 
     $self->{input_stream} = [@{$in->{entity}->{value}}];
     $self->{di_data_set} = my $dids = $main->di_data_set;
-    $DI = $self->{di} = @$dids;
-    $dids->[$DI]->{map} = [[0, -1, 0]]; # the input stream # XXX
+    $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
+    $dids->[$DI] ||= {name => '%'.$in->{entity}->{name}.';'} if $DI >= 0;
 
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
     $self->{is_sub_parser} = 1;
@@ -5332,10 +5340,11 @@ sub generate_api ($) {
     my $doc = $self->{document} = $main->{document}->implementation->create_document;
     $doc->manakai_is_html ($main->{document}->manakai_is_html);
     $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
-    for (qw(onerror onerrors onextentref entity_expansion_count
+    for (qw(onerrors onextentref entity_expansion_count
             max_entity_depth max_entity_expansions)) {
       $self->{$_} = $main->{$_};
     }
+    $self->{onerror} = $main->onerror;
     $self->{nodes} = [$doc];
 
     $self->{entity_depth} = ($main->{entity_depth} || 0) + 1;
@@ -5343,8 +5352,8 @@ sub generate_api ($) {
 
     $self->{input_stream} = [];
     $self->{di_data_set} = my $dids = $main->di_data_set;
-    $DI = $self->{di} = @$dids;
-    $dids->[$DI]->{map} = [[0, -1, 0]]; # the input stream # XXX
+    $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
+    $dids->[$DI] ||= {} if $DI >= 0;
 
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
     $self->{is_sub_parser} = 1;
@@ -5374,10 +5383,11 @@ sub generate_api ($) {
     my $doc = $self->{document} = $main->{document}->implementation->create_document;
     $doc->manakai_is_html ($main->{document}->manakai_is_html);
     $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
-    for (qw(onerror onerrors onextentref entity_expansion_count
+    for (qw(onerrors onextentref entity_expansion_count
             max_entity_depth max_entity_expansions)) {
       $self->{$_} = $main->{$_};
     }
+    $self->{onerror} = $main->onerror;
     $self->{nodes} = [$doc];
 
     $self->{entity_depth} = ($main->{entity_depth} || 0) + 1;
@@ -5385,8 +5395,8 @@ sub generate_api ($) {
 
     $self->{input_stream} = [@{$in->{entity}->{value}}];
     $self->{di_data_set} = my $dids = $main->di_data_set;
-    $DI = $self->{di} = @$dids;
-    $dids->[$DI]->{map} = [[0, -1, 0]]; # the input stream # XXX
+    $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
+    $dids->[$DI] ||= {name => '%'.$in->{entity}->{name}.';'} if $DI >= 0;
 
     $Token = $main->{saved_states}->{Token};
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
@@ -5439,10 +5449,11 @@ sub generate_api ($) {
     my $doc = $self->{document} = $main->{document}->implementation->create_document;
     $doc->manakai_is_html ($main->{document}->manakai_is_html);
     $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
-    for (qw(onerror onerrors onextentref entity_expansion_count
+    for (qw(onerrors onextentref entity_expansion_count
             max_entity_depth max_entity_expansions)) {
       $self->{$_} = $main->{$_};
     }
+    $self->{onerror} = $main->onerror;
     $self->{nodes} = [$doc];
 
     $self->{entity_depth} = ($main->{entity_depth} || 0) + 1;
@@ -5450,8 +5461,8 @@ sub generate_api ($) {
 
     $self->{input_stream} = [];
     $self->{di_data_set} = my $dids = $main->di_data_set;
-    $DI = $self->{di} = @$dids;
-    $dids->[$DI]->{map} = [[0, -1, 0]]; # the input stream # XXX
+    $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
+    $dids->[$DI] ||= {} if $DI >= 0;
 
     $Token = $main->{saved_states}->{Token};
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
@@ -5482,10 +5493,11 @@ sub generate_api ($) {
     my $doc = $self->{document} = $main->{document}->implementation->create_document;
     $doc->manakai_is_html ($main->{document}->manakai_is_html);
     $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
-    for (qw(onerror onerrors onextentref entity_expansion_count
+    for (qw(onerrors onextentref entity_expansion_count
             max_entity_depth max_entity_expansions)) {
       $self->{$_} = $main->{$_};
     }
+    $self->{onerror} = $main->onerror;
     $self->{nodes} = [$doc];
 
     $self->{entity_depth} = ($main->{entity_depth} || 0) + 1;
@@ -5493,8 +5505,8 @@ sub generate_api ($) {
 
     $self->{input_stream} = [@{$in->{entity}->{value}}];
     $self->{di_data_set} = my $dids = $main->di_data_set;
-    $DI = $self->{di} = @$dids;
-    $dids->[$DI]->{map} = [[0, -1, 0]]; # the input stream # XXX
+    $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
+    $dids->[$DI] ||= {name => '%'.$in->{entity}->{name}.';'} if $DI >= 0;
 
     $Token = $main->{saved_states}->{Token};
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
@@ -5547,10 +5559,11 @@ sub generate_api ($) {
     my $doc = $self->{document} = $main->{document}->implementation->create_document;
     $doc->manakai_is_html ($main->{document}->manakai_is_html);
     $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
-    for (qw(onerror onerrors onextentref entity_expansion_count
+    for (qw(onerrors onextentref entity_expansion_count
             max_entity_depth max_entity_expansions)) {
       $self->{$_} = $main->{$_};
     }
+    $self->{onerror} = $main->onerror;
     $self->{nodes} = [$doc];
 
     $self->{entity_depth} = ($main->{entity_depth} || 0) + 1;
@@ -5558,8 +5571,8 @@ sub generate_api ($) {
 
     $self->{input_stream} = [];
     $self->{di_data_set} = my $dids = $main->di_data_set;
-    $DI = $self->{di} = @$dids;
-    $dids->[$DI]->{map} = [[0, -1, 0]]; # the input stream # XXX
+    $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
+    $dids->[$DI] ||= {} if $DI >= 0;
 
     $Token = $main->{saved_states}->{Token};
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
@@ -5634,40 +5647,51 @@ sub generate ($) {
       return bless {
         ## Input parameters
         # Scripting IframeSrcdoc DI known_definite_encoding locale_tag
+        # di_data_set is_sub_parser
 
         ## Callbacks
         # onerror onerrors onappcacheselection onscript
         # onelementspopped onrestartwithencoding
+        # onextentref onparsed
 
         ## Parser internal states
-        # input_stream input_encoding saved_stats saved_lists
+        # input_stream input_encoding saved_states saved_lists saved_maps
         # nodes document can_restart restart
         # parse_bytes_started transport_encoding_label
         # byte_bufer byte_buffer_orig
       }, $_[0];
     } # new
 
-our $DefaultErrorHandler = sub {
-  my $error = {@_};
-  my $index = $error->{token} ? $error->{token}->{index} : $error->{index};
-  $index = -1 if not defined $index;
-  my $text = defined $error->{text} ? qq{ - $error->{text}} : '';
-  my $value = defined $error->{value} ? qq{ "$error->{value}"} : '';
-  my $level = {
-    m => 'Parse error',
-    s => 'SHOULD-level error',
-    w => 'Warning',
-    i => 'Information',
-  }->{$error->{level} || ''} || $error->{level};
-  my $di = defined $error->{di} && $error->{di} != 1 ? "document #$error->{di} " : '';
-  warn "$level ($error->{type}$text) at ${di}index $index$value\n";
-}; # $DefaultErrorHandler
+my $GetDefaultErrorHandler = sub {
+  my $dids = $_[0]->di_data_set;
+  return sub {
+    my $error = {@_};
+    my $text = defined $error->{text} ? qq{ - $error->{text}} : '';
+    my $value = defined $error->{value} ? qq{ "$error->{value}"} : '';
+    my $level = {
+      m => 'Parse error',
+      s => 'SHOULD-level error',
+      w => 'Warning',
+      i => 'Information',
+    }->{$error->{level} || ''} || $error->{level};
+    my $doc = 'document #' . $error->{di};
+    if (not $error->{di} == -1) {
+      my $did = $dids->[$error->{di}];
+      if (defined $did->{name}) {
+        $doc = $did->{name};
+      } elsif (defined $did->{url}) {
+        $doc = 'document <' . $did->{url} . '>';
+      }
+    }
+    warn "$level ($error->{type}$text) at $doc index $error->{index}$value\n";
+  };
+}; # $GetDefaultErrorHandler
 
 sub onerror ($;$) {
   if (@_ > 1) {
     $_[0]->{onerror} = $_[1];
   }
-  return $_[0]->{onerror} || $DefaultErrorHandler;
+  return $_[0]->{onerror} ||= $GetDefaultErrorHandler->($_[0]);
 } # onerror
 
 sub onerrors ($;$) {
@@ -5782,7 +5806,7 @@ my $OnContentEntityReference = sub {
     $main->{pause}++;
     $main->{pause}++;
     if (defined $data->{entity}->{value}) { # internal
-      $sub->parse ($_[0], $_[1]);
+      $sub->parse ($main, $data);
     } else { # external
       $main->onextentref->($main, $data, $sub);
     }
@@ -5822,7 +5846,7 @@ my $OnDTDEntityReference = sub {
     $main->{pause}++;
     $main->{pause}++;
     if (defined $data->{entity}->{value}) { # internal
-      $sub->parse ($_[0], $_[1]);
+      $sub->parse ($main, $data);
     } else { # external
       $main->onextentref->($main, $data, $sub);
     }
@@ -5860,7 +5884,7 @@ my $OnEntityValueEntityReference = sub {
     $main->{pause}++;
     $main->{pause}++;
     if (defined $data->{entity}->{value}) { # internal
-      $sub->parse ($_[0], $_[1]);
+      $sub->parse ($main, $data);
     } else { # external
       $main->onextentref->($main, $data, $sub);
     }
@@ -5899,7 +5923,7 @@ my $OnMDEntityReference = sub {
     $main->{pause}++;
     $main->{pause}++;
     if (defined $data->{entity}->{value}) { # internal
-      $sub->parse ($_[0], $_[1]);
+      $sub->parse ($main, $data);
     } else { # external
       $main->onextentref->($main, $data, $sub);
     }
