@@ -294,7 +294,15 @@ my $OnMDEntityReference = sub {
     my $main2 = $main;
     $sub->onparsed (sub {
       my $sub = $_[0];
-      $main2->{saved_states}->{State} = $sub->{saved_states}->{State};
+      package Web::XML::Parser;
+      if ($sub->{saved_states}->{State} == DTD_STATE ()) {
+warn "XXX";
+die 123;
+      } else {
+        $main2->{saved_states}->{State} = $sub->{saved_states}->{State};
+      }
+      $main2->{saved_states}->{Attr} = $sub->{saved_states}->{Attr};
+      $main2->{saved_states}->{OpenCMGroups} = $sub->{saved_states}->{OpenCMGroups};
       $data->{entity}->{open}--;
       $main2->{pause}--;
       $main2->_parse_sub_done;
@@ -367,7 +375,7 @@ sub onrestartwithencoding ($;$) {
     } # _cleanup_states
 
     ## ------ Common defs ------
-    our $AFE;our $AllDeclsProcessed;our $AnchoredIndex;our $Attr;our $CONTEXT;our $Callbacks;our $Confident;our $DI;our $DTDDefs;our $DTDMode;our $EOF;our $Errors;our $FORM_ELEMENT;our $FRAMESET_OK;our $HEAD_ELEMENT;our $IM;our $IframeSrcdoc;our $InForeign;our $Input;our $LastStartTagName;our $NEXT_ID;our $OE;our $OP;our $ORIGINAL_IM;our $Offset;our $OpenCMGroups;our $OpenMarkedSections;our $OriginalState;our $QUIRKS;our $SC;our $Scripting;our $State;our $StopProcessing;our $TABLE_CHARS;our $TEMPLATE_IMS;our $Temp;our $TempIndex;our $Token;our $Tokens;our $XMLStandalone;
+    our $AFE;our $AnchoredIndex;our $Attr;our $CONTEXT;our $Callbacks;our $Confident;our $DI;our $DTDDefs;our $DTDMode;our $EOF;our $Errors;our $FORM_ELEMENT;our $FRAMESET_OK;our $HEAD_ELEMENT;our $IM;our $IframeSrcdoc;our $InForeign;our $InMDEntity;our $Input;our $LastStartTagName;our $NEXT_ID;our $OE;our $OP;our $ORIGINAL_IM;our $Offset;our $OpenCMGroups;our $OpenMarkedSections;our $OriginalState;our $QUIRKS;our $SC;our $Scripting;our $State;our $TABLE_CHARS;our $TEMPLATE_IMS;our $Temp;our $TempIndex;our $Token;our $Tokens;
     ## ------ Tokenizer defs ------
     my $InvalidCharRefs = $Web::HTML::_SyntaxDefs->{xml_charref_invalid};
 sub ATTLIST_TOKEN () { 1 }
@@ -969,7 +977,7 @@ push @$Errors, {type => 'after-root-element-doctype',
                                 index => $token->{index}};
 
           if ($token->{has_internal_subset_flag}) {
-            $StopProcessing = 1;
+            $DTDDefs->{StopProcessing} = 1;
 
           $IM = IN_SUBSET_AFTER_ROOT_ELEMENT_IM;
           #warn "Insertion mode changed to |in subset after root element| ($IM)";
@@ -1440,7 +1448,8 @@ push @$OP, ['construct-doctype'];
                               type => 'attribute not allowed:standalone',
                               di => $DI, index => $pos};
             } else {
-              push @$OP, ['xml-standalone', $XMLStandalone = ($v ne 'no')];
+              push @$OP, ['xml-standalone',
+                          $DTDDefs->{XMLStandalone} = ($v ne 'no')];
             }
           } else {
             my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
@@ -1739,7 +1748,8 @@ push @$OP, ['construct-doctype'];
                               type => 'attribute not allowed:standalone',
                               di => $DI, index => $pos};
             } else {
-              push @$OP, ['xml-standalone', $XMLStandalone = ($v ne 'no')];
+              push @$OP, ['xml-standalone',
+                          $DTDDefs->{XMLStandalone} = ($v ne 'no')];
             }
           } else {
             my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
@@ -2038,7 +2048,8 @@ push @$OP, ['construct-doctype'];
                               type => 'attribute not allowed:standalone',
                               di => $DI, index => $pos};
             } else {
-              push @$OP, ['xml-standalone', $XMLStandalone = ($v ne 'no')];
+              push @$OP, ['xml-standalone',
+                          $DTDDefs->{XMLStandalone} = ($v ne 'no')];
             }
           } else {
             my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
@@ -2149,7 +2160,7 @@ push @$Errors, {type => 'before-root-element-doctype',
                                 index => $token->{index}};
 
           if ($token->{has_internal_subset_flag}) {
-            $StopProcessing = 1;
+            $DTDDefs->{StopProcessing} = 1;
 
           $IM = IN_SUBSET_BEFORE_ROOT_ELEMENT_IM;
           #warn "Insertion mode changed to |in subset before root element| ($IM)";
@@ -2232,7 +2243,7 @@ push @$OP, ['stop-parsing'];
               if (_tokenize_attr_value $attrs->{$attr_name} and
                   $def->{external} and
                   not $def->{external}->{vc_error_reported} and
-                  $XMLStandalone) {
+                  $DTDDefs->{XMLStandalone}) {
                 push @$Errors, {level => 'm',
                                 type => 'VC:Standalone Document Declaration:attr',
                                 di => $def->{di}, index => $def->{index},
@@ -2252,7 +2263,7 @@ push @$OP, ['stop-parsing'];
 
             if ($def->{external} and
                 not $def->{external}->{vc_error_reported} and
-                $XMLStandalone) {
+                $DTDDefs->{XMLStandalone}) {
               push @$Errors, {level => 'm',
                               type => 'VC:Standalone Document Declaration:attr',
                                 di => $def->{di}, index => $def->{index},
@@ -2352,7 +2363,7 @@ push @$OP, ['stop-parsing'];
           $DTDDefs->{el_ncnames}->{$l} ||= $attr if defined $l;
           if (defined $attr->{declared_type}) {
             #
-          } elsif ($AllDeclsProcessed) {
+          } elsif ($DTDDefs->{AllDeclsProcessed}) {
             $attr->{declared_type} = 0; # no value
           } else {
             $attr->{declared_type} = 11; # unknown
@@ -2418,7 +2429,7 @@ push @$Errors, {type => 'in-element-doctype',
                                 index => $token->{index}};
 
           if ($token->{has_internal_subset_flag}) {
-            $StopProcessing = 1;
+            $DTDDefs->{StopProcessing} = 1;
 
           $IM = IN_SUBSET_IN_ELEMENT_IM;
           #warn "Insertion mode changed to |in subset in element| ($IM)";
@@ -2565,7 +2576,7 @@ push @$OP, ['stop-parsing'];
               if (_tokenize_attr_value $attrs->{$attr_name} and
                   $def->{external} and
                   not $def->{external}->{vc_error_reported} and
-                  $XMLStandalone) {
+                  $DTDDefs->{XMLStandalone}) {
                 push @$Errors, {level => 'm',
                                 type => 'VC:Standalone Document Declaration:attr',
                                 di => $def->{di}, index => $def->{index},
@@ -2585,7 +2596,7 @@ push @$OP, ['stop-parsing'];
 
             if ($def->{external} and
                 not $def->{external}->{vc_error_reported} and
-                $XMLStandalone) {
+                $DTDDefs->{XMLStandalone}) {
               push @$Errors, {level => 'm',
                               type => 'VC:Standalone Document Declaration:attr',
                                 di => $def->{di}, index => $def->{index},
@@ -2685,7 +2696,7 @@ push @$OP, ['stop-parsing'];
           $DTDDefs->{el_ncnames}->{$l} ||= $attr if defined $l;
           if (defined $attr->{declared_type}) {
             #
-          } elsif ($AllDeclsProcessed) {
+          } elsif ($DTDDefs->{AllDeclsProcessed}) {
             $attr->{declared_type} = 0; # no value
           } else {
             $attr->{declared_type} = 11; # unknown
@@ -3101,17 +3112,27 @@ return;
                  push @$Errors, {@_, di => $DI, index => $Offset + pos $Input};
                });
           my $def = $DTDDefs->{elements}->{$token->{name}};
-          for (qw(name di index content_keyword cmgroup)) {
+          for (qw(name di index cmgroup)) {
             $def->{$_} = $token->{$_};
           }
+          if (defined $token->{content_keyword}) {
+            if ({EMPTY => 1, ANY => 1}->{$token->{content_keyword}}) {
+              $def->{content_keyword} = $token->{content_keyword};
+            } else {
+              push @$Errors, {level => 'm',
+                              type => 'xml:dtd:unknown content keyword',
+                              value => $token->{content_keyword},
+                              di => $DI, index => $Offset + pos $Input};
+            }
+          }
+          ## XXX $self->{t}->{content} syntax check.
+          $DTDDefs->{elements}->{$token->{name}}->{has_element_decl} = 1;
         } else {
           push @$Errors, {level => 'm',
                           type => 'duplicate element decl', ## TODO: type
                           value => $token->{name},
                           di => $DI, index => $Offset + pos $Input};
-          $DTDDefs->{elements}->{$token->{name}}->{has_element_decl} = 1;
         }
-        ## TODO: $self->{t}->{content} syntax check.
       
         },
       ,
@@ -3580,7 +3601,8 @@ push @$OP, ['construct-doctype'];
                               type => 'attribute not allowed:standalone',
                               di => $DI, index => $pos};
             } else {
-              push @$OP, ['xml-standalone', $XMLStandalone = ($v ne 'no')];
+              push @$OP, ['xml-standalone',
+                          $DTDDefs->{XMLStandalone} = ($v ne 'no')];
             }
           } else {
             my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
@@ -4058,11 +4080,19 @@ $OriginalState = [A_ATTLIST_ATTR_DEFAULT_STATE, A_ATTLIST_ATTR_DEFAULT_STATE___B
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'attlist-attribute-default-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
         push @{$Token->{attr_list} ||= []}, $Attr;
       
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G([\"])/gcs) {
 
             push @$Errors, {type => 'attlist-attribute-default-0022', level => 'm',
@@ -4138,12 +4168,20 @@ $Attr->{q<name>} .= q@�@;
 $State = B_ALLOWED_TOKEN_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'attlist-attribute-name-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'attlist-attribute-name-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } else {
 if ($EOF) {
 
@@ -4219,12 +4257,20 @@ $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = B_ALLOWED_TOKEN_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'attlist-attribute-type-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'attlist-attribute-type-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } else {
 if ($EOF) {
 
@@ -4273,9 +4319,17 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $OriginalState = [B_ATTLIST_ATTR_NAME_STATE, B_ATTLIST_ATTR_NAME_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'attlist-name-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'NULL', level => 'm',
@@ -4349,6 +4403,14 @@ $State = PE_NAME_IN_MARKUP_DECL_STATE;
 $Token->{q<name>} = q@�@;
 $State = ATTLIST_NAME_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'attlist-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
 
             push @$Errors, {type => 'attlist-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -8987,9 +9049,17 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $OriginalState = [A_ELEMENT_CONTENT_STATE, A_ELEMENT_CONTENT_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'element-content-keyword-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } else {
 if ($EOF) {
 
@@ -9049,6 +9119,14 @@ $Token->{cmgroup} = $cmgroup;
 @$OpenCMGroups = ($cmgroup);
 $State = B_CM_ITEM_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'element-name-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
 
             push @$Errors, {type => 'element-name-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -9121,6 +9199,14 @@ $State = PE_NAME_IN_MARKUP_DECL_STATE;
 $Token->{q<name>} = q@�@;
 $State = ELEMENT_NAME_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'element-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
 
             push @$Errors, {type => 'element-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -9202,6 +9288,14 @@ $State = ENT_VALUE__SQ__STATE;
 $Token->{q<value>} = [['', $DI, $Offset + pos $Input]];
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'entity-name-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'entity-name-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
@@ -9254,12 +9348,20 @@ $State = ENT_PUBLIC_ID__DQ__STATE_CR;
 $State = A_ENT_PUBLIC_ID_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'entity-public-identifier-double-quoted-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'entity-public-identifier-double-quoted-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 return 1 if $Token->{type} == ENTITY_TOKEN;
 } else {
 if ($EOF) {
@@ -9310,12 +9412,20 @@ $State = ENT_PUBLIC_ID__DQ__STATE_CR;
 $State = A_ENT_PUBLIC_ID_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'entity-public-identifier-double-quoted-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'entity-public-identifier-double-quoted-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 return 1 if $Token->{type} == ENTITY_TOKEN;
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = ENT_PUBLIC_ID__DQ__STATE;
@@ -9368,12 +9478,20 @@ $State = ENT_PUBLIC_ID__SQ__STATE_CR;
 $State = A_ENT_PUBLIC_ID_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'entity-public-identifier-single-quoted-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'entity-public-identifier-single-quoted-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 return 1 if $Token->{type} == ENTITY_TOKEN;
 } else {
 if ($EOF) {
@@ -9424,12 +9542,20 @@ $State = ENT_PUBLIC_ID__SQ__STATE_CR;
 $State = A_ENT_PUBLIC_ID_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'entity-public-identifier-single-quoted-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'entity-public-identifier-single-quoted-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 return 1 if $Token->{type} == ENTITY_TOKEN;
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = ENT_PUBLIC_ID__SQ__STATE;
@@ -9494,6 +9620,14 @@ $State = PE_DECL_OR_REF_STATE;
 $Token->{q<name>} = q@�@;
 $State = ENT_NAME_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'entity-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
 
             push @$Errors, {type => 'entity-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -13415,9 +13549,17 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $OriginalState = [A_ENT_PARAMETER_STATE, A_ENT_PARAMETER_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'ndata-identifier-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 return 1 if $Token->{type} == ENTITY_TOKEN;
 } else {
 if ($EOF) {
@@ -13470,12 +13612,20 @@ $OriginalState = [A_NOTATION_NAME_STATE, A_NOTATION_NAME_STATE___BEFORE_TEXT_DEC
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'notation-name-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'notation-name-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } else {
 if ($EOF) {
 
@@ -13524,12 +13674,20 @@ $State = NOTATION_PUBLIC_ID__DQ__STATE_CR;
 $State = A_NOTATION_PUBLIC_ID_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'notation-public-identifier-double-quoted-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'notation-public-identifier-double-quoted-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } else {
 if ($EOF) {
 
@@ -13579,12 +13737,20 @@ $State = NOTATION_PUBLIC_ID__DQ__STATE_CR;
 $State = A_NOTATION_PUBLIC_ID_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'notation-public-identifier-double-quoted-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'notation-public-identifier-double-quoted-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = NOTATION_PUBLIC_ID__DQ__STATE;
 $Token->{q<public_identifier>} .= $1;
@@ -13636,12 +13802,20 @@ $State = NOTATION_PUBLIC_ID__SQ__STATE_CR;
 $State = A_NOTATION_PUBLIC_ID_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'notation-public-identifier-single-quoted-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'notation-public-identifier-single-quoted-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } else {
 if ($EOF) {
 
@@ -13691,12 +13865,20 @@ $State = NOTATION_PUBLIC_ID__SQ__STATE_CR;
 $State = A_NOTATION_PUBLIC_ID_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'notation-public-identifier-single-quoted-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'notation-public-identifier-single-quoted-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = NOTATION_PUBLIC_ID__SQ__STATE;
 $Token->{q<public_identifier>} .= $1;
@@ -13767,6 +13949,14 @@ $State = PE_NAME_IN_MARKUP_DECL_STATE;
 $Token->{q<name>} = q@�@;
 $State = NOTATION_NAME_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'notation-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
 
             push @$Errors, {type => 'notation-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -14289,11 +14479,19 @@ $State = DEFAULT_ATTR_VALUE__SQ__STATE;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-attlist-attribute-default-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
         push @{$Token->{attr_list} ||= []}, $Attr;
       
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
         push @{$Token->{attr_list} ||= []}, $Attr;
@@ -14373,11 +14571,19 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = A_ATTLIST_ATTR_DEFAULT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-attlist-attribute-default-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
         push @{$Token->{attr_list} ||= []}, $Attr;
       
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
         push @{$Token->{attr_list} ||= []}, $Attr;
@@ -14610,12 +14816,20 @@ $State = PE_NAME_IN_MARKUP_DECL_STATE;
 $State = B_ALLOWED_TOKEN_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-attlist-attribute-name-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'after-attlist-attribute-name-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = ATTLIST_ATTR_TYPE_STATE;
 $Attr->{q<declared_type>} = $1;
@@ -14670,12 +14884,20 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = A_ATTLIST_ATTR_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-attlist-attribute-name-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'after-attlist-attribute-name-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = ATTLIST_ATTR_TYPE_STATE;
 $Attr->{q<declared_type>} = $1;
@@ -14895,12 +15117,20 @@ $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = B_ALLOWED_TOKEN_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-attlist-attribute-type-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'after-attlist-attribute-type-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-attlist-attribute-type-else', level => 'm',
@@ -14966,12 +15196,20 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = A_ATTLIST_ATTR_TYPE_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-attlist-attribute-type-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'after-attlist-attribute-type-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-attlist-attribute-type-else', level => 'm',
@@ -15191,11 +15429,19 @@ $OriginalState = [B_ATTLIST_ATTR_NAME_STATE, B_ATTLIST_ATTR_NAME_STATE___BEFORE_
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-attlist-default-value-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
         push @{$Token->{attr_list} ||= []}, $Attr;
       
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'after-attlist-default-value-else', level => 'm',
@@ -16028,9 +16274,17 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $OriginalState = [A_ELEMENT_CONTENT_STATE, A_ELEMENT_CONTENT_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-element-content-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-element-content-else', level => 'm',
@@ -16085,9 +16339,17 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = A_ELEMENT_CONTENT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-element-content-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-element-content-else', level => 'm',
@@ -16322,6 +16584,14 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = A_ENT_NAME_STATE_S;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-entity-name-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'after-entity-name-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
@@ -16402,6 +16672,14 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = A_ENT_NAME_STATE_S;
 } elsif ($Input =~ /\G([\>])/gcs) {
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-entity-name-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
 
             push @$Errors, {type => 'after-entity-name-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -17116,9 +17394,17 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $OriginalState = [A_ENT_PARAMETER_STATE, A_ENT_PARAMETER_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-entity-parameter-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 return 1 if $Token->{type} == ENTITY_TOKEN;
 } elsif ($Input =~ /\G(.)/gcs) {
 
@@ -17174,9 +17460,17 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = A_ENT_PARAMETER_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-entity-parameter-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 return 1 if $Token->{type} == ENTITY_TOKEN;
 } elsif ($Input =~ /\G(.)/gcs) {
 
@@ -17403,12 +17697,20 @@ $State = ENT_SYSTEM_ID__DQ__STATE;
 $State = ENT_SYSTEM_ID__SQ__STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-entity-public-identifier-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'after-entity-public-identifier-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 return 1 if $Token->{type} == ENTITY_TOKEN;
 } elsif ($Input =~ /\G(.)/gcs) {
 
@@ -17473,6 +17775,14 @@ $State = B_ENT_PUBLIC_ID_STATE;
 $State = B_ENT_PUBLIC_ID_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-entity-public-keyword-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'after-entity-public-keyword-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
@@ -17527,9 +17837,17 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $OriginalState = [B_NDATA_KWD_STATE, B_NDATA_KWD_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-entity-system-identifier-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 return 1 if $Token->{type} == ENTITY_TOKEN;
 } elsif ($Input =~ /\G(.)/gcs) {
 
@@ -17594,6 +17912,14 @@ $State = ENT_SYSTEM_ID__DQ__STATE;
 $State = ENT_SYSTEM_ID__SQ__STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-entity-system-keyword-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'after-entity-system-keyword-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
@@ -17647,11 +17973,57 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $OriginalState = [A_IGNORE_KWD_STATE, A_IGNORE_KWD_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\[])/gcs) {
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-ignore-keyword-005b-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-ignore-keyword-003c-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
+            push @$Errors, {type => 'after-ignore-keyword-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-ignore-keyword-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
+            push @$Errors, {type => 'after-ignore-keyword-003e', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 push @$OpenMarkedSections, 'IGNORE';
 $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\]])/gcs) {
 
-            push @$Errors, {type => 'after-ignore-keyword-else', level => 'm',
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-ignore-keyword-005d-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
+            push @$Errors, {type => 'after-ignore-keyword-005d', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @$OpenMarkedSections, 'IGNORE';
@@ -17711,11 +18083,42 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = A_IGNORE_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\[])/gcs) {
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-ignore-keyword-005b-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-ignore-keyword-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
+            push @$Errors, {type => 'after-ignore-keyword-003e', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 push @$OpenMarkedSections, 'IGNORE';
 $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\]])/gcs) {
 
-            push @$Errors, {type => 'after-ignore-keyword-else', level => 'm',
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-ignore-keyword-005d-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
+            push @$Errors, {type => 'after-ignore-keyword-005d', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @$OpenMarkedSections, 'IGNORE';
@@ -17934,9 +18337,47 @@ $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\[])/gcs) {
 push @$OpenMarkedSections, 'INCLUDE';
 $State = DTD_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-include-keyword-003c-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
+            push @$Errors, {type => 'after-include-keyword-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-include-keyword-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
+            push @$Errors, {type => 'after-include-keyword-003e', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\]])/gcs) {
 
-            push @$Errors, {type => 'after-include-keyword-else', level => 'm',
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-include-keyword-005d-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
+            push @$Errors, {type => 'after-include-keyword-005d', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @$OpenMarkedSections, 'IGNORE';
@@ -17998,9 +18439,32 @@ $State = A_INCLUDE_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\[])/gcs) {
 push @$OpenMarkedSections, 'INCLUDE';
 $State = DTD_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-include-keyword-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
+            push @$Errors, {type => 'after-include-keyword-003e', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\]])/gcs) {
 
-            push @$Errors, {type => 'after-include-keyword-else', level => 'm',
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-include-keyword-005d-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
+            push @$Errors, {type => 'after-include-keyword-005d', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @$OpenMarkedSections, 'IGNORE';
@@ -18219,12 +18683,20 @@ $OriginalState = [B_NDATA_ID_STATE, B_NDATA_ID_STATE___BEFORE_TEXT_DECL_IN_MARKU
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-ndata-keyword-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'after-ndata-keyword-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 return 1 if $Token->{type} == ENTITY_TOKEN;
 } elsif ($Input =~ /\G(.)/gcs) {
 
@@ -18292,12 +18764,20 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = A_NOTATION_NAME_STATE_S;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-notation-name-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'after-notation-name-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-notation-name-else', level => 'm',
@@ -18369,12 +18849,20 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = A_NOTATION_NAME_STATE_S;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-notation-name-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'after-notation-name-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-notation-name-else', level => 'm',
@@ -19085,9 +19573,17 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $OriginalState = [BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE, BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-notation-public-identifier-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G([\"])/gcs) {
 
             push @$Errors, {type => 'after-notation-public-identifier-0022', level => 'm',
@@ -19163,12 +19659,20 @@ $State = B_NOTATION_PUBLIC_ID_STATE;
 $State = B_NOTATION_PUBLIC_ID_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-notation-public-keyword-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'after-notation-public-keyword-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-notation-public-keyword-else', level => 'm',
@@ -19218,9 +19722,17 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $OriginalState = [A_NOTATION_SYSTEM_ID_STATE, A_NOTATION_SYSTEM_ID_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-notation-system-identifier-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-notation-system-identifier-else', level => 'm',
@@ -19275,9 +19787,17 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = A_NOTATION_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-notation-system-identifier-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-notation-system-identifier-else', level => 'm',
@@ -19503,12 +20023,20 @@ $State = B_NOTATION_SYSTEM_ID_STATE;
 $State = B_NOTATION_SYSTEM_ID_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-notation-system-keyword-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'after-notation-system-keyword-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-notation-system-keyword-else', level => 'm',
@@ -19648,12 +20176,20 @@ $State = DEFAULT_ATTR_VALUE__SQ__STATE;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-after-allowed-token-list-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'after-after-allowed-token-list-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-after-allowed-token-list-else', level => 'm',
@@ -19717,12 +20253,20 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = A_AFTER_ALLOWED_TOKEN_LIST_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-after-allowed-token-list-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'after-after-allowed-token-list-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-after-allowed-token-list-else', level => 'm',
@@ -19956,12 +20500,20 @@ $State = DEFAULT_ATTR_VALUE__SQ__STATE;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-allowed-token-list-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'after-allowed-token-list-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-allowed-token-list-else', level => 'm',
@@ -20020,12 +20572,20 @@ $State = A_ALLOWED_TOKEN_LIST_STATE;
 $State = B_ALLOWED_TOKEN_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-allowed-token-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'after-allowed-token-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-allowed-token-else', level => 'm',
@@ -20085,12 +20645,20 @@ $State = A_ALLOWED_TOKEN_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 $State = B_ALLOWED_TOKEN_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-allowed-token-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'after-allowed-token-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-allowed-token-else', level => 'm',
@@ -20601,7 +21169,7 @@ $State = PE_NAME_IN_MARKUP_DECL_STATE;
 pop @$OpenCMGroups;
 $State = A_CM_ITEM_STATE;
 
-        if (@$OpenCMGroups) {
+        if (not @$OpenCMGroups) {
           
             push @$Errors, {type => 'after-content-model-item-0029', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -20625,7 +21193,7 @@ $State = A_CM_ITEM_STATE;
 pop @$OpenCMGroups;
 $State = A_CM_ITEM_STATE;
 
-        if (@$OpenCMGroups) {
+        if (not @$OpenCMGroups) {
           
             push @$Errors, {type => 'after-content-model-item-007c', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -20642,15 +21210,39 @@ $State = B_CM_ITEM_STATE;
         }
       
 } elsif ($Input =~ /\G([\>])/gcs) {
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-content-model-group-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
 pop @$OpenCMGroups;
 $State = A_CM_ITEM_STATE;
 
-        if (@$OpenCMGroups) {
-          $State = DTD_STATE;
+        if (not @$OpenCMGroups) {
+          
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-content-model-item-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+$State = DTD_STATE;
 push @$Tokens, $Token;
 
         } else {
           
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-content-model-item-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'after-content-model-item-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
@@ -20666,7 +21258,7 @@ $State = A_CM_ITEM_STATE;
 pop @$OpenCMGroups;
 $State = A_CM_ITEM_STATE;
 
-        if (@$OpenCMGroups) {
+        if (not @$OpenCMGroups) {
           
             push @$Errors, {type => 'after-content-model-item-007c', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -20738,7 +21330,7 @@ $OriginalState = [A_CM_ITEM_STATE, A_CM_ITEM_STATE___BEFORE_TEXT_DECL_IN_MARKUP_
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\)])/gcs) {
 
-        if (@$OpenCMGroups) {
+        if (not @$OpenCMGroups) {
           
             push @$Errors, {type => 'after-content-model-item-0029', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -20752,7 +21344,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
       
 } elsif ($Input =~ /\G([\,])/gcs) {
 
-        if (@$OpenCMGroups) {
+        if (not @$OpenCMGroups) {
           
             push @$Errors, {type => 'after-content-model-item-007c', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -20770,12 +21362,28 @@ $State = B_CM_ITEM_STATE;
       
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (@$OpenCMGroups) {
-          $State = DTD_STATE;
+        if (not @$OpenCMGroups) {
+          
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-content-model-item-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+$State = DTD_STATE;
 push @$Tokens, $Token;
 
         } else {
           
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-content-model-item-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'after-content-model-item-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
@@ -20785,7 +21393,7 @@ $State = DTD_STATE;
       
 } elsif ($Input =~ /\G([\|])/gcs) {
 
-        if (@$OpenCMGroups) {
+        if (not @$OpenCMGroups) {
           
             push @$Errors, {type => 'after-content-model-item-007c', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -20833,10 +21441,6 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
-
-            push @$Errors, {type => 'parser:EOF', level => 'm',
-                            di => $DI, index => $Offset + (pos $Input)};
-          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -20881,7 +21485,7 @@ $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\)])/gcs) {
 $State = A_CM_ITEM_STATE;
 
-        if (@$OpenCMGroups) {
+        if (not @$OpenCMGroups) {
           
             push @$Errors, {type => 'after-content-model-item-0029', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -20896,7 +21500,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\,])/gcs) {
 $State = A_CM_ITEM_STATE;
 
-        if (@$OpenCMGroups) {
+        if (not @$OpenCMGroups) {
           
             push @$Errors, {type => 'after-content-model-item-007c', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -20919,12 +21523,28 @@ $State = A_CM_ITEM_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 $State = A_CM_ITEM_STATE;
 
-        if (@$OpenCMGroups) {
-          $State = DTD_STATE;
+        if (not @$OpenCMGroups) {
+          
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-content-model-item-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+$State = DTD_STATE;
 push @$Tokens, $Token;
 
         } else {
           
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-content-model-item-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'after-content-model-item-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
@@ -20935,7 +21555,7 @@ $State = DTD_STATE;
 } elsif ($Input =~ /\G([\|])/gcs) {
 $State = A_CM_ITEM_STATE;
 
-        if (@$OpenCMGroups) {
+        if (not @$OpenCMGroups) {
           
             push @$Errors, {type => 'after-content-model-item-007c', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -20983,10 +21603,6 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
-
-            push @$Errors, {type => 'parser:EOF', level => 'm',
-                            di => $DI, index => $Offset + (pos $Input)};
-          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -21301,9 +21917,62 @@ $State = A_MSS_STATE_I;
 $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = A_MSS_STATE_I;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-mss-003c-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
+            push @$Errors, {type => 'after-mss-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-mss-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
+            push @$Errors, {type => 'after-mss-003e', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} elsif ($Input =~ /\G([\[])/gcs) {
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-mss-005b-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
+            push @$Errors, {type => 'after-mss-005b', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\]])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-mss-005d-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
+            push @$Errors, {type => 'after-mss-005d', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @$OpenMarkedSections, 'IGNORE';
@@ -21370,9 +22039,47 @@ $State = A_MSS_STATE_I;
 $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = A_MSS_STATE_I;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-mss-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
+            push @$Errors, {type => 'after-mss-003e', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} elsif ($Input =~ /\G([\[])/gcs) {
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-mss-005b-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
+            push @$Errors, {type => 'after-mss-005b', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\]])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-mss-005d-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
+            push @$Errors, {type => 'after-mss-005d', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @$OpenMarkedSections, 'IGNORE';
@@ -22185,12 +22892,20 @@ $State = B_ALLOWED_TOKEN_STATE;
 $Attr->{allowed_tokens}->[-1] .= q@�@;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'allowed-token-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'allowed-token-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G(.)/gcs) {
 $Attr->{allowed_tokens}->[-1] .= $1;
 } else {
@@ -23195,7 +23910,7 @@ $Temp .= $1;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -23337,7 +24052,7 @@ $Temp .= q@�@;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -23473,7 +24188,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -23609,7 +24324,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -23744,7 +24459,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -23880,7 +24595,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -24016,7 +24731,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -24153,7 +24868,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -24289,7 +25004,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -24429,7 +25144,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -24565,7 +25280,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -24701,7 +25416,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -24838,7 +25553,7 @@ if ($EOF) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -26050,7 +26765,7 @@ $Temp .= $1;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -26192,7 +26907,7 @@ $Temp .= q@�@;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -26328,7 +27043,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -26464,7 +27179,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -26600,7 +27315,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -26736,7 +27451,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -26872,7 +27587,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -27009,7 +27724,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -27144,7 +27859,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -27284,7 +27999,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -27420,7 +28135,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -27556,7 +28271,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -27693,7 +28408,7 @@ if ($EOF) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -29424,7 +30139,7 @@ $Temp .= $1;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -29566,7 +30281,7 @@ $Temp .= q@�@;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -29701,7 +30416,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -29836,7 +30551,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -29976,7 +30691,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -30112,7 +30827,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -30248,7 +30963,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -30385,7 +31100,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -30525,7 +31240,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -30665,7 +31380,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -30805,7 +31520,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -30980,7 +31695,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -31121,7 +31836,7 @@ if ($EOF) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -32450,7 +33165,7 @@ $Temp .= $1;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -32592,7 +33307,7 @@ $Temp .= q@�@;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -32728,7 +33443,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -32864,7 +33579,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -33000,7 +33715,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -33136,7 +33851,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -33272,7 +33987,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -33409,7 +34124,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -33545,7 +34260,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -33685,7 +34400,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -33821,7 +34536,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -33957,7 +34672,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -34094,7 +34809,7 @@ if ($EOF) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -34514,12 +35229,20 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'before-attlist-attribute-default-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'before-attlist-attribute-default-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G(.)/gcs) {
 $Attr->{q<default_type>} .= $1;
 $State = ATTLIST_ATTR_DEFAULT_STATE;
@@ -34566,9 +35289,17 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $OriginalState = [B_ATTLIST_ATTR_NAME_STATE, B_ATTLIST_ATTR_NAME_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'before-attlist-attribute-name-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'NULL', level => 'm',
@@ -34635,9 +35366,17 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = B_ATTLIST_ATTR_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'before-attlist-attribute-name-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'NULL', level => 'm',
@@ -34869,6 +35608,14 @@ $Token->{q<name>} = q@�@;
 $State = ATTLIST_NAME_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'before-attlist-name-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'before-attlist-name-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
@@ -34931,6 +35678,14 @@ $State = B_ATTLIST_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 $Token->{q<name>} = q@�@;
 $State = ATTLIST_NAME_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'before-attlist-name-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
 
             push @$Errors, {type => 'before-attlist-name-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -35341,6 +36096,14 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'before-element-content-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'before-element-content-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
@@ -35437,6 +36200,14 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'before-element-content-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
 
             push @$Errors, {type => 'before-element-content-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -35670,6 +36441,14 @@ $Token->{q<name>} = q@�@;
 $State = ELEMENT_NAME_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'before-element-name-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'before-element-name-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
@@ -35732,6 +36511,14 @@ $State = B_ELEMENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 $Token->{q<name>} = q@�@;
 $State = ELEMENT_NAME_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'before-element-name-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
 
             push @$Errors, {type => 'before-element-name-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -35949,6 +36736,14 @@ $OriginalState = [B_ENT_NAME_STATE, B_ENT_NAME_STATE___BEFORE_TEXT_DECL_IN_MARKU
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'before-entity-name-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'before-entity-name-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
@@ -36007,6 +36802,14 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = B_ENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'before-entity-name-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
 
             push @$Errors, {type => 'before-entity-name-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -36225,6 +37028,14 @@ $State = PE_NAME_IN_MARKUP_DECL_STATE;
 $State = ENT_PUBLIC_ID__SQ__STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'before-entity-public-identifier-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'before-entity-public-identifier-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
@@ -36287,6 +37098,14 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = B_ENT_PUBLIC_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'before-entity-public-identifier-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
 
             push @$Errors, {type => 'before-entity-public-identifier-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -36508,6 +37327,14 @@ $State = PE_NAME_IN_MARKUP_DECL_STATE;
 $State = ENT_SYSTEM_ID__SQ__STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'before-entity-system-identifier-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'before-entity-system-identifier-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
@@ -36570,6 +37397,14 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = B_ENT_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'before-entity-system-identifier-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
 
             push @$Errors, {type => 'before-entity-system-identifier-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -36787,6 +37622,14 @@ $State = ENT_NAME_STATE;
 $State = PE_DECL_OR_REF_AFTER_SPACE_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'before-entity-name-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'before-entity-name-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
@@ -36842,6 +37685,14 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = B_ENT_TYPE_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'before-entity-name-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
 
             push @$Errors, {type => 'before-entity-name-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -37248,12 +38099,20 @@ $OriginalState = [B_NDATA_ID_STATE, B_NDATA_ID_STATE___BEFORE_TEXT_DECL_IN_MARKU
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'before-ndata-identifier-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'before-ndata-identifier-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 return 1 if $Token->{type} == ENTITY_TOKEN;
 } elsif ($Input =~ /\G(.)/gcs) {
 $Token->{q<notation_name>} = $1;
@@ -37310,12 +38169,20 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = B_NDATA_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'before-ndata-identifier-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'before-ndata-identifier-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 return 1 if $Token->{type} == ENTITY_TOKEN;
 } elsif ($Input =~ /\G(.)/gcs) {
 $Token->{q<notation_name>} = $1;
@@ -37525,9 +38392,17 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $OriginalState = [B_NDATA_KWD_STATE, B_NDATA_KWD_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'before-ndata-keyword-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 return 1 if $Token->{type} == ENTITY_TOKEN;
 } elsif ($Input =~ /\G([N])/gcs) {
 $Temp = $1;
@@ -37591,9 +38466,17 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = B_NDATA_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'before-ndata-keyword-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 return 1 if $Token->{type} == ENTITY_TOKEN;
 } elsif ($Input =~ /\G([N])/gcs) {
 $Temp = $1;
@@ -38024,6 +38907,14 @@ $Token->{q<name>} = q@�@;
 $State = NOTATION_NAME_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'before-notation-name-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'before-notation-name-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
@@ -38090,6 +38981,14 @@ $State = B_NOTATION_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 $Token->{q<name>} = q@�@;
 $State = NOTATION_NAME_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'before-notation-name-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
 
             push @$Errors, {type => 'before-notation-name-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -38312,12 +39211,20 @@ $State = PE_NAME_IN_MARKUP_DECL_STATE;
 $State = NOTATION_PUBLIC_ID__SQ__STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'before-notation-public-identifier-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'before-notation-public-identifier-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'before-notation-public-identifier-else', level => 'm',
@@ -38377,12 +39284,20 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = B_NOTATION_PUBLIC_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'before-notation-public-identifier-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'before-notation-public-identifier-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'before-notation-public-identifier-else', level => 'm',
@@ -38599,12 +39514,20 @@ $State = PE_NAME_IN_MARKUP_DECL_STATE;
 $State = NOTATION_SYSTEM_ID__SQ__STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'before-notation-system-identifier-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'before-notation-system-identifier-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'before-notation-system-identifier-else', level => 'm',
@@ -38664,12 +39587,20 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = B_NOTATION_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'before-notation-system-identifier-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'before-notation-system-identifier-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'before-notation-system-identifier-else', level => 'm',
@@ -38896,12 +39827,20 @@ $State = ALLOWED_TOKEN_STATE;
 $State = A_ALLOWED_TOKEN_LIST_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'before-allowed-token-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'before-allowed-token-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G([\|])/gcs) {
 
             push @$Errors, {type => 'before-allowed-token-007c', level => 'm',
@@ -38974,12 +39913,20 @@ $State = ALLOWED_TOKEN_STATE;
 $State = A_ALLOWED_TOKEN_LIST_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'before-allowed-token-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'before-allowed-token-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G([\|])/gcs) {
 $State = B_ALLOWED_TOKEN_STATE;
 
@@ -40980,6 +41927,14 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'before-content-model-item-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'before-content-model-item-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
@@ -41091,6 +42046,14 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'before-content-model-item-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
 
             push @$Errors, {type => 'before-content-model-item-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -41377,12 +42340,20 @@ $State = PE_NAME_IN_MARKUP_DECL_STATE;
 $State = ENT_SYSTEM_ID__SQ__STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'between-entity-public-and-system-identifiers-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'between-entity-public-and-system-identifiers-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 return 1 if $Token->{type} == ENTITY_TOKEN;
 } elsif ($Input =~ /\G(.)/gcs) {
 
@@ -41443,12 +42414,20 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'between-entity-public-and-system-identifiers-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'between-entity-public-and-system-identifiers-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 return 1 if $Token->{type} == ENTITY_TOKEN;
 } elsif ($Input =~ /\G(.)/gcs) {
 
@@ -41665,9 +42644,17 @@ $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 $State = NOTATION_SYSTEM_ID__SQ__STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'between-notation-public-and-system-identifiers-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'between-notation-public-and-system-identifiers-else', level => 'm',
@@ -41726,9 +42713,17 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'between-notation-public-and-system-identifiers-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'between-notation-public-and-system-identifiers-else', level => 'm',
@@ -42059,9 +43054,17 @@ $StateActions->[BOGUS_MARKUP_DECL_STATE] = sub {
 if ($Input =~ /\G([^\>]+)/gcs) {
 
 } elsif ($Input =~ /\G([\>])/gcs) {
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'bogus-markup-declaration-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 return 1 if $Token->{type} == ENTITY_TOKEN;
 } else {
 if ($EOF) {
@@ -42647,7 +43650,7 @@ $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\)])/gcs) {
 $State = A_CM_ITEM_STATE;
 
-        if (@$OpenCMGroups) {
+        if (not @$OpenCMGroups) {
           
             push @$Errors, {type => 'after-content-model-item-0029', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -42668,7 +43671,7 @@ $State = A_CM_ITEM_STATE;
 } elsif ($Input =~ /\G([\,])/gcs) {
 $State = A_CM_ITEM_STATE;
 
-        if (@$OpenCMGroups) {
+        if (not @$OpenCMGroups) {
           
             push @$Errors, {type => 'after-content-model-item-007c', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -42685,14 +43688,38 @@ $State = B_CM_ITEM_STATE;
         }
       
 } elsif ($Input =~ /\G([\>])/gcs) {
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'content-model-element-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
 $State = A_CM_ITEM_STATE;
 
-        if (@$OpenCMGroups) {
-          $State = DTD_STATE;
+        if (not @$OpenCMGroups) {
+          
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-content-model-item-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+$State = DTD_STATE;
 push @$Tokens, $Token;
 
         } else {
           
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'after-content-model-item-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'after-content-model-item-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
@@ -42706,7 +43733,7 @@ $State = A_CM_ITEM_STATE;
 } elsif ($Input =~ /\G([\|])/gcs) {
 $State = A_CM_ITEM_STATE;
 
-        if (@$OpenCMGroups) {
+        if (not @$OpenCMGroups) {
           
             push @$Errors, {type => 'after-content-model-item-007c', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -42727,6 +43754,7 @@ $State = B_CM_ITEM_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
+$OpenCMGroups->[-1]->{items}->[-1]->{q<name>} .= q@�@;
 } elsif ($Input =~ /\G([\(])/gcs) {
 
             push @$Errors, {type => 'content-model-element-0028', level => 'm',
@@ -42734,6 +43762,7 @@ $State = B_CM_ITEM_STATE;
           
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
+$OpenCMGroups->[-1]->{items}->[-1]->{q<name>} .= $1;
 } else {
 if ($EOF) {
 
@@ -43753,7 +44782,7 @@ $Temp .= $1;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -43895,7 +44924,7 @@ $Temp .= q@�@;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -44035,7 +45064,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -44176,7 +45205,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -44316,7 +45345,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -44456,7 +45485,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -44596,7 +45625,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -44731,7 +45760,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -44871,7 +45900,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -45007,7 +46036,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -45147,7 +46176,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -45287,7 +46316,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -45428,7 +46457,7 @@ if ($EOF) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -47008,7 +48037,7 @@ $Temp .= $1;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -47150,7 +48179,7 @@ $Temp .= q@�@;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -47286,7 +48315,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -47422,7 +48451,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -47557,7 +48586,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -47693,7 +48722,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -47829,7 +48858,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -47966,7 +48995,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -48102,7 +49131,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -48242,7 +49271,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -48378,7 +49407,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -48514,7 +49543,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -48651,7 +49680,7 @@ if ($EOF) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -49983,7 +51012,7 @@ $Temp .= $1;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -50125,7 +51154,7 @@ $Temp .= q@�@;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -50261,7 +51290,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -50397,7 +51426,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -50533,7 +51562,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -50669,7 +51698,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -50805,7 +51834,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -50942,7 +51971,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -51077,7 +52106,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -51217,7 +52246,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -51353,7 +52382,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -51489,7 +52518,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -51626,7 +52655,7 @@ if ($EOF) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -52809,7 +53838,7 @@ $Temp .= $1;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -52951,7 +53980,7 @@ $Temp .= q@�@;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -53087,7 +54116,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -53223,7 +54252,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -53359,7 +54388,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -53495,7 +54524,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -53631,7 +54660,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -53768,7 +54797,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -53904,7 +54933,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -54044,7 +55073,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -54180,7 +55209,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -54316,7 +55345,7 @@ return 1 if $return;
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -54453,7 +55482,7 @@ if ($EOF) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -56445,11 +57474,13 @@ $Temp .= $1;
                             di => $DI, index => $TempIndex};
           }
 
-          if (not $StopProcessing and not $XMLStandalone) {
+          if (not $DTDDefs->{StopProcessing} and
+              not $DTDDefs->{XMLStandalone}) {
             push @$Errors, {level => 'i',
                             type => 'stop processing',
                             di => $DI, index => $TempIndex};
-            $StopProcessing = 1;
+            $State = BOGUS_MARKUP_DECL_STATE;
+            $DTDDefs->{StopProcessing} = 1;
           }
         } # REF
       
@@ -56487,6 +57518,14 @@ $OriginalState = [B_ENT_TYPE_STATE, B_ENT_TYPE_STATE___BEFORE_TEXT_DECL_IN_MARKU
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 $Token->{q<is_parameter_entity_flag>} = 1;
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'before-entity-name-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
 
             push @$Errors, {type => 'before-entity-name-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -56570,11 +57609,13 @@ $Temp .= $1;
                             di => $DI, index => $TempIndex};
           }
 
-          if (not $StopProcessing and not $XMLStandalone) {
+          if (not $DTDDefs->{StopProcessing} and
+              not $DTDDefs->{XMLStandalone}) {
             push @$Errors, {level => 'i',
                             type => 'stop processing',
                             di => $DI, index => $TempIndex};
-            $StopProcessing = 1;
+            $State = BOGUS_MARKUP_DECL_STATE;
+            $DTDDefs->{StopProcessing} = 1;
           }
         } # REF
       
@@ -56663,6 +57704,14 @@ $State = ENT_NAME_STATE;
           
 $Token->{q<is_parameter_entity_flag>} = 1;
 
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'before-entity-name-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
+
             push @$Errors, {type => 'before-entity-name-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
@@ -56743,7 +57792,7 @@ $Temp .= $1;
               ## done (Chrome behavior).
 
               $DTDDefs->{has_charref_decls} = 1;
-              $DTDDefs->{charref_vc_error} = 1 if $XMLStandalone;
+              $DTDDefs->{charref_vc_error} = 1 if $DTDDefs->{XMLStandalone};
               $TempIndex += length $Temp;
               $Temp = '';
               $return = 1;
@@ -56762,11 +57811,12 @@ $Temp .= $1;
                             di => $DI, index => $TempIndex};
           }
 
-          if (not $StopProcessing and not $XMLStandalone) {
+          if (not $DTDDefs->{StopProcessing} and
+              not $DTDDefs->{XMLStandalone}) {
             push @$Errors, {level => 'i',
                             type => 'stop processing',
                             di => $DI, index => $TempIndex};
-            $StopProcessing = 1;
+            $DTDDefs->{StopProcessing} = 1;
           }
         } # REF
       
@@ -56940,11 +57990,12 @@ $Temp .= $1;
                             di => $DI, index => $TempIndex};
           }
 
-          if (not $StopProcessing and not $XMLStandalone) {
+          if (not $DTDDefs->{StopProcessing} and
+              not $DTDDefs->{XMLStandalone}) {
             push @$Errors, {level => 'i',
                             type => 'stop processing',
                             di => $DI, index => $TempIndex};
-            $StopProcessing = 1;
+            $DTDDefs->{StopProcessing} = 1;
           }
         } # REF
       
@@ -57118,11 +58169,12 @@ $Temp .= $1;
                             di => $DI, index => $TempIndex};
           }
 
-          if (not $StopProcessing and not $XMLStandalone) {
+          if (not $DTDDefs->{StopProcessing} and
+              not $DTDDefs->{XMLStandalone}) {
             push @$Errors, {level => 'i',
                             type => 'stop processing',
                             di => $DI, index => $TempIndex};
-            $StopProcessing = 1;
+            $DTDDefs->{StopProcessing} = 1;
           }
         } # REF
       
@@ -57296,11 +58348,12 @@ $Temp .= $1;
                             di => $DI, index => $TempIndex};
           }
 
-          if (not $StopProcessing and not $XMLStandalone) {
+          if (not $DTDDefs->{StopProcessing} and
+              not $DTDDefs->{XMLStandalone}) {
             push @$Errors, {level => 'i',
                             type => 'stop processing',
                             di => $DI, index => $TempIndex};
-            $StopProcessing = 1;
+            $DTDDefs->{StopProcessing} = 1;
           }
         } # REF
       
@@ -57410,6 +58463,7 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -57479,11 +58533,13 @@ $Temp .= $1;
                             di => $DI, index => $TempIndex};
           }
 
-          if (not $StopProcessing and not $XMLStandalone) {
+          if (not $DTDDefs->{StopProcessing} and
+              not $DTDDefs->{XMLStandalone}) {
             push @$Errors, {level => 'i',
                             type => 'stop processing',
                             di => $DI, index => $TempIndex};
-            $StopProcessing = 1;
+            $State = BOGUS_MARKUP_DECL_STATE;
+            $DTDDefs->{StopProcessing} = 1;
           }
         } # REF
       
@@ -57548,9 +58604,17 @@ $State = BOGUS_MARKUP_DECL_STATE;
             push @$Errors, {type => 'parameter-entity-name-in-markup-declaration-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
+
+        if (defined $InMDEntity) {
+          push @$Errors, {type => 'bogus-markup-declaration-003e-fragment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+          return 1;
+        }
+      
 $State = DTD_STATE;
 push @$Tokens, $Token;
-$Token->{StopProcessing} = 1 if $StopProcessing;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 return 1 if $Token->{type} == ENTITY_TOKEN;
 } elsif ($Input =~ /\G([\`])/gcs) {
 
@@ -58628,10 +59692,22 @@ sub dom_tree ($$) {
 
     } elsif ($op->[0] eq 'construct-doctype') {
       my $doctype = $nodes->[1];
+      my $serialize_cmgroup; $serialize_cmgroup = sub {
+        return '(' . (join {'|' => ' | ', ',' => ', '}->{$_[0]->{separators}->[0]->{type} || ''} || '', map {
+          if ($_->{items}) {
+            $serialize_cmgroup->($_);
+          } else {
+            $_->{name} . ($_->{repetition} || '');
+          }
+        } @{$_[0]->{items}}) . ')' . ($_[0]->{repetition} || '');
+      };
       for my $data (values %{$DTDDefs->{elements} or {}}) {
         my $node = $doc->create_element_type_definition ($data->{name});
-        $node->content_model_text ($data->{content_keyword})
-            if defined $data->{content_keyword};
+        if (defined $data->{content_keyword}) {
+          $node->content_model_text ($data->{content_keyword});
+        } elsif (defined $data->{cmgroup}) {
+          $node->content_model_text ($serialize_cmgroup->($data->{cmgroup}));
+        }
         $node->manakai_set_source_location (['', $data->{di}, $data->{index}])
             if defined $data->{index};
         $doctype->set_element_type_definition_node ($node);
@@ -58717,7 +59793,7 @@ sub dom_tree ($$) {
           $self->_construct_tree;
 
           if (@$Callbacks or @$Errors) {
-            $self->{saved_states} = {AllDeclsProcessed => $AllDeclsProcessed, AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, StopProcessing => $StopProcessing, Temp => $Temp, TempIndex => $TempIndex, Token => $Token, XMLStandalone => $XMLStandalone};
+            $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
             {
               my $Errors = $Errors;
               my $Callbacks = $Callbacks;
@@ -58742,7 +59818,7 @@ sub dom_tree ($$) {
                 return 1;
               }
             }
-            ($AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $StopProcessing, $Temp, $TempIndex, $Token, $XMLStandalone) = @{$self->{saved_states}}{qw(AllDeclsProcessed AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State StopProcessing Temp TempIndex Token XMLStandalone)};
+            ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State Temp TempIndex Token)};
 ($AFE, $Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP OpenCMGroups OpenMarkedSections TABLE_CHARS TEMPLATE_IMS Tokens)};
 ($DTDDefs) = @{$self->{saved_maps}}{qw(DTDDefs)};
           }
@@ -58814,7 +59890,7 @@ sub dom_tree ($$) {
       $doc->manakai_compat_mode ('no quirks');
       $doc->remove_child ($_) for $doc->child_nodes->to_list;
       $self->{nodes} = [$doc];
-      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InMDEntity, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
       $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
 $NEXT_ID = 1;
@@ -58823,6 +59899,7 @@ $DTDMode = q{N/A};
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
       $IframeSrcdoc = $self->{IframeSrcdoc};
+$InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
       $Confident = 1; # irrelevant
@@ -58854,7 +59931,7 @@ $Scripting = $self->{Scripting};
       $doc->remove_child ($_) for $doc->child_nodes->to_list;
       $self->{nodes} = [$doc];
 
-      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InMDEntity, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
       $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
 $NEXT_ID = 1;
@@ -58863,6 +59940,7 @@ $DTDMode = q{N/A};
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
       $IframeSrcdoc = $self->{IframeSrcdoc};
+$InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
       $Confident = 1; # irrelevant
@@ -58878,7 +59956,7 @@ $Scripting = $self->{Scripting};
       ## Note that $DI != $source_di to support document.write()'s
       ## insertion.
 
-      $self->{saved_states} = {AllDeclsProcessed => $AllDeclsProcessed, AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, StopProcessing => $StopProcessing, Temp => $Temp, TempIndex => $TempIndex, Token => $Token, XMLStandalone => $XMLStandalone};
+      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
       return;
     } # parse_chars_start
   
@@ -58887,27 +59965,29 @@ $Scripting = $self->{Scripting};
       my $self = $_[0];
       my $input = [$_[1]]; # string copy
 
-      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InMDEntity, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
       $IframeSrcdoc = $self->{IframeSrcdoc};
+$InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
-      ($AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $StopProcessing, $Temp, $TempIndex, $Token, $XMLStandalone) = @{$self->{saved_states}}{qw(AllDeclsProcessed AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State StopProcessing Temp TempIndex Token XMLStandalone)};
+      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State Temp TempIndex Token)};
 ($AFE, $Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP OpenCMGroups OpenMarkedSections TABLE_CHARS TEMPLATE_IMS Tokens)};
 ($DTDDefs) = @{$self->{saved_maps}}{qw(DTDDefs)};
 
       $self->_feed_chars ($input) or die "Can't restart";
 
-      $self->{saved_states} = {AllDeclsProcessed => $AllDeclsProcessed, AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, StopProcessing => $StopProcessing, Temp => $Temp, TempIndex => $TempIndex, Token => $Token, XMLStandalone => $XMLStandalone};
+      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
       return;
     } # parse_chars_feed
 
     sub parse_chars_end ($) {
       my $self = $_[0];
-      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InMDEntity, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
       $IframeSrcdoc = $self->{IframeSrcdoc};
+$InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
-      ($AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $StopProcessing, $Temp, $TempIndex, $Token, $XMLStandalone) = @{$self->{saved_states}}{qw(AllDeclsProcessed AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State StopProcessing Temp TempIndex Token XMLStandalone)};
+      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State Temp TempIndex Token)};
 ($AFE, $Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP OpenCMGroups OpenMarkedSections TABLE_CHARS TEMPLATE_IMS Tokens)};
 ($DTDDefs) = @{$self->{saved_maps}}{qw(DTDDefs)};
 
@@ -58944,7 +60024,7 @@ $Scripting = $self->{Scripting};
         $self->{nodes} = [$doc];
         $doc->remove_child ($_) for $doc->child_nodes->to_list;
 
-        local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+        local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InMDEntity, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
         $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
 $NEXT_ID = 1;
@@ -58953,6 +60033,7 @@ $DTDMode = q{N/A};
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
         $IframeSrcdoc = $self->{IframeSrcdoc};
+$InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
 
@@ -59000,6 +60081,7 @@ $DTDMode = q{N/A};
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
       $IframeSrcdoc = $self->{IframeSrcdoc};
+$InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
       $State = DATA_STATE;;
@@ -59051,7 +60133,7 @@ $Scripting = $self->{Scripting};
       $doc->manakai_is_html (0);
       $self->{can_restart} = 1;
 
-      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InMDEntity, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
       PARSER: {
         $self->_parse_bytes_init;
         $self->_parse_bytes_start_parsing (no_body_data_yet => 1) or do {
@@ -59060,7 +60142,7 @@ $Scripting = $self->{Scripting};
         };
       } # PARSER
 
-      $self->{saved_states} = {AllDeclsProcessed => $AllDeclsProcessed, AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, StopProcessing => $StopProcessing, Temp => $Temp, TempIndex => $TempIndex, Token => $Token, XMLStandalone => $XMLStandalone};
+      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
       return;
     } # parse_bytes_start
   
@@ -59071,11 +60153,12 @@ $Scripting = $self->{Scripting};
     sub parse_bytes_feed ($$;%) {
       my ($self, undef, %args) = @_;
 
-      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InMDEntity, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
       $IframeSrcdoc = $self->{IframeSrcdoc};
+$InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
-      ($AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $StopProcessing, $Temp, $TempIndex, $Token, $XMLStandalone) = @{$self->{saved_states}}{qw(AllDeclsProcessed AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State StopProcessing Temp TempIndex Token XMLStandalone)};
+      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State Temp TempIndex Token)};
 ($AFE, $Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP OpenCMGroups OpenMarkedSections TABLE_CHARS TEMPLATE_IMS Tokens)};
 ($DTDDefs) = @{$self->{saved_maps}}{qw(DTDDefs)};
 
@@ -59105,17 +60188,18 @@ $Scripting = $self->{Scripting};
         }
       } # PARSER
 
-      $self->{saved_states} = {AllDeclsProcessed => $AllDeclsProcessed, AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, StopProcessing => $StopProcessing, Temp => $Temp, TempIndex => $TempIndex, Token => $Token, XMLStandalone => $XMLStandalone};
+      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
       return;
     } # parse_bytes_feed
 
     sub parse_bytes_end ($) {
       my $self = $_[0];
-      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InMDEntity, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
       $IframeSrcdoc = $self->{IframeSrcdoc};
+$InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
-      ($AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $StopProcessing, $Temp, $TempIndex, $Token, $XMLStandalone) = @{$self->{saved_states}}{qw(AllDeclsProcessed AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State StopProcessing Temp TempIndex Token XMLStandalone)};
+      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State Temp TempIndex Token)};
 ($AFE, $Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP OpenCMGroups OpenMarkedSections TABLE_CHARS TEMPLATE_IMS Tokens)};
 ($DTDDefs) = @{$self->{saved_maps}}{qw(DTDDefs)};
 
@@ -59156,7 +60240,7 @@ $Scripting = $self->{Scripting};
   sub parse ($$$) {
     my ($self, $main, $in) = @_;
 
-    local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+    local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InMDEntity, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
     $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
 $NEXT_ID = 1;
@@ -59165,6 +60249,7 @@ $DTDMode = q{N/A};
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
     $IframeSrcdoc = $self->{IframeSrcdoc};
+$InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
     $Confident = 1; # irrelevant
@@ -59220,7 +60305,7 @@ $Scripting = $self->{Scripting};
   sub parse ($$$) {
     my ($self, $main, $in) = @_;
 
-    local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+    local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InMDEntity, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
     $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
 $NEXT_ID = 1;
@@ -59229,6 +60314,7 @@ $DTDMode = q{N/A};
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
     $IframeSrcdoc = $self->{IframeSrcdoc};
+$InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
     $Confident = 1; # irrelevant
@@ -59289,7 +60375,7 @@ $Scripting = $self->{Scripting};
       $self->{main_parser} = $_[2];
       $self->{can_restart} = 1;
 
-      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InMDEntity, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
       PARSER: {
         $self->_parse_bytes_init;
         $self->_parse_bytes_start_parsing (no_body_data_yet => 1) or do {
@@ -59298,7 +60384,7 @@ $Scripting = $self->{Scripting};
         };
       } # PARSER
 
-      $self->{saved_states} = {AllDeclsProcessed => $AllDeclsProcessed, AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, StopProcessing => $StopProcessing, Temp => $Temp, TempIndex => $TempIndex, Token => $Token, XMLStandalone => $XMLStandalone};
+      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
       return;
     } # parse_bytes_start
 
@@ -59316,6 +60402,7 @@ $DTDMode = q{N/A};
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
     $IframeSrcdoc = $self->{IframeSrcdoc};
+$InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
     {
@@ -59366,7 +60453,7 @@ $Scripting = $self->{Scripting};
   sub parse ($$$) {
     my ($self, $main, $in) = @_;
 
-    local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+    local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InMDEntity, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
     $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
 $NEXT_ID = 1;
@@ -59375,6 +60462,7 @@ $DTDMode = q{N/A};
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
     $IframeSrcdoc = $self->{IframeSrcdoc};
+$InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
     $Confident = 1; # irrelevant
@@ -59408,6 +60496,7 @@ $Scripting = $self->{Scripting};
 
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
     $self->{is_sub_parser} = 1;
+    $DTDMode = 'parameter entity';
 
     $NEXT_ID++;
     $self->{nodes}->[$CONTEXT = 1] = $main->{nodes}->[1]; # DOCTYPE
@@ -59426,7 +60515,7 @@ $Scripting = $self->{Scripting};
       $self->{main_parser} = $_[2];
       $self->{can_restart} = 1;
 
-      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InMDEntity, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
       PARSER: {
         $self->_parse_bytes_init;
         $self->_parse_bytes_start_parsing (no_body_data_yet => 1) or do {
@@ -59435,7 +60524,7 @@ $Scripting = $self->{Scripting};
         };
       } # PARSER
 
-      $self->{saved_states} = {AllDeclsProcessed => $AllDeclsProcessed, AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, StopProcessing => $StopProcessing, Temp => $Temp, TempIndex => $TempIndex, Token => $Token, XMLStandalone => $XMLStandalone};
+      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
       return;
     } # parse_bytes_start
 
@@ -59453,6 +60542,7 @@ $DTDMode = q{N/A};
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
     $IframeSrcdoc = $self->{IframeSrcdoc};
+$InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
     {
@@ -59481,6 +60571,7 @@ $Scripting = $self->{Scripting};
 
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
     $self->{is_sub_parser} = 1;
+    $DTDMode = 'parameter entity';
 
     $NEXT_ID++;
     $self->{nodes}->[$CONTEXT = 1] = $main->{nodes}->[1]; # DOCTYPE
@@ -59494,7 +60585,7 @@ $Scripting = $self->{Scripting};
   sub parse ($$$) {
     my ($self, $main, $in) = @_;
 
-    local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+    local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InMDEntity, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
     $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
 $NEXT_ID = 1;
@@ -59503,6 +60594,7 @@ $DTDMode = q{N/A};
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
     $IframeSrcdoc = $self->{IframeSrcdoc};
+$InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
     $Confident = 1; # irrelevant
@@ -59537,6 +60629,7 @@ $Scripting = $self->{Scripting};
     $Token = $main->{saved_states}->{Token};
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
     $self->{is_sub_parser} = 1;
+    $DTDMode = 'parameter entity';
 
     $NEXT_ID++;
     $self->{nodes}->[$CONTEXT = 1] = $main->{nodes}->[1]; # DOCTYPE
@@ -59555,7 +60648,7 @@ $Scripting = $self->{Scripting};
       $self->{main_parser} = $_[2];
       $self->{can_restart} = 1;
 
-      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InMDEntity, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
       PARSER: {
         $self->_parse_bytes_init;
         $self->_parse_bytes_start_parsing (no_body_data_yet => 1) or do {
@@ -59564,7 +60657,7 @@ $Scripting = $self->{Scripting};
         };
       } # PARSER
 
-      $self->{saved_states} = {AllDeclsProcessed => $AllDeclsProcessed, AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, StopProcessing => $StopProcessing, Temp => $Temp, TempIndex => $TempIndex, Token => $Token, XMLStandalone => $XMLStandalone};
+      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
       return;
     } # parse_bytes_start
 
@@ -59582,6 +60675,7 @@ $DTDMode = q{N/A};
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
     $IframeSrcdoc = $self->{IframeSrcdoc};
+$InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
     {
@@ -59611,6 +60705,7 @@ $Scripting = $self->{Scripting};
     $Token = $main->{saved_states}->{Token};
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
     $self->{is_sub_parser} = 1;
+    $DTDMode = 'parameter entity';
 
     $NEXT_ID++;
     $self->{nodes}->[$CONTEXT = 1] = $main->{nodes}->[1]; # DOCTYPE
@@ -59624,7 +60719,8 @@ $Scripting = $self->{Scripting};
   sub parse ($$$) {
     my ($self, $main, $in) = @_;
 
-    local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+    $self->{InMDEntity} = 1;
+    local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InMDEntity, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
     $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
 $NEXT_ID = 1;
@@ -59633,6 +60729,7 @@ $DTDMode = q{N/A};
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
     $IframeSrcdoc = $self->{IframeSrcdoc};
+$InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
     $Confident = 1; # irrelevant
@@ -59665,8 +60762,11 @@ $Scripting = $self->{Scripting};
     } if $DI >= 0;
 
     $Token = $main->{saved_states}->{Token};
+    $Attr = $main->{saved_states}->{Attr};
+    $OpenCMGroups = $main->{saved_states}->{OpenCMGroups};
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
     $self->{is_sub_parser} = 1;
+    $DTDMode = 'parameter entity';
 
     $NEXT_ID++;
     $self->{nodes}->[$CONTEXT = 1] = $main->{nodes}->[1]; # DOCTYPE
@@ -59685,7 +60785,9 @@ $Scripting = $self->{Scripting};
       $self->{main_parser} = $_[2];
       $self->{can_restart} = 1;
 
-      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+      $self->{InMDEntity} = 1;
+
+      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InMDEntity, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
       PARSER: {
         $self->_parse_bytes_init;
         $self->_parse_bytes_start_parsing (no_body_data_yet => 1) or do {
@@ -59694,7 +60796,7 @@ $Scripting = $self->{Scripting};
         };
       } # PARSER
 
-      $self->{saved_states} = {AllDeclsProcessed => $AllDeclsProcessed, AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, StopProcessing => $StopProcessing, Temp => $Temp, TempIndex => $TempIndex, Token => $Token, XMLStandalone => $XMLStandalone};
+      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
       return;
     } # parse_bytes_start
 
@@ -59712,6 +60814,7 @@ $DTDMode = q{N/A};
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
     $IframeSrcdoc = $self->{IframeSrcdoc};
+$InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
     {
@@ -59739,8 +60842,11 @@ $Scripting = $self->{Scripting};
     $dids->[$DI] ||= {} if $DI >= 0;
 
     $Token = $main->{saved_states}->{Token};
+    $Attr = $main->{saved_states}->{Attr};
+    $OpenCMGroups = $main->{saved_states}->{OpenCMGroups};
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
     $self->{is_sub_parser} = 1;
+    $DTDMode = 'parameter entity';
 
     $NEXT_ID++;
     $self->{nodes}->[$CONTEXT = 1] = $main->{nodes}->[1]; # DOCTYPE
@@ -59756,11 +60862,12 @@ $Scripting = $self->{Scripting};
 
     sub _parse_sub_done ($) {
       my $self = $_[0];
-      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InMDEntity, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
       $IframeSrcdoc = $self->{IframeSrcdoc};
+$InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
-      ($AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $StopProcessing, $Temp, $TempIndex, $Token, $XMLStandalone) = @{$self->{saved_states}}{qw(AllDeclsProcessed AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State StopProcessing Temp TempIndex Token XMLStandalone)};
+      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State Temp TempIndex Token)};
 ($AFE, $Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP OpenCMGroups OpenMarkedSections TABLE_CHARS TEMPLATE_IMS Tokens)};
 ($DTDDefs) = @{$self->{saved_maps}}{qw(DTDDefs)};
 

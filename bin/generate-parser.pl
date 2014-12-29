@@ -83,12 +83,10 @@ if ($LANG eq 'XML') {
   $Vars->{DTDMode} = {type => 'enum', save => 1, default => 'N/A'};
   $Vars->{OpenMarkedSections} = {unchanged => 1, type => 'list'};
   $Vars->{OpenCMGroups} = {unchanged => 1, type => 'list'};
-  $Vars->{StopProcessing} = {save => 1, type => 'boolean'};
   $Vars->{DTDDefs} = {unchanged => 1, type => 'map'};
-  $Vars->{AllDeclsProcessed} = {save => 1, type => 'boolean'};
-  $Vars->{XMLStandalone} = {save => 1, type => 'boolean'};
   $Vars->{OriginalState} = {save => 1, type => 'enum'};
   $Vars->{SC} = {input => 1, from_method => 1};
+  $Vars->{InMDEntity} = {input => 1, unchanged => 1, type => 'boolean'};
 }
 
 ## ------ Input byte stream ------
@@ -611,6 +609,17 @@ sub serialize_actions ($;%) {
       } else {
         die "Unknown if |$_->{if}|";
       }
+    } elsif ($type eq 'parse error-and-switch') {
+      die unless $_->{break};
+      die $_->{if} unless $_->{if} eq 'fragment';
+      push @result, sprintf q{
+        if (defined $InMDEntity) {
+          push @$Errors, {type => '%s', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+          %s
+          return 1;
+        }
+      }, $_->{error_type} // $_->{name}, switch_state_code $_->{state};
     } elsif ($type eq 'switch-and-emit') {
       die "Unknown if |$_->{if}|" unless $_->{if} eq 'appropriate end tag';
       die unless $_->{break};
@@ -684,7 +693,7 @@ sub serialize_actions ($;%) {
           $_->{possible_token_types}->{'NOTATION token'} or
           $_->{possible_token_types}->{'ATTLIST token'} or
           $_->{possible_token_types}->{'ELEMENT token'}) {
-        push @result, q{$Token->{StopProcessing} = 1 if $StopProcessing;};
+        push @result, q{$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};};
       }
       if ($_->{possible_token_types}->{'DOCTYPE token'} and
           $LANG eq 'XML') {
@@ -820,8 +829,8 @@ sub serialize_actions ($;%) {
       } elsif ($type eq 'set-to-cmgroup') {
         push @result, sprintf q[$OpenCMGroups->[-1]->{q<%s>} = %s;],
             $field, $value;
-      } elsif ($type eq 'append-to-cmgroup') {
-        push @result, sprintf q[$OpenCMGroups->[-1]->{q<%s>} .= %s;],
+      } elsif ($type eq 'append-to-cmelement') {
+        push @result, sprintf q[$OpenCMGroups->[-1]->{items}->[-1]->{q<%s>} .= %s;],
             $field, $value;
       } elsif ($type eq 'set-to-cmelement') {
         push @result, sprintf q[$OpenCMGroups->[-1]->{items}->[-1]->{q<%s>} = %s;],
@@ -843,6 +852,8 @@ sub serialize_actions ($;%) {
                           value => %s,
                           di => $DI, index => %s};
         }, $value, $index_delta;
+      } else {
+        die $type;
       }
     } elsif ($type eq 'set-empty') {
       my $field = $_->{field};
@@ -966,7 +977,7 @@ sub serialize_actions ($;%) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -1107,7 +1118,7 @@ sub serialize_actions ($;%) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
-                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
                   push @$Errors, {level => 'm',
                                   type => 'VC:Standalone Document Declaration:entity',
                                   value => $Temp,
@@ -1232,7 +1243,7 @@ sub serialize_actions ($;%) {
               ## done (Chrome behavior).
 
               $DTDDefs->{has_charref_decls} = 1;
-              $DTDDefs->{charref_vc_error} = 1 if $XMLStandalone;
+              $DTDDefs->{charref_vc_error} = 1 if $DTDDefs->{XMLStandalone};
               $TempIndex += length $Temp;
               $Temp = '';
               $return = 1;
@@ -1251,11 +1262,12 @@ sub serialize_actions ($;%) {
                             di => $DI, index => $TempIndex};
           }
 
-          if (not $StopProcessing and not $XMLStandalone) {
+          if (not $DTDDefs->{StopProcessing} and
+              not $DTDDefs->{XMLStandalone}) {
             push @$Errors, {level => 'i',
                             type => 'stop processing',
                             di => $DI, index => $TempIndex};
-            $StopProcessing = 1;
+            $DTDDefs->{StopProcessing} = 1;
           }
         } # REF
       };
@@ -1291,17 +1303,18 @@ sub serialize_actions ($;%) {
                             di => $DI, index => $TempIndex};
           }
 
-          if (not $StopProcessing and not $XMLStandalone) {
+          if (not $DTDDefs->{StopProcessing} and
+              not $DTDDefs->{XMLStandalone}) {
             push @$Errors, {level => 'i',
                             type => 'stop processing',
                             di => $DI, index => $TempIndex};
-            $StopProcessing = 1;
+            $DTDDefs->{StopProcessing} = 1;
           }
         } # REF
       };
       $return = '1 if $return';
     } elsif ($type eq 'process-temp-as-peref-md') { # XML only
-      push @result, q{
+      push @result, sprintf q{
         my $return;
         REF: {
           if (defined $DTDDefs->{pe}->{$Temp}) {
@@ -1331,14 +1344,16 @@ sub serialize_actions ($;%) {
                             di => $DI, index => $TempIndex};
           }
 
-          if (not $StopProcessing and not $XMLStandalone) {
+          if (not $DTDDefs->{StopProcessing} and
+              not $DTDDefs->{XMLStandalone}) {
             push @$Errors, {level => 'i',
                             type => 'stop processing',
                             di => $DI, index => $TempIndex};
-            $StopProcessing = 1;
+            %s
+            $DTDDefs->{StopProcessing} = 1;
           }
         } # REF
-      };
+      }, switch_state_code 'bogus markup declaration state';
       $return = '1 if $return';
     } elsif ($type eq 'set-original-state') { # XML only
       push @result, sprintf q{$OriginalState = [%s, %s];},
@@ -1412,7 +1427,7 @@ sub serialize_actions ($;%) {
         die "Unknown list type |$list|";
       }
       push @result, sprintf q{
-        if (%s) {
+        if (not %s) {
           %s
         } else {
           %s
@@ -2269,7 +2284,7 @@ sub actions_to_code ($;%) {
               if (_tokenize_attr_value $attrs->{$attr_name} and
                   $def->{external} and
                   not $def->{external}->{vc_error_reported} and
-                  $XMLStandalone) {
+                  $DTDDefs->{XMLStandalone}) {
                 push @$Errors, {level => 'm',
                                 type => 'VC:Standalone Document Declaration:attr',
                                 di => $def->{di}, index => $def->{index},
@@ -2289,7 +2304,7 @@ sub actions_to_code ($;%) {
 
             if ($def->{external} and
                 not $def->{external}->{vc_error_reported} and
-                $XMLStandalone) {
+                $DTDDefs->{XMLStandalone}) {
               push @$Errors, {level => 'm',
                               type => 'VC:Standalone Document Declaration:attr',
                                 di => $def->{di}, index => $def->{index},
@@ -2389,7 +2404,7 @@ sub actions_to_code ($;%) {
           $DTDDefs->{el_ncnames}->{$l} ||= $attr if defined $l;
           if (defined $attr->{declared_type}) {
             #
-          } elsif ($AllDeclsProcessed) {
+          } elsif ($DTDDefs->{AllDeclsProcessed}) {
             $attr->{declared_type} = 0; # no value
           } else {
             $attr->{declared_type} = 11; # unknown
@@ -3023,7 +3038,7 @@ sub actions_to_code ($;%) {
         $DTDDefs->{index} = $token->{index};
       };
     } elsif ($act->{type} eq 'set the stop processing flag') {
-      push @code, q{$StopProcessing = 1;};
+      push @code, q{$DTDDefs->{StopProcessing} = 1;};
     } elsif ($act->{type} eq 'set-end-tag-name') {
       push @code, q{my $tag_name = length $token->{tag_name} ? $token->{tag_name} : $OE->[-1]->{token}->{tag_name};};
     } elsif ($act->{type} eq 'the XML declaration is missing') {
@@ -3102,7 +3117,8 @@ sub actions_to_code ($;%) {
                               type => 'attribute not allowed:standalone',
                               di => $DI, index => $pos};
             } else {
-              push @$OP, ['xml-standalone', $XMLStandalone = ($v ne 'no')];
+              push @$OP, ['xml-standalone',
+                          $DTDDefs->{XMLStandalone} = ($v ne 'no')];
             }
           } else {
             my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
@@ -3135,17 +3151,27 @@ sub actions_to_code ($;%) {
                  push @$Errors, {@_, di => $DI, index => $Offset + pos $Input};
                });
           my $def = $DTDDefs->{elements}->{$token->{name}};
-          for (qw(name di index content_keyword cmgroup)) {
+          for (qw(name di index cmgroup)) {
             $def->{$_} = $token->{$_};
           }
+          if (defined $token->{content_keyword}) {
+            if ({EMPTY => 1, ANY => 1}->{$token->{content_keyword}}) {
+              $def->{content_keyword} = $token->{content_keyword};
+            } else {
+              push @$Errors, {level => 'm',
+                              type => 'xml:dtd:unknown content keyword',
+                              value => $token->{content_keyword},
+                              di => $DI, index => $Offset + pos $Input};
+            }
+          }
+          ## XXX $self->{t}->{content} syntax check.
+          $DTDDefs->{elements}->{$token->{name}}->{has_element_decl} = 1;
         } else {
           push @$Errors, {level => 'm',
                           type => 'duplicate element decl', ## TODO: type
                           value => $token->{name},
                           di => $DI, index => $Offset + pos $Input};
-          $DTDDefs->{elements}->{$token->{name}}->{has_element_decl} = 1;
         }
-        ## TODO: $self->{t}->{content} syntax check.
       };
     } elsif ($act->{type} eq 'process an ATTLIST token') {
       push @code, q{
@@ -4324,10 +4350,22 @@ sub dom_tree ($$) {
 
     } elsif ($op->[0] eq 'construct-doctype') {
       my $doctype = $nodes->[1];
+      my $serialize_cmgroup; $serialize_cmgroup = sub {
+        return '(' . (join {'|' => ' | ', ',' => ', '}->{$_[0]->{separators}->[0]->{type} || ''} || '', map {
+          if ($_->{items}) {
+            $serialize_cmgroup->($_);
+          } else {
+            $_->{name} . ($_->{repetition} || '');
+          }
+        } @{$_[0]->{items}}) . ')' . ($_[0]->{repetition} || '');
+      };
       for my $data (values %%{$DTDDefs->{elements} or {}}) {
         my $node = $doc->create_element_type_definition ($data->{name});
-        $node->content_model_text ($data->{content_keyword})
-            if defined $data->{content_keyword};
+        if (defined $data->{content_keyword}) {
+          $node->content_model_text ($data->{content_keyword});
+        } elsif (defined $data->{cmgroup}) {
+          $node->content_model_text ($serialize_cmgroup->($data->{cmgroup}));
+        }
         $node->manakai_set_source_location (['', $data->{di}, $data->{index}])
             if defined $data->{index};
         $doctype->set_element_type_definition_node ($node);
@@ -5309,6 +5347,7 @@ sub generate_api ($) {
 
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
     $self->{is_sub_parser} = 1;
+    $DTDMode = 'parameter entity';
 
     $NEXT_ID++;
     $self->{nodes}->[$CONTEXT = 1] = $main->{nodes}->[1]; # DOCTYPE
@@ -5374,6 +5413,7 @@ sub generate_api ($) {
 
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
     $self->{is_sub_parser} = 1;
+    $DTDMode = 'parameter entity';
 
     $NEXT_ID++;
     $self->{nodes}->[$CONTEXT = 1] = $main->{nodes}->[1]; # DOCTYPE
@@ -5422,6 +5462,7 @@ sub generate_api ($) {
     $Token = $main->{saved_states}->{Token};
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
     $self->{is_sub_parser} = 1;
+    $DTDMode = 'parameter entity';
 
     $NEXT_ID++;
     $self->{nodes}->[$CONTEXT = 1] = $main->{nodes}->[1]; # DOCTYPE
@@ -5488,6 +5529,7 @@ sub generate_api ($) {
     $Token = $main->{saved_states}->{Token};
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
     $self->{is_sub_parser} = 1;
+    $DTDMode = 'parameter entity';
 
     $NEXT_ID++;
     $self->{nodes}->[$CONTEXT = 1] = $main->{nodes}->[1]; # DOCTYPE
@@ -5501,6 +5543,7 @@ sub generate_api ($) {
   sub parse ($$$) {
     my ($self, $main, $in) = @_;
 
+    $self->{InMDEntity} = 1;
     VARS::LOCAL;
     VARS::INIT;
     VARS::RESET;
@@ -5534,8 +5577,11 @@ sub generate_api ($) {
     } if $DI >= 0;
 
     $Token = $main->{saved_states}->{Token};
+    $Attr = $main->{saved_states}->{Attr};
+    $OpenCMGroups = $main->{saved_states}->{OpenCMGroups};
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
     $self->{is_sub_parser} = 1;
+    $DTDMode = 'parameter entity';
 
     $NEXT_ID++;
     $self->{nodes}->[$CONTEXT = 1] = $main->{nodes}->[1]; # DOCTYPE
@@ -5553,6 +5599,8 @@ sub generate_api ($) {
 
       $self->{main_parser} = $_[2];
       $self->{can_restart} = 1;
+
+      $self->{InMDEntity} = 1;
 
       VARS::LOCAL;
       PARSER: {
@@ -5600,8 +5648,11 @@ sub generate_api ($) {
     $dids->[$DI] ||= {} if $DI >= 0;
 
     $Token = $main->{saved_states}->{Token};
+    $Attr = $main->{saved_states}->{Attr};
+    $OpenCMGroups = $main->{saved_states}->{OpenCMGroups};
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
     $self->{is_sub_parser} = 1;
+    $DTDMode = 'parameter entity';
 
     $NEXT_ID++;
     $self->{nodes}->[$CONTEXT = 1] = $main->{nodes}->[1]; # DOCTYPE
@@ -5848,7 +5899,7 @@ my $OnDTDEntityReference = sub {
     $main->onerrors->($main, [{level => 'm',
                                type => 'entity:too deep',
                                text => $main->max_entity_depth,
-                               value => '%'.$data->{entity}->{name}.';',
+                               value => '%%'.$data->{entity}->{name}.';',
                                di => $data->{entity}->{di},
                                index => $data->{entity}->{index}}]);
   } elsif (defined $data->{entity}->{name} and
@@ -5856,7 +5907,7 @@ my $OnDTDEntityReference = sub {
     $main->onerrors->($main, [{level => 'm',
                                type => 'entity:too many refs',
                                text => $main->max_entity_expansions,
-                               value => '%'.$data->{entity}->{name}.';',
+                               value => '%%'.$data->{entity}->{name}.';',
                                di => $data->{entity}->{di},
                                index => $data->{entity}->{index}}]);
   } else {
@@ -5887,14 +5938,14 @@ my $OnEntityValueEntityReference = sub {
     $main->onerrors->($main, [{level => 'm',
                                type => 'entity:too deep',
                                text => $main->max_entity_depth,
-                               value => '%'.$data->{entity}->{name}.';',
+                               value => '%%'.$data->{entity}->{name}.';',
                                di => $data->{entity}->{di},
                                index => $data->{entity}->{index}}]);
   } elsif ((${$main->{entity_expansion_count} || \0}) > $main->max_entity_expansions + 1) {
     $main->onerrors->($main, [{level => 'm',
                                type => 'entity:too many refs',
                                text => $main->max_entity_expansions,
-                               value => '%'.$data->{entity}->{name}.';',
+                               value => '%%'.$data->{entity}->{name}.';',
                                di => $data->{entity}->{di},
                                index => $data->{entity}->{index}}]);
   } else {
@@ -5925,14 +5976,14 @@ my $OnMDEntityReference = sub {
     $main->onerrors->($main, [{level => 'm',
                                type => 'entity:too deep',
                                text => $main->max_entity_depth,
-                               value => '%'.$data->{entity}->{name}.';',
+                               value => '%%'.$data->{entity}->{name}.';',
                                di => $data->{entity}->{di},
                                index => $data->{entity}->{index}}]);
   } elsif ((${$main->{entity_expansion_count} || \0}) > $main->max_entity_expansions + 1) {
     $main->onerrors->($main, [{level => 'm',
                                type => 'entity:too many refs',
                                text => $main->max_entity_expansions,
-                               value => '%'.$data->{entity}->{name}.';',
+                               value => '%%'.$data->{entity}->{name}.';',
                                di => $data->{entity}->{di},
                                index => $data->{entity}->{index}}]);
   } else {
@@ -5940,7 +5991,15 @@ my $OnMDEntityReference = sub {
     my $main2 = $main;
     $sub->onparsed (sub {
       my $sub = $_[0];
-      $main2->{saved_states}->{State} = $sub->{saved_states}->{State};
+      package Web::XML::Parser;
+      if ($sub->{saved_states}->{State} == %s ()) {
+warn "XXX";
+die 123;
+      } else {
+        $main2->{saved_states}->{State} = $sub->{saved_states}->{State};
+      }
+      $main2->{saved_states}->{Attr} = $sub->{saved_states}->{Attr};
+      $main2->{saved_states}->{OpenCMGroups} = $sub->{saved_states}->{OpenCMGroups};
       $data->{entity}->{open}--;
       $main2->{pause}--;
       $main2->_parse_sub_done;
@@ -6062,6 +6121,7 @@ it under the same terms as Perl itself.
       } : q{
         sub HTMLNS () { q<http://www.w3.org/1999/xhtml> }
       }),
+      state_const 'DTD state',
       $var_decls,
       $tokenizer_defs_code,
       $tree_defs_code, $api_defs_code,
