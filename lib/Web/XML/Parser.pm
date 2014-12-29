@@ -45,6 +45,8 @@ my $GetDefaultErrorHandler = sub {
   my $dids = $_[0]->di_data_set;
   return sub {
     my $error = {@_};
+    require Web::HTML::SourceMap;
+    my ($di, $index) = Web::HTML::SourceMap::resolve_index_pair ($dids, $error->{di}, $error->{index});
     my $text = defined $error->{text} ? qq{ - $error->{text}} : '';
     my $value = defined $error->{value} ? qq{ "$error->{value}"} : '';
     my $level = {
@@ -54,15 +56,15 @@ my $GetDefaultErrorHandler = sub {
       i => 'Information',
     }->{$error->{level} || ''} || $error->{level};
     my $doc = 'document #' . $error->{di};
-    if (not $error->{di} == -1) {
-      my $did = $dids->[$error->{di}];
+    if (not $di == -1) {
+      my $did = $dids->[$di];
       if (defined $did->{name}) {
         $doc = $did->{name};
       } elsif (defined $did->{url}) {
         $doc = 'document <' . $did->{url} . '>';
       }
     }
-    warn "$level ($error->{type}$text) at $doc index $error->{index}$value\n";
+    warn "$level ($error->{type}$text) at $doc index $index$value\n";
   };
 }; # $GetDefaultErrorHandler
 
@@ -4008,7 +4010,7 @@ sub _change_the_encoding ($$$) {
 
     sub di_data_set ($;$) {
       if (@_ > 1) {
-        $_[0]->{di_data_set} = 0+$_[1];
+        $_[0]->{di_data_set} = $_[1];
       }
       return $_[0]->{di_data_set} ||= [];
     } # di_data_set
@@ -8670,14 +8672,13 @@ if ($Input =~ /\G([0123456789]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -8710,14 +8711,13 @@ $State = ENT_VALUE__DQ__STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -8755,14 +8755,13 @@ push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -8797,14 +8796,13 @@ $State = ENT_VALUE__DQ__STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -8837,14 +8835,13 @@ $State = A_ENT_PARAMETER_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -8879,14 +8876,13 @@ $State = PE_NAME_IN_ENT_VALUE__DQ__STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -8921,14 +8917,13 @@ $State = ENT_VALUE__DQ__STATE___CHARREF_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -8963,14 +8958,13 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -9033,14 +9027,13 @@ if ($Input =~ /\G([0123456789ABCDEFabcdef]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -9073,14 +9066,13 @@ $State = ENT_VALUE__DQ__STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -9118,14 +9110,13 @@ push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -9160,14 +9151,13 @@ $State = ENT_VALUE__DQ__STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -9200,14 +9190,13 @@ $State = A_ENT_PARAMETER_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -9242,14 +9231,13 @@ $State = PE_NAME_IN_ENT_VALUE__DQ__STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -9284,14 +9272,13 @@ $State = ENT_VALUE__DQ__STATE___CHARREF_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -9326,14 +9313,13 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -9940,14 +9926,13 @@ if ($Input =~ /\G([0123456789]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -9980,14 +9965,13 @@ $State = ENT_VALUE__SQ__STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -10025,14 +10009,13 @@ push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -10067,14 +10050,13 @@ $State = ENT_VALUE__SQ__STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -10109,14 +10091,13 @@ $State = PE_NAME_IN_ENT_VALUE__SQ__STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -10151,14 +10132,13 @@ $State = ENT_VALUE__SQ__STATE___CHARREF_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -10191,14 +10171,13 @@ $State = A_ENT_PARAMETER_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -10233,14 +10212,13 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -10303,14 +10281,13 @@ if ($Input =~ /\G([0123456789ABCDEFabcdef]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -10343,14 +10320,13 @@ $State = ENT_VALUE__SQ__STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -10388,14 +10364,13 @@ push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -10430,14 +10405,13 @@ $State = ENT_VALUE__SQ__STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -10472,14 +10446,13 @@ $State = PE_NAME_IN_ENT_VALUE__SQ__STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -10514,14 +10487,13 @@ $State = ENT_VALUE__SQ__STATE___CHARREF_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -10554,14 +10526,13 @@ $State = A_ENT_PARAMETER_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -10596,14 +10567,13 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -11201,14 +11171,13 @@ if ($Input =~ /\G([0123456789]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -11241,14 +11210,13 @@ $State = ENT_VALUE_IN_ENT_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -11286,14 +11254,13 @@ push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -11328,14 +11295,13 @@ $State = ENT_VALUE_IN_ENT_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -11370,14 +11336,13 @@ $State = PE_NAME_IN_ENT_VALUE_IN_ENT_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -11412,14 +11377,13 @@ $State = ENT_VALUE_IN_ENT_STATE___CHARREF_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -11454,14 +11418,13 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -11524,14 +11487,13 @@ if ($Input =~ /\G([0123456789ABCDEFabcdef]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -11564,14 +11526,13 @@ $State = ENT_VALUE_IN_ENT_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -11609,14 +11570,13 @@ push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -11651,14 +11611,13 @@ $State = ENT_VALUE_IN_ENT_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -11693,14 +11652,13 @@ $State = PE_NAME_IN_ENT_VALUE_IN_ENT_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -11735,14 +11693,13 @@ $State = ENT_VALUE_IN_ENT_STATE___CHARREF_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -11777,14 +11734,13 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -21253,15 +21209,6 @@ if ($Input =~ /\G([0123456789]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -21293,15 +21240,6 @@ $State = ATTR_VALUE__DQ__STATE;
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -21341,15 +21279,6 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -21382,15 +21311,6 @@ push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -21425,15 +21345,6 @@ $State = ATTR_VALUE__DQ__STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -21465,15 +21376,6 @@ $State = A_ATTR_VALUE__QUOTED__STATE;
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -21508,15 +21410,6 @@ $State = ATTR_VALUE__DQ__STATE___CHARREF_STATE;
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -21555,15 +21448,6 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -21597,15 +21481,6 @@ if ($EOF) {
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -21654,15 +21529,6 @@ if ($Input =~ /\G([0123456789ABCDEFabcdef]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -21694,15 +21560,6 @@ $State = ATTR_VALUE__DQ__STATE;
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -21742,15 +21599,6 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -21783,15 +21631,6 @@ push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -21826,15 +21665,6 @@ $State = ATTR_VALUE__DQ__STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -21866,15 +21696,6 @@ $State = A_ATTR_VALUE__QUOTED__STATE;
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -21909,15 +21730,6 @@ $State = ATTR_VALUE__DQ__STATE___CHARREF_STATE;
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -21956,15 +21768,6 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -21998,15 +21801,6 @@ if ($EOF) {
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -24270,15 +24064,6 @@ if ($Input =~ /\G([0123456789]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -24310,15 +24095,6 @@ $State = ATTR_VALUE__SQ__STATE;
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -24358,15 +24134,6 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -24400,15 +24167,6 @@ push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -24441,15 +24199,6 @@ $State = ATTR_VALUE__SQ__STATE_CR;
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -24485,15 +24234,6 @@ $State = ATTR_VALUE__SQ__STATE___CHARREF_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -24525,15 +24265,6 @@ $State = A_ATTR_VALUE__QUOTED__STATE;
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -24572,15 +24303,6 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -24614,15 +24336,6 @@ if ($EOF) {
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -24671,15 +24384,6 @@ if ($Input =~ /\G([0123456789ABCDEFabcdef]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -24711,15 +24415,6 @@ $State = ATTR_VALUE__SQ__STATE;
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -24759,15 +24454,6 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -24801,15 +24487,6 @@ push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -24842,15 +24519,6 @@ $State = ATTR_VALUE__SQ__STATE_CR;
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -24886,15 +24554,6 @@ $State = ATTR_VALUE__SQ__STATE___CHARREF_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -24926,15 +24585,6 @@ $State = A_ATTR_VALUE__QUOTED__STATE;
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -24973,15 +24623,6 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -25015,15 +24656,6 @@ if ($EOF) {
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -27434,15 +27066,6 @@ if ($Input =~ /\G([0123456789]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -27474,15 +27097,6 @@ $State = ATTR_VALUE__UNQUOTED__STATE;
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -27522,15 +27136,6 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -27563,15 +27168,6 @@ $State = B_ATTR_NAME_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -27603,15 +27199,6 @@ $State = B_ATTR_NAME_STATE;
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -27650,15 +27237,6 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -27692,15 +27270,6 @@ $State = ATTR_VALUE__UNQUOTED__STATE___CHARREF_STATE;
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -27739,15 +27308,6 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -27785,15 +27345,6 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -27830,15 +27381,6 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -27912,15 +27454,6 @@ push @$Tokens, $Token;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -27958,15 +27491,6 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -28000,15 +27524,6 @@ if ($EOF) {
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -28057,15 +27572,6 @@ if ($Input =~ /\G([0123456789ABCDEFabcdef]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -28097,15 +27603,6 @@ $State = ATTR_VALUE__UNQUOTED__STATE;
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -28145,15 +27642,6 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -28186,15 +27674,6 @@ $State = B_ATTR_NAME_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -28226,15 +27705,6 @@ $State = B_ATTR_NAME_STATE;
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -28273,15 +27743,6 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -28315,15 +27776,6 @@ $State = ATTR_VALUE__UNQUOTED__STATE___CHARREF_STATE;
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -28362,15 +27814,6 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -28408,15 +27851,6 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -28453,15 +27887,6 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -28535,15 +27960,6 @@ push @$Tokens, $Token;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -28581,15 +27997,6 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -28623,15 +28030,6 @@ if ($EOF) {
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -31120,15 +30518,6 @@ if ($Input =~ /\G([0123456789]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -31160,15 +30549,6 @@ $State = ATTR_VALUE_IN_ENT_STATE;
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -31208,15 +30588,6 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -31250,15 +30621,6 @@ push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -31291,15 +30653,6 @@ $State = ATTR_VALUE_IN_ENT_STATE_CR;
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -31335,15 +30688,6 @@ $State = ATTR_VALUE_IN_ENT_STATE___CHARREF_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -31377,15 +30721,6 @@ if ($EOF) {
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -31430,15 +30765,6 @@ if ($Input =~ /\G([0123456789ABCDEFabcdef]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -31470,15 +30796,6 @@ $State = ATTR_VALUE_IN_ENT_STATE;
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -31518,15 +30835,6 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -31560,15 +30868,6 @@ push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -31601,15 +30900,6 @@ $State = ATTR_VALUE_IN_ENT_STATE_CR;
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -31645,15 +30935,6 @@ $State = ATTR_VALUE_IN_ENT_STATE___CHARREF_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -31687,15 +30968,6 @@ if ($EOF) {
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -42304,14 +41576,13 @@ if ($Input =~ /\G([0123456789]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -42349,14 +41620,13 @@ $State = DATA_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -42403,14 +41673,13 @@ $State = DATA_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -42454,14 +41723,13 @@ $State = DATA_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -42499,14 +41767,13 @@ $State = CHARREF_IN_DATA_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -42545,14 +41812,13 @@ $AnchoredIndex = $Offset + (pos $Input) - 1;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -42595,14 +41861,13 @@ $State = IN_MSC_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -42646,14 +41911,13 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -42702,14 +41966,13 @@ if ($Input =~ /\G([0123456789ABCDEFabcdef]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -42747,14 +42010,13 @@ $State = DATA_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -42801,14 +42063,13 @@ $State = DATA_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -42852,14 +42113,13 @@ $State = DATA_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -42897,14 +42157,13 @@ $State = CHARREF_IN_DATA_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -42943,14 +42202,13 @@ $AnchoredIndex = $Offset + (pos $Input) - 1;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -42993,14 +42251,13 @@ $State = IN_MSC_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -43044,14 +42301,13 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -43107,7 +42363,7 @@ $Temp .= $1;
           REF: {
             ## <XML>
 
-            if (not @$OE and $DTDMode eq 'N/A') {
+            if (not @$OE) {
               push @$Errors, {level => 'm',
                               type => 'ref outside of root element',
                               value => $Temp,
@@ -43249,7 +42505,7 @@ $Temp .= q@�@;
           REF: {
             ## <XML>
 
-            if (not @$OE and $DTDMode eq 'N/A') {
+            if (not @$OE) {
               push @$Errors, {level => 'm',
                               type => 'ref outside of root element',
                               value => $Temp,
@@ -43389,7 +42645,7 @@ return 1 if $return;
           REF: {
             ## <XML>
 
-            if (not @$OE and $DTDMode eq 'N/A') {
+            if (not @$OE) {
               push @$Errors, {level => 'm',
                               type => 'ref outside of root element',
                               value => $Temp,
@@ -43530,7 +42786,7 @@ return 1 if $return;
           REF: {
             ## <XML>
 
-            if (not @$OE and $DTDMode eq 'N/A') {
+            if (not @$OE) {
               push @$Errors, {level => 'm',
                               type => 'ref outside of root element',
                               value => $Temp,
@@ -43670,7 +42926,7 @@ return 1 if $return;
           REF: {
             ## <XML>
 
-            if (not @$OE and $DTDMode eq 'N/A') {
+            if (not @$OE) {
               push @$Errors, {level => 'm',
                               type => 'ref outside of root element',
                               value => $Temp,
@@ -43810,7 +43066,7 @@ return 1 if $return;
           REF: {
             ## <XML>
 
-            if (not @$OE and $DTDMode eq 'N/A') {
+            if (not @$OE) {
               push @$Errors, {level => 'm',
                               type => 'ref outside of root element',
                               value => $Temp,
@@ -43950,7 +43206,7 @@ return 1 if $return;
           REF: {
             ## <XML>
 
-            if (not @$OE and $DTDMode eq 'N/A') {
+            if (not @$OE) {
               push @$Errors, {level => 'm',
                               type => 'ref outside of root element',
                               value => $Temp,
@@ -44085,7 +43341,7 @@ return 1 if $return;
           REF: {
             ## <XML>
 
-            if (not @$OE and $DTDMode eq 'N/A') {
+            if (not @$OE) {
               push @$Errors, {level => 'm',
                               type => 'ref outside of root element',
                               value => $Temp,
@@ -44225,7 +43481,7 @@ return 1 if $return;
           REF: {
             ## <XML>
 
-            if (not @$OE and $DTDMode eq 'N/A') {
+            if (not @$OE) {
               push @$Errors, {level => 'm',
                               type => 'ref outside of root element',
                               value => $Temp,
@@ -44361,7 +43617,7 @@ return 1 if $return;
           REF: {
             ## <XML>
 
-            if (not @$OE and $DTDMode eq 'N/A') {
+            if (not @$OE) {
               push @$Errors, {level => 'm',
                               type => 'ref outside of root element',
                               value => $Temp,
@@ -44501,7 +43757,7 @@ return 1 if $return;
           REF: {
             ## <XML>
 
-            if (not @$OE and $DTDMode eq 'N/A') {
+            if (not @$OE) {
               push @$Errors, {level => 'm',
                               type => 'ref outside of root element',
                               value => $Temp,
@@ -44641,7 +43897,7 @@ return 1 if $return;
           REF: {
             ## <XML>
 
-            if (not @$OE and $DTDMode eq 'N/A') {
+            if (not @$OE) {
               push @$Errors, {level => 'm',
                               type => 'ref outside of root element',
                               value => $Temp,
@@ -44782,7 +44038,7 @@ if ($EOF) {
           REF: {
             ## <XML>
 
-            if (not @$OE and $DTDMode eq 'N/A') {
+            if (not @$OE) {
               push @$Errors, {level => 'm',
                               type => 'ref outside of root element',
                               value => $Temp,
@@ -45678,15 +44934,6 @@ if ($Input =~ /\G([0123456789]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -45718,15 +44965,6 @@ $State = DEFAULT_ATTR_VALUE__DQ__STATE;
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -45766,15 +45004,6 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -45807,15 +45036,6 @@ push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -45850,15 +45070,6 @@ $State = DEFAULT_ATTR_VALUE__DQ__STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -45890,15 +45101,6 @@ $State = B_ATTLIST_ATTR_NAME_STATE;
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -45934,15 +45136,6 @@ $State = DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -45976,15 +45169,6 @@ if ($EOF) {
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -46048,15 +45232,6 @@ if ($Input =~ /\G([0123456789ABCDEFabcdef]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -46088,15 +45263,6 @@ $State = DEFAULT_ATTR_VALUE__DQ__STATE;
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -46136,15 +45302,6 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -46177,15 +45334,6 @@ push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -46220,15 +45368,6 @@ $State = DEFAULT_ATTR_VALUE__DQ__STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -46260,15 +45399,6 @@ $State = B_ATTLIST_ATTR_NAME_STATE;
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -46304,15 +45434,6 @@ $State = DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -46346,15 +45467,6 @@ if ($EOF) {
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -48678,15 +47790,6 @@ if ($Input =~ /\G([0123456789]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -48718,15 +47821,6 @@ $State = DEFAULT_ATTR_VALUE__SQ__STATE;
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -48766,15 +47860,6 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -48808,15 +47893,6 @@ push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -48849,15 +47925,6 @@ $State = DEFAULT_ATTR_VALUE__SQ__STATE_CR;
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -48893,15 +47960,6 @@ $State = DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -48933,15 +47991,6 @@ $State = B_ATTLIST_ATTR_NAME_STATE;
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -48976,15 +48025,6 @@ if ($EOF) {
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -49048,15 +48088,6 @@ if ($Input =~ /\G([0123456789ABCDEFabcdef]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -49088,15 +48119,6 @@ $State = DEFAULT_ATTR_VALUE__SQ__STATE;
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -49136,15 +48158,6 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -49178,15 +48191,6 @@ push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -49219,15 +48223,6 @@ $State = DEFAULT_ATTR_VALUE__SQ__STATE_CR;
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -49263,15 +48258,6 @@ $State = DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -49303,15 +48289,6 @@ $State = B_ATTLIST_ATTR_NAME_STATE;
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -49346,15 +48323,6 @@ if ($EOF) {
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -51631,15 +50599,6 @@ if ($Input =~ /\G([0123456789]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -51671,15 +50630,6 @@ $State = DEFAULT_ATTR_VALUE_IN_ENT_STATE;
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -51719,15 +50669,6 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -51761,15 +50702,6 @@ push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -51802,15 +50734,6 @@ $State = DEFAULT_ATTR_VALUE_IN_ENT_STATE_CR;
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -51846,15 +50769,6 @@ $State = DEFAULT_ATTR_VALUE_IN_ENT_STATE___CHARREF_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -51888,15 +50802,6 @@ if ($EOF) {
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -51941,15 +50846,6 @@ if ($Input =~ /\G([0123456789ABCDEFabcdef]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -51981,15 +50877,6 @@ $State = DEFAULT_ATTR_VALUE_IN_ENT_STATE;
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -52029,15 +50916,6 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -52071,15 +50949,6 @@ push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -52112,15 +50981,6 @@ $State = DEFAULT_ATTR_VALUE_IN_ENT_STATE_CR;
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -52156,15 +51016,6 @@ $State = DEFAULT_ATTR_VALUE_IN_ENT_STATE___CHARREF_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -52198,15 +51049,6 @@ if ($EOF) {
             push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-
-        ## <XML>
-        if (not @$OE and $DTDMode eq 'N/A') {
-          push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
@@ -58841,7 +57683,11 @@ $Scripting = $self->{Scripting};
     $self->{input_stream} = [@{$in->{entity}->{value}}];
     $self->{di_data_set} = my $dids = $main->di_data_set;
     $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
-    $dids->[$DI] ||= {name => '&'.$in->{entity}->{name}.';'} if $DI >= 0;
+    require Web::HTML::SourceMap;
+    $dids->[$DI] ||= {
+      name => '&'.$in->{entity}->{name}.';',
+      map => Web::HTML::SourceMap::indexed_string_to_mapping ($self->{input_stream}),
+    } if $DI >= 0;
 
     $Attr = $main->{saved_states}->{Attr};
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
@@ -58897,7 +57743,11 @@ $Scripting = $self->{Scripting};
     $self->{input_stream} = [@{$in->{entity}->{value}}];
     $self->{di_data_set} = my $dids = $main->di_data_set;
     $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
-    $dids->[$DI] ||= {name => '&'.$in->{entity}->{name}.';'} if $DI >= 0;
+    require Web::HTML::SourceMap;
+    $dids->[$DI] ||= {
+      name => '&'.$in->{entity}->{name}.';',
+      map => Web::HTML::SourceMap::indexed_string_to_mapping ($self->{input_stream}),
+    } if $DI >= 0;
 
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
     $self->{is_sub_parser} = 1;
@@ -59039,7 +57889,11 @@ $Scripting = $self->{Scripting};
     $self->{input_stream} = [@{$in->{entity}->{value}}];
     $self->{di_data_set} = my $dids = $main->di_data_set;
     $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
-    $dids->[$DI] ||= {name => '%'.$in->{entity}->{name}.';'} if $DI >= 0;
+    require Web::HTML::SourceMap;
+    $dids->[$DI] ||= {
+      name => '%'.$in->{entity}->{name}.';',
+      map => Web::HTML::SourceMap::indexed_string_to_mapping ($self->{input_stream}),
+    } if $DI >= 0;
 
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
     $self->{is_sub_parser} = 1;
@@ -59163,7 +58017,11 @@ $Scripting = $self->{Scripting};
     $self->{input_stream} = [@{$in->{entity}->{value}}];
     $self->{di_data_set} = my $dids = $main->di_data_set;
     $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
-    $dids->[$DI] ||= {name => '%'.$in->{entity}->{name}.';'} if $DI >= 0;
+    require Web::HTML::SourceMap;
+    $dids->[$DI] ||= {
+      name => '%'.$in->{entity}->{name}.';',
+      map => Web::HTML::SourceMap::indexed_string_to_mapping ($self->{input_stream}),
+    } if $DI >= 0;
 
     $Token = $main->{saved_states}->{Token};
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
@@ -59289,7 +58147,11 @@ $Scripting = $self->{Scripting};
     $self->{input_stream} = [@{$in->{entity}->{value}}];
     $self->{di_data_set} = my $dids = $main->di_data_set;
     $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
-    $dids->[$DI] ||= {name => '%'.$in->{entity}->{name}.';'} if $DI >= 0;
+    require Web::HTML::SourceMap;
+    $dids->[$DI] ||= {
+      name => '%'.$in->{entity}->{name}.';',
+      map => Web::HTML::SourceMap::indexed_string_to_mapping ($self->{input_stream}),
+    } if $DI >= 0;
 
     $Token = $main->{saved_states}->{Token};
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};

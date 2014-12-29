@@ -451,7 +451,7 @@ sub _change_the_encoding ($$$) {
 
     sub di_data_set ($;$) {
       if (@_ > 1) {
-        $_[0]->{di_data_set} = 0+$_[1];
+        $_[0]->{di_data_set} = $_[1];
       }
       return $_[0]->{di_data_set} ||= [];
     } # di_data_set
@@ -890,16 +890,16 @@ sub serialize_actions ($;%) {
       $field =~ tr/ -/__/ if defined $field;
       push @result, sprintf q[$Token->{q<%s>} = 1;], $field;
     } elsif ($type eq 'process-temp-as-decimal') {
-      push @result, q{
-        ## <XML>
+      use Data::Dumper;
+      push @result, sprintf q{
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      } if $LANG eq 'XML' and not $_->{in_attr};
+      push @result, q{
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -927,15 +927,14 @@ sub serialize_actions ($;%) {
       push @result, q{$Attr->{has_ref} = 1;} if $_->{in_attr};
     } elsif ($type eq 'process-temp-as-hexadecimal') {
       push @result, q{
-        ## <XML>
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
-                            type => 'ref outside of root element',
-                            value => $Temp,
-                            di => $DI, index => $TempIndex};
-          }
-        ## </XML>
-
+                          type => 'ref outside of root element',
+                          value => $Temp,
+                          di => $DI, index => $TempIndex};
+        }
+      } if $LANG eq 'XML' and not $_->{in_attr};
+      push @result, q{
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
@@ -1098,7 +1097,7 @@ sub serialize_actions ($;%) {
           REF: {
             ## <XML>
 
-            if (not @$OE and $DTDMode eq 'N/A') {
+            if (not @$OE) {
               push @$Errors, {level => 'm',
                               type => 'ref outside of root element',
                               value => $Temp,
@@ -5114,7 +5113,11 @@ sub generate_api ($) {
     $self->{input_stream} = [@{$in->{entity}->{value}}];
     $self->{di_data_set} = my $dids = $main->di_data_set;
     $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
-    $dids->[$DI] ||= {name => '&'.$in->{entity}->{name}.';'} if $DI >= 0;
+    require Web::HTML::SourceMap;
+    $dids->[$DI] ||= {
+      name => '&'.$in->{entity}->{name}.';',
+      map => Web::HTML::SourceMap::indexed_string_to_mapping ($self->{input_stream}),
+    } if $DI >= 0;
 
     $Attr = $main->{saved_states}->{Attr};
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
@@ -5162,7 +5165,11 @@ sub generate_api ($) {
     $self->{input_stream} = [@{$in->{entity}->{value}}];
     $self->{di_data_set} = my $dids = $main->di_data_set;
     $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
-    $dids->[$DI] ||= {name => '&'.$in->{entity}->{name}.';'} if $DI >= 0;
+    require Web::HTML::SourceMap;
+    $dids->[$DI] ||= {
+      name => '&'.$in->{entity}->{name}.';',
+      map => Web::HTML::SourceMap::indexed_string_to_mapping ($self->{input_stream}),
+    } if $DI >= 0;
 
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
     $self->{is_sub_parser} = 1;
@@ -5288,7 +5295,11 @@ sub generate_api ($) {
     $self->{input_stream} = [@{$in->{entity}->{value}}];
     $self->{di_data_set} = my $dids = $main->di_data_set;
     $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
-    $dids->[$DI] ||= {name => '%'.$in->{entity}->{name}.';'} if $DI >= 0;
+    require Web::HTML::SourceMap;
+    $dids->[$DI] ||= {
+      name => '%'.$in->{entity}->{name}.';',
+      map => Web::HTML::SourceMap::indexed_string_to_mapping ($self->{input_stream}),
+    } if $DI >= 0;
 
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
     $self->{is_sub_parser} = 1;
@@ -5396,7 +5407,11 @@ sub generate_api ($) {
     $self->{input_stream} = [@{$in->{entity}->{value}}];
     $self->{di_data_set} = my $dids = $main->di_data_set;
     $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
-    $dids->[$DI] ||= {name => '%'.$in->{entity}->{name}.';'} if $DI >= 0;
+    require Web::HTML::SourceMap;
+    $dids->[$DI] ||= {
+      name => '%'.$in->{entity}->{name}.';',
+      map => Web::HTML::SourceMap::indexed_string_to_mapping ($self->{input_stream}),
+    } if $DI >= 0;
 
     $Token = $main->{saved_states}->{Token};
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
@@ -5506,7 +5521,11 @@ sub generate_api ($) {
     $self->{input_stream} = [@{$in->{entity}->{value}}];
     $self->{di_data_set} = my $dids = $main->di_data_set;
     $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
-    $dids->[$DI] ||= {name => '%'.$in->{entity}->{name}.';'} if $DI >= 0;
+    require Web::HTML::SourceMap;
+    $dids->[$DI] ||= {
+      name => '%'.$in->{entity}->{name}.';',
+      map => Web::HTML::SourceMap::indexed_string_to_mapping ($self->{input_stream}),
+    } if $DI >= 0;
 
     $Token = $main->{saved_states}->{Token};
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
@@ -5666,6 +5685,8 @@ my $GetDefaultErrorHandler = sub {
   my $dids = $_[0]->di_data_set;
   return sub {
     my $error = {@_};
+    require Web::HTML::SourceMap;
+    my ($di, $index) = Web::HTML::SourceMap::resolve_index_pair ($dids, $error->{di}, $error->{index});
     my $text = defined $error->{text} ? qq{ - $error->{text}} : '';
     my $value = defined $error->{value} ? qq{ "$error->{value}"} : '';
     my $level = {
@@ -5675,15 +5696,15 @@ my $GetDefaultErrorHandler = sub {
       i => 'Information',
     }->{$error->{level} || ''} || $error->{level};
     my $doc = 'document #' . $error->{di};
-    if (not $error->{di} == -1) {
-      my $did = $dids->[$error->{di}];
+    if (not $di == -1) {
+      my $did = $dids->[$di];
       if (defined $did->{name}) {
         $doc = $did->{name};
       } elsif (defined $did->{url}) {
         $doc = 'document <' . $did->{url} . '>';
       }
     }
-    warn "$level ($error->{type}$text) at $doc index $error->{index}$value\n";
+    warn "$level ($error->{type}$text) at $doc index $index$value\n";
   };
 }; # $GetDefaultErrorHandler
 

@@ -77,16 +77,28 @@ sub _test ($$) {
   my $ges = $p->{ge} ||= {};
   my $pes = $p->{pe} ||= {};
 
-  my $data = $test->{data}->[0];
-  my $ip = [undef, {lc_map => create_index_lc_mapping $data}];
+  my $ip = [];
+  my $main_di = 0;
+  $p->di (0);
+  $ip->[$main_di]->{data} = $test->{data}->[0];
+  $ip->[$main_di]->{lc_map} = create_index_lc_mapping $ip->[$main_di]->{data};
+  my $url_to_di = {};
+  for (0..$#{$test->{resource} or []}) {
+    my $res = $test->{resource}->[$_];
+    $ip->[$_+1]->{data} = $res->[0];
+    $ip->[$_+1]->{lc_map} = create_index_lc_mapping $ip->[$_+1]->{data};
+    $ip->[$_+1]->{url} = $res->[1]->[0]; # or undef
+    $url_to_di->{$res->[1]->[0]} = $_+1 if defined $res->[1]->[0];
+  }
+  $p->di_data_set ($ip);
 
   my @errors;
   $p->onerror (sub {
     my %opt = @_;
-    my $di = $opt{di};
-    my ($l, $c) = index_pair_to_lc_pair $ip, $di, $opt{index};
+    my ($di, $index) = resolve_index_pair $ip, $opt{di}, $opt{index};
+    my ($l, $c) = index_pair_to_lc_pair $ip, $di, $index;
     push @errors, join ';',
-        ($di != 1 ? "[$di]" : '') . ($l || 0), ($c || 0),
+        ($di != $main_di ? "[$di]" : '') . ($l || 0), ($c || 0),
         $opt{type},
         defined $opt{text} ? $opt{text} : '',
         defined $opt{value} ? $opt{value} : '',
@@ -159,18 +171,20 @@ ok 1;
   }; # $code
 
   if (defined $test->{resource}) {
-    my %res;
-    my $i = 0;
-    for (@{$test->{resource}}) {
-      $res{defined $_->[1]->[0] ? $_->[1]->[0] : ''} = [++$i, $_->[0]];
-    }
     $p->onextentref (sub {
       my ($parser, $data, $subparser) = @_;
-      my $e = $res{$data->{entity}->{system_identifier} || ''}; # XXX
-      $subparser->di ($e->[0]) if defined $e;
-      $subparser->parse_bytes_start ('utf-8', $parser);
-      $subparser->parse_bytes_feed (encode 'utf-8', defined $e->[1] ? $e->[1] : '<?xml encoding="utf-8"?>'); # XXX
-      $subparser->parse_bytes_end;
+      my $di = defined $data->{entity}->{system_identifier} ? $url_to_di->{$data->{entity}->{system_identifier}} : undef;
+      if (defined $di) {
+        $subparser->di ($di);
+        $subparser->parse_bytes_start ('utf-8', $parser);
+        $subparser->parse_bytes_feed (encode 'utf-8', $ip->[$di]->{data});
+        $subparser->parse_bytes_end;
+      } else {
+        # XXX
+        $subparser->parse_bytes_start ('utf-8', $parser);
+        $subparser->parse_bytes_feed ('<?xml encoding="utf-8"?>');
+        $subparser->parse_bytes_end;
+      }
     });
     $p->onparsed (sub {
       test {
@@ -180,10 +194,10 @@ ok 1;
     });
 
     $p->parse_bytes_start (undef, $doc);
-    $p->parse_bytes_feed (encode 'utf-8', $data);
+    $p->parse_bytes_feed (encode 'utf-8', $ip->[$main_di]->{data});
     $p->parse_bytes_end;
   } elsif (not defined $test->{element}) {
-    $p->parse_char_string ($data => $doc);
+    $p->parse_char_string ($ip->[$main_di]->{data} => $doc);
     $result = dumptree ($doc);
     $code->();
   } else {
@@ -201,7 +215,7 @@ ok 1;
           (q<http://www.w3.org/1999/xhtml>, [undef, $test->{element}]);
     }
     my $children = $p->parse_char_string_with_context
-        ($data, $el, $dom->create_document);
+        ($ip->[$main_di]->{data}, $el, $dom->create_document);
     $el->append_child ($_) for $children->to_list;
     $result = dumptree ($el);
     $code->();
