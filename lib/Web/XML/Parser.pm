@@ -218,6 +218,13 @@ my $OnDTDEntityReference = sub {
     my $main2 = $main;
     $sub->onparsed (sub {
       my $sub = $_[0];
+      if (@{$sub->{saved_lists}->{OpenMarkedSections} or []} and
+          not $sub->{saved_lists}->{OpenMarkedSections}->[-1] eq 'IGNORE') {
+        $main2->onerrors->($main2, [{level => 'm',
+                                     type => 'ms:unclosed',
+                                     di => $sub->{saved_states}->{Token}->{di},
+                                     index => $sub->{saved_states}->{Token}->{index}}]);
+      }
       $data->{entity}->{open}--;
       $main2->{pause}--;
       $main2->_parse_sub_done;
@@ -300,10 +307,7 @@ my $OnMDEntityReference = sub {
         $main2->onerrors->($main2, [{level => 'm',
                                      type => 'unclosed literal',
                                      di => $sub->{saved_states}->{Token}->{di},
-                                     index => $sub->{saved_states}->{Token}->{di}}]);
-      } elsif ($sub->{saved_states}->{State} == DTD_STATE ()) {
-warn "XXX";
-die 123;
+                                     index => $sub->{saved_states}->{Token}->{index}}]);
       } else {
         $main2->{saved_states}->{State} = $sub->{saved_states}->{State};
       }
@@ -763,80 +767,83 @@ sub BOGUS_AFTER_DOCTYPE_INTERNAL_SUBSET_STATE () { 352 }
 sub BOGUS_COMMENT_STATE () { 353 }
 sub BOGUS_COMMENT_STATE_CR () { 354 }
 sub BOGUS_MARKUP_DECL_STATE () { 355 }
-sub CHARREF_IN_DATA_STATE () { 356 }
-sub COMMENT_END_BANG_STATE () { 357 }
-sub COMMENT_END_DASH_STATE () { 358 }
-sub COMMENT_END_STATE () { 359 }
-sub COMMENT_START_DASH_STATE () { 360 }
-sub COMMENT_START_STATE () { 361 }
-sub COMMENT_STATE () { 362 }
-sub COMMENT_STATE_CR () { 363 }
-sub CM_ELEMENT_STATE () { 364 }
-sub DATA_STATE () { 365 }
-sub DATA_STATE___CHARREF_BEFORE_HEX_NUM_STATE () { 366 }
-sub DATA_STATE___CHARREF_DECIMAL_NUM_STATE () { 367 }
-sub DATA_STATE___CHARREF_HEX_NUM_STATE () { 368 }
-sub DATA_STATE___CHARREF_NAME_STATE () { 369 }
-sub DATA_STATE___CHARREF_NUM_STATE () { 370 }
-sub DATA_STATE___CHARREF_STATE () { 371 }
-sub DATA_STATE___CHARREF_STATE_CR () { 372 }
-sub DATA_STATE_CR () { 373 }
-sub DEFAULT_ATTR_VALUE__DQ__STATE () { 374 }
-sub DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_BEFORE_HEX_NUM_STATE () { 375 }
-sub DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_DECIMAL_NUM_STATE () { 376 }
-sub DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_HEX_NUM_STATE () { 377 }
-sub DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_NAME_STATE () { 378 }
-sub DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_NUM_STATE () { 379 }
-sub DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_STATE () { 380 }
-sub DEFAULT_ATTR_VALUE__DQ__STATE_CR () { 381 }
-sub DEFAULT_ATTR_VALUE__SQ__STATE () { 382 }
-sub DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_BEFORE_HEX_NUM_STATE () { 383 }
-sub DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_DECIMAL_NUM_STATE () { 384 }
-sub DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_HEX_NUM_STATE () { 385 }
-sub DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_NAME_STATE () { 386 }
-sub DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_NUM_STATE () { 387 }
-sub DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_STATE () { 388 }
-sub DEFAULT_ATTR_VALUE__SQ__STATE_CR () { 389 }
-sub DEFAULT_ATTR_VALUE_IN_ENT_STATE () { 390 }
-sub DEFAULT_ATTR_VALUE_IN_ENT_STATE___CHARREF_BEFORE_HEX_NUM_STATE () { 391 }
-sub DEFAULT_ATTR_VALUE_IN_ENT_STATE___CHARREF_DECIMAL_NUM_STATE () { 392 }
-sub DEFAULT_ATTR_VALUE_IN_ENT_STATE___CHARREF_HEX_NUM_STATE () { 393 }
-sub DEFAULT_ATTR_VALUE_IN_ENT_STATE___CHARREF_NAME_STATE () { 394 }
-sub DEFAULT_ATTR_VALUE_IN_ENT_STATE___CHARREF_NUM_STATE () { 395 }
-sub DEFAULT_ATTR_VALUE_IN_ENT_STATE___CHARREF_STATE () { 396 }
-sub DEFAULT_ATTR_VALUE_IN_ENT_STATE_CR () { 397 }
-sub END_TAG_OPEN_STATE () { 398 }
-sub IGNORED_SECTION_STATE () { 399 }
-sub IN_DTD_MSC_STATE () { 400 }
-sub IN_IGNORED_SECTION_MSC_STATE () { 401 }
-sub IN_MSC_STATE () { 402 }
-sub IN_PIC_STATE () { 403 }
-sub MDO_STATE () { 404 }
-sub MDO_STATE__ () { 405 }
-sub MDO_STATE_D () { 406 }
-sub MDO_STATE_DO () { 407 }
-sub MDO_STATE_DOC () { 408 }
-sub MDO_STATE_DOCT () { 409 }
-sub MDO_STATE_DOCTY () { 410 }
-sub MDO_STATE_DOCTYP () { 411 }
-sub MDO_STATE__5B () { 412 }
-sub MDO_STATE__5BC () { 413 }
-sub MDO_STATE__5BCD () { 414 }
-sub MDO_STATE__5BCDA () { 415 }
-sub MDO_STATE__5BCDAT () { 416 }
-sub MDO_STATE__5BCDATA () { 417 }
-sub PE_DECL_OR_REF_AFTER_SPACE_STATE () { 418 }
-sub PE_DECL_OR_REF_STATE () { 419 }
-sub PE_NAME_IN_DTD_STATE () { 420 }
-sub PE_NAME_IN_ENT_VALUE__DQ__STATE () { 421 }
-sub PE_NAME_IN_ENT_VALUE__SQ__STATE () { 422 }
-sub PE_NAME_IN_ENT_VALUE_IN_ENT_STATE () { 423 }
-sub PE_NAME_IN_MARKUP_DECL_STATE () { 424 }
-sub SELF_CLOSING_START_TAG_STATE () { 425 }
-sub TAG_NAME_STATE () { 426 }
-sub TAG_OPEN_STATE () { 427 }
-sub TEXT_DECL_IN_ENT_VALUE_IN_ENT_STATE () { 428 }
-sub TEXT_DECL_IN_ENT_VALUE_IN_ENT_STATE_CR () { 429 }
+sub BOGUS_STATUS_KWD_STATE () { 356 }
+sub CHARREF_IN_DATA_STATE () { 357 }
+sub COMMENT_END_BANG_STATE () { 358 }
+sub COMMENT_END_DASH_STATE () { 359 }
+sub COMMENT_END_STATE () { 360 }
+sub COMMENT_START_DASH_STATE () { 361 }
+sub COMMENT_START_STATE () { 362 }
+sub COMMENT_STATE () { 363 }
+sub COMMENT_STATE_CR () { 364 }
+sub CM_ELEMENT_STATE () { 365 }
+sub DATA_STATE () { 366 }
+sub DATA_STATE___CHARREF_BEFORE_HEX_NUM_STATE () { 367 }
+sub DATA_STATE___CHARREF_DECIMAL_NUM_STATE () { 368 }
+sub DATA_STATE___CHARREF_HEX_NUM_STATE () { 369 }
+sub DATA_STATE___CHARREF_NAME_STATE () { 370 }
+sub DATA_STATE___CHARREF_NUM_STATE () { 371 }
+sub DATA_STATE___CHARREF_STATE () { 372 }
+sub DATA_STATE___CHARREF_STATE_CR () { 373 }
+sub DATA_STATE_CR () { 374 }
+sub DEFAULT_ATTR_VALUE__DQ__STATE () { 375 }
+sub DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_BEFORE_HEX_NUM_STATE () { 376 }
+sub DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_DECIMAL_NUM_STATE () { 377 }
+sub DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_HEX_NUM_STATE () { 378 }
+sub DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_NAME_STATE () { 379 }
+sub DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_NUM_STATE () { 380 }
+sub DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_STATE () { 381 }
+sub DEFAULT_ATTR_VALUE__DQ__STATE_CR () { 382 }
+sub DEFAULT_ATTR_VALUE__SQ__STATE () { 383 }
+sub DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_BEFORE_HEX_NUM_STATE () { 384 }
+sub DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_DECIMAL_NUM_STATE () { 385 }
+sub DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_HEX_NUM_STATE () { 386 }
+sub DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_NAME_STATE () { 387 }
+sub DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_NUM_STATE () { 388 }
+sub DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_STATE () { 389 }
+sub DEFAULT_ATTR_VALUE__SQ__STATE_CR () { 390 }
+sub DEFAULT_ATTR_VALUE_IN_ENT_STATE () { 391 }
+sub DEFAULT_ATTR_VALUE_IN_ENT_STATE___CHARREF_BEFORE_HEX_NUM_STATE () { 392 }
+sub DEFAULT_ATTR_VALUE_IN_ENT_STATE___CHARREF_DECIMAL_NUM_STATE () { 393 }
+sub DEFAULT_ATTR_VALUE_IN_ENT_STATE___CHARREF_HEX_NUM_STATE () { 394 }
+sub DEFAULT_ATTR_VALUE_IN_ENT_STATE___CHARREF_NAME_STATE () { 395 }
+sub DEFAULT_ATTR_VALUE_IN_ENT_STATE___CHARREF_NUM_STATE () { 396 }
+sub DEFAULT_ATTR_VALUE_IN_ENT_STATE___CHARREF_STATE () { 397 }
+sub DEFAULT_ATTR_VALUE_IN_ENT_STATE_CR () { 398 }
+sub END_TAG_OPEN_STATE () { 399 }
+sub IGNORED_SECTION_MDO_STATE () { 400 }
+sub IGNORED_SECTION_STATE () { 401 }
+sub IGNORED_SECTION_TAG_STATE () { 402 }
+sub IN_IGNORED_SECTION_MSC_STATE () { 403 }
+sub IN_MSC_STATE () { 404 }
+sub IN_PIC_STATE () { 405 }
+sub MDO_STATE () { 406 }
+sub MDO_STATE__ () { 407 }
+sub MDO_STATE_D () { 408 }
+sub MDO_STATE_DO () { 409 }
+sub MDO_STATE_DOC () { 410 }
+sub MDO_STATE_DOCT () { 411 }
+sub MDO_STATE_DOCTY () { 412 }
+sub MDO_STATE_DOCTYP () { 413 }
+sub MDO_STATE__5B () { 414 }
+sub MDO_STATE__5BC () { 415 }
+sub MDO_STATE__5BCD () { 416 }
+sub MDO_STATE__5BCDA () { 417 }
+sub MDO_STATE__5BCDAT () { 418 }
+sub MDO_STATE__5BCDATA () { 419 }
+sub PE_DECL_OR_REF_AFTER_SPACE_STATE () { 420 }
+sub PE_DECL_OR_REF_STATE () { 421 }
+sub PE_NAME_IN_DTD_STATE () { 422 }
+sub PE_NAME_IN_ENT_VALUE__DQ__STATE () { 423 }
+sub PE_NAME_IN_ENT_VALUE__SQ__STATE () { 424 }
+sub PE_NAME_IN_ENT_VALUE_IN_ENT_STATE () { 425 }
+sub PE_NAME_IN_MARKUP_DECL_STATE () { 426 }
+sub PE_NAME_IN_STATUS_KWD_STATE () { 427 }
+sub SELF_CLOSING_START_TAG_STATE () { 428 }
+sub TAG_NAME_STATE () { 429 }
+sub TAG_OPEN_STATE () { 430 }
+sub TEXT_DECL_IN_ENT_VALUE_IN_ENT_STATE () { 431 }
+sub TEXT_DECL_IN_ENT_VALUE_IN_ENT_STATE_CR () { 432 }
 
 my $TokenizerAbortingTagNames = {
   title => 1,
@@ -3155,9 +3162,7 @@ return;
         sub {
           my $token = $_;
 
-        if (not defined $token->{name}) {
-          #
-        } elsif ($token->{StopProcessing}) {
+        if ($token->{StopProcessing}) {
           push @$Errors, {level => 'w',
                           type => 'xml:dtd:entity ignored',
                           di => $DI, index => $Offset + pos $Input};
@@ -3165,7 +3170,10 @@ return;
               (name => $token->{name},
                onerror => sub {
                  push @$Errors, {@_, di => $DI, index => $Offset + pos $Input};
-               });
+               })
+              if defined $token->{name};
+        } elsif (not defined $token->{name}) {
+          #
         } else { # not stop processing
           if ($token->{is_parameter_entity_flag}) {
             if (not $DTDDefs->{pe}->{'%'.$token->{name} . ';'}) {
@@ -3216,7 +3224,7 @@ return;
                 only_text => 1,
               };
             } elsif (not $DTDDefs->{ge}->{'&'.$token->{name}.';'}) {
-              my $is_external = not $DTDMode eq 'internal subset';
+              my $is_external = not $DTDMode eq 'internal subset'; # not in param entity
               push @$Errors, {level => 'w',
                               type => 'xml:dtd:ext decl',
                               di => $DI, index => $Offset + pos $Input}
@@ -4013,13 +4021,13 @@ $OriginalState = [A_ATTLIST_ATTR_DEFAULT_STATE, A_ATTLIST_ATTR_DEFAULT_STATE___B
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'attlist-attribute-default-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'attlist-attribute-default-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
         push @{$Token->{attr_list} ||= []}, $Attr;
       
@@ -4044,6 +4052,12 @@ $State = DEFAULT_ATTR_VALUE__SQ__STATE;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -4102,13 +4116,13 @@ $Attr->{q<name>} .= q@�@;
 $State = B_ALLOWED_TOKEN_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'attlist-attribute-name-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'attlist-attribute-name-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'attlist-attribute-name-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -4118,6 +4132,12 @@ push @$Tokens, $Token;
 $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -4192,13 +4212,13 @@ $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = B_ALLOWED_TOKEN_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'attlist-attribute-type-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'attlist-attribute-type-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'attlist-attribute-type-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -4208,6 +4228,12 @@ push @$Tokens, $Token;
 $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -4254,13 +4280,13 @@ $OriginalState = [B_ATTLIST_ATTR_NAME_STATE, B_ATTLIST_ATTR_NAME_STATE___BEFORE_
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'attlist-name-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'attlist-name-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 $State = DTD_STATE;
 push @$Tokens, $Token;
 $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
@@ -4272,6 +4298,12 @@ $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 $Token->{q<name>} .= q@�@;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -4337,13 +4369,13 @@ $Token->{q<name>} = q@�@;
 $State = ATTLIST_NAME_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'attlist-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'attlist-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'attlist-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -4362,6 +4394,12 @@ $Token->{q<name>} = $1;
 $State = ATTLIST_NAME_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -4593,6 +4631,7 @@ $State = DOCTYPE_IN_PIC_STATE;
 $Token->{q<data>} .= q@�@;
 } else {
 if ($EOF) {
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -4646,6 +4685,7 @@ $State = DOCTYPE_PI_DATA_STATE;
 $Token->{q<data>} .= $1;
 } else {
 if ($EOF) {
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -4744,6 +4784,7 @@ if ($EOF) {
       
 $Token->{q<data>} = q@?@;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -4822,6 +4863,7 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 $Token->{q<data>} = q@?@;
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -4878,6 +4920,7 @@ $State = DOCTYPE_PI_TARGET_QUESTION_STATE;
 $Token->{q<target>} .= q@�@;
 } else {
 if ($EOF) {
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -4931,6 +4974,7 @@ $State = DOCTYPE_PI_DATA_STATE;
 $Token->{q<data>} .= $1;
 } else {
 if ($EOF) {
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -4987,6 +5031,7 @@ $State = DOCTYPE_PI_DATA_STATE;
 $Token->{q<data>} .= $1;
 } else {
 if ($EOF) {
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -5034,6 +5079,7 @@ $State = DTD_STATE;
 } else {
 if ($EOF) {
 push @$Tokens, $Token;
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -5085,6 +5131,7 @@ $Token->{q<data>} .= $1;
 } else {
 if ($EOF) {
 push @$Tokens, $Token;
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -5141,6 +5188,7 @@ $Token->{q<data>} .= $1;
 $State = DOCTYPE_COMMENT_STATE;
 } else {
 if ($EOF) {
+$State = DTD_STATE;
 push @$Tokens, $Token;
 
             if (defined $CONTEXT) {
@@ -5194,6 +5242,7 @@ $Token->{q<data>} .= $1;
 $State = DOCTYPE_COMMENT_STATE;
 } else {
 if ($EOF) {
+$State = DTD_STATE;
 push @$Tokens, $Token;
 
             if (defined $CONTEXT) {
@@ -5268,6 +5317,7 @@ $Token->{q<data>} .= $1;
 $State = DOCTYPE_COMMENT_STATE;
 } else {
 if ($EOF) {
+$State = DTD_STATE;
 push @$Tokens, $Token;
 
             if (defined $CONTEXT) {
@@ -5328,6 +5378,7 @@ $Token->{q<data>} .= $1;
 $State = DOCTYPE_COMMENT_STATE;
 } else {
 if ($EOF) {
+$State = DTD_STATE;
 push @$Tokens, $Token;
 
             if (defined $CONTEXT) {
@@ -5386,6 +5437,7 @@ $Token->{q<data>} .= $1;
 $State = DOCTYPE_COMMENT_STATE;
 } else {
 if ($EOF) {
+$State = DTD_STATE;
 push @$Tokens, $Token;
 
             if (defined $CONTEXT) {
@@ -5436,6 +5488,7 @@ $State = DOCTYPE_COMMENT_END_DASH_STATE;
 $Token->{q<data>} .= q@�@;
 } else {
 if ($EOF) {
+$State = DTD_STATE;
 push @$Tokens, $Token;
 
             if (defined $CONTEXT) {
@@ -5490,6 +5543,7 @@ $State = DOCTYPE_COMMENT_STATE;
 $Token->{q<data>} .= $1;
 } else {
 if ($EOF) {
+$State = DTD_STATE;
 push @$Tokens, $Token;
 
             if (defined $CONTEXT) {
@@ -5548,6 +5602,7 @@ $Token->{q<data>} .= $1;
 } else {
 if ($EOF) {
 $Token->{q<data>} .= q@?@;
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -5650,7 +5705,8 @@ push @$Tokens, $Token;
 $State = DTD_STATE;
 } elsif ($Input =~ /\G([\[])/gcs) {
 
-          unless ($DTDMode eq 'internal subset') {
+          unless ($DTDMode eq 'internal subset' or
+                  $DTDMode eq 'parameter entity in internal subset') {
             $State = A_MSS_STATE;
             return 1;
           }
@@ -5659,14 +5715,8 @@ $State = DTD_STATE;
             push @$Errors, {type => 'doctype-markup-declaration-open-005b', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-
-        $Token = {type => COMMENT_TOKEN, tn => 0,
-                  di => $DI, index => $AnchoredIndex};
-      
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
-$State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'doctype-markup-declaration-open-else', level => 'm',
@@ -5693,6 +5743,7 @@ if ($EOF) {
 $Token->{q<data>} = '';
 $Token->{q<data>} .= $Temp;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -5798,6 +5849,7 @@ if ($EOF) {
 $Token->{q<data>} = '';
 $Token->{q<data>} .= $Temp;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -5902,6 +5954,7 @@ if ($EOF) {
 $Token->{q<data>} = '';
 $Token->{q<data>} .= $Temp;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -6006,6 +6059,7 @@ if ($EOF) {
 $Token->{q<data>} = '';
 $Token->{q<data>} .= $Temp;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -6110,6 +6164,7 @@ if ($EOF) {
 $Token->{q<data>} = '';
 $Token->{q<data>} .= $Temp;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -6214,6 +6269,7 @@ if ($EOF) {
 $Token->{q<data>} = '';
 $Token->{q<data>} .= $Temp;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -6318,6 +6374,7 @@ if ($EOF) {
 $Token->{q<data>} = '';
 $Token->{q<data>} .= $Temp;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -6436,6 +6493,7 @@ if ($EOF) {
 $Token->{q<data>} = '';
 $Token->{q<data>} .= $Temp;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -6546,6 +6604,7 @@ if ($EOF) {
 $Token->{q<data>} = '';
 $Token->{q<data>} .= $Temp;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -6650,6 +6709,7 @@ if ($EOF) {
 $Token->{q<data>} = '';
 $Token->{q<data>} .= $Temp;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -6754,6 +6814,7 @@ if ($EOF) {
 $Token->{q<data>} = '';
 $Token->{q<data>} .= $Temp;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -6858,6 +6919,7 @@ if ($EOF) {
 $Token->{q<data>} = '';
 $Token->{q<data>} .= $Temp;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -6962,6 +7024,7 @@ if ($EOF) {
 $Token->{q<data>} = '';
 $Token->{q<data>} .= $Temp;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -7080,6 +7143,7 @@ if ($EOF) {
 $Token->{q<data>} = '';
 $Token->{q<data>} .= $Temp;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -7184,6 +7248,7 @@ if ($EOF) {
 $Token->{q<data>} = '';
 $Token->{q<data>} .= $Temp;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -7288,6 +7353,7 @@ if ($EOF) {
 $Token->{q<data>} = '';
 $Token->{q<data>} .= $Temp;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -7392,6 +7458,7 @@ if ($EOF) {
 $Token->{q<data>} = '';
 $Token->{q<data>} .= $Temp;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -7510,6 +7577,7 @@ if ($EOF) {
 $Token->{q<data>} = '';
 $Token->{q<data>} .= $Temp;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -7614,6 +7682,7 @@ if ($EOF) {
 $Token->{q<data>} = '';
 $Token->{q<data>} .= $Temp;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -7718,6 +7787,7 @@ if ($EOF) {
 $Token->{q<data>} = '';
 $Token->{q<data>} .= $Temp;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -7822,6 +7892,7 @@ if ($EOF) {
 $Token->{q<data>} = '';
 $Token->{q<data>} .= $Temp;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -7926,6 +7997,7 @@ if ($EOF) {
 $Token->{q<data>} = '';
 $Token->{q<data>} .= $Temp;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -8030,6 +8102,7 @@ if ($EOF) {
 $Token->{q<data>} = '';
 $Token->{q<data>} .= $Temp;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -8134,6 +8207,7 @@ if ($EOF) {
 $Token->{q<data>} = '';
 $Token->{q<data>} .= $Temp;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -8252,6 +8326,7 @@ if ($EOF) {
 $Token->{q<data>} = '';
 $Token->{q<data>} .= $Temp;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -8850,6 +8925,7 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE;
 $Token->{q<data>} .= $1;
 } else {
 if ($EOF) {
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -8891,13 +8967,7 @@ $State = PE_NAME_IN_DTD_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 $State = DOCTYPE_TAG_STATE;
 } elsif ($Input =~ /\G([\]])/gcs) {
-
-          if ($DTDMode eq 'internal subset') {
-            $State = A_DOCTYPE_INTERNAL_SUBSET_STATE;
-            return 1;
-          }
-        
-$State = IN_DTD_MSC_STATE;
+$State = A_DOCTYPE_INTERNAL_SUBSET_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'dtd-else', level => 'm',
@@ -8951,18 +9021,24 @@ $OriginalState = [A_ELEMENT_CONTENT_STATE, A_ELEMENT_CONTENT_STATE___BEFORE_TEXT
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'element-content-keyword-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'element-content-keyword-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 $State = DTD_STATE;
 push @$Tokens, $Token;
 $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -9020,13 +9096,13 @@ $Token->{cmgroup} = $cmgroup;
 $State = B_CM_ITEM_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'element-name-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'element-name-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'element-name-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -9034,6 +9110,12 @@ $State = B_CM_ITEM_STATE;
 $State = DTD_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -9099,13 +9181,13 @@ $Token->{q<name>} = q@�@;
 $State = ELEMENT_NAME_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'element-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'element-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'element-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -9124,6 +9206,12 @@ $Token->{q<name>} = $1;
 $State = ELEMENT_NAME_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -9188,13 +9276,13 @@ $State = ENT_VALUE__SQ__STATE;
 $Token->{q<value>} = [['', $DI, $Offset + pos $Input]];
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'entity-name-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'entity-name-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'entity-name-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -9205,6 +9293,12 @@ $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 return 1 if $Token->{type} == ENTITY_TOKEN;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -9252,13 +9346,13 @@ $State = A_ENT_PUBLIC_ID_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 undef $InLiteral;
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'entity-public-identifier-double-quoted-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'entity-public-identifier-double-quoted-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'entity-public-identifier-double-quoted-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -9269,6 +9363,12 @@ $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 return 1 if $Token->{type} == ENTITY_TOKEN;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -9315,15 +9415,16 @@ $State = ENT_PUBLIC_ID__DQ__STATE_CR;
 undef $InLiteral;
 $State = A_ENT_PUBLIC_ID_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$State = ENT_PUBLIC_ID__DQ__STATE;
 undef $InLiteral;
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'entity-public-identifier-double-quoted-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'entity-public-identifier-double-quoted-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'entity-public-identifier-double-quoted-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -9337,6 +9438,13 @@ $State = ENT_PUBLIC_ID__DQ__STATE;
 $Token->{q<public_identifier>} .= $1;
 } else {
 if ($EOF) {
+$State = ENT_PUBLIC_ID__DQ__STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -9384,13 +9492,13 @@ $State = A_ENT_PUBLIC_ID_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 undef $InLiteral;
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'entity-public-identifier-single-quoted-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'entity-public-identifier-single-quoted-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'entity-public-identifier-single-quoted-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -9401,6 +9509,12 @@ $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 return 1 if $Token->{type} == ENTITY_TOKEN;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -9447,15 +9561,16 @@ $State = ENT_PUBLIC_ID__SQ__STATE_CR;
 undef $InLiteral;
 $State = A_ENT_PUBLIC_ID_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$State = ENT_PUBLIC_ID__SQ__STATE;
 undef $InLiteral;
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'entity-public-identifier-single-quoted-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'entity-public-identifier-single-quoted-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'entity-public-identifier-single-quoted-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -9469,6 +9584,13 @@ $State = ENT_PUBLIC_ID__SQ__STATE;
 $Token->{q<public_identifier>} .= $1;
 } else {
 if ($EOF) {
+$State = ENT_PUBLIC_ID__SQ__STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -9527,13 +9649,13 @@ $Token->{q<name>} = q@�@;
 $State = ENT_NAME_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'entity-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'entity-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'entity-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -9552,6 +9674,12 @@ $Token->{q<name>} = $1;
 $State = ENT_NAME_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -9598,6 +9726,12 @@ undef $InLiteral;
 $State = A_ENT_SYSTEM_ID_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -9648,6 +9782,13 @@ $State = ENT_SYSTEM_ID__DQ__STATE;
 $Token->{q<system_identifier>} .= $1;
 } else {
 if ($EOF) {
+$State = ENT_SYSTEM_ID__DQ__STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -9694,6 +9835,12 @@ undef $InLiteral;
 $State = A_ENT_SYSTEM_ID_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -9744,6 +9891,13 @@ $State = ENT_SYSTEM_ID__SQ__STATE;
 $Token->{q<system_identifier>} .= $1;
 } else {
 if ($EOF) {
+$State = ENT_SYSTEM_ID__SQ__STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -9802,6 +9956,12 @@ $State = ENT_VALUE__DQ__STATE___CHARREF_STATE;
 push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -9899,6 +10059,13 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE__DQ__STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -10254,6 +10421,13 @@ if ($EOF) {
         $Temp = chr $code;
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE__DQ__STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -10609,6 +10783,13 @@ if ($EOF) {
         $Temp = chr $code;
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE__DQ__STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -10717,6 +10898,13 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE__DQ__STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -10824,6 +11012,13 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE__DQ__STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -10960,6 +11155,13 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE__DQ__STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -11022,6 +11224,13 @@ $State = ENT_VALUE__DQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
+$State = ENT_VALUE__DQ__STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -11080,6 +11289,12 @@ $State = A_ENT_PARAMETER_STATE;
 push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -11177,6 +11392,13 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE__SQ__STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -11532,6 +11754,13 @@ if ($EOF) {
         $Temp = chr $code;
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE__SQ__STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -11887,6 +12116,13 @@ if ($EOF) {
         $Temp = chr $code;
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE__SQ__STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -11995,6 +12231,13 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE__SQ__STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -12102,6 +12345,13 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE__SQ__STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -12238,6 +12488,13 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE__SQ__STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -12300,6 +12557,13 @@ $State = ENT_VALUE__SQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
+$State = ENT_VALUE__SQ__STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -12355,6 +12619,8 @@ $State = ENT_VALUE_IN_ENT_STATE___CHARREF_STATE;
 push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -12444,6 +12710,9 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE_IN_ENT_STATE;
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -12759,6 +13028,9 @@ if ($EOF) {
         $Temp = chr $code;
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE_IN_ENT_STATE;
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -13074,6 +13346,9 @@ if ($EOF) {
         $Temp = chr $code;
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE_IN_ENT_STATE;
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -13174,6 +13449,9 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE_IN_ENT_STATE;
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -13273,6 +13551,9 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE_IN_ENT_STATE;
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -13409,6 +13690,9 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE_IN_ENT_STATE;
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -13468,6 +13752,9 @@ $State = ENT_VALUE_IN_ENT_STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
+$State = ENT_VALUE_IN_ENT_STATE;
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -13514,13 +13801,13 @@ $OriginalState = [A_ENT_PARAMETER_STATE, A_ENT_PARAMETER_STATE___BEFORE_TEXT_DEC
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'ndata-identifier-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'ndata-identifier-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 $State = DTD_STATE;
 push @$Tokens, $Token;
 $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
@@ -13533,6 +13820,12 @@ return 1 if $Token->{type} == ENTITY_TOKEN;
 $Token->{q<notation_name>} .= q@�@;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -13581,13 +13874,13 @@ $OriginalState = [A_NOTATION_NAME_STATE, A_NOTATION_NAME_STATE___BEFORE_TEXT_DEC
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'notation-name-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'notation-name-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'notation-name-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -13597,6 +13890,12 @@ push @$Tokens, $Token;
 $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -13644,13 +13943,13 @@ $State = A_NOTATION_PUBLIC_ID_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 undef $InLiteral;
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'notation-public-identifier-double-quoted-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'notation-public-identifier-double-quoted-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'notation-public-identifier-double-quoted-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -13660,6 +13959,12 @@ push @$Tokens, $Token;
 $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -13706,15 +14011,16 @@ $State = NOTATION_PUBLIC_ID__DQ__STATE_CR;
 undef $InLiteral;
 $State = A_NOTATION_PUBLIC_ID_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$State = NOTATION_PUBLIC_ID__DQ__STATE;
 undef $InLiteral;
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'notation-public-identifier-double-quoted-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'notation-public-identifier-double-quoted-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'notation-public-identifier-double-quoted-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -13727,6 +14033,13 @@ $State = NOTATION_PUBLIC_ID__DQ__STATE;
 $Token->{q<public_identifier>} .= $1;
 } else {
 if ($EOF) {
+$State = NOTATION_PUBLIC_ID__DQ__STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -13774,13 +14087,13 @@ $State = A_NOTATION_PUBLIC_ID_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 undef $InLiteral;
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'notation-public-identifier-single-quoted-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'notation-public-identifier-single-quoted-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'notation-public-identifier-single-quoted-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -13790,6 +14103,12 @@ push @$Tokens, $Token;
 $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -13836,15 +14155,16 @@ $State = NOTATION_PUBLIC_ID__SQ__STATE_CR;
 undef $InLiteral;
 $State = A_NOTATION_PUBLIC_ID_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$State = NOTATION_PUBLIC_ID__SQ__STATE;
 undef $InLiteral;
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'notation-public-identifier-single-quoted-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'notation-public-identifier-single-quoted-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'notation-public-identifier-single-quoted-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -13857,6 +14177,13 @@ $State = NOTATION_PUBLIC_ID__SQ__STATE;
 $Token->{q<public_identifier>} .= $1;
 } else {
 if ($EOF) {
+$State = NOTATION_PUBLIC_ID__SQ__STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -13922,13 +14249,13 @@ $Token->{q<name>} = q@�@;
 $State = NOTATION_NAME_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'notation-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'notation-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'notation-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -13947,6 +14274,12 @@ $Token->{q<name>} = $1;
 $State = NOTATION_NAME_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -13993,6 +14326,12 @@ undef $InLiteral;
 $State = A_NOTATION_SYSTEM_ID_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -14043,6 +14382,13 @@ $State = NOTATION_SYSTEM_ID__DQ__STATE;
 $Token->{q<system_identifier>} .= $1;
 } else {
 if ($EOF) {
+$State = NOTATION_SYSTEM_ID__DQ__STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -14089,6 +14435,12 @@ undef $InLiteral;
 $State = A_NOTATION_SYSTEM_ID_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -14139,6 +14491,13 @@ $State = NOTATION_SYSTEM_ID__SQ__STATE;
 $Token->{q<system_identifier>} .= $1;
 } else {
 if ($EOF) {
+$State = NOTATION_SYSTEM_ID__SQ__STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -14452,13 +14811,13 @@ $State = DEFAULT_ATTR_VALUE__SQ__STATE;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-attlist-attribute-default-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-attlist-attribute-default-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
         push @{$Token->{attr_list} ||= []}, $Attr;
       
@@ -14491,6 +14850,12 @@ $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + (pos $Input) - length $1;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -14538,6 +14903,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $State = A_ATTLIST_ATTR_DEFAULT_STATE;
@@ -14555,6 +14921,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $InLiteral = 1;
@@ -14574,6 +14941,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Temp = q@%@;
@@ -14594,6 +14962,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $InLiteral = 1;
@@ -14617,16 +14986,18 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = A_ATTLIST_ATTR_DEFAULT_STATE;
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-attlist-attribute-default-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-attlist-attribute-default-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
         push @{$Token->{attr_list} ||= []}, $Attr;
       
@@ -14647,6 +15018,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 
@@ -14676,6 +15048,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 
@@ -14702,8 +15075,16 @@ $TempIndex = $Offset + (pos $Input);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = A_ATTLIST_ATTR_DEFAULT_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -14757,6 +15138,12 @@ $State = A_ATTLIST_ATTR_DEFAULT_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-attlist-attribute-default-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -14775,6 +15162,12 @@ $State = A_ATTLIST_ATTR_DEFAULT_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-attlist-attribute-default-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -14794,6 +15187,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-attlist-attribute-default-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -14813,6 +15212,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-attlist-attribute-default-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -14832,6 +15237,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-attlist-attribute-default-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -14851,6 +15262,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-attlist-attribute-default-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -14871,8 +15288,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-attlist-attribute-default-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -14926,6 +15356,12 @@ $State = A_ATTLIST_ATTR_DEFAULT_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-attlist-attribute-default-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -14944,6 +15380,12 @@ $State = A_ATTLIST_ATTR_DEFAULT_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-attlist-attribute-default-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -14963,6 +15405,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-attlist-attribute-default-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -14982,6 +15430,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-attlist-attribute-default-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -15001,6 +15455,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-attlist-attribute-default-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -15020,6 +15480,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-attlist-attribute-default-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -15043,8 +15509,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-attlist-attribute-default-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -15088,13 +15567,13 @@ $State = PE_NAME_IN_MARKUP_DECL_STATE;
 $State = B_ALLOWED_TOKEN_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-attlist-attribute-name-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-attlist-attribute-name-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'after-attlist-attribute-name-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -15107,6 +15586,12 @@ $State = ATTLIST_ATTR_TYPE_STATE;
 $Attr->{q<declared_type>} = $1;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -15154,6 +15639,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $State = A_ATTLIST_ATTR_NAME_STATE;
@@ -15171,6 +15657,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Temp = q@%@;
@@ -15191,6 +15678,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $State = B_ALLOWED_TOKEN_STATE;
@@ -15212,16 +15700,18 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = A_ATTLIST_ATTR_NAME_STATE;
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-attlist-attribute-name-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-attlist-attribute-name-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'after-attlist-attribute-name-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -15243,6 +15733,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $State = ATTLIST_ATTR_TYPE_STATE;
@@ -15262,8 +15753,16 @@ $TempIndex = $Offset + (pos $Input);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = A_ATTLIST_ATTR_NAME_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -15317,6 +15816,12 @@ $State = A_ATTLIST_ATTR_NAME_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-attlist-attribute-name-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -15335,6 +15840,12 @@ $State = A_ATTLIST_ATTR_NAME_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-attlist-attribute-name-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -15354,6 +15865,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-attlist-attribute-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -15373,6 +15890,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-attlist-attribute-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -15392,6 +15915,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-attlist-attribute-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -15411,6 +15940,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-attlist-attribute-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -15431,8 +15966,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-attlist-attribute-name-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -15486,6 +16034,12 @@ $State = A_ATTLIST_ATTR_NAME_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-attlist-attribute-name-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -15504,6 +16058,12 @@ $State = A_ATTLIST_ATTR_NAME_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-attlist-attribute-name-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -15523,6 +16083,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-attlist-attribute-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -15542,6 +16108,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-attlist-attribute-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -15561,6 +16133,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-attlist-attribute-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -15580,6 +16158,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-attlist-attribute-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -15603,8 +16187,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-attlist-attribute-name-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -15658,13 +16255,13 @@ $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = B_ALLOWED_TOKEN_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-attlist-attribute-type-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-attlist-attribute-type-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'after-attlist-attribute-type-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -15680,6 +16277,12 @@ $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -15727,6 +16330,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $State = A_ATTLIST_ATTR_TYPE_STATE;
@@ -15744,6 +16348,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $InLiteral = 1;
@@ -15763,6 +16368,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $State = B_ATTLIST_ATTR_DEFAULT_STATE;
@@ -15780,6 +16386,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Temp = q@%@;
@@ -15800,6 +16407,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $InLiteral = 1;
@@ -15819,6 +16427,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $State = B_ALLOWED_TOKEN_STATE;
@@ -15840,16 +16449,18 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = A_ATTLIST_ATTR_TYPE_STATE;
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-attlist-attribute-type-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-attlist-attribute-type-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'after-attlist-attribute-type-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -15871,6 +16482,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 
@@ -15893,8 +16505,16 @@ $TempIndex = $Offset + (pos $Input);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = A_ATTLIST_ATTR_TYPE_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -15948,6 +16568,12 @@ $State = A_ATTLIST_ATTR_TYPE_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-attlist-attribute-type-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -15966,6 +16592,12 @@ $State = A_ATTLIST_ATTR_TYPE_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-attlist-attribute-type-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -15985,6 +16617,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-attlist-attribute-type-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -16004,6 +16642,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-attlist-attribute-type-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -16023,6 +16667,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-attlist-attribute-type-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -16042,6 +16692,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-attlist-attribute-type-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -16062,8 +16718,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-attlist-attribute-type-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -16117,6 +16786,12 @@ $State = A_ATTLIST_ATTR_TYPE_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-attlist-attribute-type-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -16135,6 +16810,12 @@ $State = A_ATTLIST_ATTR_TYPE_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-attlist-attribute-type-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -16154,6 +16835,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-attlist-attribute-type-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -16173,6 +16860,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-attlist-attribute-type-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -16192,6 +16885,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-attlist-attribute-type-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -16211,6 +16910,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-attlist-attribute-type-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -16234,8 +16939,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-attlist-attribute-type-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -16284,13 +17002,13 @@ $OriginalState = [B_ATTLIST_ATTR_NAME_STATE, B_ATTLIST_ATTR_NAME_STATE___BEFORE_
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-attlist-default-value-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-attlist-default-value-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
         push @{$Token->{attr_list} ||= []}, $Attr;
       
@@ -16332,6 +17050,12 @@ $Attr->{index} = $Offset + (pos $Input) - length $1;
 } else {
 if ($EOF) {
 
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -16364,6 +17088,14 @@ return 0;
 };
 $StateActions->[A_DOCTYPE_INTERNAL_SUBSET_STATE] = sub {
 if ($Input =~ /\G([\>])/gcs) {
+
+          if (defined $CONTEXT) {
+            push @$Errors, {type => 'after-doctype-internal-subset-003e-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+            $State = DTD_STATE;
+            return 1;
+          }
+        
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -16372,15 +17104,36 @@ $State = DATA_STATE;
                         index => $Offset + pos $Input};
       
 return 1;
+} elsif ($Input =~ /\G([\]])/gcs) {
+$State = A_DTD_MSC_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-doctype-internal-subset-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
+
+          if (defined $CONTEXT) {
+            $State = DTD_STATE;
+            return 1;
+          }
+        
 $DTDMode = q{N/A};
 $State = BOGUS_AFTER_DOCTYPE_INTERNAL_SUBSET_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+$State = DTD_STATE;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
@@ -17075,7 +17828,25 @@ return 0;
 };
 $StateActions->[A_DTD_MSC_STATE] = sub {
 if ($Input =~ /\G([\>])/gcs) {
-pop @$OpenMarkedSections;
+
+        if (@$OpenMarkedSections) {
+          pop @$OpenMarkedSections;
+          if (@$OpenMarkedSections) {
+            if ($OpenMarkedSections->[-1] eq 'INCLUDE') {
+              $State = DTD_STATE;
+            } else {
+              $State = IGNORED_SECTION_STATE;
+            }
+          } else {
+            $State = DTD_STATE;
+          }
+        } else {
+          push @$Errors, {level => 'm',
+                          type => 'string in internal subset', # ]]>
+                          di => $DI, index => $Offset + (pos $Input) - 3};
+          $State = DTD_STATE;
+        }
+      
 } elsif ($Input =~ /\G([\]])/gcs) {
 
             push @$Errors, {type => 'after-dtd-msc-005d', level => 'm',
@@ -17089,6 +17860,11 @@ pop @$OpenMarkedSections;
 $State = DTD_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -17130,13 +17906,13 @@ $OriginalState = [A_ELEMENT_CONTENT_STATE, A_ELEMENT_CONTENT_STATE___BEFORE_TEXT
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-element-content-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-element-content-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 $State = DTD_STATE;
 push @$Tokens, $Token;
 $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
@@ -17148,6 +17924,12 @@ $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -17195,6 +17977,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $State = A_ELEMENT_CONTENT_STATE;
@@ -17212,6 +17995,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Temp = q@%@;
@@ -17236,16 +18020,18 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = A_ELEMENT_CONTENT_STATE;
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-element-content-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-element-content-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 $State = DTD_STATE;
 push @$Tokens, $Token;
 $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
@@ -17263,6 +18049,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 
@@ -17285,8 +18072,16 @@ $TempIndex = $Offset + (pos $Input);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = A_ELEMENT_CONTENT_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -17340,6 +18135,12 @@ $State = A_ELEMENT_CONTENT_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-element-content-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -17358,6 +18159,12 @@ $State = A_ELEMENT_CONTENT_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-element-content-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -17377,6 +18184,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-element-content-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -17396,6 +18209,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-element-content-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -17415,6 +18234,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-element-content-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -17434,6 +18259,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-element-content-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -17454,8 +18285,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-element-content-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -17509,6 +18353,12 @@ $State = A_ELEMENT_CONTENT_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-element-content-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -17527,6 +18377,12 @@ $State = A_ELEMENT_CONTENT_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-element-content-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -17546,6 +18402,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-element-content-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -17565,6 +18427,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-element-content-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -17584,6 +18452,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-element-content-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -17603,6 +18477,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-element-content-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -17626,8 +18506,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-element-content-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -17693,13 +18586,13 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = A_ENT_NAME_STATE_S;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-entity-name-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-entity-name-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'after-entity-name-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -17716,6 +18609,12 @@ return 1 if $Token->{type} == ENTITY_TOKEN;
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -17763,6 +18662,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $State = A_ENT_NAME_STATE;
@@ -17780,6 +18680,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $InLiteral = 1;
@@ -17799,6 +18700,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Temp = q@%@;
@@ -17819,6 +18721,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $InLiteral = 1;
@@ -17842,6 +18745,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Temp = $1;
@@ -17861,6 +18765,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Temp = $1;
@@ -17880,6 +18785,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Temp = $1;
@@ -17899,6 +18805,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Temp = $1;
@@ -17918,16 +18825,18 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = A_ENT_NAME_STATE;
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-entity-name-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-entity-name-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'after-entity-name-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -17950,6 +18859,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 
@@ -17972,8 +18882,16 @@ $TempIndex = $Offset + (pos $Input);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = A_ENT_NAME_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -18027,6 +18945,12 @@ $State = A_ENT_NAME_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-entity-name-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -18045,6 +18969,12 @@ $State = A_ENT_NAME_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-entity-name-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -18064,6 +18994,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-entity-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -18083,6 +19019,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-entity-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -18102,6 +19044,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-entity-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -18121,6 +19069,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-entity-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -18141,8 +19095,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-entity-name-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -18196,6 +19163,12 @@ $State = A_ENT_NAME_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-entity-name-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -18214,6 +19187,12 @@ $State = A_ENT_NAME_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-entity-name-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -18233,6 +19212,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-entity-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -18252,6 +19237,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-entity-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -18271,6 +19262,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-entity-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -18290,6 +19287,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-entity-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -18313,8 +19316,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-entity-name-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -18361,6 +19377,13 @@ $State = A_ENT_NAME_STATE_PU;
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+$State = A_ENT_NAME_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -18407,6 +19430,13 @@ $State = A_ENT_NAME_STATE_PUB;
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+$State = A_ENT_NAME_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -18453,6 +19483,13 @@ $State = A_ENT_NAME_STATE_PUBL;
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+$State = A_ENT_NAME_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -18499,6 +19536,13 @@ $State = A_ENT_NAME_STATE_PUBLI;
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+$State = A_ENT_NAME_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -18559,6 +19603,13 @@ $State = A_ENT_PUBLIC_KWD_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+$State = A_ENT_NAME_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -18605,6 +19656,13 @@ $State = A_ENT_NAME_STATE_SY;
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+$State = A_ENT_NAME_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -18651,6 +19709,13 @@ $State = A_ENT_NAME_STATE_SYS;
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+$State = A_ENT_NAME_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -18697,6 +19762,13 @@ $State = A_ENT_NAME_STATE_SYST;
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+$State = A_ENT_NAME_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -18743,6 +19815,13 @@ $State = A_ENT_NAME_STATE_SYSTE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+$State = A_ENT_NAME_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -18803,6 +19882,13 @@ $State = A_ENT_SYSTEM_KWD_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+$State = A_ENT_NAME_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -18844,13 +19930,13 @@ $OriginalState = [A_ENT_PARAMETER_STATE, A_ENT_PARAMETER_STATE___BEFORE_TEXT_DEC
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-entity-parameter-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-entity-parameter-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 $State = DTD_STATE;
 push @$Tokens, $Token;
 $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
@@ -18863,6 +19949,12 @@ return 1 if $Token->{type} == ENTITY_TOKEN;
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -18910,6 +20002,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $State = A_ENT_PARAMETER_STATE;
@@ -18927,6 +20020,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Temp = q@%@;
@@ -18951,16 +20045,18 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = A_ENT_PARAMETER_STATE;
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-entity-parameter-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-entity-parameter-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 $State = DTD_STATE;
 push @$Tokens, $Token;
 $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
@@ -18979,6 +20075,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 
@@ -19001,8 +20098,16 @@ $TempIndex = $Offset + (pos $Input);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = A_ENT_PARAMETER_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -19056,6 +20161,12 @@ $State = A_ENT_PARAMETER_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-entity-parameter-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -19074,6 +20185,12 @@ $State = A_ENT_PARAMETER_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-entity-parameter-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -19093,6 +20210,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-entity-parameter-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -19112,6 +20235,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-entity-parameter-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -19131,6 +20260,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-entity-parameter-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -19150,6 +20285,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-entity-parameter-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -19170,8 +20311,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-entity-parameter-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -19225,6 +20379,12 @@ $State = A_ENT_PARAMETER_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-entity-parameter-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -19243,6 +20403,12 @@ $State = A_ENT_PARAMETER_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-entity-parameter-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -19262,6 +20428,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-entity-parameter-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -19281,6 +20453,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-entity-parameter-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -19300,6 +20478,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-entity-parameter-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -19319,6 +20503,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-entity-parameter-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -19342,8 +20532,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-entity-parameter-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -19400,13 +20603,13 @@ $InLiteral = 1;
 $State = ENT_SYSTEM_ID__SQ__STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-entity-public-identifier-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-entity-public-identifier-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'after-entity-public-identifier-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -19423,6 +20626,12 @@ return 1 if $Token->{type} == ENTITY_TOKEN;
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -19477,13 +20686,13 @@ $State = B_ENT_PUBLIC_ID_STATE;
 $State = B_ENT_PUBLIC_ID_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-entity-public-keyword-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-entity-public-keyword-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'after-entity-public-keyword-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -19500,6 +20709,12 @@ return 1 if $Token->{type} == ENTITY_TOKEN;
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -19542,13 +20757,13 @@ $OriginalState = [B_NDATA_KWD_STATE, B_NDATA_KWD_STATE___BEFORE_TEXT_DECL_IN_MAR
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-entity-system-identifier-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-entity-system-identifier-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 $State = DTD_STATE;
 push @$Tokens, $Token;
 $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
@@ -19581,6 +20796,12 @@ $State = B_NDATA_KWD_STATE_N;
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -19637,13 +20858,13 @@ $InLiteral = 1;
 $State = ENT_SYSTEM_ID__SQ__STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-entity-system-keyword-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-entity-system-keyword-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'after-entity-system-keyword-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -19660,6 +20881,12 @@ return 1 if $Token->{type} == ENTITY_TOKEN;
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -19698,61 +20925,88 @@ if ($Input =~ /\G([\	\\ \
 $Temp = q@%@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $OriginalState = [A_IGNORE_KWD_STATE, A_IGNORE_KWD_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
-$State = PE_NAME_IN_MARKUP_DECL_STATE;
+$State = PE_NAME_IN_STATUS_KWD_STATE;
 } elsif ($Input =~ /\G([\[])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-ignore-keyword-005b-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-ignore-keyword-005b-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
 push @$OpenMarkedSections, 'IGNORE';
 $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-ignore-keyword-003c-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-ignore-keyword-003c-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'after-ignore-keyword-003c', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-003c-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
 push @$OpenMarkedSections, 'IGNORE';
-$State = IGNORED_SECTION_STATE;
+$State = IGNORED_SECTION_TAG_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-ignore-keyword-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-ignore-keyword-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'after-ignore-keyword-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
 push @$OpenMarkedSections, 'IGNORE';
 $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\]])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-ignore-keyword-005d-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-ignore-keyword-005d-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'after-ignore-keyword-005d', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-005d-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
 push @$OpenMarkedSections, 'IGNORE';
 $State = IN_IGNORED_SECTION_MSC_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -19760,10 +21014,15 @@ $State = IN_IGNORED_SECTION_MSC_STATE;
             push @$Errors, {type => 'after-ignore-keyword-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @$OpenMarkedSections, 'IGNORE';
-$State = IGNORED_SECTION_STATE;
+$State = BOGUS_STATUS_KWD_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -19811,6 +21070,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $State = A_IGNORE_KWD_STATE;
@@ -19828,12 +21088,13 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Temp = q@%@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $OriginalState = [A_IGNORE_KWD_STATE, A_IGNORE_KWD_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
-$State = PE_NAME_IN_MARKUP_DECL_STATE;
+$State = PE_NAME_IN_STATUS_KWD_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
@@ -19852,16 +21113,18 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = A_IGNORE_KWD_STATE;
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-ignore-keyword-005b-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-ignore-keyword-005b-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
 push @$OpenMarkedSections, 'IGNORE';
 $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
@@ -19878,20 +21141,31 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = A_IGNORE_KWD_STATE;
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-ignore-keyword-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-ignore-keyword-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'after-ignore-keyword-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
 push @$OpenMarkedSections, 'IGNORE';
 $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\]])/gcs) {
@@ -19908,20 +21182,31 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = A_IGNORE_KWD_STATE;
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-ignore-keyword-005d-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-ignore-keyword-005d-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'after-ignore-keyword-005d', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-005d-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
 push @$OpenMarkedSections, 'IGNORE';
 $State = IN_IGNORED_SECTION_MSC_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -19938,14 +21223,14 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 
             push @$Errors, {type => 'after-ignore-keyword-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @$OpenMarkedSections, 'IGNORE';
-$State = IGNORED_SECTION_STATE;
+$State = BOGUS_STATUS_KWD_STATE;
 } else {
 if ($EOF) {
 $Temp = $1;
@@ -19961,8 +21246,16 @@ $TempIndex = $Offset + (pos $Input);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = A_IGNORE_KWD_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -20016,6 +21309,12 @@ $State = A_IGNORE_KWD_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-ignore-keyword-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -20034,6 +21333,12 @@ $State = A_IGNORE_KWD_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-ignore-keyword-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -20053,6 +21358,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-ignore-keyword-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -20072,6 +21383,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-ignore-keyword-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -20091,6 +21408,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-ignore-keyword-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -20110,6 +21433,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-ignore-keyword-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -20130,8 +21459,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-ignore-keyword-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -20185,6 +21527,12 @@ $State = A_IGNORE_KWD_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-ignore-keyword-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -20203,6 +21551,12 @@ $State = A_IGNORE_KWD_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-ignore-keyword-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -20222,6 +21576,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-ignore-keyword-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -20241,6 +21601,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-ignore-keyword-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -20260,6 +21626,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-ignore-keyword-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -20279,6 +21651,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-ignore-keyword-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -20302,8 +21680,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-ignore-keyword-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -20342,53 +21733,88 @@ if ($Input =~ /\G([\	\\ \
 $Temp = q@%@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $OriginalState = [A_INCLUDE_KWD_STATE, A_INCLUDE_KWD_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
-$State = PE_NAME_IN_MARKUP_DECL_STATE;
+$State = PE_NAME_IN_STATUS_KWD_STATE;
 } elsif ($Input =~ /\G([\[])/gcs) {
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-include-keyword-005b-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
 push @$OpenMarkedSections, 'INCLUDE';
 $State = DTD_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-include-keyword-003c-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-include-keyword-003c-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'after-include-keyword-003c', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-003c-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
 push @$OpenMarkedSections, 'IGNORE';
-$State = IGNORED_SECTION_STATE;
+$State = IGNORED_SECTION_TAG_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-include-keyword-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-include-keyword-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'after-include-keyword-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
 push @$OpenMarkedSections, 'IGNORE';
 $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\]])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-include-keyword-005d-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-include-keyword-005d-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'after-include-keyword-005d', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-005d-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
 push @$OpenMarkedSections, 'IGNORE';
 $State = IN_IGNORED_SECTION_MSC_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -20396,10 +21822,15 @@ $State = IN_IGNORED_SECTION_MSC_STATE;
             push @$Errors, {type => 'after-include-keyword-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @$OpenMarkedSections, 'IGNORE';
-$State = IGNORED_SECTION_STATE;
+$State = BOGUS_STATUS_KWD_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -20447,6 +21878,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $State = A_INCLUDE_KWD_STATE;
@@ -20464,12 +21896,13 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Temp = q@%@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $OriginalState = [A_INCLUDE_KWD_STATE, A_INCLUDE_KWD_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
-$State = PE_NAME_IN_MARKUP_DECL_STATE;
+$State = PE_NAME_IN_STATUS_KWD_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
@@ -20488,8 +21921,18 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = A_INCLUDE_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-include-keyword-005b-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
 push @$OpenMarkedSections, 'INCLUDE';
 $State = DTD_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
@@ -20506,20 +21949,31 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = A_INCLUDE_KWD_STATE;
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-include-keyword-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-include-keyword-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'after-include-keyword-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
 push @$OpenMarkedSections, 'IGNORE';
 $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\]])/gcs) {
@@ -20536,20 +21990,31 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = A_INCLUDE_KWD_STATE;
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-include-keyword-005d-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-include-keyword-005d-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'after-include-keyword-005d', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-005d-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
 push @$OpenMarkedSections, 'IGNORE';
 $State = IN_IGNORED_SECTION_MSC_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -20566,14 +22031,14 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 
             push @$Errors, {type => 'after-include-keyword-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @$OpenMarkedSections, 'IGNORE';
-$State = IGNORED_SECTION_STATE;
+$State = BOGUS_STATUS_KWD_STATE;
 } else {
 if ($EOF) {
 $Temp = $1;
@@ -20589,8 +22054,16 @@ $TempIndex = $Offset + (pos $Input);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = A_INCLUDE_KWD_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -20644,6 +22117,12 @@ $State = A_INCLUDE_KWD_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-include-keyword-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -20662,6 +22141,12 @@ $State = A_INCLUDE_KWD_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-include-keyword-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -20681,6 +22166,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-include-keyword-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -20700,6 +22191,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-include-keyword-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -20719,6 +22216,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-include-keyword-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -20738,6 +22241,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-include-keyword-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -20758,8 +22267,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-include-keyword-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -20813,6 +22335,12 @@ $State = A_INCLUDE_KWD_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-include-keyword-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -20831,6 +22359,12 @@ $State = A_INCLUDE_KWD_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-include-keyword-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -20850,6 +22384,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-include-keyword-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -20869,6 +22409,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-include-keyword-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -20888,6 +22434,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-include-keyword-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -20907,6 +22459,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-include-keyword-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -20930,8 +22488,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-include-keyword-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -20985,13 +22556,13 @@ $Token->{q<notation_name>} = q@�@;
 $State = NDATA_ID_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-ndata-keyword-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-ndata-keyword-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'after-ndata-keyword-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -21009,6 +22580,12 @@ $Token->{q<notation_name>} = $1;
 $State = NDATA_ID_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -21066,13 +22643,13 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = A_NOTATION_NAME_STATE_S;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-notation-name-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-notation-name-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'after-notation-name-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -21088,6 +22665,12 @@ $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -21135,6 +22718,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $State = A_NOTATION_NAME_STATE;
@@ -21152,6 +22736,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Temp = q@%@;
@@ -21176,6 +22761,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Temp = $1;
@@ -21195,6 +22781,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Temp = $1;
@@ -21214,6 +22801,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Temp = $1;
@@ -21233,6 +22821,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Temp = $1;
@@ -21252,16 +22841,18 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = A_NOTATION_NAME_STATE;
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-notation-name-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-notation-name-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'after-notation-name-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -21283,6 +22874,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 
@@ -21305,8 +22897,16 @@ $TempIndex = $Offset + (pos $Input);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = A_NOTATION_NAME_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -21360,6 +22960,12 @@ $State = A_NOTATION_NAME_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-notation-name-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -21378,6 +22984,12 @@ $State = A_NOTATION_NAME_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-notation-name-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -21397,6 +23009,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-notation-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -21416,6 +23034,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-notation-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -21435,6 +23059,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-notation-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -21454,6 +23084,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-notation-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -21474,8 +23110,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-notation-name-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -21529,6 +23178,12 @@ $State = A_NOTATION_NAME_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-notation-name-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -21547,6 +23202,12 @@ $State = A_NOTATION_NAME_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-notation-name-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -21566,6 +23227,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-notation-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -21585,6 +23252,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-notation-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -21604,6 +23277,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-notation-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -21623,6 +23302,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-notation-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -21646,8 +23331,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-notation-name-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -21694,6 +23392,13 @@ $State = A_NOTATION_NAME_STATE_PU;
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+$State = A_NOTATION_NAME_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -21740,6 +23445,13 @@ $State = A_NOTATION_NAME_STATE_PUB;
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+$State = A_NOTATION_NAME_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -21786,6 +23498,13 @@ $State = A_NOTATION_NAME_STATE_PUBL;
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+$State = A_NOTATION_NAME_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -21832,6 +23551,13 @@ $State = A_NOTATION_NAME_STATE_PUBLI;
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+$State = A_NOTATION_NAME_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -21892,6 +23618,13 @@ $State = A_NOTATION_PUBLIC_KWD_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+$State = A_NOTATION_NAME_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -21938,6 +23671,13 @@ $State = A_NOTATION_NAME_STATE_SY;
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+$State = A_NOTATION_NAME_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -21984,6 +23724,13 @@ $State = A_NOTATION_NAME_STATE_SYS;
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+$State = A_NOTATION_NAME_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -22030,6 +23777,13 @@ $State = A_NOTATION_NAME_STATE_SYST;
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+$State = A_NOTATION_NAME_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -22076,6 +23830,13 @@ $State = A_NOTATION_NAME_STATE_SYSTE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+$State = A_NOTATION_NAME_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -22136,6 +23897,13 @@ $State = A_NOTATION_SYSTEM_KWD_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+$State = A_NOTATION_NAME_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -22178,13 +23946,13 @@ $OriginalState = [BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE, BETWEEN_NOTATION
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-notation-public-identifier-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-notation-public-identifier-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 $State = DTD_STATE;
 push @$Tokens, $Token;
 $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
@@ -22210,6 +23978,12 @@ $State = NOTATION_SYSTEM_ID__SQ__STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -22264,13 +24038,13 @@ $State = B_NOTATION_PUBLIC_ID_STATE;
 $State = B_NOTATION_PUBLIC_ID_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-notation-public-keyword-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-notation-public-keyword-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'after-notation-public-keyword-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -22286,6 +24060,12 @@ $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -22327,13 +24107,13 @@ $OriginalState = [A_NOTATION_SYSTEM_ID_STATE, A_NOTATION_SYSTEM_ID_STATE___BEFOR
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-notation-system-identifier-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-notation-system-identifier-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 $State = DTD_STATE;
 push @$Tokens, $Token;
 $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
@@ -22345,6 +24125,12 @@ $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -22392,6 +24178,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $State = A_NOTATION_SYSTEM_ID_STATE;
@@ -22409,6 +24196,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Temp = q@%@;
@@ -22433,16 +24221,18 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = A_NOTATION_SYSTEM_ID_STATE;
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-notation-system-identifier-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-notation-system-identifier-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 $State = DTD_STATE;
 push @$Tokens, $Token;
 $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
@@ -22460,6 +24250,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 
@@ -22482,8 +24273,16 @@ $TempIndex = $Offset + (pos $Input);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = A_NOTATION_SYSTEM_ID_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -22537,6 +24336,12 @@ $State = A_NOTATION_SYSTEM_ID_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-notation-system-identifier-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -22555,6 +24360,12 @@ $State = A_NOTATION_SYSTEM_ID_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-notation-system-identifier-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -22574,6 +24385,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-notation-system-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -22593,6 +24410,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-notation-system-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -22612,6 +24435,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-notation-system-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -22631,6 +24460,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-notation-system-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -22651,8 +24486,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-notation-system-identifier-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -22706,6 +24554,12 @@ $State = A_NOTATION_SYSTEM_ID_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-notation-system-identifier-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -22724,6 +24578,12 @@ $State = A_NOTATION_SYSTEM_ID_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-notation-system-identifier-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -22743,6 +24603,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-notation-system-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -22762,6 +24628,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-notation-system-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -22781,6 +24653,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-notation-system-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -22800,6 +24678,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-notation-system-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -22823,8 +24707,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-notation-system-identifier-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -22879,13 +24776,13 @@ $State = B_NOTATION_SYSTEM_ID_STATE;
 $State = B_NOTATION_SYSTEM_ID_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-notation-system-keyword-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-notation-system-keyword-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'after-notation-system-keyword-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -22901,6 +24798,12 @@ $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -23033,13 +24936,13 @@ $State = DEFAULT_ATTR_VALUE__SQ__STATE;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-after-allowed-token-list-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-after-allowed-token-list-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'after-after-allowed-token-list-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -23055,6 +24958,12 @@ $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -23102,6 +25011,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $State = A_AFTER_ALLOWED_TOKEN_LIST_STATE;
@@ -23119,6 +25029,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $InLiteral = 1;
@@ -23138,6 +25049,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $State = B_ATTLIST_ATTR_DEFAULT_STATE;
@@ -23155,6 +25067,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Temp = q@%@;
@@ -23175,6 +25088,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $InLiteral = 1;
@@ -23198,16 +25112,18 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = A_AFTER_ALLOWED_TOKEN_LIST_STATE;
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-after-allowed-token-list-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-after-allowed-token-list-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'after-after-allowed-token-list-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -23229,6 +25145,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 
@@ -23251,8 +25168,16 @@ $TempIndex = $Offset + (pos $Input);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = A_AFTER_ALLOWED_TOKEN_LIST_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -23306,6 +25231,12 @@ $State = A_AFTER_ALLOWED_TOKEN_LIST_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-after-allowed-token-list-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -23324,6 +25255,12 @@ $State = A_AFTER_ALLOWED_TOKEN_LIST_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-after-allowed-token-list-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -23343,6 +25280,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-after-allowed-token-list-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -23362,6 +25305,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-after-allowed-token-list-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -23381,6 +25330,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-after-allowed-token-list-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -23400,6 +25355,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-after-allowed-token-list-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -23420,8 +25381,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-after-allowed-token-list-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -23475,6 +25449,12 @@ $State = A_AFTER_ALLOWED_TOKEN_LIST_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-after-allowed-token-list-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -23493,6 +25473,12 @@ $State = A_AFTER_ALLOWED_TOKEN_LIST_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-after-allowed-token-list-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -23512,6 +25498,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-after-allowed-token-list-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -23531,6 +25523,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-after-allowed-token-list-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -23550,6 +25548,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-after-allowed-token-list-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -23569,6 +25573,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-after-allowed-token-list-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -23592,8 +25602,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-after-allowed-token-list-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -23658,13 +25681,13 @@ $State = DEFAULT_ATTR_VALUE__SQ__STATE;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-allowed-token-list-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-allowed-token-list-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'after-allowed-token-list-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -23684,6 +25707,12 @@ $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -23729,13 +25758,13 @@ $State = A_ALLOWED_TOKEN_LIST_STATE;
 $State = B_ALLOWED_TOKEN_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-allowed-token-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-allowed-token-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'after-allowed-token-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -23751,6 +25780,12 @@ $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -23798,6 +25833,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $State = A_ALLOWED_TOKEN_STATE;
@@ -23815,6 +25851,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Temp = q@%@;
@@ -23835,6 +25872,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $State = A_ALLOWED_TOKEN_LIST_STATE;
@@ -23856,6 +25894,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $State = B_ALLOWED_TOKEN_STATE;
@@ -23873,16 +25912,18 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = A_ALLOWED_TOKEN_STATE;
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-allowed-token-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-allowed-token-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'after-allowed-token-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -23904,6 +25945,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 
@@ -23926,8 +25968,16 @@ $TempIndex = $Offset + (pos $Input);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = A_ALLOWED_TOKEN_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -23981,6 +26031,12 @@ $State = A_ALLOWED_TOKEN_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-allowed-token-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -23999,6 +26055,12 @@ $State = A_ALLOWED_TOKEN_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-allowed-token-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -24018,6 +26080,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-allowed-token-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -24037,6 +26105,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-allowed-token-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -24056,6 +26130,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-allowed-token-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -24075,6 +26155,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-allowed-token-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -24095,8 +26181,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-allowed-token-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -24150,6 +26249,12 @@ $State = A_ALLOWED_TOKEN_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-allowed-token-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -24168,6 +26273,12 @@ $State = A_ALLOWED_TOKEN_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-allowed-token-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -24187,6 +26298,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-allowed-token-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -24206,6 +26323,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-allowed-token-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -24225,6 +26348,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-allowed-token-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -24244,6 +26373,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-allowed-token-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -24267,8 +26402,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-allowed-token-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -24650,37 +26798,37 @@ $State = B_CM_ITEM_STATE;
       
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-content-model-group-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-content-model-group-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 pop @$OpenCMGroups;
 $State = A_CM_ITEM_STATE;
 
         if (not @$OpenCMGroups) {
           
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-content-model-item-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-content-model-item-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 $State = DTD_STATE;
 push @$Tokens, $Token;
 
         } else {
           
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-content-model-item-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-content-model-item-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'after-content-model-item-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -24727,6 +26875,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -24802,25 +26956,25 @@ $State = B_CM_ITEM_STATE;
 
         if (not @$OpenCMGroups) {
           
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-content-model-item-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-content-model-item-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 $State = DTD_STATE;
 push @$Tokens, $Token;
 
         } else {
           
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-content-model-item-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-content-model-item-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'after-content-model-item-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -24879,6 +27033,8 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -24926,6 +27082,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $State = A_CM_ITEM_STATE;
@@ -24943,6 +27100,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Temp = q@%@;
@@ -24963,6 +27121,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $State = A_CM_ITEM_STATE;
@@ -24993,6 +27152,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $State = A_CM_ITEM_STATE;
@@ -25031,31 +27191,32 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $State = A_CM_ITEM_STATE;
 
         if (not @$OpenCMGroups) {
           
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-content-model-item-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-content-model-item-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 $State = DTD_STATE;
 push @$Tokens, $Token;
 
         } else {
           
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-content-model-item-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-content-model-item-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'after-content-model-item-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -25078,6 +27239,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $State = A_CM_ITEM_STATE;
@@ -25112,6 +27274,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 
@@ -25133,6 +27296,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 
@@ -25154,6 +27318,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 
@@ -25175,6 +27340,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 
@@ -25196,6 +27362,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 
@@ -25218,8 +27385,12 @@ $TempIndex = $Offset + (pos $Input);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = A_CM_ITEM_STATE;
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -25273,6 +27444,12 @@ $State = A_CM_ITEM_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-content-model-item-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -25291,6 +27468,12 @@ $State = A_CM_ITEM_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-content-model-item-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -25310,6 +27493,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-content-model-item-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -25329,6 +27518,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-content-model-item-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -25348,6 +27543,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-content-model-item-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -25367,6 +27568,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-content-model-item-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -25387,8 +27594,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-content-model-item-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -25442,6 +27662,12 @@ $State = A_CM_ITEM_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-content-model-item-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -25460,6 +27686,12 @@ $State = A_CM_ITEM_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-content-model-item-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -25479,6 +27711,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-content-model-item-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -25498,6 +27736,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-content-model-item-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -25517,6 +27761,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-content-model-item-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -25536,6 +27786,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-content-model-item-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -25559,8 +27815,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-content-model-item-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -25594,12 +27863,35 @@ return 0;
 };
 $StateActions->[A_IGNORED_SECTION_MSC_STATE] = sub {
 if ($Input =~ /\G([\>])/gcs) {
-pop @$OpenMarkedSections;
+
+        if (@$OpenMarkedSections) {
+          pop @$OpenMarkedSections;
+          if (@$OpenMarkedSections) {
+            if ($OpenMarkedSections->[-1] eq 'INCLUDE') {
+              $State = DTD_STATE;
+            } else {
+              $State = IGNORED_SECTION_STATE;
+            }
+          } else {
+            $State = DTD_STATE;
+          }
+        } else {
+          push @$Errors, {level => 'm',
+                          type => 'string in internal subset', # ]]>
+                          di => $DI, index => $Offset + (pos $Input) - 3};
+          $State = DTD_STATE;
+        }
+      
 } elsif ($Input =~ /\G([\]]+)/gcs) {
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = IGNORED_SECTION_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -25702,7 +27994,7 @@ if ($Input =~ /\G([\	\\ \
 $Temp = q@%@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $OriginalState = [A_MSS_STATE, A_MSS_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
-$State = PE_NAME_IN_MARKUP_DECL_STATE;
+$State = PE_NAME_IN_STATUS_KWD_STATE;
 } elsif ($Input =~ /\G([I])/gcs) {
 $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
@@ -25713,62 +28005,98 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = A_MSS_STATE_I;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-mss-003c-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-mss-003c-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'after-mss-003c', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-003c-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
 push @$OpenMarkedSections, 'IGNORE';
-$State = IGNORED_SECTION_STATE;
+$State = IGNORED_SECTION_TAG_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-mss-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-mss-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'after-mss-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
 push @$OpenMarkedSections, 'IGNORE';
 $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\[])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-mss-005b-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-mss-005b-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'after-mss-005b', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-005b-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
 push @$OpenMarkedSections, 'IGNORE';
 $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\]])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-mss-005d-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-mss-005d-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'after-mss-005d', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-005d-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
 push @$OpenMarkedSections, 'IGNORE';
 $State = IN_IGNORED_SECTION_MSC_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -25776,10 +28104,15 @@ $State = IN_IGNORED_SECTION_MSC_STATE;
             push @$Errors, {type => 'after-mss-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @$OpenMarkedSections, 'IGNORE';
-$State = IGNORED_SECTION_STATE;
+$State = BOGUS_STATUS_KWD_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -25827,6 +28160,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $State = A_MSS_STATE;
@@ -25844,12 +28178,13 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Temp = q@%@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $OriginalState = [A_MSS_STATE, A_MSS_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
-$State = PE_NAME_IN_MARKUP_DECL_STATE;
+$State = PE_NAME_IN_STATUS_KWD_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
@@ -25868,6 +28203,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Temp = $1;
@@ -25887,6 +28223,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Temp = $1;
@@ -25906,20 +28243,31 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = A_MSS_STATE;
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-mss-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-mss-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'after-mss-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
 push @$OpenMarkedSections, 'IGNORE';
 $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\[])/gcs) {
@@ -25936,20 +28284,31 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = A_MSS_STATE;
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-mss-005b-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-mss-005b-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'after-mss-005b', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-005b-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
 push @$OpenMarkedSections, 'IGNORE';
 $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\]])/gcs) {
@@ -25966,20 +28325,31 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = A_MSS_STATE;
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-mss-005d-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-mss-005d-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'after-mss-005d', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-005d-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
 push @$OpenMarkedSections, 'IGNORE';
 $State = IN_IGNORED_SECTION_MSC_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -25996,14 +28366,14 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 
             push @$Errors, {type => 'after-mss-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @$OpenMarkedSections, 'IGNORE';
-$State = IGNORED_SECTION_STATE;
+$State = BOGUS_STATUS_KWD_STATE;
 } else {
 if ($EOF) {
 $Temp = $1;
@@ -26019,8 +28389,16 @@ $TempIndex = $Offset + (pos $Input);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = A_MSS_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -26074,6 +28452,12 @@ $State = A_MSS_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-mss-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -26092,6 +28476,12 @@ $State = A_MSS_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-mss-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -26111,6 +28501,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-mss-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -26130,6 +28526,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-mss-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -26149,6 +28551,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-mss-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -26168,6 +28576,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-mss-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -26188,8 +28602,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-mss-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -26243,6 +28670,12 @@ $State = A_MSS_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-mss-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -26261,6 +28694,12 @@ $State = A_MSS_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-mss-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -26280,6 +28719,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-mss-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -26299,6 +28744,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-mss-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -26318,6 +28769,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-mss-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -26337,6 +28794,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-mss-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -26360,8 +28823,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'after-mss-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -26406,11 +28882,84 @@ $State = A_MSS_STATE_IG;
 } elsif ($Input =~ /\G([n])/gcs) {
 $Temp .= $1;
 $State = A_MSS_STATE_IN;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'after-mss-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-0025-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'after-mss-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-003c-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_TAG_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'after-mss-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} elsif ($Input =~ /\G([\[])/gcs) {
+
+            push @$Errors, {type => 'after-mss-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-005b-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\]])/gcs) {
 
             push @$Errors, {type => 'after-mss-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-005d-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
 push @$OpenMarkedSections, 'IGNORE';
 $State = IN_IGNORED_SECTION_MSC_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -26418,10 +28967,16 @@ $State = IN_IGNORED_SECTION_MSC_STATE;
             push @$Errors, {type => 'after-mss-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @$OpenMarkedSections, 'IGNORE';
-$State = IGNORED_SECTION_STATE;
+$State = BOGUS_STATUS_KWD_STATE;
 } else {
 if ($EOF) {
+$State = A_MSS_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -26460,11 +29015,84 @@ $State = A_MSS_STATE_IGN;
 } elsif ($Input =~ /\G([n])/gcs) {
 $Temp .= $1;
 $State = A_MSS_STATE_IGN;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'after-mss-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-0025-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'after-mss-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-003c-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_TAG_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'after-mss-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} elsif ($Input =~ /\G([\[])/gcs) {
+
+            push @$Errors, {type => 'after-mss-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-005b-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\]])/gcs) {
 
             push @$Errors, {type => 'after-mss-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-005d-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
 push @$OpenMarkedSections, 'IGNORE';
 $State = IN_IGNORED_SECTION_MSC_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -26472,10 +29100,16 @@ $State = IN_IGNORED_SECTION_MSC_STATE;
             push @$Errors, {type => 'after-mss-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @$OpenMarkedSections, 'IGNORE';
-$State = IGNORED_SECTION_STATE;
+$State = BOGUS_STATUS_KWD_STATE;
 } else {
 if ($EOF) {
+$State = A_MSS_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -26514,11 +29148,84 @@ $State = A_MSS_STATE_IGNO;
 } elsif ($Input =~ /\G([o])/gcs) {
 $Temp .= $1;
 $State = A_MSS_STATE_IGNO;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'after-mss-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-0025-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'after-mss-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-003c-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_TAG_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'after-mss-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} elsif ($Input =~ /\G([\[])/gcs) {
+
+            push @$Errors, {type => 'after-mss-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-005b-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\]])/gcs) {
 
             push @$Errors, {type => 'after-mss-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-005d-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
 push @$OpenMarkedSections, 'IGNORE';
 $State = IN_IGNORED_SECTION_MSC_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -26526,10 +29233,16 @@ $State = IN_IGNORED_SECTION_MSC_STATE;
             push @$Errors, {type => 'after-mss-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @$OpenMarkedSections, 'IGNORE';
-$State = IGNORED_SECTION_STATE;
+$State = BOGUS_STATUS_KWD_STATE;
 } else {
 if ($EOF) {
+$State = A_MSS_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -26568,11 +29281,84 @@ $State = A_MSS_STATE_IGNOR;
 } elsif ($Input =~ /\G([r])/gcs) {
 $Temp .= $1;
 $State = A_MSS_STATE_IGNOR;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'after-mss-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-0025-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'after-mss-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-003c-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_TAG_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'after-mss-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} elsif ($Input =~ /\G([\[])/gcs) {
+
+            push @$Errors, {type => 'after-mss-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-005b-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\]])/gcs) {
 
             push @$Errors, {type => 'after-mss-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-005d-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
 push @$OpenMarkedSections, 'IGNORE';
 $State = IN_IGNORED_SECTION_MSC_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -26580,10 +29366,16 @@ $State = IN_IGNORED_SECTION_MSC_STATE;
             push @$Errors, {type => 'after-mss-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @$OpenMarkedSections, 'IGNORE';
-$State = IGNORED_SECTION_STATE;
+$State = BOGUS_STATUS_KWD_STATE;
 } else {
 if ($EOF) {
+$State = A_MSS_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -26616,7 +29408,55 @@ return 1;
 return 0;
 };
 $StateActions->[A_MSS_STATE_IGNOR] = sub {
-if ($Input =~ /\G([E])/gcs) {
+if ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'after-mss-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-0025-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'after-mss-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-003c-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_TAG_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'after-mss-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} elsif ($Input =~ /\G([E])/gcs) {
 $Temp .= $1;
 
             unless ($Temp eq q{IGNORE}) {
@@ -26626,11 +29466,36 @@ $Temp .= $1;
             }
           
 $State = A_IGNORE_KWD_STATE;
+} elsif ($Input =~ /\G([\[])/gcs) {
+
+            push @$Errors, {type => 'after-mss-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-005b-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\]])/gcs) {
 
             push @$Errors, {type => 'after-mss-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-005d-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
 push @$OpenMarkedSections, 'IGNORE';
 $State = IN_IGNORED_SECTION_MSC_STATE;
 } elsif ($Input =~ /\G([e])/gcs) {
@@ -26648,10 +29513,16 @@ $State = A_IGNORE_KWD_STATE;
             push @$Errors, {type => 'after-mss-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @$OpenMarkedSections, 'IGNORE';
-$State = IGNORED_SECTION_STATE;
+$State = BOGUS_STATUS_KWD_STATE;
 } else {
 if ($EOF) {
+$State = A_MSS_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -26690,11 +29561,84 @@ $State = A_MSS_STATE_INC;
 } elsif ($Input =~ /\G([c])/gcs) {
 $Temp .= $1;
 $State = A_MSS_STATE_INC;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'after-mss-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-0025-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'after-mss-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-003c-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_TAG_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'after-mss-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} elsif ($Input =~ /\G([\[])/gcs) {
+
+            push @$Errors, {type => 'after-mss-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-005b-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\]])/gcs) {
 
             push @$Errors, {type => 'after-mss-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-005d-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
 push @$OpenMarkedSections, 'IGNORE';
 $State = IN_IGNORED_SECTION_MSC_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -26702,10 +29646,16 @@ $State = IN_IGNORED_SECTION_MSC_STATE;
             push @$Errors, {type => 'after-mss-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @$OpenMarkedSections, 'IGNORE';
-$State = IGNORED_SECTION_STATE;
+$State = BOGUS_STATUS_KWD_STATE;
 } else {
 if ($EOF) {
+$State = A_MSS_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -26744,11 +29694,84 @@ $State = A_MSS_STATE_INCL;
 } elsif ($Input =~ /\G([l])/gcs) {
 $Temp .= $1;
 $State = A_MSS_STATE_INCL;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'after-mss-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-0025-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'after-mss-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-003c-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_TAG_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'after-mss-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} elsif ($Input =~ /\G([\[])/gcs) {
+
+            push @$Errors, {type => 'after-mss-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-005b-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\]])/gcs) {
 
             push @$Errors, {type => 'after-mss-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-005d-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
 push @$OpenMarkedSections, 'IGNORE';
 $State = IN_IGNORED_SECTION_MSC_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -26756,10 +29779,16 @@ $State = IN_IGNORED_SECTION_MSC_STATE;
             push @$Errors, {type => 'after-mss-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @$OpenMarkedSections, 'IGNORE';
-$State = IGNORED_SECTION_STATE;
+$State = BOGUS_STATUS_KWD_STATE;
 } else {
 if ($EOF) {
+$State = A_MSS_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -26798,11 +29827,84 @@ $State = A_MSS_STATE_INCLU;
 } elsif ($Input =~ /\G([u])/gcs) {
 $Temp .= $1;
 $State = A_MSS_STATE_INCLU;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'after-mss-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-0025-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'after-mss-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-003c-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_TAG_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'after-mss-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} elsif ($Input =~ /\G([\[])/gcs) {
+
+            push @$Errors, {type => 'after-mss-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-005b-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\]])/gcs) {
 
             push @$Errors, {type => 'after-mss-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-005d-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
 push @$OpenMarkedSections, 'IGNORE';
 $State = IN_IGNORED_SECTION_MSC_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -26810,10 +29912,16 @@ $State = IN_IGNORED_SECTION_MSC_STATE;
             push @$Errors, {type => 'after-mss-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @$OpenMarkedSections, 'IGNORE';
-$State = IGNORED_SECTION_STATE;
+$State = BOGUS_STATUS_KWD_STATE;
 } else {
 if ($EOF) {
+$State = A_MSS_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -26852,11 +29960,84 @@ $State = A_MSS_STATE_INCLUD;
 } elsif ($Input =~ /\G([d])/gcs) {
 $Temp .= $1;
 $State = A_MSS_STATE_INCLUD;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'after-mss-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-0025-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'after-mss-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-003c-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_TAG_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'after-mss-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} elsif ($Input =~ /\G([\[])/gcs) {
+
+            push @$Errors, {type => 'after-mss-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-005b-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\]])/gcs) {
 
             push @$Errors, {type => 'after-mss-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-005d-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
 push @$OpenMarkedSections, 'IGNORE';
 $State = IN_IGNORED_SECTION_MSC_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -26864,10 +30045,16 @@ $State = IN_IGNORED_SECTION_MSC_STATE;
             push @$Errors, {type => 'after-mss-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @$OpenMarkedSections, 'IGNORE';
-$State = IGNORED_SECTION_STATE;
+$State = BOGUS_STATUS_KWD_STATE;
 } else {
 if ($EOF) {
+$State = A_MSS_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -26900,7 +30087,55 @@ return 1;
 return 0;
 };
 $StateActions->[A_MSS_STATE_INCLUD] = sub {
-if ($Input =~ /\G([E])/gcs) {
+if ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'after-mss-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-0025-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'after-mss-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-003c-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_TAG_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'after-mss-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} elsif ($Input =~ /\G([E])/gcs) {
 $Temp .= $1;
 
             unless ($Temp eq q{INCLUDE}) {
@@ -26910,11 +30145,36 @@ $Temp .= $1;
             }
           
 $State = A_INCLUDE_KWD_STATE;
+} elsif ($Input =~ /\G([\[])/gcs) {
+
+            push @$Errors, {type => 'after-mss-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-005b-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\]])/gcs) {
 
             push @$Errors, {type => 'after-mss-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-005d-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
 push @$OpenMarkedSections, 'IGNORE';
 $State = IN_IGNORED_SECTION_MSC_STATE;
 } elsif ($Input =~ /\G([e])/gcs) {
@@ -26932,10 +30192,16 @@ $State = A_INCLUDE_KWD_STATE;
             push @$Errors, {type => 'after-mss-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @$OpenMarkedSections, 'IGNORE';
-$State = IGNORED_SECTION_STATE;
+$State = BOGUS_STATUS_KWD_STATE;
 } else {
 if ($EOF) {
+$State = A_MSS_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -26988,13 +30254,13 @@ $State = B_ALLOWED_TOKEN_STATE;
 $Attr->{allowed_tokens}->[-1] .= q@�@;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'allowed-token-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'allowed-token-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'allowed-token-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -27006,6 +30272,12 @@ $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 $Attr->{allowed_tokens}->[-1] .= $1;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -39476,13 +42748,13 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'before-attlist-attribute-default-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'before-attlist-attribute-default-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'before-attlist-attribute-default-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -39495,6 +42767,12 @@ $Attr->{q<default_type>} .= $1;
 $State = ATTLIST_ATTR_DEFAULT_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -39536,13 +42814,13 @@ $OriginalState = [B_ATTLIST_ATTR_NAME_STATE, B_ATTLIST_ATTR_NAME_STATE___BEFORE_
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'before-attlist-attribute-name-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'before-attlist-attribute-name-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 $State = DTD_STATE;
 push @$Tokens, $Token;
 $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
@@ -39566,6 +42844,12 @@ $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + (pos $Input) - length $1;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -39613,6 +42897,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $State = B_ATTLIST_ATTR_NAME_STATE;
@@ -39630,6 +42915,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Temp = q@%@;
@@ -39654,16 +42940,18 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = B_ATTLIST_ATTR_NAME_STATE;
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'before-attlist-attribute-name-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'before-attlist-attribute-name-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 $State = DTD_STATE;
 push @$Tokens, $Token;
 $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
@@ -39681,6 +42969,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 
@@ -39707,6 +42996,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 
@@ -39730,8 +43020,16 @@ $TempIndex = $Offset + (pos $Input);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = B_ATTLIST_ATTR_NAME_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -39785,6 +43083,12 @@ $State = B_ATTLIST_ATTR_NAME_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-attlist-attribute-name-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -39803,6 +43107,12 @@ $State = B_ATTLIST_ATTR_NAME_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-attlist-attribute-name-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -39822,6 +43132,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-attlist-attribute-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -39841,6 +43157,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-attlist-attribute-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -39860,6 +43182,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-attlist-attribute-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -39879,6 +43207,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-attlist-attribute-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -39899,8 +43233,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-attlist-attribute-name-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -39954,6 +43301,12 @@ $State = B_ATTLIST_ATTR_NAME_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-attlist-attribute-name-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -39972,6 +43325,12 @@ $State = B_ATTLIST_ATTR_NAME_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-attlist-attribute-name-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -39991,6 +43350,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-attlist-attribute-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -40010,6 +43375,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-attlist-attribute-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -40029,6 +43400,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-attlist-attribute-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -40048,6 +43425,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-attlist-attribute-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -40071,8 +43454,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-attlist-attribute-name-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -40121,13 +43517,13 @@ $Token->{q<name>} = q@�@;
 $State = ATTLIST_NAME_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'before-attlist-name-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'before-attlist-name-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'before-attlist-name-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -40138,6 +43534,12 @@ $Token->{q<name>} = $1;
 $State = ATTLIST_NAME_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -40185,6 +43587,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $State = B_ATTLIST_NAME_STATE;
@@ -40202,6 +43605,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Temp = q@%@;
@@ -40226,6 +43630,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 
@@ -40248,16 +43653,18 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = B_ATTLIST_NAME_STATE;
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'before-attlist-name-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'before-attlist-name-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'before-attlist-name-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -40277,6 +43684,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Token->{q<name>} = $1;
@@ -40296,8 +43704,16 @@ $TempIndex = $Offset + (pos $Input);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = B_ATTLIST_NAME_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -40351,6 +43767,12 @@ $State = B_ATTLIST_NAME_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-attlist-name-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -40369,6 +43791,12 @@ $State = B_ATTLIST_NAME_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-attlist-name-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -40388,6 +43816,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-attlist-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -40407,6 +43841,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-attlist-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -40426,6 +43866,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-attlist-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -40445,6 +43891,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-attlist-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -40465,8 +43917,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-attlist-name-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -40520,6 +43985,12 @@ $State = B_ATTLIST_NAME_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-attlist-name-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -40538,6 +44009,12 @@ $State = B_ATTLIST_NAME_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-attlist-name-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -40557,6 +44034,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-attlist-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -40576,6 +44059,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-attlist-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -40595,6 +44084,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-attlist-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -40614,6 +44109,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-attlist-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -40637,8 +44138,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-attlist-name-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -40902,13 +44416,13 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'before-element-content-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'before-element-content-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'before-element-content-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -40931,6 +44445,12 @@ $Token->{q<content_keyword>} = $1;
 $State = ELEMENT_CONTENT_KWD_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -40978,6 +44498,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $State = B_ELEMENT_CONTENT_STATE;
@@ -40995,6 +44516,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Temp = q@%@;
@@ -41015,6 +44537,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 my $cmgroup = {items => [], separators => [], di => $DI, index => $Offset + pos $Input};
@@ -41039,6 +44562,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 
@@ -41060,6 +44584,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 
@@ -41081,6 +44606,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 
@@ -41102,6 +44628,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 
@@ -41123,16 +44650,18 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = B_ELEMENT_CONTENT_STATE;
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'before-element-content-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'before-element-content-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'before-element-content-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -41152,6 +44681,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 
@@ -41173,6 +44703,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 
@@ -41194,6 +44725,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Token->{q<content_keyword>} = $1;
@@ -41213,8 +44745,16 @@ $TempIndex = $Offset + (pos $Input);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = B_ELEMENT_CONTENT_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -41268,6 +44808,12 @@ $State = B_ELEMENT_CONTENT_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-element-content-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -41286,6 +44832,12 @@ $State = B_ELEMENT_CONTENT_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-element-content-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -41305,6 +44857,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-element-content-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -41324,6 +44882,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-element-content-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -41343,6 +44907,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-element-content-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -41362,6 +44932,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-element-content-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -41382,8 +44958,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-element-content-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -41437,6 +45026,12 @@ $State = B_ELEMENT_CONTENT_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-element-content-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -41455,6 +45050,12 @@ $State = B_ELEMENT_CONTENT_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-element-content-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -41474,6 +45075,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-element-content-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -41493,6 +45100,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-element-content-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -41512,6 +45125,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-element-content-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -41531,6 +45150,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-element-content-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -41554,8 +45179,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-element-content-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -41604,13 +45242,13 @@ $Token->{q<name>} = q@�@;
 $State = ELEMENT_NAME_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'before-element-name-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'before-element-name-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'before-element-name-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -41621,6 +45259,12 @@ $Token->{q<name>} = $1;
 $State = ELEMENT_NAME_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -41668,6 +45312,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $State = B_ELEMENT_NAME_STATE;
@@ -41685,6 +45330,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Temp = q@%@;
@@ -41709,6 +45355,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 
@@ -41731,16 +45378,18 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = B_ELEMENT_NAME_STATE;
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'before-element-name-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'before-element-name-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'before-element-name-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -41760,6 +45409,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Token->{q<name>} = $1;
@@ -41779,8 +45429,16 @@ $TempIndex = $Offset + (pos $Input);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = B_ELEMENT_NAME_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -41834,6 +45492,12 @@ $State = B_ELEMENT_NAME_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-element-name-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -41852,6 +45516,12 @@ $State = B_ELEMENT_NAME_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-element-name-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -41871,6 +45541,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-element-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -41890,6 +45566,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-element-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -41909,6 +45591,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-element-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -41928,6 +45616,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-element-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -41948,8 +45642,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-element-name-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -42003,6 +45710,12 @@ $State = B_ELEMENT_NAME_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-element-name-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -42021,6 +45734,12 @@ $State = B_ELEMENT_NAME_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-element-name-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -42040,6 +45759,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-element-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -42059,6 +45784,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-element-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -42078,6 +45809,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-element-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -42097,6 +45834,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-element-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -42120,8 +45863,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-element-name-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -42166,13 +45922,13 @@ $OriginalState = [B_ENT_NAME_STATE, B_ENT_NAME_STATE___BEFORE_TEXT_DECL_IN_MARKU
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'before-entity-name-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'before-entity-name-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'before-entity-name-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -42183,6 +45939,12 @@ $Token->{q<name>} = $1;
 $State = ENT_NAME_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -42229,6 +45991,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Token->{q<name>} = q@�@;
@@ -42248,6 +46011,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $State = B_ENT_NAME_STATE;
@@ -42265,6 +46029,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Temp = q@%@;
@@ -42289,16 +46054,18 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = B_ENT_NAME_STATE;
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'before-entity-name-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'before-entity-name-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'before-entity-name-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -42318,6 +46085,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Token->{q<name>} = $1;
@@ -42337,8 +46105,16 @@ $TempIndex = $Offset + (pos $Input);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = B_ENT_NAME_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -42392,6 +46168,12 @@ $State = B_ENT_NAME_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-name-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -42410,6 +46192,12 @@ $State = B_ENT_NAME_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-name-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -42429,6 +46217,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -42448,6 +46242,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -42467,6 +46267,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -42486,6 +46292,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -42506,8 +46318,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-name-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -42561,6 +46386,12 @@ $State = B_ENT_NAME_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-name-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -42579,6 +46410,12 @@ $State = B_ENT_NAME_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-name-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -42598,6 +46435,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -42617,6 +46460,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -42636,6 +46485,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -42655,6 +46510,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -42678,8 +46539,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-name-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -42727,13 +46601,13 @@ $InLiteral = 1;
 $State = ENT_PUBLIC_ID__SQ__STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'before-entity-public-identifier-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'before-entity-public-identifier-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'before-entity-public-identifier-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -42750,6 +46624,12 @@ return 1 if $Token->{type} == ENTITY_TOKEN;
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -42797,6 +46677,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $State = B_ENT_PUBLIC_ID_STATE;
@@ -42814,6 +46695,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $InLiteral = 1;
@@ -42832,6 +46714,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Temp = q@%@;
@@ -42852,6 +46735,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $InLiteral = 1;
@@ -42874,16 +46758,18 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = B_ENT_PUBLIC_ID_STATE;
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'before-entity-public-identifier-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'before-entity-public-identifier-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'before-entity-public-identifier-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -42906,6 +46792,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 
@@ -42928,8 +46815,16 @@ $TempIndex = $Offset + (pos $Input);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = B_ENT_PUBLIC_ID_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -42983,6 +46878,12 @@ $State = B_ENT_PUBLIC_ID_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-public-identifier-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -43001,6 +46902,12 @@ $State = B_ENT_PUBLIC_ID_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-public-identifier-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -43020,6 +46927,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-public-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -43039,6 +46952,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-public-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -43058,6 +46977,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-public-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -43077,6 +47002,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-public-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -43097,8 +47028,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-public-identifier-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -43152,6 +47096,12 @@ $State = B_ENT_PUBLIC_ID_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-public-identifier-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -43170,6 +47120,12 @@ $State = B_ENT_PUBLIC_ID_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-public-identifier-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -43189,6 +47145,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-public-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -43208,6 +47170,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-public-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -43227,6 +47195,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-public-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -43246,6 +47220,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-public-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -43269,8 +47249,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-public-identifier-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -43318,13 +47311,13 @@ $InLiteral = 1;
 $State = ENT_SYSTEM_ID__SQ__STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'before-entity-system-identifier-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'before-entity-system-identifier-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'before-entity-system-identifier-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -43341,6 +47334,12 @@ return 1 if $Token->{type} == ENTITY_TOKEN;
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -43388,6 +47387,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $State = B_ENT_SYSTEM_ID_STATE;
@@ -43405,6 +47405,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $InLiteral = 1;
@@ -43423,6 +47424,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Temp = q@%@;
@@ -43443,6 +47445,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $InLiteral = 1;
@@ -43465,16 +47468,18 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = B_ENT_SYSTEM_ID_STATE;
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'before-entity-system-identifier-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'before-entity-system-identifier-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'before-entity-system-identifier-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -43497,6 +47502,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 
@@ -43519,8 +47525,16 @@ $TempIndex = $Offset + (pos $Input);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = B_ENT_SYSTEM_ID_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -43574,6 +47588,12 @@ $State = B_ENT_SYSTEM_ID_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-system-identifier-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -43592,6 +47612,12 @@ $State = B_ENT_SYSTEM_ID_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-system-identifier-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -43611,6 +47637,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-system-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -43630,6 +47662,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-system-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -43649,6 +47687,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-system-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -43668,6 +47712,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-system-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -43688,8 +47738,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-system-identifier-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -43743,6 +47806,12 @@ $State = B_ENT_SYSTEM_ID_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-system-identifier-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -43761,6 +47830,12 @@ $State = B_ENT_SYSTEM_ID_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-system-identifier-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -43780,6 +47855,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-system-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -43799,6 +47880,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-system-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -43818,6 +47905,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-system-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -43837,6 +47930,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-system-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -43860,8 +47959,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-system-identifier-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -43902,14 +48014,15 @@ $State = ENT_NAME_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 $State = PE_DECL_OR_REF_AFTER_SPACE_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$State = B_ENT_NAME_STATE;
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'before-entity-name-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'before-entity-name-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'before-entity-name-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -43920,6 +48033,12 @@ $Token->{q<name>} = $1;
 $State = ENT_NAME_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -43966,6 +48085,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Token->{q<name>} = q@�@;
@@ -43985,6 +48105,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $State = B_ENT_TYPE_STATE;
@@ -44002,6 +48123,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $State = PE_DECL_OR_REF_AFTER_SPACE_STATE;
@@ -44023,16 +48145,18 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = B_ENT_NAME_STATE;
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'before-entity-name-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'before-entity-name-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'before-entity-name-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -44052,6 +48176,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Token->{q<name>} = $1;
@@ -44071,8 +48196,16 @@ $TempIndex = $Offset + (pos $Input);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = B_ENT_TYPE_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -44126,6 +48259,12 @@ $State = B_ENT_TYPE_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-type-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -44144,6 +48283,12 @@ $State = B_ENT_TYPE_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-type-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -44163,6 +48308,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-type-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -44182,6 +48333,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-type-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -44201,6 +48358,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-type-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -44220,6 +48383,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-type-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -44240,8 +48409,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-type-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -44295,6 +48477,12 @@ $State = B_ENT_TYPE_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-type-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -44313,6 +48501,12 @@ $State = B_ENT_TYPE_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-type-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -44332,6 +48526,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-type-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -44351,6 +48551,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-type-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -44370,6 +48576,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-type-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -44389,6 +48601,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-type-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -44412,8 +48630,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-entity-type-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -44462,6 +48693,7 @@ if ($Input =~ /\G([\])/gcs) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 push @{$Token->{q<value>}}, [q@
@@ -44483,6 +48715,7 @@ $State = ENT_VALUE_IN_ENT_STATE_CR;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Temp = q@%@;
@@ -44504,6 +48737,7 @@ $State = PE_NAME_IN_ENT_VALUE_IN_ENT_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Temp = q@&@;
@@ -44529,6 +48763,7 @@ $State = TEXT_DECL_IN_ENT_VALUE_IN_ENT_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $State = ENT_VALUE_IN_ENT_STATE;
@@ -44553,6 +48788,7 @@ push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $State = ENT_VALUE_IN_ENT_STATE;
@@ -44574,8 +48810,12 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = ENT_VALUE_IN_ENT_STATE;
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -44624,13 +48864,13 @@ $Token->{q<notation_name>} = q@�@;
 $State = NDATA_ID_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'before-ndata-identifier-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'before-ndata-identifier-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'before-ndata-identifier-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -44644,6 +48884,12 @@ $Token->{q<notation_name>} = $1;
 $State = NDATA_ID_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -44691,6 +48937,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $State = B_NDATA_ID_STATE;
@@ -44708,6 +48955,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Temp = q@%@;
@@ -44732,6 +48980,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 
@@ -44754,16 +49003,18 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = B_NDATA_ID_STATE;
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'before-ndata-identifier-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'before-ndata-identifier-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'before-ndata-identifier-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -44786,6 +49037,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Token->{q<notation_name>} = $1;
@@ -44805,8 +49057,16 @@ $TempIndex = $Offset + (pos $Input);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = B_NDATA_ID_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -44860,6 +49120,12 @@ $State = B_NDATA_ID_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-ndata-identifier-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -44878,6 +49144,12 @@ $State = B_NDATA_ID_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-ndata-identifier-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -44897,6 +49169,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-ndata-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -44916,6 +49194,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-ndata-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -44935,6 +49219,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-ndata-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -44954,6 +49244,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-ndata-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -44974,8 +49270,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-ndata-identifier-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -45029,6 +49338,12 @@ $State = B_NDATA_ID_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-ndata-identifier-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -45047,6 +49362,12 @@ $State = B_NDATA_ID_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-ndata-identifier-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -45066,6 +49387,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-ndata-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -45085,6 +49412,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-ndata-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -45104,6 +49437,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-ndata-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -45123,6 +49462,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-ndata-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -45146,8 +49491,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-ndata-identifier-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -45189,13 +49547,13 @@ $OriginalState = [B_NDATA_KWD_STATE, B_NDATA_KWD_STATE___BEFORE_TEXT_DECL_IN_MAR
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'before-ndata-keyword-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'before-ndata-keyword-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 $State = DTD_STATE;
 push @$Tokens, $Token;
 $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
@@ -45216,6 +49574,12 @@ $State = B_NDATA_KWD_STATE_N;
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -45263,6 +49627,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $State = B_NDATA_KWD_STATE;
@@ -45280,6 +49645,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Temp = q@%@;
@@ -45304,16 +49670,18 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = B_NDATA_KWD_STATE;
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'before-ndata-keyword-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'before-ndata-keyword-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 $State = DTD_STATE;
 push @$Tokens, $Token;
 $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
@@ -45332,6 +49700,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Temp = $1;
@@ -45351,6 +49720,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Temp = $1;
@@ -45370,6 +49740,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 
@@ -45392,8 +49763,16 @@ $TempIndex = $Offset + (pos $Input);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = B_NDATA_KWD_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -45447,6 +49826,12 @@ $State = B_NDATA_KWD_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-ndata-keyword-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -45465,6 +49850,12 @@ $State = B_NDATA_KWD_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-ndata-keyword-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -45484,6 +49875,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-ndata-keyword-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -45503,6 +49900,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-ndata-keyword-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -45522,6 +49925,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-ndata-keyword-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -45541,6 +49950,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-ndata-keyword-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -45561,8 +49976,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-ndata-keyword-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -45616,6 +50044,12 @@ $State = B_NDATA_KWD_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-ndata-keyword-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -45634,6 +50068,12 @@ $State = B_NDATA_KWD_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-ndata-keyword-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -45653,6 +50093,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-ndata-keyword-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -45672,6 +50118,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-ndata-keyword-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -45691,6 +50143,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-ndata-keyword-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -45710,6 +50168,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-ndata-keyword-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -45733,8 +50197,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-ndata-keyword-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -45781,6 +50258,13 @@ $State = B_NDATA_KWD_STATE_ND;
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+$State = B_NDATA_KWD_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -45827,6 +50311,13 @@ $State = B_NDATA_KWD_STATE_NDA;
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+$State = B_NDATA_KWD_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -45873,6 +50364,13 @@ $State = B_NDATA_KWD_STATE_NDAT;
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+$State = B_NDATA_KWD_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -45933,6 +50431,13 @@ $State = A_NDATA_KWD_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+$State = B_NDATA_KWD_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -45981,13 +50486,13 @@ $Token->{q<name>} = q@�@;
 $State = NOTATION_NAME_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'before-notation-name-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'before-notation-name-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'before-notation-name-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -46002,6 +50507,12 @@ $Token->{q<name>} = $1;
 $State = NOTATION_NAME_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -46049,6 +50560,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $State = B_NOTATION_NAME_STATE;
@@ -46066,6 +50578,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Temp = q@%@;
@@ -46090,6 +50603,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 
@@ -46112,16 +50626,18 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = B_NOTATION_NAME_STATE;
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'before-notation-name-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'before-notation-name-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'before-notation-name-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -46145,6 +50661,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Token->{q<name>} = $1;
@@ -46164,8 +50681,16 @@ $TempIndex = $Offset + (pos $Input);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = B_NOTATION_NAME_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -46219,6 +50744,12 @@ $State = B_NOTATION_NAME_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-notation-name-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -46237,6 +50768,12 @@ $State = B_NOTATION_NAME_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-notation-name-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -46256,6 +50793,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-notation-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -46275,6 +50818,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-notation-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -46294,6 +50843,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-notation-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -46313,6 +50868,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-notation-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -46333,8 +50894,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-notation-name-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -46388,6 +50962,12 @@ $State = B_NOTATION_NAME_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-notation-name-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -46406,6 +50986,12 @@ $State = B_NOTATION_NAME_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-notation-name-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -46425,6 +51011,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-notation-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -46444,6 +51036,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-notation-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -46463,6 +51061,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-notation-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -46482,6 +51086,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-notation-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -46505,8 +51115,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-notation-name-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -46554,13 +51177,13 @@ $InLiteral = 1;
 $State = NOTATION_PUBLIC_ID__SQ__STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'before-notation-public-identifier-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'before-notation-public-identifier-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'before-notation-public-identifier-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -46576,6 +51199,12 @@ $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -46623,6 +51252,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $State = B_NOTATION_PUBLIC_ID_STATE;
@@ -46640,6 +51270,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $InLiteral = 1;
@@ -46658,6 +51289,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Temp = q@%@;
@@ -46678,6 +51310,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $InLiteral = 1;
@@ -46700,16 +51333,18 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = B_NOTATION_PUBLIC_ID_STATE;
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'before-notation-public-identifier-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'before-notation-public-identifier-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'before-notation-public-identifier-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -46731,6 +51366,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 
@@ -46753,8 +51389,16 @@ $TempIndex = $Offset + (pos $Input);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = B_NOTATION_PUBLIC_ID_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -46808,6 +51452,12 @@ $State = B_NOTATION_PUBLIC_ID_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-notation-public-identifier-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -46826,6 +51476,12 @@ $State = B_NOTATION_PUBLIC_ID_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-notation-public-identifier-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -46845,6 +51501,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-notation-public-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -46864,6 +51526,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-notation-public-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -46883,6 +51551,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-notation-public-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -46902,6 +51576,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-notation-public-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -46922,8 +51602,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-notation-public-identifier-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -46977,6 +51670,12 @@ $State = B_NOTATION_PUBLIC_ID_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-notation-public-identifier-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -46995,6 +51694,12 @@ $State = B_NOTATION_PUBLIC_ID_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-notation-public-identifier-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -47014,6 +51719,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-notation-public-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -47033,6 +51744,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-notation-public-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -47052,6 +51769,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-notation-public-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -47071,6 +51794,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-notation-public-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -47094,8 +51823,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-notation-public-identifier-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -47143,13 +51885,13 @@ $InLiteral = 1;
 $State = NOTATION_SYSTEM_ID__SQ__STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'before-notation-system-identifier-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'before-notation-system-identifier-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'before-notation-system-identifier-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -47165,6 +51907,12 @@ $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -47212,6 +51960,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $State = B_NOTATION_SYSTEM_ID_STATE;
@@ -47229,6 +51978,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $InLiteral = 1;
@@ -47247,6 +51997,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Temp = q@%@;
@@ -47267,6 +52018,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $InLiteral = 1;
@@ -47289,16 +52041,18 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = B_NOTATION_SYSTEM_ID_STATE;
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'before-notation-system-identifier-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'before-notation-system-identifier-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'before-notation-system-identifier-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -47320,6 +52074,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 
@@ -47342,8 +52097,16 @@ $TempIndex = $Offset + (pos $Input);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = B_NOTATION_SYSTEM_ID_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -47397,6 +52160,12 @@ $State = B_NOTATION_SYSTEM_ID_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-notation-system-identifier-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -47415,6 +52184,12 @@ $State = B_NOTATION_SYSTEM_ID_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-notation-system-identifier-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -47434,6 +52209,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-notation-system-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -47453,6 +52234,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-notation-system-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -47472,6 +52259,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-notation-system-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -47491,6 +52284,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-notation-system-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -47511,8 +52310,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-notation-system-identifier-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -47566,6 +52378,12 @@ $State = B_NOTATION_SYSTEM_ID_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-notation-system-identifier-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -47584,6 +52402,12 @@ $State = B_NOTATION_SYSTEM_ID_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-notation-system-identifier-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -47603,6 +52427,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-notation-system-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -47622,6 +52452,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-notation-system-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -47641,6 +52477,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-notation-system-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -47660,6 +52502,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-notation-system-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -47683,8 +52531,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-notation-system-identifier-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -47740,13 +52601,13 @@ $State = ALLOWED_TOKEN_STATE;
 $State = A_ALLOWED_TOKEN_LIST_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'before-allowed-token-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'before-allowed-token-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'before-allowed-token-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -47765,6 +52626,12 @@ $Attr->{allowed_tokens}->[-1] = $1;
 $State = ALLOWED_TOKEN_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -47812,6 +52679,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $State = B_ALLOWED_TOKEN_STATE;
@@ -47829,6 +52697,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Temp = q@%@;
@@ -47853,6 +52722,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 
@@ -47876,6 +52746,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 
@@ -47897,16 +52768,18 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = B_ALLOWED_TOKEN_STATE;
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'before-allowed-token-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'before-allowed-token-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'before-allowed-token-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -47928,6 +52801,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $State = B_ALLOWED_TOKEN_STATE;
@@ -47949,6 +52823,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 push @{$Attr->{allowed_tokens} ||= []}, '';
@@ -47969,8 +52844,16 @@ $TempIndex = $Offset + (pos $Input);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = B_ALLOWED_TOKEN_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -48024,6 +52907,12 @@ $State = B_ALLOWED_TOKEN_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-allowed-token-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -48042,6 +52931,12 @@ $State = B_ALLOWED_TOKEN_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-allowed-token-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -48061,6 +52956,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-allowed-token-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -48080,6 +52981,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-allowed-token-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -48099,6 +53006,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-allowed-token-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -48118,6 +53031,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-allowed-token-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -48138,8 +53057,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-allowed-token-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -48193,6 +53125,12 @@ $State = B_ALLOWED_TOKEN_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-allowed-token-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -48211,6 +53149,12 @@ $State = B_ALLOWED_TOKEN_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-allowed-token-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -48230,6 +53174,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-allowed-token-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -48249,6 +53199,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-allowed-token-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -48268,6 +53224,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-allowed-token-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -48287,6 +53249,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-allowed-token-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -48310,8 +53278,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-allowed-token-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -50137,13 +55118,13 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'before-content-model-item-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'before-content-model-item-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'before-content-model-item-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -50170,6 +55151,12 @@ $OpenCMGroups->[-1]->{items}->[-1]->{q<name>} = $1;
 $State = CM_ELEMENT_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -50217,6 +55204,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $State = B_CM_ITEM_STATE;
@@ -50234,6 +55222,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Temp = q@%@;
@@ -50254,6 +55243,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $State = B_CM_ITEM_STATE;
@@ -50278,6 +55268,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 
@@ -50304,6 +55295,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 
@@ -50325,6 +55317,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 
@@ -50346,6 +55339,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 
@@ -50367,6 +55361,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 
@@ -50388,16 +55383,18 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = B_CM_ITEM_STATE;
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'before-content-model-item-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'before-content-model-item-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'before-content-model-item-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -50417,6 +55414,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 
@@ -50438,6 +55436,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 
@@ -50459,6 +55458,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 
@@ -50482,8 +55482,16 @@ $TempIndex = $Offset + (pos $Input);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = B_CM_ITEM_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -50537,6 +55545,12 @@ $State = B_CM_ITEM_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-content-model-item-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -50555,6 +55569,12 @@ $State = B_CM_ITEM_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-content-model-item-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -50574,6 +55594,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-content-model-item-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -50593,6 +55619,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-content-model-item-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -50612,6 +55644,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-content-model-item-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -50631,6 +55669,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-content-model-item-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -50651,8 +55695,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-content-model-item-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -50706,6 +55763,12 @@ $State = B_CM_ITEM_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-content-model-item-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -50724,6 +55787,12 @@ $State = B_CM_ITEM_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-content-model-item-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -50743,6 +55812,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-content-model-item-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -50762,6 +55837,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-content-model-item-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -50781,6 +55862,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-content-model-item-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -50800,6 +55887,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-content-model-item-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -50823,8 +55916,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'before-content-model-item-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -50927,13 +56033,13 @@ $InLiteral = 1;
 $State = ENT_SYSTEM_ID__SQ__STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'between-entity-public-and-system-identifiers-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'between-entity-public-and-system-identifiers-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'between-entity-public-and-system-identifiers-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -50950,6 +56056,12 @@ return 1 if $Token->{type} == ENTITY_TOKEN;
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -50997,6 +56109,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $State = BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE;
@@ -51014,6 +56127,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $InLiteral = 1;
@@ -51032,6 +56146,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Temp = q@%@;
@@ -51052,6 +56167,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $InLiteral = 1;
@@ -51074,16 +56190,18 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE;
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'between-entity-public-and-system-identifiers-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'between-entity-public-and-system-identifiers-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'between-entity-public-and-system-identifiers-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -51106,6 +56224,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 
@@ -51128,8 +56247,16 @@ $TempIndex = $Offset + (pos $Input);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -51183,6 +56310,12 @@ $State = BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'between-entity-public-and-system-identifiers-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -51201,6 +56334,12 @@ $State = BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'between-entity-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -51220,6 +56359,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'between-entity-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -51239,6 +56384,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'between-entity-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -51258,6 +56409,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'between-entity-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -51277,6 +56434,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'between-entity-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -51297,8 +56460,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'between-entity-public-and-system-identifiers-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -51352,6 +56528,12 @@ $State = BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'between-entity-public-and-system-identifiers-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -51370,6 +56552,12 @@ $State = BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'between-entity-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -51389,6 +56577,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'between-entity-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -51408,6 +56602,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'between-entity-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -51427,6 +56627,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'between-entity-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -51446,6 +56652,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'between-entity-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -51469,8 +56681,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'between-entity-public-and-system-identifiers-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -51518,13 +56743,13 @@ $InLiteral = 1;
 $State = NOTATION_SYSTEM_ID__SQ__STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'between-notation-public-and-system-identifiers-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'between-notation-public-and-system-identifiers-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 $State = DTD_STATE;
 push @$Tokens, $Token;
 $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
@@ -51536,6 +56761,12 @@ $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -51583,6 +56814,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $State = BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE;
@@ -51600,6 +56832,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $InLiteral = 1;
@@ -51618,6 +56851,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $Temp = q@%@;
@@ -51638,6 +56872,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 $InLiteral = 1;
@@ -51660,16 +56895,18 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE;
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'between-notation-public-and-system-identifiers-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'between-notation-public-and-system-identifiers-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 $State = DTD_STATE;
 push @$Tokens, $Token;
 $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
@@ -51687,6 +56924,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 
@@ -51709,8 +56947,16 @@ $TempIndex = $Offset + (pos $Input);
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
+$State = BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -51764,6 +57010,12 @@ $State = BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'between-notation-public-and-system-identifiers-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -51782,6 +57034,12 @@ $State = BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'between-notation-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -51801,6 +57059,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'between-notation-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -51820,6 +57084,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'between-notation-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -51839,6 +57109,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'between-notation-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -51858,6 +57134,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'between-notation-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -51878,8 +57160,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'between-notation-public-and-system-identifiers-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -51933,6 +57228,12 @@ $State = BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'between-notation-public-and-system-identifiers-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -51951,6 +57252,12 @@ $State = BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'between-notation-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -51970,6 +57277,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'between-notation-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -51989,6 +57302,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'between-notation-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -52008,6 +57327,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'between-notation-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -52027,6 +57352,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'between-notation-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -52050,8 +57381,21 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
+          push @$Errors, {type => 'between-notation-public-and-system-identifiers-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        
+
         }
       
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -52210,19 +57554,122 @@ if ($Input =~ /\G([^\>]+)/gcs) {
 
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'bogus-markup-declaration-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-markup-declaration-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 $State = DTD_STATE;
 push @$Tokens, $Token;
 $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 return 1 if $Token->{type} == ENTITY_TOKEN;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+        
+return 1;
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[BOGUS_STATUS_KWD_STATE] = sub {
+if ($Input =~ /\G([^\%\<\>\[\]]+)/gcs) {
+
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-0025-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-003c-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_TAG_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} elsif ($Input =~ /\G([\[])/gcs) {
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-005b-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} elsif ($Input =~ /\G([\]])/gcs) {
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-005d-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IN_IGNORED_SECTION_MSC_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -52843,36 +58290,36 @@ $State = B_CM_ITEM_STATE;
       
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'content-model-element-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'content-model-element-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 $State = A_CM_ITEM_STATE;
 
         if (not @$OpenCMGroups) {
           
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-content-model-item-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-content-model-item-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 $State = DTD_STATE;
 push @$Tokens, $Token;
 
         } else {
           
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'after-content-model-item-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'after-content-model-item-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'after-content-model-item-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -52919,6 +58366,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $OpenCMGroups->[-1]->{items}->[-1]->{q<name>} .= $1;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -56405,6 +61858,12 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -56512,6 +61971,13 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__DQ__STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -56847,6 +62313,13 @@ if ($EOF) {
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__DQ__STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -57182,6 +62655,13 @@ if ($EOF) {
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__DQ__STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -59031,6 +64511,13 @@ if ($EOF) {
           } # REF
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__DQ__STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 if $return }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -59149,6 +64636,13 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__DQ__STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -59287,6 +64781,13 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__DQ__STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -59354,6 +64855,13 @@ $State = DEFAULT_ATTR_VALUE__DQ__STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
+$State = DEFAULT_ATTR_VALUE__DQ__STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -59417,6 +64925,12 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -59525,6 +65039,13 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__SQ__STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -59860,6 +65381,13 @@ if ($EOF) {
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__SQ__STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -60195,6 +65723,13 @@ if ($EOF) {
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__SQ__STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -62044,6 +67579,13 @@ if ($EOF) {
           } # REF
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__SQ__STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 if $return }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -62162,6 +67704,13 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__SQ__STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -62300,6 +67849,13 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__SQ__STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -62367,6 +67923,13 @@ $State = DEFAULT_ATTR_VALUE__SQ__STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
+$State = DEFAULT_ATTR_VALUE__SQ__STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -65286,13 +70849,23 @@ return 1;
 }
 return 0;
 };
-$StateActions->[IGNORED_SECTION_STATE] = sub {
-if ($Input =~ /\G([^\]]+)/gcs) {
-
+$StateActions->[IGNORED_SECTION_MDO_STATE] = sub {
+if ($Input =~ /\G([\<])/gcs) {
+$State = IGNORED_SECTION_TAG_STATE;
+} elsif ($Input =~ /\G([\[])/gcs) {
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\]])/gcs) {
 $State = IN_IGNORED_SECTION_MSC_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = IGNORED_SECTION_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -65324,17 +70897,67 @@ return 1;
 }
 return 0;
 };
-$StateActions->[IN_DTD_MSC_STATE] = sub {
-if ($Input =~ /\G([\]])/gcs) {
-$State = A_DTD_MSC_STATE;
-} elsif ($Input =~ /\G(.)/gcs) {
+$StateActions->[IGNORED_SECTION_STATE] = sub {
+if ($Input =~ /\G([^\<\]]+)/gcs) {
 
-            push @$Errors, {type => 'in-dtd-msc-else', level => 'm',
-                            di => $DI, index => $Offset + (pos $Input) - 1};
-          
-$State = DTD_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+$State = IGNORED_SECTION_TAG_STATE;
+} elsif ($Input =~ /\G([\]])/gcs) {
+$State = IN_IGNORED_SECTION_MSC_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+$State = DTD_STATE;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+        
+return 1;
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[IGNORED_SECTION_TAG_STATE] = sub {
+if ($Input =~ /\G([\!])/gcs) {
+$State = IGNORED_SECTION_MDO_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+$State = IGNORED_SECTION_TAG_STATE;
+} elsif ($Input =~ /\G([\]])/gcs) {
+$State = IN_IGNORED_SECTION_MSC_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = IGNORED_SECTION_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -65373,6 +70996,11 @@ $State = A_IGNORED_SECTION_MSC_STATE;
 $State = IGNORED_SECTION_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -66760,7 +72388,8 @@ $Temp .= $1;
                               type => 'WFC:No Recursion',
                               value => $Temp,
                               di => $DI, index => $TempIndex};
-            } elsif ($DTDMode eq 'internal subset') {
+            } elsif ($DTDMode eq 'internal subset' or
+                     $DTDMode eq 'parameter entity in internal subset') {
               ## In a markup declaration in internal subset
               push @$Errors, {level => 'm',
                               type => 'WFC:PEs in Internal Subset',
@@ -66826,14 +72455,15 @@ $OriginalState = [B_ENT_TYPE_STATE, B_ENT_TYPE_STATE___BEFORE_TEXT_DECL_IN_MARKU
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 $Token->{q<is_parameter_entity_flag>} = 1;
+$State = B_ENT_NAME_STATE;
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'before-entity-name-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'before-entity-name-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'before-entity-name-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -66848,6 +72478,13 @@ $Temp .= $1;
 } else {
 if ($EOF) {
 $Token->{q<is_parameter_entity_flag>} = 1;
+$State = B_ENT_NAME_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -66900,7 +72537,8 @@ $Temp .= $1;
                               type => 'WFC:No Recursion',
                               value => $Temp,
                               di => $DI, index => $TempIndex};
-            } elsif ($DTDMode eq 'internal subset') {
+            } elsif ($DTDMode eq 'internal subset' or
+                     $DTDMode eq 'parameter entity in internal subset') {
               ## In a markup declaration in internal subset
               push @$Errors, {level => 'm',
                               type => 'WFC:PEs in Internal Subset',
@@ -67016,14 +72654,15 @@ $State = ENT_NAME_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $Token->{q<is_parameter_entity_flag>} = 1;
+$State = B_ENT_NAME_STATE;
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'before-entity-name-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'before-entity-name-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 
             push @$Errors, {type => 'before-entity-name-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -67050,6 +72689,13 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 $Token->{q<is_parameter_entity_flag>} = 1;
+$State = B_ENT_NAME_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -67240,6 +72886,12 @@ $State = DTD_STATE;
 } else {
 if ($EOF) {
 
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -67291,7 +72943,8 @@ $Temp .= $1;
                               type => 'WFC:No Recursion',
                               value => $Temp,
                               di => $DI, index => $TempIndex};
-            } elsif ($DTDMode eq 'internal subset') {
+            } elsif ($DTDMode eq 'internal subset' or
+                     $DTDMode eq 'parameter entity in internal subset') {
               ## In a markup declaration in internal subset
               push @$Errors, {level => 'm',
                               type => 'WFC:PEs in Internal Subset',
@@ -67425,6 +73078,12 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -67476,7 +73135,8 @@ $Temp .= $1;
                               type => 'WFC:No Recursion',
                               value => $Temp,
                               di => $DI, index => $TempIndex};
-            } elsif ($DTDMode eq 'internal subset') {
+            } elsif ($DTDMode eq 'internal subset' or
+                     $DTDMode eq 'parameter entity in internal subset') {
               ## In a markup declaration in internal subset
               push @$Errors, {level => 'm',
                               type => 'WFC:PEs in Internal Subset',
@@ -67610,6 +73270,12 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -67661,7 +73327,8 @@ $Temp .= $1;
                               type => 'WFC:No Recursion',
                               value => $Temp,
                               di => $DI, index => $TempIndex};
-            } elsif ($DTDMode eq 'internal subset') {
+            } elsif ($DTDMode eq 'internal subset' or
+                     $DTDMode eq 'parameter entity in internal subset') {
               ## In a markup declaration in internal subset
               push @$Errors, {level => 'm',
                               type => 'WFC:PEs in Internal Subset',
@@ -67799,6 +73466,9 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE_IN_ENT_STATE;
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -67851,7 +73521,8 @@ $Temp .= $1;
                               type => 'WFC:No Recursion',
                               value => $Temp,
                               di => $DI, index => $TempIndex};
-            } elsif ($DTDMode eq 'internal subset') {
+            } elsif ($DTDMode eq 'internal subset' or
+                     $DTDMode eq 'parameter entity in internal subset') {
               ## In a markup declaration in internal subset
               push @$Errors, {level => 'm',
                               type => 'WFC:PEs in Internal Subset',
@@ -67944,14 +73615,15 @@ $State = BOGUS_MARKUP_DECL_STATE;
             push @$Errors, {type => 'parameter-entity-name-in-markup-declaration-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
+$State = BOGUS_MARKUP_DECL_STATE;
 
-        if (defined $InMDEntity) {
-          push @$Errors, {type => 'bogus-markup-declaration-003e-fragment', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          $State = BOGUS_MARKUP_DECL_STATE;
-          return 1;
-        }
-      
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-markup-declaration-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            return 1;
+          }
+        
 $State = DTD_STATE;
 push @$Tokens, $Token;
 $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
@@ -67968,6 +73640,209 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+$State = BOGUS_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+        
+return 1;
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[PE_NAME_IN_STATUS_KWD_STATE] = sub {
+if ($Input =~ /\G([^\;\ \	\\ \
+\\"\#\%\&\'\<\=\>\`]+)/gcs) {
+$Temp .= $1;
+
+} elsif ($Input =~ /\G([\;])/gcs) {
+$Temp .= $1;
+
+        my $return;
+        REF: {
+          if ($DTDDefs->{StopProcessing}) {
+            $TempIndex += length $Temp;
+            $Temp = '';
+            last REF;
+          } elsif (defined $DTDDefs->{pe}->{$Temp}) {
+            my $ent = $DTDDefs->{pe}->{$Temp};
+            if ($ent->{open}) {
+              push @$Errors, {level => 'm',
+                              type => 'WFC:No Recursion',
+                              value => $Temp,
+                              di => $DI, index => $TempIndex};
+            } elsif ($DTDMode eq 'internal subset' or
+                     $DTDMode eq 'parameter entity in internal subset') {
+              ## In a markup declaration in internal subset
+              push @$Errors, {level => 'm',
+                              type => 'WFC:PEs in Internal Subset',
+                              value => $Temp,
+                              di => $DI, index => $TempIndex};
+            } else {
+              push @$Callbacks, [$OnMDEntityReference,
+                                 {entity => $ent}];
+              $TempIndex += length $Temp;
+              $Temp = '';
+              $return = 1;
+              last REF;
+            }
+          } else {
+            push @$Errors, {type => 'entity not declared', value => $Temp,
+                            level => 'm',
+                            di => $DI, index => $TempIndex};
+            $DTDDefs->{entity_names}->{$Temp}
+              ||= {di => $DI, index => $TempIndex};
+          }
+
+          if (not $DTDDefs->{StopProcessing} and
+              not $DTDDefs->{XMLStandalone}) {
+            push @$Errors, {level => 'i',
+                            type => 'stop processing',
+                            di => $DI, index => $TempIndex};
+            $State = BOGUS_MARKUP_DECL_STATE;
+            $DTDDefs->{StopProcessing} = 1;
+          }
+        } # REF
+      
+return 1 if $return;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\	\\ \
+\])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-status-keyword-ws', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+} elsif ($Input =~ /\G([\"])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-status-keyword-0022', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+} elsif ($Input =~ /\G([\#])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-status-keyword-0023', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-status-keyword-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-0025-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-status-keyword-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+} elsif ($Input =~ /\G([\'])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-status-keyword-0027', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-status-keyword-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-003c-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_TAG_STATE;
+} elsif ($Input =~ /\G([\=])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-status-keyword-003d', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-status-keyword-003e', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'bogus-status-keyword-003e-md-fragment', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} elsif ($Input =~ /\G([\`])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-status-keyword-0060', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -68837,6 +74712,7 @@ $State = TEXT_DECL_IN_ENT_VALUE_IN_ENT_STATE_CR;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -68854,6 +74730,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -68872,6 +74749,7 @@ $State = PE_NAME_IN_ENT_VALUE_IN_ENT_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -68891,6 +74769,7 @@ $Temp .= $1;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -68907,6 +74786,7 @@ $State = ENT_VALUE_IN_ENT_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -68929,9 +74809,13 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE_IN_ENT_STATE;
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -68983,6 +74867,7 @@ $State = TEXT_DECL_IN_ENT_VALUE_IN_ENT_STATE_CR;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -69000,6 +74885,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -69018,6 +74904,7 @@ $State = PE_NAME_IN_ENT_VALUE_IN_ENT_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -69037,6 +74924,7 @@ $Temp .= $1;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -69053,6 +74941,7 @@ $State = ENT_VALUE_IN_ENT_STATE;
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -69078,9 +74967,13 @@ if ($EOF) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          
         }
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE_IN_ENT_STATE;
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -69916,11 +75809,12 @@ $Scripting = $self->{Scripting};
     my $doc = $self->{document} = $main->{document}->implementation->create_document;
     $doc->manakai_is_html ($main->{document}->manakai_is_html);
     $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
-    for (qw(onerrors onextentref entity_expansion_count
+    for (qw(onextentref entity_expansion_count
             max_entity_depth max_entity_expansions)) {
       $self->{$_} = $main->{$_};
     }
     $self->{onerror} = $main->onerror;
+    $self->{onerrors} = $main->onerrors;
     $self->{nodes} = [$doc];
 
     $self->{entity_depth} = ($main->{entity_depth} || 0) + 1;
@@ -69977,11 +75871,12 @@ $Scripting = $self->{Scripting};
     my $doc = $self->{document} = $main->{document}->implementation->create_document;
     $doc->manakai_is_html ($main->{document}->manakai_is_html);
     $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
-    for (qw(onerrors onextentref entity_expansion_count
+    for (qw(onextentref entity_expansion_count
             max_entity_depth max_entity_expansions)) {
       $self->{$_} = $main->{$_};
     }
     $self->{onerror} = $main->onerror;
+    $self->{onerrors} = $main->onerrors;
     $self->{nodes} = [$doc];
 
     $self->{entity_depth} = ($main->{entity_depth} || 0) + 1;
@@ -70064,11 +75959,12 @@ $Scripting = $self->{Scripting};
     my $doc = $self->{document} = $main->{document}->implementation->create_document;
     $doc->manakai_is_html ($main->{document}->manakai_is_html);
     $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
-    for (qw(onerrors onextentref entity_expansion_count
+    for (qw(onextentref entity_expansion_count
             max_entity_depth max_entity_expansions)) {
       $self->{$_} = $main->{$_};
     }
     $self->{onerror} = $main->onerror;
+    $self->{onerrors} = $main->onerrors;
     $self->{nodes} = [$doc];
 
     $self->{entity_depth} = ($main->{entity_depth} || 0) + 1;
@@ -70125,11 +76021,12 @@ $Scripting = $self->{Scripting};
     my $doc = $self->{document} = $main->{document}->implementation->create_document;
     $doc->manakai_is_html ($main->{document}->manakai_is_html);
     $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
-    for (qw(onerrors onextentref entity_expansion_count
+    for (qw(onextentref entity_expansion_count
             max_entity_depth max_entity_expansions)) {
       $self->{$_} = $main->{$_};
     }
     $self->{onerror} = $main->onerror;
+    $self->{onerrors} = $main->onerrors;
     $self->{nodes} = [$doc];
 
     $self->{entity_depth} = ($main->{entity_depth} || 0) + 1;
@@ -70146,7 +76043,12 @@ $Scripting = $self->{Scripting};
 
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
     $self->{is_sub_parser} = 1;
-    $DTDMode = 'parameter entity';
+    if ($main->{saved_states}->{DTDMode} eq 'internal subset' or
+        $main->{saved_states}->{DTDMode} eq 'parameter entity in internal subset') {
+      $DTDMode = 'parameter entity in internal subset';
+    } else {
+      $DTDMode = 'parameter entity';
+    }
 
     $NEXT_ID++;
     $self->{nodes}->[$CONTEXT = 1] = $main->{nodes}->[1]; # DOCTYPE
@@ -70204,11 +76106,12 @@ $Scripting = $self->{Scripting};
     my $doc = $self->{document} = $main->{document}->implementation->create_document;
     $doc->manakai_is_html ($main->{document}->manakai_is_html);
     $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
-    for (qw(onerrors onextentref entity_expansion_count
+    for (qw(onextentref entity_expansion_count
             max_entity_depth max_entity_expansions)) {
       $self->{$_} = $main->{$_};
     }
     $self->{onerror} = $main->onerror;
+    $self->{onerrors} = $main->onerrors;
     $self->{nodes} = [$doc];
 
     $self->{entity_depth} = ($main->{entity_depth} || 0) + 1;
@@ -70257,11 +76160,12 @@ $Scripting = $self->{Scripting};
     my $doc = $self->{document} = $main->{document}->implementation->create_document;
     $doc->manakai_is_html ($main->{document}->manakai_is_html);
     $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
-    for (qw(onerrors onextentref entity_expansion_count
+    for (qw(onextentref entity_expansion_count
             max_entity_depth max_entity_expansions)) {
       $self->{$_} = $main->{$_};
     }
     $self->{onerror} = $main->onerror;
+    $self->{onerrors} = $main->onerrors;
     $self->{nodes} = [$doc];
 
     $self->{entity_depth} = ($main->{entity_depth} || 0) + 1;
@@ -70279,7 +76183,12 @@ $Scripting = $self->{Scripting};
     $Token = $main->{saved_states}->{Token};
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
     $self->{is_sub_parser} = 1;
-    $DTDMode = 'parameter entity';
+    if ($main->{saved_states}->{DTDMode} eq 'internal subset' or
+        $main->{saved_states}->{DTDMode} eq 'parameter entity in internal subset') {
+      $DTDMode = 'parameter entity in internal subset';
+    } else {
+      $DTDMode = 'parameter entity';
+    }
 
     $NEXT_ID++;
     $self->{nodes}->[$CONTEXT = 1] = $main->{nodes}->[1]; # DOCTYPE
@@ -70337,11 +76246,12 @@ $Scripting = $self->{Scripting};
     my $doc = $self->{document} = $main->{document}->implementation->create_document;
     $doc->manakai_is_html ($main->{document}->manakai_is_html);
     $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
-    for (qw(onerrors onextentref entity_expansion_count
+    for (qw(onextentref entity_expansion_count
             max_entity_depth max_entity_expansions)) {
       $self->{$_} = $main->{$_};
     }
     $self->{onerror} = $main->onerror;
+    $self->{onerrors} = $main->onerrors;
     $self->{nodes} = [$doc];
 
     $self->{entity_depth} = ($main->{entity_depth} || 0) + 1;
@@ -70392,11 +76302,16 @@ $Scripting = $self->{Scripting};
     my $doc = $self->{document} = $main->{document}->implementation->create_document;
     $doc->manakai_is_html ($main->{document}->manakai_is_html);
     $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
-    for (qw(onerrors onextentref entity_expansion_count
+    for (qw(onextentref entity_expansion_count
             max_entity_depth max_entity_expansions)) {
       $self->{$_} = $main->{$_};
     }
     $self->{onerror} = $main->onerror;
+    my $onerrors = $main->onerrors;
+    $self->{onerrors} = sub {
+      my ($self, $errors) = @_;
+      $onerrors->($self, [grep { $_->{type} ne 'parser:EOF' } @$errors]);
+    };
     $self->{nodes} = [$doc];
 
     $self->{entity_depth} = ($main->{entity_depth} || 0) + 1;
@@ -70416,7 +76331,12 @@ $Scripting = $self->{Scripting};
     $OpenCMGroups = $main->{saved_states}->{OpenCMGroups};
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
     $self->{is_sub_parser} = 1;
-    $DTDMode = 'parameter entity';
+    if ($main->{saved_states}->{DTDMode} eq 'internal subset' or
+        $main->{saved_states}->{DTDMode} eq 'parameter entity in internal subset') {
+      $DTDMode = 'parameter entity in internal subset';
+    } else {
+      $DTDMode = 'parameter entity';
+    }
 
     $NEXT_ID++;
     $self->{nodes}->[$CONTEXT = 1] = $main->{nodes}->[1]; # DOCTYPE
@@ -70476,11 +76396,16 @@ $Scripting = $self->{Scripting};
     my $doc = $self->{document} = $main->{document}->implementation->create_document;
     $doc->manakai_is_html ($main->{document}->manakai_is_html);
     $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
-    for (qw(onerrors onextentref entity_expansion_count
+    for (qw(onextentref entity_expansion_count
             max_entity_depth max_entity_expansions)) {
       $self->{$_} = $main->{$_};
     }
     $self->{onerror} = $main->onerror;
+    my $onerrors = $main->onerrors;
+    $self->{onerrors} = sub {
+      my ($self, $errors) = @_;
+      $onerrors->($self, [grep { $_->{type} ne 'parser:EOF' } @$errors]);
+    };
     $self->{nodes} = [$doc];
 
     $self->{entity_depth} = ($main->{entity_depth} || 0) + 1;

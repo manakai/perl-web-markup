@@ -594,7 +594,8 @@ sub serialize_actions ($;%) {
       } elsif ($_->{if} eq 'DTD mode is not internal subset') {
         die unless $_->{break};
         push @result, sprintf q[
-          unless ($DTDMode eq 'internal subset') {
+          unless ($DTDMode eq 'internal subset' or
+                  $DTDMode eq 'parameter entity in internal subset') {
             %s
             return 1;
           }
@@ -602,7 +603,16 @@ sub serialize_actions ($;%) {
       } elsif ($_->{if} eq 'DTD mode is internal subset') {
         die unless $_->{break};
         push @result, sprintf q[
-          if ($DTDMode eq 'internal subset') {
+          if ($DTDMode eq 'internal subset' or
+              $DTDMode eq 'parameter entity in internal subset') {
+            %s
+            return 1;
+          }
+        ], switch_state_code $_->{state};
+      } elsif ($_->{if} eq 'fragment') {
+        die unless $_->{break};
+        push @result, sprintf q[
+          if (defined $CONTEXT) {
             %s
             return 1;
           }
@@ -611,16 +621,38 @@ sub serialize_actions ($;%) {
         die "Unknown if |$_->{if}|";
       }
     } elsif ($type eq 'parse error-and-switch') {
-      die unless $_->{break};
-      die $_->{if} unless $_->{if} eq 'fragment';
-      push @result, sprintf q{
-        if (defined $InMDEntity) {
-          push @$Errors, {type => '%s', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-          %s
-          return 1;
+      if (defined $_->{if}) {
+        die unless $_->{break};
+        my $cond;
+        if ($_->{if} eq 'fragment') {
+          $cond = 'defined $CONTEXT';
+        } elsif ($_->{if} eq 'md-fragment') {
+          $cond = '$InMDEntity';
+        } else {
+          die $_->{if};
         }
-      }, $_->{error_type} // $_->{name}, switch_state_code $_->{state};
+        push @result, sprintf q{
+          if (%s) {
+            push @$Errors, {type => '%s', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1%s};
+            %s
+            return 1;
+          }
+        },
+            $cond,
+            $_->{error_type} // $_->{name},
+            (defined $_->{index_offset} ? sprintf q{ - %d}, $_->{index_offset} : ''),
+            switch_state_code $_->{state};
+      } else {
+        push @result, sprintf q{
+          push @$Errors, {type => '%s', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1%s};
+          %s
+        },
+            $_->{error_type} // $_->{name},
+            (defined $_->{index_offset} ? sprintf q{ - %d}, $_->{index_offset} : ''),
+            switch_state_code $_->{state};
+      }
     } elsif ($type eq 'switch-and-emit') {
       die "Unknown if |$_->{if}|" unless $_->{if} eq 'appropriate end tag';
       die unless $_->{break};
@@ -641,6 +673,12 @@ sub serialize_actions ($;%) {
           %s
         }
       ], switch_state_code $_->{script_state}, switch_state_code $_->{state};
+    } elsif ($type eq 'break') { # XML
+      if ($_->{if} eq 'md-fragment') {
+        push @result, sprintf q{if ($InMDEntity) { return %s }}, $return // '1';
+      } else {
+        die $_->{if};
+      }
     } elsif ($type eq 'reconsume') {
       $reconsume = 1;
     } elsif ($type eq 'emit') {
@@ -1303,7 +1341,8 @@ sub serialize_actions ($;%) {
                               type => 'WFC:No Recursion',
                               value => $Temp,
                               di => $DI, index => $TempIndex};
-            } elsif ($DTDMode eq 'internal subset') {
+            } elsif ($DTDMode eq 'internal subset' or
+                     $DTDMode eq 'parameter entity in internal subset') {
               ## In a markup declaration in internal subset
               push @$Errors, {level => 'm',
                               type => 'WFC:PEs in Internal Subset',
@@ -1350,7 +1389,8 @@ sub serialize_actions ($;%) {
                               type => 'WFC:No Recursion',
                               value => $Temp,
                               di => $DI, index => $TempIndex};
-            } elsif ($DTDMode eq 'internal subset') {
+            } elsif ($DTDMode eq 'internal subset' or
+                     $DTDMode eq 'parameter entity in internal subset') {
               ## In a markup declaration in internal subset
               push @$Errors, {level => 'm',
                               type => 'WFC:PEs in Internal Subset',
@@ -1388,7 +1428,7 @@ sub serialize_actions ($;%) {
           state_const $_->{state}, state_const $_->{external_state};
 
     } elsif ($type eq 'process-xml-declaration-in-temp') {
-      push @result, q{
+      push @result, sprintf q{
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
           my $text_decl = {data => $1,
                            di => $DI, index => $TempIndex};
@@ -1399,8 +1439,9 @@ sub serialize_actions ($;%) {
           push @$Errors, {level => 's',
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
+          %s
         }
-      };
+      }, (serialize_actions {actions => $_->{false_actions} || []});
 
     } elsif ($type eq 'set-in-literal') {
       push @result, q{$InLiteral = 1;};
@@ -1420,8 +1461,30 @@ sub serialize_actions ($;%) {
       push @result, q{push @$OpenMarkedSections, 'IGNORE';};
     } elsif ($type eq 'insert-INCLUDE') {
       push @result, q{push @$OpenMarkedSections, 'INCLUDE';};
-    } elsif ($type eq 'pop-section') {
-      push @result, q{pop @$OpenMarkedSections;};
+    } elsif ($type eq 'pop-section') { # and reset
+      push @result, sprintf q{
+        if (@$OpenMarkedSections) {
+          pop @$OpenMarkedSections;
+          if (@$OpenMarkedSections) {
+            if ($OpenMarkedSections->[-1] eq 'INCLUDE') {
+              %s
+            } else {
+              %s
+            }
+          } else {
+            %s
+          }
+        } else {
+          push @$Errors, {level => 'm',
+                          type => 'string in internal subset', # ]]>
+                          di => $DI, index => $Offset + (pos $Input) - 3};
+          %s
+        }
+      },
+          switch_state_code 'DTD state',
+          switch_state_code 'ignored section state',
+          switch_state_code 'DTD state',
+          switch_state_code 'DTD state';
     } elsif ($type eq 'create-attrdef') {
       push @result, q[
         $Attr = {di => $DI, index => $Offset + pos $Input};
@@ -3342,9 +3405,7 @@ sub actions_to_code ($;%) {
       };
     } elsif ($act->{type} eq 'process an ENTITY token') {
       push @code, q{
-        if (not defined $token->{name}) {
-          #
-        } elsif ($token->{StopProcessing}) {
+        if ($token->{StopProcessing}) {
           push @$Errors, {level => 'w',
                           type => 'xml:dtd:entity ignored',
                           di => $DI, index => $Offset + pos $Input};
@@ -3352,7 +3413,10 @@ sub actions_to_code ($;%) {
               (name => $token->{name},
                onerror => sub {
                  push @$Errors, {@_, di => $DI, index => $Offset + pos $Input};
-               });
+               })
+              if defined $token->{name};
+        } elsif (not defined $token->{name}) {
+          #
         } else { # not stop processing
           if ($token->{is_parameter_entity_flag}) {
             if (not $DTDDefs->{pe}->{'%'.$token->{name} . ';'}) {
@@ -3403,7 +3467,7 @@ sub actions_to_code ($;%) {
                 only_text => 1,
               };
             } elsif (not $DTDDefs->{ge}->{'&'.$token->{name}.';'}) {
-              my $is_external = not $DTDMode eq 'internal subset';
+              my $is_external = not $DTDMode eq 'internal subset'; # not in param entity
               push @$Errors, {level => 'w',
                               type => 'xml:dtd:ext decl',
                               di => $DI, index => $Offset + pos $Input}
@@ -5211,11 +5275,12 @@ sub generate_api ($) {
     my $doc = $self->{document} = $main->{document}->implementation->create_document;
     $doc->manakai_is_html ($main->{document}->manakai_is_html);
     $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
-    for (qw(onerrors onextentref entity_expansion_count
+    for (qw(onextentref entity_expansion_count
             max_entity_depth max_entity_expansions)) {
       $self->{$_} = $main->{$_};
     }
     $self->{onerror} = $main->onerror;
+    $self->{onerrors} = $main->onerrors;
     $self->{nodes} = [$doc];
 
     $self->{entity_depth} = ($main->{entity_depth} || 0) + 1;
@@ -5263,11 +5328,12 @@ sub generate_api ($) {
     my $doc = $self->{document} = $main->{document}->implementation->create_document;
     $doc->manakai_is_html ($main->{document}->manakai_is_html);
     $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
-    for (qw(onerrors onextentref entity_expansion_count
+    for (qw(onextentref entity_expansion_count
             max_entity_depth max_entity_expansions)) {
       $self->{$_} = $main->{$_};
     }
     $self->{onerror} = $main->onerror;
+    $self->{onerrors} = $main->onerrors;
     $self->{nodes} = [$doc];
 
     $self->{entity_depth} = ($main->{entity_depth} || 0) + 1;
@@ -5341,11 +5407,12 @@ sub generate_api ($) {
     my $doc = $self->{document} = $main->{document}->implementation->create_document;
     $doc->manakai_is_html ($main->{document}->manakai_is_html);
     $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
-    for (qw(onerrors onextentref entity_expansion_count
+    for (qw(onextentref entity_expansion_count
             max_entity_depth max_entity_expansions)) {
       $self->{$_} = $main->{$_};
     }
     $self->{onerror} = $main->onerror;
+    $self->{onerrors} = $main->onerrors;
     $self->{nodes} = [$doc];
 
     $self->{entity_depth} = ($main->{entity_depth} || 0) + 1;
@@ -5393,11 +5460,12 @@ sub generate_api ($) {
     my $doc = $self->{document} = $main->{document}->implementation->create_document;
     $doc->manakai_is_html ($main->{document}->manakai_is_html);
     $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
-    for (qw(onerrors onextentref entity_expansion_count
+    for (qw(onextentref entity_expansion_count
             max_entity_depth max_entity_expansions)) {
       $self->{$_} = $main->{$_};
     }
     $self->{onerror} = $main->onerror;
+    $self->{onerrors} = $main->onerrors;
     $self->{nodes} = [$doc];
 
     $self->{entity_depth} = ($main->{entity_depth} || 0) + 1;
@@ -5414,7 +5482,12 @@ sub generate_api ($) {
 
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
     $self->{is_sub_parser} = 1;
-    $DTDMode = 'parameter entity';
+    if ($main->{saved_states}->{DTDMode} eq 'internal subset' or
+        $main->{saved_states}->{DTDMode} eq 'parameter entity in internal subset') {
+      $DTDMode = 'parameter entity in internal subset';
+    } else {
+      $DTDMode = 'parameter entity';
+    }
 
     $NEXT_ID++;
     $self->{nodes}->[$CONTEXT = 1] = $main->{nodes}->[1]; # DOCTYPE
@@ -5463,11 +5536,12 @@ sub generate_api ($) {
     my $doc = $self->{document} = $main->{document}->implementation->create_document;
     $doc->manakai_is_html ($main->{document}->manakai_is_html);
     $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
-    for (qw(onerrors onextentref entity_expansion_count
+    for (qw(onextentref entity_expansion_count
             max_entity_depth max_entity_expansions)) {
       $self->{$_} = $main->{$_};
     }
     $self->{onerror} = $main->onerror;
+    $self->{onerrors} = $main->onerrors;
     $self->{nodes} = [$doc];
 
     $self->{entity_depth} = ($main->{entity_depth} || 0) + 1;
@@ -5507,11 +5581,12 @@ sub generate_api ($) {
     my $doc = $self->{document} = $main->{document}->implementation->create_document;
     $doc->manakai_is_html ($main->{document}->manakai_is_html);
     $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
-    for (qw(onerrors onextentref entity_expansion_count
+    for (qw(onextentref entity_expansion_count
             max_entity_depth max_entity_expansions)) {
       $self->{$_} = $main->{$_};
     }
     $self->{onerror} = $main->onerror;
+    $self->{onerrors} = $main->onerrors;
     $self->{nodes} = [$doc];
 
     $self->{entity_depth} = ($main->{entity_depth} || 0) + 1;
@@ -5529,7 +5604,12 @@ sub generate_api ($) {
     $Token = $main->{saved_states}->{Token};
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
     $self->{is_sub_parser} = 1;
-    $DTDMode = 'parameter entity';
+    if ($main->{saved_states}->{DTDMode} eq 'internal subset' or
+        $main->{saved_states}->{DTDMode} eq 'parameter entity in internal subset') {
+      $DTDMode = 'parameter entity in internal subset';
+    } else {
+      $DTDMode = 'parameter entity';
+    }
 
     $NEXT_ID++;
     $self->{nodes}->[$CONTEXT = 1] = $main->{nodes}->[1]; # DOCTYPE
@@ -5578,11 +5658,12 @@ sub generate_api ($) {
     my $doc = $self->{document} = $main->{document}->implementation->create_document;
     $doc->manakai_is_html ($main->{document}->manakai_is_html);
     $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
-    for (qw(onerrors onextentref entity_expansion_count
+    for (qw(onextentref entity_expansion_count
             max_entity_depth max_entity_expansions)) {
       $self->{$_} = $main->{$_};
     }
     $self->{onerror} = $main->onerror;
+    $self->{onerrors} = $main->onerrors;
     $self->{nodes} = [$doc];
 
     $self->{entity_depth} = ($main->{entity_depth} || 0) + 1;
@@ -5624,11 +5705,16 @@ sub generate_api ($) {
     my $doc = $self->{document} = $main->{document}->implementation->create_document;
     $doc->manakai_is_html ($main->{document}->manakai_is_html);
     $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
-    for (qw(onerrors onextentref entity_expansion_count
+    for (qw(onextentref entity_expansion_count
             max_entity_depth max_entity_expansions)) {
       $self->{$_} = $main->{$_};
     }
     $self->{onerror} = $main->onerror;
+    my $onerrors = $main->onerrors;
+    $self->{onerrors} = sub {
+      my ($self, $errors) = @_;
+      $onerrors->($self, [grep { $_->{type} ne 'parser:EOF' } @$errors]);
+    };
     $self->{nodes} = [$doc];
 
     $self->{entity_depth} = ($main->{entity_depth} || 0) + 1;
@@ -5648,7 +5734,12 @@ sub generate_api ($) {
     $OpenCMGroups = $main->{saved_states}->{OpenCMGroups};
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
     $self->{is_sub_parser} = 1;
-    $DTDMode = 'parameter entity';
+    if ($main->{saved_states}->{DTDMode} eq 'internal subset' or
+        $main->{saved_states}->{DTDMode} eq 'parameter entity in internal subset') {
+      $DTDMode = 'parameter entity in internal subset';
+    } else {
+      $DTDMode = 'parameter entity';
+    }
 
     $NEXT_ID++;
     $self->{nodes}->[$CONTEXT = 1] = $main->{nodes}->[1]; # DOCTYPE
@@ -5699,11 +5790,16 @@ sub generate_api ($) {
     my $doc = $self->{document} = $main->{document}->implementation->create_document;
     $doc->manakai_is_html ($main->{document}->manakai_is_html);
     $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
-    for (qw(onerrors onextentref entity_expansion_count
+    for (qw(onextentref entity_expansion_count
             max_entity_depth max_entity_expansions)) {
       $self->{$_} = $main->{$_};
     }
     $self->{onerror} = $main->onerror;
+    my $onerrors = $main->onerrors;
+    $self->{onerrors} = sub {
+      my ($self, $errors) = @_;
+      $onerrors->($self, [grep { $_->{type} ne 'parser:EOF' } @$errors]);
+    };
     $self->{nodes} = [$doc];
 
     $self->{entity_depth} = ($main->{entity_depth} || 0) + 1;
@@ -5976,6 +6072,13 @@ my $OnDTDEntityReference = sub {
     my $main2 = $main;
     $sub->onparsed (sub {
       my $sub = $_[0];
+      if (@{$sub->{saved_lists}->{OpenMarkedSections} or []} and
+          not $sub->{saved_lists}->{OpenMarkedSections}->[-1] eq 'IGNORE') {
+        $main2->onerrors->($main2, [{level => 'm',
+                                     type => 'ms:unclosed',
+                                     di => $sub->{saved_states}->{Token}->{di},
+                                     index => $sub->{saved_states}->{Token}->{index}}]);
+      }
       $data->{entity}->{open}--;
       $main2->{pause}--;
       $main2->_parse_sub_done;
@@ -6058,10 +6161,7 @@ my $OnMDEntityReference = sub {
         $main2->onerrors->($main2, [{level => 'm',
                                      type => 'unclosed literal',
                                      di => $sub->{saved_states}->{Token}->{di},
-                                     index => $sub->{saved_states}->{Token}->{di}}]);
-      } elsif ($sub->{saved_states}->{State} == %s ()) {
-warn "XXX";
-die 123;
+                                     index => $sub->{saved_states}->{Token}->{index}}]);
       } else {
         $main2->{saved_states}->{State} = $sub->{saved_states}->{State};
       }
@@ -6201,7 +6301,6 @@ it under the same terms as Perl itself.
         sub HTMLNS () { q<http://www.w3.org/1999/xhtml> }
       }),
       state_const 'bogus markup declaration state',
-      state_const 'DTD state',
       $var_decls,
       $tokenizer_defs_code,
       $tree_defs_code, $api_defs_code,
