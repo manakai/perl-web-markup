@@ -2993,7 +2993,7 @@ return;
             push @$Errors, {level => 'w',
                             type => 'xml:dtd:ext decl',
                             di => $DI, index => $Offset + pos $Input}
-                unless $DTDMode eq 'internal subset'; # not in parameter entity
+                unless $token->{DTDMode} eq 'internal subset'; # not in parameter entity
 
             if (not defined $DTDDefs->{elements}->{$token->{name}}) {
               $DTDDefs->{elements}->{$token->{name}}->{name} = $token->{name};
@@ -3070,7 +3070,7 @@ return;
               if (not defined $DTDDefs->{attrdef_by_name}->{$token->{name}}->{$at->{name}}) {
                 $DTDDefs->{attrdef_by_name}->{$token->{name}}->{$at->{name}} = $at;
                 push @{$DTDDefs->{attrdefs}->{$token->{name}} ||= []}, $at;
-                $at->{external} = {} unless $DTDMode eq 'internal subset'; # not in parameter entity
+                $at->{external} = {} unless $token->{DTDMode} eq 'internal subset'; # not in parameter entity
               } else {
                 push @$Errors, {level => 'w',
                                 type => 'duplicate attrdef', ## TODO: type
@@ -3122,7 +3122,7 @@ return;
           push @$Errors, {level => 'w',
                           type => 'xml:dtd:ext decl',
                           di => $DI, index => $Offset + pos $Input}
-              unless $DTDMode eq 'internal subset'; # not in parameter entity
+              unless $token->{DTDMode} eq 'internal subset'; # not in parameter entity
           $SC->check_hidden_name
               (name => $token->{name},
                onerror => sub {
@@ -3180,7 +3180,7 @@ return;
               push @$Errors, {level => 'w',
                               type => 'xml:dtd:ext decl',
                               di => $DI, index => $Offset + pos $Input}
-                  unless $DTDMode eq 'internal subset'; # and not in param entity
+                  unless $token->{DTDMode} eq 'internal subset'; # and not in param entity
               $SC->check_hidden_name
                   (name => $token->{name},
                    onerror => sub {
@@ -3224,7 +3224,7 @@ return;
                 only_text => 1,
               };
             } elsif (not $DTDDefs->{ge}->{'&'.$token->{name}.';'}) {
-              my $is_external = not $DTDMode eq 'internal subset'; # not in param entity
+              my $is_external = not $token->{DTDMode} eq 'internal subset'; # not in param entity
               push @$Errors, {level => 'w',
                               type => 'xml:dtd:ext decl',
                               di => $DI, index => $Offset + pos $Input}
@@ -3323,7 +3323,7 @@ return;
             push @$Errors, {level => 'w',
                             type => 'xml:dtd:ext decl',
                             di => $DI, index => $Offset + pos $Input}
-                unless $DTDMode eq 'internal subset'; # not in param entity
+                unless $token->{DTDMode} eq 'internal subset'; # not in param entity
             $SC->check_hidden_name
                 (name => $token->{name},
                  onerror => sub {
@@ -4339,13 +4339,13 @@ $StateActions->[ATTLIST_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \])/gcs) {
 
-        $Token = {type => ATTLIST_TOKEN, tn => 0,
+        $Token = {type => ATTLIST_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $State = B_ATTLIST_NAME_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-        $Token = {type => ATTLIST_TOKEN, tn => 0,
+        $Token = {type => ATTLIST_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Temp = q@%@;
@@ -4358,7 +4358,7 @@ $State = PE_NAME_IN_MARKUP_DECL_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => ATTLIST_TOKEN, tn => 0,
+        $Token = {type => ATTLIST_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 
@@ -4387,7 +4387,7 @@ $State = DTD_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => ATTLIST_TOKEN, tn => 0,
+        $Token = {type => ATTLIST_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<name>} = $1;
@@ -4724,7 +4724,7 @@ if ($Input =~ /\G([\ ])/gcs) {
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => PROCESSING_INSTRUCTION_TOKEN, tn => 0,
+        $Token = {type => PROCESSING_INSTRUCTION_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<target>} = q@�@;
@@ -4737,7 +4737,7 @@ $State = DOCTYPE_PI_TARGET_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = q@?@;
@@ -4749,7 +4749,7 @@ $Token->{q<data>} .= $1;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = q@?@;
@@ -4762,7 +4762,7 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = q@?@;
@@ -4770,7 +4770,7 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE;
 $Token->{q<data>} .= $1;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-        $Token = {type => PROCESSING_INSTRUCTION_TOKEN, tn => 0,
+        $Token = {type => PROCESSING_INSTRUCTION_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<target>} = $1;
@@ -4779,7 +4779,7 @@ $State = DOCTYPE_PI_TARGET_STATE;
 } else {
 if ($EOF) {
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = q@?@;
@@ -5669,7 +5669,7 @@ $State = DOCTYPE_MDO_STATE_N;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -5682,7 +5682,7 @@ $Token->{q<data>} .= q@�@;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -5696,7 +5696,7 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -5723,7 +5723,7 @@ $State = IGNORED_SECTION_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -5737,7 +5737,7 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -5778,7 +5778,7 @@ return 0;
 $StateActions->[DOCTYPE_MDO_STATE__] = sub {
 if ($Input =~ /\G([\-])/gcs) {
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -5789,7 +5789,7 @@ $State = DOCTYPE_COMMENT_START_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -5802,7 +5802,7 @@ $Token->{q<data>} .= q@�@;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -5816,7 +5816,7 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -5829,7 +5829,7 @@ $State = DTD_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -5843,7 +5843,7 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -5894,7 +5894,7 @@ $State = DOCTYPE_MDO_STATE_AT;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -5907,7 +5907,7 @@ $Token->{q<data>} .= q@�@;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -5921,7 +5921,7 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -5934,7 +5934,7 @@ $State = DTD_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -5948,7 +5948,7 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -5999,7 +5999,7 @@ $State = DOCTYPE_MDO_STATE_ATT;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -6012,7 +6012,7 @@ $Token->{q<data>} .= q@�@;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -6026,7 +6026,7 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -6039,7 +6039,7 @@ $State = DTD_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -6053,7 +6053,7 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -6104,7 +6104,7 @@ $State = DOCTYPE_MDO_STATE_ATTL;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -6117,7 +6117,7 @@ $Token->{q<data>} .= q@�@;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -6131,7 +6131,7 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -6144,7 +6144,7 @@ $State = DTD_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -6158,7 +6158,7 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -6209,7 +6209,7 @@ $State = DOCTYPE_MDO_STATE_ATTLI;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -6222,7 +6222,7 @@ $Token->{q<data>} .= q@�@;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -6236,7 +6236,7 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -6249,7 +6249,7 @@ $State = DTD_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -6263,7 +6263,7 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -6314,7 +6314,7 @@ $State = DOCTYPE_MDO_STATE_ATTLIS;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -6327,7 +6327,7 @@ $Token->{q<data>} .= q@�@;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -6341,7 +6341,7 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -6354,7 +6354,7 @@ $State = DTD_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -6368,7 +6368,7 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -6413,7 +6413,7 @@ if ($Input =~ /\G([\ ])/gcs) {
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -6426,7 +6426,7 @@ $Token->{q<data>} .= q@�@;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -6440,7 +6440,7 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -6473,7 +6473,7 @@ $State = ATTLIST_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -6487,7 +6487,7 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -6544,7 +6544,7 @@ $State = DOCTYPE_MDO_STATE_EN;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -6557,7 +6557,7 @@ $Token->{q<data>} .= q@�@;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -6571,7 +6571,7 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -6584,7 +6584,7 @@ $State = DTD_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -6598,7 +6598,7 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -6649,7 +6649,7 @@ $State = DOCTYPE_MDO_STATE_ELE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -6662,7 +6662,7 @@ $Token->{q<data>} .= q@�@;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -6676,7 +6676,7 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -6689,7 +6689,7 @@ $State = DTD_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -6703,7 +6703,7 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -6754,7 +6754,7 @@ $State = DOCTYPE_MDO_STATE_ELEM;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -6767,7 +6767,7 @@ $Token->{q<data>} .= q@�@;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -6781,7 +6781,7 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -6794,7 +6794,7 @@ $State = DTD_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -6808,7 +6808,7 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -6859,7 +6859,7 @@ $State = DOCTYPE_MDO_STATE_ELEME;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -6872,7 +6872,7 @@ $Token->{q<data>} .= q@�@;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -6886,7 +6886,7 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -6899,7 +6899,7 @@ $State = DTD_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -6913,7 +6913,7 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -6964,7 +6964,7 @@ $State = DOCTYPE_MDO_STATE_ELEMEN;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -6977,7 +6977,7 @@ $Token->{q<data>} .= q@�@;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -6991,7 +6991,7 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -7004,7 +7004,7 @@ $State = DTD_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -7018,7 +7018,7 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -7063,7 +7063,7 @@ if ($Input =~ /\G([\ ])/gcs) {
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -7076,7 +7076,7 @@ $Token->{q<data>} .= q@�@;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -7090,7 +7090,7 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -7123,7 +7123,7 @@ $State = ELEMENT_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -7137,7 +7137,7 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -7188,7 +7188,7 @@ $State = DOCTYPE_MDO_STATE_ENT;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -7201,7 +7201,7 @@ $Token->{q<data>} .= q@�@;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -7215,7 +7215,7 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -7228,7 +7228,7 @@ $State = DTD_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -7242,7 +7242,7 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -7293,7 +7293,7 @@ $State = DOCTYPE_MDO_STATE_ENTI;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -7306,7 +7306,7 @@ $Token->{q<data>} .= q@�@;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -7320,7 +7320,7 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -7333,7 +7333,7 @@ $State = DTD_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -7347,7 +7347,7 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -7398,7 +7398,7 @@ $State = DOCTYPE_MDO_STATE_ENTIT;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -7411,7 +7411,7 @@ $Token->{q<data>} .= q@�@;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -7425,7 +7425,7 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -7438,7 +7438,7 @@ $State = DTD_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -7452,7 +7452,7 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -7497,7 +7497,7 @@ if ($Input =~ /\G([\ ])/gcs) {
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -7510,7 +7510,7 @@ $Token->{q<data>} .= q@�@;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -7524,7 +7524,7 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -7557,7 +7557,7 @@ $State = ENT_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -7571,7 +7571,7 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -7622,7 +7622,7 @@ $State = DOCTYPE_MDO_STATE_NO;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -7635,7 +7635,7 @@ $Token->{q<data>} .= q@�@;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -7649,7 +7649,7 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -7662,7 +7662,7 @@ $State = DTD_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -7676,7 +7676,7 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -7727,7 +7727,7 @@ $State = DOCTYPE_MDO_STATE_NOT;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -7740,7 +7740,7 @@ $Token->{q<data>} .= q@�@;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -7754,7 +7754,7 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -7767,7 +7767,7 @@ $State = DTD_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -7781,7 +7781,7 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -7832,7 +7832,7 @@ $State = DOCTYPE_MDO_STATE_NOTA;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -7845,7 +7845,7 @@ $Token->{q<data>} .= q@�@;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -7859,7 +7859,7 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -7872,7 +7872,7 @@ $State = DTD_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -7886,7 +7886,7 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -7937,7 +7937,7 @@ $State = DOCTYPE_MDO_STATE_NOTAT;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -7950,7 +7950,7 @@ $Token->{q<data>} .= q@�@;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -7964,7 +7964,7 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -7977,7 +7977,7 @@ $State = DTD_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -7991,7 +7991,7 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -8042,7 +8042,7 @@ $State = DOCTYPE_MDO_STATE_NOTATI;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -8055,7 +8055,7 @@ $Token->{q<data>} .= q@�@;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -8069,7 +8069,7 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -8082,7 +8082,7 @@ $State = DTD_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -8096,7 +8096,7 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -8147,7 +8147,7 @@ $State = DOCTYPE_MDO_STATE_NOTATIO;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -8160,7 +8160,7 @@ $Token->{q<data>} .= q@�@;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -8174,7 +8174,7 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -8187,7 +8187,7 @@ $State = DTD_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -8201,7 +8201,7 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -8246,7 +8246,7 @@ if ($Input =~ /\G([\ ])/gcs) {
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -8259,7 +8259,7 @@ $Token->{q<data>} .= q@�@;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -8273,7 +8273,7 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -8306,7 +8306,7 @@ $State = NOTATION_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -8320,7 +8320,7 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -8611,7 +8611,7 @@ $State = B_DOCTYPE_NAME_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => DOCTYPE_TOKEN, tn => 0,
+        $Token = {type => DOCTYPE_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<name>} = q@�@;
@@ -8626,7 +8626,7 @@ $State = DOCTYPE_NAME_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => DOCTYPE_TOKEN, tn => 0,
+        $Token = {type => DOCTYPE_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<force_quirks_flag>} = 1;
@@ -8639,7 +8639,7 @@ return 1 if $Token->{type} == DOCTYPE_TOKEN;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => DOCTYPE_TOKEN, tn => 0,
+        $Token = {type => DOCTYPE_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<name>} = $1;
@@ -8654,7 +8654,7 @@ $State = DOCTYPE_NAME_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => DOCTYPE_TOKEN, tn => 0,
+        $Token = {type => DOCTYPE_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<force_quirks_flag>} = 1;
@@ -8669,7 +8669,7 @@ return 1 if $Token->{type} == DOCTYPE_TOKEN;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => DOCTYPE_TOKEN, tn => 0,
+        $Token = {type => DOCTYPE_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<name>} = $1;
@@ -8682,7 +8682,7 @@ if ($EOF) {
           
 $State = DATA_STATE;
 
-        $Token = {type => DOCTYPE_TOKEN, tn => 0,
+        $Token = {type => DOCTYPE_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<force_quirks_flag>} = 1;
@@ -8880,7 +8880,7 @@ $State = DOCTYPE_PI_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -8892,7 +8892,7 @@ $Token->{q<data>} .= q@�@;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -8905,7 +8905,7 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -8917,7 +8917,7 @@ $State = DTD_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -9151,13 +9151,13 @@ $StateActions->[ELEMENT_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \])/gcs) {
 
-        $Token = {type => ELEMENT_TOKEN, tn => 0,
+        $Token = {type => ELEMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $State = B_ELEMENT_NAME_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-        $Token = {type => ELEMENT_TOKEN, tn => 0,
+        $Token = {type => ELEMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Temp = q@%@;
@@ -9170,7 +9170,7 @@ $State = PE_NAME_IN_MARKUP_DECL_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => ELEMENT_TOKEN, tn => 0,
+        $Token = {type => ELEMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 
@@ -9199,7 +9199,7 @@ $State = DTD_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => ELEMENT_TOKEN, tn => 0,
+        $Token = {type => ELEMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<name>} = $1;
@@ -9626,13 +9626,13 @@ $StateActions->[ENT_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \])/gcs) {
 
-        $Token = {type => ENTITY_TOKEN, tn => 0,
+        $Token = {type => ENTITY_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $State = B_ENT_TYPE_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-        $Token = {type => ENTITY_TOKEN, tn => 0,
+        $Token = {type => ENTITY_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $State = PE_DECL_OR_REF_STATE;
@@ -9642,7 +9642,7 @@ $State = PE_DECL_OR_REF_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => ENTITY_TOKEN, tn => 0,
+        $Token = {type => ENTITY_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<name>} = q@�@;
@@ -9667,7 +9667,7 @@ $State = DTD_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => ENTITY_TOKEN, tn => 0,
+        $Token = {type => ENTITY_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<name>} = $1;
@@ -14219,13 +14219,13 @@ $StateActions->[NOTATION_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \])/gcs) {
 
-        $Token = {type => NOTATION_TOKEN, tn => 0,
+        $Token = {type => NOTATION_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $State = B_NOTATION_NAME_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-        $Token = {type => NOTATION_TOKEN, tn => 0,
+        $Token = {type => NOTATION_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Temp = q@%@;
@@ -14238,7 +14238,7 @@ $State = PE_NAME_IN_MARKUP_DECL_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => NOTATION_TOKEN, tn => 0,
+        $Token = {type => NOTATION_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 
@@ -14267,7 +14267,7 @@ $State = DTD_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => NOTATION_TOKEN, tn => 0,
+        $Token = {type => NOTATION_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<name>} = $1;
@@ -14610,7 +14610,7 @@ if ($Input =~ /\G([\ ])/gcs) {
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => PROCESSING_INSTRUCTION_TOKEN, tn => 0,
+        $Token = {type => PROCESSING_INSTRUCTION_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<target>} = q@�@;
@@ -14623,7 +14623,7 @@ $State = PI_TARGET_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = q@?@;
@@ -14635,7 +14635,7 @@ $Token->{q<data>} .= $1;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = q@?@;
@@ -14648,7 +14648,7 @@ $State = BOGUS_COMMENT_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = q@?@;
@@ -14656,7 +14656,7 @@ $State = BOGUS_COMMENT_STATE;
 $Token->{q<data>} .= $1;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-        $Token = {type => PROCESSING_INSTRUCTION_TOKEN, tn => 0,
+        $Token = {type => PROCESSING_INSTRUCTION_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<target>} = $1;
@@ -14669,7 +14669,7 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = q@?@;
@@ -44189,7 +44189,7 @@ if ($Input =~ /\G([\	\\ \
 \]+)/gcs) {
 } elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY])/gcs) {
 
-        $Token = {type => DOCTYPE_TOKEN, tn => 0,
+        $Token = {type => DOCTYPE_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<name>} = $1;
@@ -44200,7 +44200,7 @@ $State = DOCTYPE_NAME_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => DOCTYPE_TOKEN, tn => 0,
+        $Token = {type => DOCTYPE_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<name>} = q@�@;
@@ -44211,7 +44211,7 @@ $State = DOCTYPE_NAME_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => DOCTYPE_TOKEN, tn => 0,
+        $Token = {type => DOCTYPE_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<force_quirks_flag>} = 1;
@@ -44224,7 +44224,7 @@ return 1 if $Token->{type} == DOCTYPE_TOKEN;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => DOCTYPE_TOKEN, tn => 0,
+        $Token = {type => DOCTYPE_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<force_quirks_flag>} = 1;
@@ -44235,7 +44235,7 @@ push @$Tokens, $Token;
 return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-        $Token = {type => DOCTYPE_TOKEN, tn => 0,
+        $Token = {type => DOCTYPE_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<name>} = $1;
@@ -44248,7 +44248,7 @@ if ($EOF) {
           
 $State = DATA_STATE;
 
-        $Token = {type => DOCTYPE_TOKEN, tn => 0,
+        $Token = {type => DOCTYPE_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<force_quirks_flag>} = 1;
@@ -70749,7 +70749,7 @@ if ($Input =~ /\G([\ ])/gcs) {
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => END_TAG_TOKEN, tn => 0,
+        $Token = {type => END_TAG_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<tag_name>} = q@�@;
@@ -70761,7 +70761,7 @@ $State = TAG_NAME_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -70773,7 +70773,7 @@ $Token->{q<data>} .= $1;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -70787,7 +70787,7 @@ $State = BOGUS_COMMENT_STATE_CR;
           
 $State = DATA_STATE;
 
-        $Token = {type => END_TAG_TOKEN, tn => 0,
+        $Token = {type => END_TAG_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<tag_name>} = '';
@@ -70819,7 +70819,7 @@ push @$Tokens, $Token;
         
 } elsif ($Input =~ /\G(.)/gcs) {
 
-        $Token = {type => END_TAG_TOKEN, tn => 0,
+        $Token = {type => END_TAG_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<tag_name>} = $1;
@@ -70831,7 +70831,7 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71152,7 +71152,7 @@ $State = MDO_STATE_D;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71165,7 +71165,7 @@ $Token->{q<data>} .= q@�@;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71179,7 +71179,7 @@ $State = BOGUS_COMMENT_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71192,7 +71192,7 @@ $State = DATA_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71206,7 +71206,7 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71228,7 +71228,7 @@ return 0;
 $StateActions->[MDO_STATE__] = sub {
 if ($Input =~ /\G([\-])/gcs) {
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71239,7 +71239,7 @@ $State = COMMENT_START_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71252,7 +71252,7 @@ $Token->{q<data>} .= q@�@;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71266,7 +71266,7 @@ $State = BOGUS_COMMENT_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71279,7 +71279,7 @@ $State = DATA_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71293,7 +71293,7 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71325,7 +71325,7 @@ $State = MDO_STATE_DO;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71338,7 +71338,7 @@ $Token->{q<data>} .= q@�@;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71352,7 +71352,7 @@ $State = BOGUS_COMMENT_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71365,7 +71365,7 @@ $State = DATA_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71379,7 +71379,7 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71411,7 +71411,7 @@ $State = MDO_STATE_DOC;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71424,7 +71424,7 @@ $Token->{q<data>} .= q@�@;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71438,7 +71438,7 @@ $State = BOGUS_COMMENT_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71451,7 +71451,7 @@ $State = DATA_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71465,7 +71465,7 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71497,7 +71497,7 @@ $State = MDO_STATE_DOCT;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71510,7 +71510,7 @@ $Token->{q<data>} .= q@�@;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71524,7 +71524,7 @@ $State = BOGUS_COMMENT_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71537,7 +71537,7 @@ $State = DATA_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71551,7 +71551,7 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71583,7 +71583,7 @@ $State = MDO_STATE_DOCTY;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71596,7 +71596,7 @@ $Token->{q<data>} .= q@�@;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71610,7 +71610,7 @@ $State = BOGUS_COMMENT_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71623,7 +71623,7 @@ $State = DATA_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71637,7 +71637,7 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71669,7 +71669,7 @@ $State = MDO_STATE_DOCTYP;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71682,7 +71682,7 @@ $Token->{q<data>} .= q@�@;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71696,7 +71696,7 @@ $State = BOGUS_COMMENT_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71709,7 +71709,7 @@ $State = DATA_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71723,7 +71723,7 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71749,7 +71749,7 @@ if ($Input =~ /\G([\ ])/gcs) {
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71762,7 +71762,7 @@ $Token->{q<data>} .= q@�@;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71776,7 +71776,7 @@ $State = BOGUS_COMMENT_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71809,7 +71809,7 @@ $State = DOCTYPE_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71823,7 +71823,7 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71852,7 +71852,7 @@ $State = MDO_STATE__5BC;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71865,7 +71865,7 @@ $Token->{q<data>} .= q@�@;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71879,7 +71879,7 @@ $State = BOGUS_COMMENT_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71892,7 +71892,7 @@ $State = DATA_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71906,7 +71906,7 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71935,7 +71935,7 @@ $State = MDO_STATE__5BCD;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71948,7 +71948,7 @@ $Token->{q<data>} .= q@�@;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71962,7 +71962,7 @@ $State = BOGUS_COMMENT_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71975,7 +71975,7 @@ $State = DATA_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -71989,7 +71989,7 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -72018,7 +72018,7 @@ $State = MDO_STATE__5BCDA;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -72031,7 +72031,7 @@ $Token->{q<data>} .= q@�@;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -72045,7 +72045,7 @@ $State = BOGUS_COMMENT_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -72058,7 +72058,7 @@ $State = DATA_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -72072,7 +72072,7 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -72101,7 +72101,7 @@ $State = MDO_STATE__5BCDAT;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -72114,7 +72114,7 @@ $Token->{q<data>} .= q@�@;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -72128,7 +72128,7 @@ $State = BOGUS_COMMENT_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -72141,7 +72141,7 @@ $State = DATA_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -72155,7 +72155,7 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -72184,7 +72184,7 @@ $State = MDO_STATE__5BCDATA;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -72197,7 +72197,7 @@ $Token->{q<data>} .= q@�@;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -72211,7 +72211,7 @@ $State = BOGUS_COMMENT_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -72224,7 +72224,7 @@ $State = DATA_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -72238,7 +72238,7 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -72264,7 +72264,7 @@ if ($Input =~ /\G([\ ])/gcs) {
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -72277,7 +72277,7 @@ $Token->{q<data>} .= q@�@;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -72291,7 +72291,7 @@ $State = BOGUS_COMMENT_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -72312,7 +72312,7 @@ $State = CDATA_SECTION_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -72326,7 +72326,7 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -74128,7 +74128,7 @@ if ($Input =~ /\G\?([^\ \	\
 \\\ \?])([^\ \\?]*)\?([^\ \\>\?])([^\ \\?]*)/gcs) {
 $State = PI_STATE;
 
-        $Token = {type => PROCESSING_INSTRUCTION_TOKEN, tn => 0,
+        $Token = {type => PROCESSING_INSTRUCTION_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<target>} = $1;
@@ -74155,7 +74155,7 @@ $Token->{q<data>} .= $8;
 \\\ \?])([^\ \\?]*)\?\>/gcs) {
 $State = PI_STATE;
 
-        $Token = {type => PROCESSING_INSTRUCTION_TOKEN, tn => 0,
+        $Token = {type => PROCESSING_INSTRUCTION_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<target>} = $1;
@@ -74179,7 +74179,7 @@ push @$Tokens, $Token;
 \\ ]*)\?([^\ \\>\?])([^\ \\?]*)\?/gcs) {
 $State = PI_STATE;
 
-        $Token = {type => PROCESSING_INSTRUCTION_TOKEN, tn => 0,
+        $Token = {type => PROCESSING_INSTRUCTION_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<target>} = $1;
@@ -74203,7 +74203,7 @@ $State = IN_PIC_STATE;
 \\\ ][\	\
 \\\ ]*/gcs) {
 
-        $Token = {type => START_TAG_TOKEN, tn => 0,
+        $Token = {type => START_TAG_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<tag_name>} = $1;
@@ -74218,7 +74218,7 @@ $State = B_ATTR_NAME_STATE;
 \\\ ]*/gcs) {
 $State = END_TAG_OPEN_STATE;
 
-        $Token = {type => END_TAG_TOKEN, tn => 0,
+        $Token = {type => END_TAG_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<tag_name>} = $1;
@@ -74233,7 +74233,7 @@ $State = B_ATTR_NAME_STATE;
 \\ ]*)\?\>/gcs) {
 $State = PI_STATE;
 
-        $Token = {type => PROCESSING_INSTRUCTION_TOKEN, tn => 0,
+        $Token = {type => PROCESSING_INSTRUCTION_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<target>} = $1;
@@ -74252,7 +74252,7 @@ push @$Tokens, $Token;
 \\\ \!\/\>\?])([^\ \	\
 \\\ \/\>A-Z]*)([A-Z]*)\/\>/gcs) {
 
-        $Token = {type => START_TAG_TOKEN, tn => 0,
+        $Token = {type => START_TAG_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<tag_name>} = $1;
@@ -74312,7 +74312,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = MDO_STATE__;
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -74331,7 +74331,7 @@ $Token->{q<data>} .= $5;
 \\\ \!\/\>\?])([^\ \	\
 \\\ \/\>A-Z]*)([A-Z]*)\>/gcs) {
 
-        $Token = {type => START_TAG_TOKEN, tn => 0,
+        $Token = {type => START_TAG_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<tag_name>} = $1;
@@ -74384,7 +74384,7 @@ push @$Tokens, $Token;
 \\\ \/\>A-Z]*)([A-Z]*)\/\>/gcs) {
 $State = END_TAG_OPEN_STATE;
 
-        $Token = {type => END_TAG_TOKEN, tn => 0,
+        $Token = {type => END_TAG_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<tag_name>} = $1;
@@ -74444,7 +74444,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = MDO_STATE__;
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -74462,7 +74462,7 @@ $Token->{q<data>} .= $5;
 \\\ \/\>A-Z]*)([A-Z]*)\>/gcs) {
 $State = END_TAG_OPEN_STATE;
 
-        $Token = {type => END_TAG_TOKEN, tn => 0,
+        $Token = {type => END_TAG_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<tag_name>} = $1;
@@ -74515,7 +74515,7 @@ push @$Tokens, $Token;
 \\\ \?]*)\?\>/gcs) {
 $State = PI_STATE;
 
-        $Token = {type => PROCESSING_INSTRUCTION_TOKEN, tn => 0,
+        $Token = {type => PROCESSING_INSTRUCTION_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<target>} = $1;
@@ -74535,7 +74535,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = MDO_STATE__;
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -74559,7 +74559,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = MDO_STATE__;
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -74581,7 +74581,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = MDO_STATE__;
 
-        $Token = {type => COMMENT_TOKEN, tn => 0,
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = '';
@@ -74606,7 +74606,7 @@ $State = PI_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        $Token = {type => START_TAG_TOKEN, tn => 0,
+        $Token = {type => START_TAG_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<tag_name>} = q@�@;
@@ -74663,7 +74663,7 @@ $State = DATA_STATE;
         
 } elsif ($Input =~ /\G(.)/gcs) {
 
-        $Token = {type => START_TAG_TOKEN, tn => 0,
+        $Token = {type => START_TAG_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<tag_name>} = $1;

@@ -772,7 +772,7 @@ sub serialize_actions ($;%) {
       };
     } elsif ($type eq 'create') {
       push @result, sprintf q{
-        $Token = {type => %s_TOKEN, tn => 0,
+        $Token = {type => %s_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       }, map { s/ token$//; s/[- ]/_/g; uc $_ } $_->{token};
     } elsif ($type eq 'create-attr') {
@@ -3251,7 +3251,7 @@ sub actions_to_code ($;%) {
           push @$Errors, {level => 'w',
                           type => 'xml:dtd:ext decl',
                           di => $DI, index => $Offset + pos $Input}
-              unless $DTDMode eq 'internal subset'; # not in parameter entity
+              unless $token->{DTDMode} eq 'internal subset'; # not in parameter entity
           $SC->check_hidden_name
               (name => $token->{name},
                onerror => sub {
@@ -3296,7 +3296,7 @@ sub actions_to_code ($;%) {
             push @$Errors, {level => 'w',
                             type => 'xml:dtd:ext decl',
                             di => $DI, index => $Offset + pos $Input}
-                unless $DTDMode eq 'internal subset'; # not in parameter entity
+                unless $token->{DTDMode} eq 'internal subset'; # not in parameter entity
 
             if (not defined $DTDDefs->{elements}->{$token->{name}}) {
               $DTDDefs->{elements}->{$token->{name}}->{name} = $token->{name};
@@ -3373,7 +3373,7 @@ sub actions_to_code ($;%) {
               if (not defined $DTDDefs->{attrdef_by_name}->{$token->{name}}->{$at->{name}}) {
                 $DTDDefs->{attrdef_by_name}->{$token->{name}}->{$at->{name}} = $at;
                 push @{$DTDDefs->{attrdefs}->{$token->{name}} ||= []}, $at;
-                $at->{external} = {} unless $DTDMode eq 'internal subset'; # not in parameter entity
+                $at->{external} = {} unless $token->{DTDMode} eq 'internal subset'; # not in parameter entity
               } else {
                 push @$Errors, {level => 'w',
                                 type => 'duplicate attrdef', ## TODO: type
@@ -3423,7 +3423,7 @@ sub actions_to_code ($;%) {
               push @$Errors, {level => 'w',
                               type => 'xml:dtd:ext decl',
                               di => $DI, index => $Offset + pos $Input}
-                  unless $DTDMode eq 'internal subset'; # and not in param entity
+                  unless $token->{DTDMode} eq 'internal subset'; # and not in param entity
               $SC->check_hidden_name
                   (name => $token->{name},
                    onerror => sub {
@@ -3467,7 +3467,7 @@ sub actions_to_code ($;%) {
                 only_text => 1,
               };
             } elsif (not $DTDDefs->{ge}->{'&'.$token->{name}.';'}) {
-              my $is_external = not $DTDMode eq 'internal subset'; # not in param entity
+              my $is_external = not $token->{DTDMode} eq 'internal subset'; # not in param entity
               push @$Errors, {level => 'w',
                               type => 'xml:dtd:ext decl',
                               di => $DI, index => $Offset + pos $Input}
@@ -3538,7 +3538,7 @@ sub actions_to_code ($;%) {
             push @$Errors, {level => 'w',
                             type => 'xml:dtd:ext decl',
                             di => $DI, index => $Offset + pos $Input}
-                unless $DTDMode eq 'internal subset'; # not in param entity
+                unless $token->{DTDMode} eq 'internal subset'; # not in param entity
             $SC->check_hidden_name
                 (name => $token->{name},
                  onerror => sub {
