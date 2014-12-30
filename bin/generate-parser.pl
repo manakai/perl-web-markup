@@ -87,6 +87,7 @@ if ($LANG eq 'XML') {
   $Vars->{OriginalState} = {save => 1, type => 'enum'};
   $Vars->{SC} = {input => 1, from_method => 1};
   $Vars->{InMDEntity} = {input => 1, unchanged => 1, type => 'boolean'};
+  $Vars->{InLiteral} = {save => 1, type => 'boolean'};
 }
 
 ## ------ Input byte stream ------
@@ -1089,11 +1090,14 @@ sub serialize_actions ($;%) {
                 last REF;
               }
             }
-            push @$Errors, {type => 'entity not declared',
-                            value => $Temp,
-                            level => 'm',
-                            di => $DI, index => $TempIndex}
-                if $Temp =~ /;\z/;
+            if ($Temp =~ /;\z/) {
+              push @$Errors, {type => 'entity not declared',
+                              value => $Temp,
+                              level => 'm',
+                              di => $DI, index => $TempIndex};
+              $DTDDefs->{entity_names}->{$Temp}
+                  ||= {di => $DI, index => $TempIndex};
+            }
           } # REF
         }, !!$_->{in_default_attr}, !!$_->{before_equals};
       } elsif ($_->{in_entity_value}) { ## XML only
@@ -1215,17 +1219,23 @@ sub serialize_actions ($;%) {
                 last REF;
               }
             }
-            push @$Errors, {type => 'entity not declared', value => $Temp,
-                            level => 'm',
-                            di => $DI, index => $TempIndex}
-                if $Temp =~ /;\z/;
+            if ($Temp =~ /;\z/) {
+              push @$Errors, {type => 'entity not declared', value => $Temp,
+                              level => 'm',
+                              di => $DI, index => $TempIndex};
+              $DTDDefs->{entity_names}->{$Temp}
+                  ||= {di => $DI, index => $TempIndex};
+            }
           } # REF
         };
       }
       $return = '1 if $return';
       $result[-1] =~ s{<XML>.*?</XML>}{}gs unless $LANG eq 'XML';
     } elsif ($type eq 'validate-temp-as-entref') {
-      push @result, q{}; # XXXxml validate $Temp as XML entref
+      push @result, q{
+        $DTDDefs->{entity_names_in_entity_values}->{$Temp}
+            ||= {di => $DI, index => $TempIndex};
+      };
     } elsif ($type eq 'process-temp-as-peref-dtd') { # XML only
       push @result, q{
         my $return;
@@ -1264,6 +1274,8 @@ sub serialize_actions ($;%) {
             push @$Errors, {type => 'entity not declared', value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex};
+            $DTDDefs->{entity_names}->{$Temp}
+              ||= {di => $DI, index => $TempIndex};
           }
 
           if (not $DTDDefs->{StopProcessing} and
@@ -1309,6 +1321,8 @@ sub serialize_actions ($;%) {
             push @$Errors, {type => 'entity not declared', value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex};
+            $DTDDefs->{entity_names}->{$Temp}
+              ||= {di => $DI, index => $TempIndex};
           }
 
           if (not $DTDDefs->{StopProcessing} and
@@ -1354,6 +1368,8 @@ sub serialize_actions ($;%) {
             push @$Errors, {type => 'entity not declared', value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex};
+            $DTDDefs->{entity_names}->{$Temp}
+              ||= {di => $DI, index => $TempIndex};
           }
 
           if (not $DTDDefs->{StopProcessing} and
@@ -1371,16 +1387,6 @@ sub serialize_actions ($;%) {
       push @result, sprintf q{$OriginalState = [%s, %s];},
           state_const $_->{state}, state_const $_->{external_state};
 
-    } elsif ($type eq 'process-xml-declaration-in-value') {
-      push @result, q{
-        my $v = join '', map { $_->[0] } @{$Token->{value}}; # IndexedString
-        if ($v =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
-                           di => $Token->{di}, index => $Token->{index}};
-          $Token->{index} += length $1;
-          _process_xml_decl $text_decl;
-        }
-      };
     } elsif ($type eq 'process-xml-declaration-in-temp') {
       push @result, q{
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
@@ -1389,8 +1395,17 @@ sub serialize_actions ($;%) {
           $TempIndex += length $1;
           $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
           _process_xml_decl $text_decl;
+        } else {
+          push @$Errors, {level => 's',
+                          type => 'no XML decl',
+                          di => $DI, index => $TempIndex};
         }
       };
+
+    } elsif ($type eq 'set-in-literal') {
+      push @result, q{$InLiteral = 1;};
+    } elsif ($type eq 'unset-in-literal') {
+      push @result, q{undef $InLiteral;};
 
     } elsif ($type eq 'set-DTD-mode') {
       push @result, sprintf q{$DTDMode = q{%s};}, $_->{value};
@@ -2177,9 +2192,8 @@ sub actions_to_code ($;%) {
         }, im_const $act->{im}, $act->{im};
         $new_im = $act->{im};
       }
-      if ($act->{im} eq 'before root element') {
-        push @code, q{push @$OP, ['construct-doctype'];};
-      }
+    } elsif ($act->{type} eq 'construct the DOCTYPE node, if necessary') { # XML
+      push @code, q{push @$OP, ['construct-doctype'];};
     } elsif ($act->{type} eq 'reprocess the token') {
       push @code, sprintf q{
         goto &{$ProcessIM->[$IM]->[$token->{type}]->[$token->{tn}]};
@@ -4430,6 +4444,7 @@ sub dom_tree ($$) {
         $doctype->set_notation_node ($node);
       }
       for my $data (values %%{$DTDDefs->{ge} or {}}) {
+
         next unless defined $data->{notation_name};
         my $node = $doc->create_general_entity ($data->{name});
         $node->public_id ($data->{public_identifier}); # or undef
@@ -4606,16 +4621,31 @@ sub generate_api ($) {
         redo unless $EOF;
       }
       if ($EOF) {
-        $self->onparsed->($self);
         unless ($self->{is_sub_parser}) {
+          for my $en (keys %{$DTDDefs->{entity_names_in_entity_values} || {}}) {
+            my $vt = $DTDDefs->{entity_names_in_entity_values}->{$en};
+            $SC->check_hidden_name (name => (substr $en, 1, -2+length $en), onerror => sub {
+              $self->onerrors->($self, [{%{$DTDDefs->{entity_names_in_entity_values}->{$en}}, @_}]);
+            });
+            my $def = $DTDDefs->{ge}->{$en};
+            if (defined $def->{notation_name}) {
+              push @$Errors, {%{$DTDDefs->{entity_names_in_entity_values}->{$en}},
+                              level => 'w',
+                              type => 'xml:dtd:entity value:unparsed entref',
+                              value => $en};
+            }
+          } # $en
           $SC->check_ncnames (names => $DTDDefs->{el_ncnames} || {},
                               onerror => sub { $self->onerrors->($self, [{@_}]) });
           for my $en (keys %{$DTDDefs->{entity_names} || {}}) {
-            $SC->check_hidden_name (name => $en, onerror => sub {
-              $self->onerrors->($self, [{%{$self->{entity_names}->{$en}}, @_}]);
+            $SC->check_hidden_name (name => (substr $en, 1, -2+length $en), onerror => sub {
+              $self->onerrors->($self, [{%{$DTDDefs->{entity_names}->{$en}}, @_}]);
             });
           }
         }
+        $self->onerrors->($self, $Errors) if @$Errors;
+        @$Errors = ();
+        $self->onparsed->($self);
         $self->_cleanup_states;
       }
       return 1;
@@ -5695,12 +5725,6 @@ sub generate_api ($) {
     $self->{nodes}->[$CONTEXT = 1] = $main->{nodes}->[1]; # DOCTYPE
   } # _parse_bytes_init
 
-    sub _feed_eof ($) {
-      my $self = shift;
-      push @{$self->{input_stream}}, [' ', -1, 0]; # XXX di/index
-      return $self->SUPER::_feed_eof (@_);
-    } # _feed_eof
-
 }
 
     sub _parse_sub_done ($) {
@@ -6029,7 +6053,13 @@ my $OnMDEntityReference = sub {
     $sub->onparsed (sub {
       my $sub = $_[0];
       package Web::XML::Parser;
-      if ($sub->{saved_states}->{State} == %s ()) {
+      if ($sub->{saved_states}->{InLiteral}) {
+        $main2->{saved_states}->{State} = %s ();
+        $main2->onerrors->($main2, [{level => 'm',
+                                     type => 'unclosed literal',
+                                     di => $sub->{saved_states}->{Token}->{di},
+                                     index => $sub->{saved_states}->{Token}->{di}}]);
+      } elsif ($sub->{saved_states}->{State} == %s ()) {
 warn "XXX";
 die 123;
       } else {
@@ -6037,6 +6067,18 @@ die 123;
       }
       $main2->{saved_states}->{Attr} = $sub->{saved_states}->{Attr};
       $main2->{saved_states}->{OpenCMGroups} = $sub->{saved_states}->{OpenCMGroups};
+
+      my $sub2 = XXX::MDEntityParser->new;
+      $sub2->onparsed (sub {
+        $main2->{saved_states}->{State} = $sub2->{saved_states}->{State};
+        $main2->{saved_states}->{Attr} = $sub2->{saved_states}->{Attr};
+        $main2->{saved_states}->{OpenCMGroups} = $sub2->{saved_states}->{OpenCMGroups};
+      });
+      {
+        local $main2->{saved_states}->{OriginalState} = [$main2->{saved_states}->{State}];
+        $sub2->parse ($main2, {entity => {value => [[' ', -1, 0]], name => ''}});
+      }
+
       $data->{entity}->{open}--;
       $main2->{pause}--;
       $main2->_parse_sub_done;
@@ -6158,6 +6200,7 @@ it under the same terms as Perl itself.
       } : q{
         sub HTMLNS () { q<http://www.w3.org/1999/xhtml> }
       }),
+      state_const 'bogus markup declaration state',
       state_const 'DTD state',
       $var_decls,
       $tokenizer_defs_code,
