@@ -74,8 +74,6 @@ sub _test ($$) {
 
   my $doc = $dom->create_document;
   my $p = Web::XML::Parser->new;
-  my $ges = $p->{ge} ||= {};
-  my $pes = $p->{pe} ||= {};
 
   my $ip = [];
   my $main_di = 0;
@@ -111,6 +109,8 @@ sub _test ($$) {
   }
 
   my $result;
+  my $ges;
+  my $pes;
   my $code = sub {
     my @expected = sort {$a cmp $b} @{$test->{errors}->[0] ||= []};
     @errors = sort {$a cmp $b} @errors;
@@ -136,26 +136,26 @@ ok 1;
       for (sort { $a cmp $b } keys %$ges) {
         my $ent = $ges->{$_};
         my $v = '<!ENTITY ' . $ent->{name} . ' "'; 
-        $v .= $ent->{value} if defined $ent->{value};
+        $v .= join '', map { $_->[0] } @{$ent->{value} or []};
         $v .= '" "';
-        $v .= $ent->{pubid} if defined $ent->{pubid};
+        $v .= $ent->{public_identifier} if defined $ent->{public_identifier};
         $v .= '" "';
-        $v .= $ent->{sysid} if defined $ent->{sysid};
+        $v .= $ent->{system_identifier} if defined $ent->{system_identifier};
         $v .= '" ';
-        $v .= $ent->{notation} if defined $ent->{notation};
+        $v .= $ent->{notation_name} if defined $ent->{notation_name};
         $v .= '>';
         push @e, $v;
       }
       for (sort { $a cmp $b } keys %$pes) {
         my $ent = $pes->{$_};
         my $v = '<!ENTITY % ' . $ent->{name} . ' "'; 
-        $v .= $ent->{value} if defined $ent->{value};
+        $v .= join '', map { $_->[0] } @{$ent->{value} or []};
         $v .= '" "';
-        $v .= $ent->{pubid} if defined $ent->{pubid};
+        $v .= $ent->{public_identifier} if defined $ent->{public_identifier};
         $v .= '" "';
-        $v .= $ent->{sysid} if defined $ent->{sysid};
+        $v .= $ent->{system_identifier} if defined $ent->{system_identifier};
         $v .= '" ';
-        $v .= $ent->{notation} if defined $ent->{notation};
+        $v .= $ent->{notation_name} if defined $ent->{notation_name};
         $v .= '>';
         push @e, $v;
       }
@@ -168,6 +168,7 @@ ok 1;
     eq_or_diff $result, $test->{document}->[0], 'Document tree';
     done $c;
     undef $c;
+    undef $p;
   }; # $code
 
   if (defined $test->{resource}) {
@@ -189,6 +190,8 @@ ok 1;
     $p->onparsed (sub {
       test {
         $result = dumptree ($doc);
+        $ges = $p->{saved_maps}->{DTDDefs}->{ge} ||= {};
+        $pes = $p->{saved_maps}->{DTDDefs}->{pe} ||= {};
         $code->();
       } $c;
     });
@@ -197,9 +200,15 @@ ok 1;
     $p->parse_bytes_feed (encode 'utf-8', $ip->[$main_di]->{data});
     $p->parse_bytes_end;
   } elsif (not defined $test->{element}) {
+    $p->onparsed (sub {
+      test {
+        $result = dumptree ($doc);
+        $ges = $p->{saved_maps}->{DTDDefs}->{ge} ||= {};
+        $pes = $p->{saved_maps}->{DTDDefs}->{pe} ||= {};
+        $code->();
+      } $c;
+    });
     $p->parse_char_string ($ip->[$main_di]->{data} => $doc);
-    $result = dumptree ($doc);
-    $code->();
   } else {
     my $el;
     if ($test->{element} =~ s/^svg\s*//) {

@@ -721,8 +721,8 @@ sub serialize_actions ($;%) {
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         };
+        $return = 1;
       }
     } elsif ($type eq 'emit-temp') {
       push @result, q{
@@ -1230,7 +1230,11 @@ sub serialize_actions ($;%) {
       push @result, q{
         my $return;
         REF: {
-          if (defined $DTDDefs->{pe}->{$Temp}) {
+          if ($DTDDefs->{StopProcessing}) {
+            $TempIndex += length $Temp;
+            $Temp = '';
+            last REF;
+          } elsif (defined $DTDDefs->{pe}->{$Temp}) {
             my $ent = $DTDDefs->{pe}->{$Temp};
             if ($ent->{open}) {
               push @$Errors, {level => 'm',
@@ -1276,7 +1280,11 @@ sub serialize_actions ($;%) {
       push @result, q{
         my $return;
         REF: {
-          if (defined $DTDDefs->{pe}->{$Temp}) {
+          if ($DTDDefs->{StopProcessing}) {
+            $TempIndex += length $Temp;
+            $Temp = '';
+            last REF;
+          } elsif (defined $DTDDefs->{pe}->{$Temp}) {
             my $ent = $DTDDefs->{pe}->{$Temp};
             if ($ent->{open}) {
               push @$Errors, {level => 'm',
@@ -1317,7 +1325,11 @@ sub serialize_actions ($;%) {
       push @result, sprintf q{
         my $return;
         REF: {
-          if (defined $DTDDefs->{pe}->{$Temp}) {
+          if ($DTDDefs->{StopProcessing}) {
+            $TempIndex += length $Temp;
+            $Temp = '';
+            last REF;
+          } elsif (defined $DTDDefs->{pe}->{$Temp}) {
             my $ent = $DTDDefs->{pe}->{$Temp};
             if ($ent->{open}) {
               push @$Errors, {level => 'm',
@@ -1360,15 +1372,23 @@ sub serialize_actions ($;%) {
           state_const $_->{state}, state_const $_->{external_state};
 
     } elsif ($type eq 'process-xml-declaration-in-value') {
-      push @result, q{# XXX IndexedString
-        if ($Token->{value} =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+      push @result, q{
+        my $v = join '', map { $_->[0] } @{$Token->{value}}; # IndexedString
+        if ($v =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          my $text_decl = {data => $1,
+                           di => $Token->{di}, index => $Token->{index}};
+          $Token->{index} += length $1;
+          _process_xml_decl $text_decl;
         }
       };
     } elsif ($type eq 'process-xml-declaration-in-temp') {
-      push @result, q{# XXX IndexedString
+      push @result, q{
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       };
 
@@ -1379,8 +1399,8 @@ sub serialize_actions ($;%) {
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       };
+      $return = 1;
     } elsif ($type eq 'insert-IGNORE') {
       push @result, q{push @$OpenMarkedSections, 'IGNORE';};
     } elsif ($type eq 'insert-INCLUDE') {
@@ -1648,6 +1668,10 @@ sub strict_checker ($;$) {
   return $_[0]->{strict_checker} || 'Web::XML::Parser::MinimumChecker';
 } # strict_checker
 
+  };
+
+  push @def_code, q{
+
 sub _sc ($) {
   return $_[0]->{_sc} ||= do {
     my $sc = $_[0]->strict_checker;
@@ -1655,6 +1679,95 @@ sub _sc ($) {
     $sc;
   };
 } # _sc
+
+    sub _process_xml_decl ($) {
+      my $token = $_[0];
+
+        my $pos = $token->{index}; # XXX + target + space
+        my $req_sp = 0;
+
+        if ($token->{data} =~ s/\Aversion[\x09\x0A\x20]*=[\x09\x0A\x20]*
+                                  (?>"([^"]*)"|'([^']*)')([\x09\x0A\x20]*)//x) {
+          my $v = defined $1 ? $1 : $2;
+          my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
+          $pos += $+[0] - $-[0];
+          $req_sp = not length $3;
+          $SC->check_hidden_version
+              (name => $v,
+               onerror => sub {
+                 push @$Errors, {@_, di => $DI, index => $p};
+               });
+          unless (defined $CONTEXT) { # XML declaration
+            push @$OP, ['xml-version', $v];
+          }
+        } else {
+          if (not defined $CONTEXT) { # XML declaration
+            push @$Errors, {level => 'm',
+                            type => 'attribute missing:version',
+                            di => $DI, index => $pos};
+          }
+        }
+
+        if ($token->{data} =~ s/\Aencoding[\x09\x0A\x20]*=[\x09\x0A\x20]*
+                                  (?>"([^"]*)"|'([^']*)')([\x09\x0A\x20]*)//x) {
+          my $v = defined $1 ? $1 : $2;
+          my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
+          if ($req_sp) {
+            push @$Errors, {level => 'm',
+                            type => 'no space before attr name',
+                            di => $DI, index => $p};
+          }
+          $pos += $+[0] - $-[0];
+          $req_sp = not length $3;
+          $SC->check_hidden_encoding
+              (name => $v,
+               onerror => sub {
+                 push @$Errors, {@_, di => $DI, index => $p};
+               });
+          unless (defined $CONTEXT) { # XML declaration
+            push @$OP, ['xml-encoding', $v];
+          }
+        } else {
+          if (defined $CONTEXT) { # text declaration
+            push @$Errors, {level => 'm',
+                            type => 'attribute missing:encoding',
+                            di => $DI, index => $pos};
+          }
+        }
+
+        if ($token->{data} =~ s/\Astandalone[\x09\x0A\x20]*=[\x09\x0A\x20]*
+                                  (?>"([^"]*)"|'([^']*)')[\x09\x0A\x20]*//x) {
+          my $v = defined $1 ? $1 : $2;
+          if ($req_sp) {
+            push @$Errors, {level => 'm',
+                            type => 'no space before attr name',
+                            di => $DI, index => $pos};
+          }
+          if ($v eq 'yes' or $v eq 'no') {
+            if (defined $CONTEXT) { # text declaration
+              push @$Errors, {level => 'm',
+                              type => 'attribute not allowed:standalone',
+                              di => $DI, index => $pos};
+            } else {
+              push @$OP, ['xml-standalone',
+                          $DTDDefs->{XMLStandalone} = ($v ne 'no')];
+            }
+          } else {
+            my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
+            push @$Errors, {level => 'm',
+                            type => 'XML standalone:syntax error',
+                            di => $DI, index => $p, value => $v};
+          }
+          $pos += $+[0] - $-[0];
+        }
+
+        if (length $token->{data}) {
+          push @$Errors, {level => 'm',
+                          type => 'bogus XML declaration',
+                          di => $DI, index => $pos};
+        }
+
+    } # _process_xml_decl
   } if $LANG eq 'XML';
 
   my $def_code = join "\n", @def_code;
@@ -2509,6 +2622,9 @@ sub actions_to_code ($;%) {
         } elsif ($act->{position} eq 'doctype') { # XML
           push @code, sprintf q{
             push @$OP, ['%s', $token => 1];
+            push @$Errors, {level => 'w',
+                            type => 'xml:dtd:pi',
+                            di => $DI, index => $Offset + pos $Input};
           }, $type;
         } elsif ($act->{position} eq 'oe[0]') {
           push @code, sprintf q{
@@ -3048,93 +3164,7 @@ sub actions_to_code ($;%) {
                         di => $token->{di}, index => $token->{index}};
       };
     } elsif ($act->{type} eq 'process an XML declaration') {
-      push @code, q{
-        my $pos = $token->{index};
-        my $req_sp = 0;
-
-        if ($token->{data} =~ s/\Aversion[\x09\x0A\x20]*=[\x09\x0A\x20]*
-                                  (?>"([^"]*)"|'([^']*)')([\x09\x0A\x20]*)//x) {
-          my $v = defined $1 ? $1 : $2;
-          my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
-          $pos += $+[0] - $-[0];
-          $req_sp = not length $3;
-          if (defined $CONTEXT) { # text declaration
-            $SC->check_hidden_version
-                (name => $v,
-                 onerror => sub {
-                   push @$Errors, {@_, di => $DI, index => $p};
-                 });
-          } else { # XML declaration
-            push @$OP, ['xml-version', $v];
-          }
-        } else {
-          if (not defined $CONTEXT) { # XML declaration
-            push @$Errors, {level => 'm',
-                            type => 'attribute missing:version',
-                            di => $DI, index => $pos};
-          }
-        }
-
-        if ($token->{data} =~ s/\Aencoding[\x09\x0A\x20]*=[\x09\x0A\x20]*
-                                  (?>"([^"]*)"|'([^']*)')([\x09\x0A\x20]*)//x) {
-          my $v = defined $1 ? $1 : $2;
-          my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
-          if ($req_sp) {
-            push @$Errors, {level => 'm',
-                            type => 'no space before attr name',
-                            di => $DI, index => $p};
-          }
-          $pos += $+[0] - $-[0];
-          $req_sp = not length $3;
-          if (defined $CONTEXT) { # text declaration
-            $SC->check_hidden_encoding
-                (name => $v,
-                 onerror => sub {
-                   push @$Errors, {@_, di => $DI, index => $p};
-                 });
-          } else { # XML declaration
-            push @$OP, ['xml-encoding', $v];
-          }
-        } else {
-          if (defined $CONTEXT) { # text declaration
-            push @$Errors, {level => 'm',
-                            type => 'attribute missing:encoding',
-                            di => $DI, index => $pos};
-          }
-        }
-
-        if ($token->{data} =~ s/\Astandalone[\x09\x0A\x20]*=[\x09\x0A\x20]*
-                                  (?>"([^"]*)"|'([^']*)')[\x09\x0A\x20]*//x) {
-          my $v = defined $1 ? $1 : $2;
-          if ($req_sp) {
-            push @$Errors, {level => 'm',
-                            type => 'no space before attr name',
-                            di => $DI, index => $pos};
-          }
-          if ($v eq 'yes' or $v eq 'no') {
-            if (defined $CONTEXT) { # text declaration
-              push @$Errors, {level => 'm',
-                              type => 'attribute not allowed:standalone',
-                              di => $DI, index => $pos};
-            } else {
-              push @$OP, ['xml-standalone',
-                          $DTDDefs->{XMLStandalone} = ($v ne 'no')];
-            }
-          } else {
-            my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
-            push @$Errors, {level => 'm',
-                            type => 'XML standalone:syntax error',
-                            di => $DI, index => $p, value => $v};
-          }
-          $pos += $+[0] - $-[0];
-        }
-
-        if (length $token->{data}) {
-          push @$Errors, {level => 'm',
-                          type => 'bogus XML declaration',
-                          di => $DI, index => $pos};
-        }
-      };
+      push @code, q{_process_xml_decl $token;};
 
     } elsif ($act->{type} eq 'process an ELEMENT token') {
       push @code, q{
@@ -3334,7 +3364,7 @@ sub actions_to_code ($;%) {
               amp => 1, apos => 1, quot => 1, lt => 1, gt => 1,
             }->{$token->{name}}) {
               if (not defined $token->{value} or # external entity
-                  not $token->{value} =~ { # XXX IndexedString
+                  not join ('', map { $_->[0] } @{$token->{value}}) =~ { # IndexedString
                     amp => qr/\A&#(?:x0*26|0*38);\z/,
                     lt => qr/\A&#(?:x0*3[Cc]|0*60);\z/,
                     gt => qr/\A(?>&#(?:x0*3[Ee]|0*62);|>)\z/,
@@ -3349,13 +3379,13 @@ sub actions_to_code ($;%) {
 
               $DTDDefs->{ge}->{'&'.$token->{name}.';'} = {
                 name => $token->{name},
-                value => {
+                value => [[{
                   amp => '&',
                   lt => '<',
                   gt => '>',
                   quot => '"',
                   apos => "'",
-                }->{$token->{name}},
+                }->{$token->{name}}, -1, 0]],
                 only_text => 1,
               };
             } elsif (not $DTDDefs->{ge}->{'&'.$token->{name}.';'}) {
@@ -3403,11 +3433,18 @@ sub actions_to_code ($;%) {
           }
           if (defined $token->{notation_name}) {
             $SC->check_hidden_name
-                (name => $token->{notation},
+                (name => $token->{notation_name},
                  onerror => sub {
                    push @$Errors, {@_, di => $DI,
                                    index => $Offset + pos $Input};
                  });
+            if ($token->{is_parameter_entity_flag}) {
+              push @$Errors, {level => 'm',
+                              type => 'xml:dtd:param entity with ndata',
+                              value => $token->{name},
+                              di => $DI, index => $Offset + pos $Input};
+              delete $token->{notation_name};
+            }
           }
         } # not stop processing
       };
@@ -5804,7 +5841,7 @@ sub onextentref ($;$) {
     my ($self, $data, $sub) = @_;
     $self->onerrors->($self, [{level => 'i',
                                type => 'external entref',
-                               value => '&'.$data->{entity}->{name}.';',
+                               value => (defined $data->{entity}->{name} ? ($data->{entity}->{is_parameter_entity_flag} ? '%' : '&').$data->{entity}->{name}.';' : undef),
                                di => $data->{entity}->{di},
                                index => $data->{entity}->{index}}]);
     $sub->parse_bytes_start (undef, $self);

@@ -107,7 +107,7 @@ sub onextentref ($;$) {
     my ($self, $data, $sub) = @_;
     $self->onerrors->($self, [{level => 'i',
                                type => 'external entref',
-                               value => '&'.$data->{entity}->{name}.';',
+                               value => (defined $data->{entity}->{name} ? ($data->{entity}->{is_parameter_entity_flag} ? '%' : '&').$data->{entity}->{name}.';' : undef),
                                di => $data->{entity}->{di},
                                index => $data->{entity}->{index}}]);
     $sub->parse_bytes_start (undef, $self);
@@ -879,6 +879,9 @@ sub strict_checker ($;$) {
   return $_[0]->{strict_checker} || 'Web::XML::Parser::MinimumChecker';
 } # strict_checker
 
+  
+
+
 sub _sc ($) {
   return $_[0]->{_sc} ||= do {
     my $sc = $_[0]->strict_checker;
@@ -886,6 +889,95 @@ sub _sc ($) {
     $sc;
   };
 } # _sc
+
+    sub _process_xml_decl ($) {
+      my $token = $_[0];
+
+        my $pos = $token->{index}; # XXX + target + space
+        my $req_sp = 0;
+
+        if ($token->{data} =~ s/\Aversion[\x09\x0A\x20]*=[\x09\x0A\x20]*
+                                  (?>"([^"]*)"|'([^']*)')([\x09\x0A\x20]*)//x) {
+          my $v = defined $1 ? $1 : $2;
+          my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
+          $pos += $+[0] - $-[0];
+          $req_sp = not length $3;
+          $SC->check_hidden_version
+              (name => $v,
+               onerror => sub {
+                 push @$Errors, {@_, di => $DI, index => $p};
+               });
+          unless (defined $CONTEXT) { # XML declaration
+            push @$OP, ['xml-version', $v];
+          }
+        } else {
+          if (not defined $CONTEXT) { # XML declaration
+            push @$Errors, {level => 'm',
+                            type => 'attribute missing:version',
+                            di => $DI, index => $pos};
+          }
+        }
+
+        if ($token->{data} =~ s/\Aencoding[\x09\x0A\x20]*=[\x09\x0A\x20]*
+                                  (?>"([^"]*)"|'([^']*)')([\x09\x0A\x20]*)//x) {
+          my $v = defined $1 ? $1 : $2;
+          my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
+          if ($req_sp) {
+            push @$Errors, {level => 'm',
+                            type => 'no space before attr name',
+                            di => $DI, index => $p};
+          }
+          $pos += $+[0] - $-[0];
+          $req_sp = not length $3;
+          $SC->check_hidden_encoding
+              (name => $v,
+               onerror => sub {
+                 push @$Errors, {@_, di => $DI, index => $p};
+               });
+          unless (defined $CONTEXT) { # XML declaration
+            push @$OP, ['xml-encoding', $v];
+          }
+        } else {
+          if (defined $CONTEXT) { # text declaration
+            push @$Errors, {level => 'm',
+                            type => 'attribute missing:encoding',
+                            di => $DI, index => $pos};
+          }
+        }
+
+        if ($token->{data} =~ s/\Astandalone[\x09\x0A\x20]*=[\x09\x0A\x20]*
+                                  (?>"([^"]*)"|'([^']*)')[\x09\x0A\x20]*//x) {
+          my $v = defined $1 ? $1 : $2;
+          if ($req_sp) {
+            push @$Errors, {level => 'm',
+                            type => 'no space before attr name',
+                            di => $DI, index => $pos};
+          }
+          if ($v eq 'yes' or $v eq 'no') {
+            if (defined $CONTEXT) { # text declaration
+              push @$Errors, {level => 'm',
+                              type => 'attribute not allowed:standalone',
+                              di => $DI, index => $pos};
+            } else {
+              push @$OP, ['xml-standalone',
+                          $DTDDefs->{XMLStandalone} = ($v ne 'no')];
+            }
+          } else {
+            my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
+            push @$Errors, {level => 'm',
+                            type => 'XML standalone:syntax error',
+                            di => $DI, index => $p, value => $v};
+          }
+          $pos += $+[0] - $-[0];
+        }
+
+        if (length $token->{data}) {
+          push @$Errors, {level => 'm',
+                          type => 'bogus XML declaration',
+                          di => $DI, index => $pos};
+        }
+
+    } # _process_xml_decl
   
     ## ------ Tree constructor defs ------
     my $Element2Type = {};
@@ -1379,93 +1471,7 @@ push @$OP, ['construct-doctype'];
           my $token = $_;
 
           if ($token->{target} eq q@xml@) {
-            
-        my $pos = $token->{index};
-        my $req_sp = 0;
-
-        if ($token->{data} =~ s/\Aversion[\x09\x0A\x20]*=[\x09\x0A\x20]*
-                                  (?>"([^"]*)"|'([^']*)')([\x09\x0A\x20]*)//x) {
-          my $v = defined $1 ? $1 : $2;
-          my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
-          $pos += $+[0] - $-[0];
-          $req_sp = not length $3;
-          if (defined $CONTEXT) { # text declaration
-            $SC->check_hidden_version
-                (name => $v,
-                 onerror => sub {
-                   push @$Errors, {@_, di => $DI, index => $p};
-                 });
-          } else { # XML declaration
-            push @$OP, ['xml-version', $v];
-          }
-        } else {
-          if (not defined $CONTEXT) { # XML declaration
-            push @$Errors, {level => 'm',
-                            type => 'attribute missing:version',
-                            di => $DI, index => $pos};
-          }
-        }
-
-        if ($token->{data} =~ s/\Aencoding[\x09\x0A\x20]*=[\x09\x0A\x20]*
-                                  (?>"([^"]*)"|'([^']*)')([\x09\x0A\x20]*)//x) {
-          my $v = defined $1 ? $1 : $2;
-          my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
-          if ($req_sp) {
-            push @$Errors, {level => 'm',
-                            type => 'no space before attr name',
-                            di => $DI, index => $p};
-          }
-          $pos += $+[0] - $-[0];
-          $req_sp = not length $3;
-          if (defined $CONTEXT) { # text declaration
-            $SC->check_hidden_encoding
-                (name => $v,
-                 onerror => sub {
-                   push @$Errors, {@_, di => $DI, index => $p};
-                 });
-          } else { # XML declaration
-            push @$OP, ['xml-encoding', $v];
-          }
-        } else {
-          if (defined $CONTEXT) { # text declaration
-            push @$Errors, {level => 'm',
-                            type => 'attribute missing:encoding',
-                            di => $DI, index => $pos};
-          }
-        }
-
-        if ($token->{data} =~ s/\Astandalone[\x09\x0A\x20]*=[\x09\x0A\x20]*
-                                  (?>"([^"]*)"|'([^']*)')[\x09\x0A\x20]*//x) {
-          my $v = defined $1 ? $1 : $2;
-          if ($req_sp) {
-            push @$Errors, {level => 'm',
-                            type => 'no space before attr name',
-                            di => $DI, index => $pos};
-          }
-          if ($v eq 'yes' or $v eq 'no') {
-            if (defined $CONTEXT) { # text declaration
-              push @$Errors, {level => 'm',
-                              type => 'attribute not allowed:standalone',
-                              di => $DI, index => $pos};
-            } else {
-              push @$OP, ['xml-standalone',
-                          $DTDDefs->{XMLStandalone} = ($v ne 'no')];
-            }
-          } else {
-            my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
-            push @$Errors, {level => 'm',
-                            type => 'XML standalone:syntax error',
-                            di => $DI, index => $p, value => $v};
-          }
-          $pos += $+[0] - $-[0];
-        }
-
-        if (length $token->{data}) {
-          push @$Errors, {level => 'm',
-                          type => 'bogus XML declaration',
-                          di => $DI, index => $pos};
-        }
-      
+            _process_xml_decl $token;
 
           $IM = IN_SUBSET_IM;
           #warn "Insertion mode changed to |in subset| ($IM)";
@@ -1679,93 +1685,7 @@ push @$OP, ['construct-doctype'];
           my $token = $_;
 
           if ($token->{target} eq q@xml@) {
-            
-        my $pos = $token->{index};
-        my $req_sp = 0;
-
-        if ($token->{data} =~ s/\Aversion[\x09\x0A\x20]*=[\x09\x0A\x20]*
-                                  (?>"([^"]*)"|'([^']*)')([\x09\x0A\x20]*)//x) {
-          my $v = defined $1 ? $1 : $2;
-          my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
-          $pos += $+[0] - $-[0];
-          $req_sp = not length $3;
-          if (defined $CONTEXT) { # text declaration
-            $SC->check_hidden_version
-                (name => $v,
-                 onerror => sub {
-                   push @$Errors, {@_, di => $DI, index => $p};
-                 });
-          } else { # XML declaration
-            push @$OP, ['xml-version', $v];
-          }
-        } else {
-          if (not defined $CONTEXT) { # XML declaration
-            push @$Errors, {level => 'm',
-                            type => 'attribute missing:version',
-                            di => $DI, index => $pos};
-          }
-        }
-
-        if ($token->{data} =~ s/\Aencoding[\x09\x0A\x20]*=[\x09\x0A\x20]*
-                                  (?>"([^"]*)"|'([^']*)')([\x09\x0A\x20]*)//x) {
-          my $v = defined $1 ? $1 : $2;
-          my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
-          if ($req_sp) {
-            push @$Errors, {level => 'm',
-                            type => 'no space before attr name',
-                            di => $DI, index => $p};
-          }
-          $pos += $+[0] - $-[0];
-          $req_sp = not length $3;
-          if (defined $CONTEXT) { # text declaration
-            $SC->check_hidden_encoding
-                (name => $v,
-                 onerror => sub {
-                   push @$Errors, {@_, di => $DI, index => $p};
-                 });
-          } else { # XML declaration
-            push @$OP, ['xml-encoding', $v];
-          }
-        } else {
-          if (defined $CONTEXT) { # text declaration
-            push @$Errors, {level => 'm',
-                            type => 'attribute missing:encoding',
-                            di => $DI, index => $pos};
-          }
-        }
-
-        if ($token->{data} =~ s/\Astandalone[\x09\x0A\x20]*=[\x09\x0A\x20]*
-                                  (?>"([^"]*)"|'([^']*)')[\x09\x0A\x20]*//x) {
-          my $v = defined $1 ? $1 : $2;
-          if ($req_sp) {
-            push @$Errors, {level => 'm',
-                            type => 'no space before attr name',
-                            di => $DI, index => $pos};
-          }
-          if ($v eq 'yes' or $v eq 'no') {
-            if (defined $CONTEXT) { # text declaration
-              push @$Errors, {level => 'm',
-                              type => 'attribute not allowed:standalone',
-                              di => $DI, index => $pos};
-            } else {
-              push @$OP, ['xml-standalone',
-                          $DTDDefs->{XMLStandalone} = ($v ne 'no')];
-            }
-          } else {
-            my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
-            push @$Errors, {level => 'm',
-                            type => 'XML standalone:syntax error',
-                            di => $DI, index => $p, value => $v};
-          }
-          $pos += $+[0] - $-[0];
-        }
-
-        if (length $token->{data}) {
-          push @$Errors, {level => 'm',
-                          type => 'bogus XML declaration',
-                          di => $DI, index => $pos};
-        }
-      
+            _process_xml_decl $token;
 
           $IM = BEFORE_DOCTYPE_IM;
           #warn "Insertion mode changed to |before DOCTYPE| ($IM)";
@@ -1979,93 +1899,7 @@ push @$OP, ['construct-doctype'];
           my $token = $_;
 
           if ($token->{target} eq q@xml@) {
-            
-        my $pos = $token->{index};
-        my $req_sp = 0;
-
-        if ($token->{data} =~ s/\Aversion[\x09\x0A\x20]*=[\x09\x0A\x20]*
-                                  (?>"([^"]*)"|'([^']*)')([\x09\x0A\x20]*)//x) {
-          my $v = defined $1 ? $1 : $2;
-          my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
-          $pos += $+[0] - $-[0];
-          $req_sp = not length $3;
-          if (defined $CONTEXT) { # text declaration
-            $SC->check_hidden_version
-                (name => $v,
-                 onerror => sub {
-                   push @$Errors, {@_, di => $DI, index => $p};
-                 });
-          } else { # XML declaration
-            push @$OP, ['xml-version', $v];
-          }
-        } else {
-          if (not defined $CONTEXT) { # XML declaration
-            push @$Errors, {level => 'm',
-                            type => 'attribute missing:version',
-                            di => $DI, index => $pos};
-          }
-        }
-
-        if ($token->{data} =~ s/\Aencoding[\x09\x0A\x20]*=[\x09\x0A\x20]*
-                                  (?>"([^"]*)"|'([^']*)')([\x09\x0A\x20]*)//x) {
-          my $v = defined $1 ? $1 : $2;
-          my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
-          if ($req_sp) {
-            push @$Errors, {level => 'm',
-                            type => 'no space before attr name',
-                            di => $DI, index => $p};
-          }
-          $pos += $+[0] - $-[0];
-          $req_sp = not length $3;
-          if (defined $CONTEXT) { # text declaration
-            $SC->check_hidden_encoding
-                (name => $v,
-                 onerror => sub {
-                   push @$Errors, {@_, di => $DI, index => $p};
-                 });
-          } else { # XML declaration
-            push @$OP, ['xml-encoding', $v];
-          }
-        } else {
-          if (defined $CONTEXT) { # text declaration
-            push @$Errors, {level => 'm',
-                            type => 'attribute missing:encoding',
-                            di => $DI, index => $pos};
-          }
-        }
-
-        if ($token->{data} =~ s/\Astandalone[\x09\x0A\x20]*=[\x09\x0A\x20]*
-                                  (?>"([^"]*)"|'([^']*)')[\x09\x0A\x20]*//x) {
-          my $v = defined $1 ? $1 : $2;
-          if ($req_sp) {
-            push @$Errors, {level => 'm',
-                            type => 'no space before attr name',
-                            di => $DI, index => $pos};
-          }
-          if ($v eq 'yes' or $v eq 'no') {
-            if (defined $CONTEXT) { # text declaration
-              push @$Errors, {level => 'm',
-                              type => 'attribute not allowed:standalone',
-                              di => $DI, index => $pos};
-            } else {
-              push @$OP, ['xml-standalone',
-                          $DTDDefs->{XMLStandalone} = ($v ne 'no')];
-            }
-          } else {
-            my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
-            push @$Errors, {level => 'm',
-                            type => 'XML standalone:syntax error',
-                            di => $DI, index => $p, value => $v};
-          }
-          $pos += $+[0] - $-[0];
-        }
-
-        if (length $token->{data}) {
-          push @$Errors, {level => 'm',
-                          type => 'bogus XML declaration',
-                          di => $DI, index => $pos};
-        }
-      
+            _process_xml_decl $token;
 
           $IM = IN_ELEMENT_IM;
           #warn "Insertion mode changed to |in element| ($IM)";
@@ -3181,7 +3015,7 @@ return;
               amp => 1, apos => 1, quot => 1, lt => 1, gt => 1,
             }->{$token->{name}}) {
               if (not defined $token->{value} or # external entity
-                  not $token->{value} =~ { # XXX IndexedString
+                  not join ('', map { $_->[0] } @{$token->{value}}) =~ { # IndexedString
                     amp => qr/\A&#(?:x0*26|0*38);\z/,
                     lt => qr/\A&#(?:x0*3[Cc]|0*60);\z/,
                     gt => qr/\A(?>&#(?:x0*3[Ee]|0*62);|>)\z/,
@@ -3196,13 +3030,13 @@ return;
 
               $DTDDefs->{ge}->{'&'.$token->{name}.';'} = {
                 name => $token->{name},
-                value => {
+                value => [[{
                   amp => '&',
                   lt => '<',
                   gt => '>',
                   quot => '"',
                   apos => "'",
-                }->{$token->{name}},
+                }->{$token->{name}}, -1, 0]],
                 only_text => 1,
               };
             } elsif (not $DTDDefs->{ge}->{'&'.$token->{name}.';'}) {
@@ -3250,11 +3084,18 @@ return;
           }
           if (defined $token->{notation_name}) {
             $SC->check_hidden_name
-                (name => $token->{notation},
+                (name => $token->{notation_name},
                  onerror => sub {
                    push @$Errors, {@_, di => $DI,
                                    index => $Offset + pos $Input};
                  });
+            if ($token->{is_parameter_entity_flag}) {
+              push @$Errors, {level => 'm',
+                              type => 'xml:dtd:param entity with ndata',
+                              value => $token->{name},
+                              di => $DI, index => $Offset + pos $Input};
+              delete $token->{notation_name};
+            }
           }
         } # not stop processing
       
@@ -3334,6 +3175,9 @@ push @$OP, ['construct-doctype'];
           my $token = $_;
 
             push @$OP, ['pi', $token => 1];
+            push @$Errors, {level => 'w',
+                            type => 'xml:dtd:pi',
+                            di => $DI, index => $Offset + pos $Input};
           
 
           $SC->check_pi_target
@@ -3532,93 +3376,7 @@ push @$OP, ['construct-doctype'];
           my $token = $_;
 
           if ($token->{target} eq q@xml@) {
-            
-        my $pos = $token->{index};
-        my $req_sp = 0;
-
-        if ($token->{data} =~ s/\Aversion[\x09\x0A\x20]*=[\x09\x0A\x20]*
-                                  (?>"([^"]*)"|'([^']*)')([\x09\x0A\x20]*)//x) {
-          my $v = defined $1 ? $1 : $2;
-          my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
-          $pos += $+[0] - $-[0];
-          $req_sp = not length $3;
-          if (defined $CONTEXT) { # text declaration
-            $SC->check_hidden_version
-                (name => $v,
-                 onerror => sub {
-                   push @$Errors, {@_, di => $DI, index => $p};
-                 });
-          } else { # XML declaration
-            push @$OP, ['xml-version', $v];
-          }
-        } else {
-          if (not defined $CONTEXT) { # XML declaration
-            push @$Errors, {level => 'm',
-                            type => 'attribute missing:version',
-                            di => $DI, index => $pos};
-          }
-        }
-
-        if ($token->{data} =~ s/\Aencoding[\x09\x0A\x20]*=[\x09\x0A\x20]*
-                                  (?>"([^"]*)"|'([^']*)')([\x09\x0A\x20]*)//x) {
-          my $v = defined $1 ? $1 : $2;
-          my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
-          if ($req_sp) {
-            push @$Errors, {level => 'm',
-                            type => 'no space before attr name',
-                            di => $DI, index => $p};
-          }
-          $pos += $+[0] - $-[0];
-          $req_sp = not length $3;
-          if (defined $CONTEXT) { # text declaration
-            $SC->check_hidden_encoding
-                (name => $v,
-                 onerror => sub {
-                   push @$Errors, {@_, di => $DI, index => $p};
-                 });
-          } else { # XML declaration
-            push @$OP, ['xml-encoding', $v];
-          }
-        } else {
-          if (defined $CONTEXT) { # text declaration
-            push @$Errors, {level => 'm',
-                            type => 'attribute missing:encoding',
-                            di => $DI, index => $pos};
-          }
-        }
-
-        if ($token->{data} =~ s/\Astandalone[\x09\x0A\x20]*=[\x09\x0A\x20]*
-                                  (?>"([^"]*)"|'([^']*)')[\x09\x0A\x20]*//x) {
-          my $v = defined $1 ? $1 : $2;
-          if ($req_sp) {
-            push @$Errors, {level => 'm',
-                            type => 'no space before attr name',
-                            di => $DI, index => $pos};
-          }
-          if ($v eq 'yes' or $v eq 'no') {
-            if (defined $CONTEXT) { # text declaration
-              push @$Errors, {level => 'm',
-                              type => 'attribute not allowed:standalone',
-                              di => $DI, index => $pos};
-            } else {
-              push @$OP, ['xml-standalone',
-                          $DTDDefs->{XMLStandalone} = ($v ne 'no')];
-            }
-          } else {
-            my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
-            push @$Errors, {level => 'm',
-                            type => 'XML standalone:syntax error',
-                            di => $DI, index => $p, value => $v};
-          }
-          $pos += $+[0] - $-[0];
-        }
-
-        if (length $token->{data}) {
-          push @$Errors, {level => 'm',
-                          type => 'bogus XML declaration',
-                          di => $DI, index => $pos};
-        }
-      
+            _process_xml_decl $token;
 
           $IM = BEFORE_ROOT_ELEMENT_IM;
           #warn "Insertion mode changed to |before root element| ($IM)";
@@ -4127,14 +3885,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -4202,14 +3959,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -4291,14 +4047,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -4356,14 +4111,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -4447,14 +4201,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -4488,8 +4241,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -4540,8 +4293,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -4597,8 +4350,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -4635,8 +4388,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -4679,14 +4432,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -4733,14 +4485,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -4832,14 +4583,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -4911,14 +4661,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -4968,14 +4717,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -5022,14 +4770,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -5079,14 +4826,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -5127,14 +4873,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -5179,14 +4924,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -5237,14 +4981,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -5291,14 +5034,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -5366,14 +5108,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -5427,14 +5168,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -5486,14 +5226,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -5537,14 +5276,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -5592,14 +5330,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -5650,14 +5387,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -5796,14 +5532,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -5902,14 +5637,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -6007,14 +5741,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -6112,14 +5845,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -6217,14 +5949,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -6322,14 +6053,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -6427,14 +6157,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -6546,14 +6275,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -6657,14 +6385,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -6762,14 +6489,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -6867,14 +6593,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -6972,14 +6697,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -7077,14 +6801,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -7196,14 +6919,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -7301,14 +7023,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -7406,14 +7127,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -7511,14 +7231,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -7630,14 +7349,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -7735,14 +7453,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -7840,14 +7557,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -7945,14 +7661,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -8050,14 +7765,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -8155,14 +7869,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -8260,14 +7973,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -8379,14 +8091,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -8432,9 +8143,8 @@ push @$Tokens, $Token;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
-return 1 if $Token->{type} == DOCTYPE_TOKEN;
+return 1;
 } else {
 return 1;
 }
@@ -8479,9 +8189,8 @@ push @$Tokens, $Token;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
-return 1 if $Token->{type} == DOCTYPE_TOKEN;
+return 1;
 } else {
 return 1;
 }
@@ -8530,9 +8239,8 @@ push @$Tokens, $Token;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
-return 1 if $Token->{type} == DOCTYPE_TOKEN;
+return 1;
 } else {
 return 1;
 }
@@ -8577,9 +8285,8 @@ push @$Tokens, $Token;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
-return 1 if $Token->{type} == DOCTYPE_TOKEN;
+return 1;
 } else {
 return 1;
 }
@@ -8628,9 +8335,8 @@ push @$Tokens, $Token;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
-return 1 if $Token->{type} == DOCTYPE_TOKEN;
+return 1;
 } else {
 return 1;
 }
@@ -8684,6 +8390,25 @@ return 1 if $Token->{type} == DOCTYPE_TOKEN;
       
 $Token->{q<name>} = $1;
 $State = DOCTYPE_NAME_STATE;
+} elsif ($Input =~ /\G([\[])/gcs) {
+
+            push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+
+            push @$Errors, {type => 'before-doctype-name-005b', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+
+        $Token = {type => DOCTYPE_TOKEN, tn => 0,
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<force_quirks_flag>} = 1;
+$State = DTD_STATE;
+$Token->{q<has_internal_subset_flag>} = 1;
+$DTDMode = q{internal subset};
+push @$Tokens, $Token;
+return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
@@ -8712,9 +8437,8 @@ push @$Tokens, $Token;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
-return 1 if $Token->{type} == DOCTYPE_TOKEN;
+return 1;
 } else {
 return 1;
 }
@@ -8752,9 +8476,8 @@ push @$Tokens, $Token;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
-return 1 if $Token->{type} == DOCTYPE_TOKEN;
+return 1;
 } else {
 return 1;
 }
@@ -8797,9 +8520,8 @@ push @$Tokens, $Token;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
-return 1 if $Token->{type} == DOCTYPE_TOKEN;
+return 1;
 } else {
 return 1;
 }
@@ -8837,9 +8559,8 @@ push @$Tokens, $Token;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
-return 1 if $Token->{type} == DOCTYPE_TOKEN;
+return 1;
 } else {
 return 1;
 }
@@ -8882,9 +8603,8 @@ push @$Tokens, $Token;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
-return 1 if $Token->{type} == DOCTYPE_TOKEN;
+return 1;
 } else {
 return 1;
 }
@@ -8893,6 +8613,10 @@ return 0;
 };
 $StateActions->[DOCTYPE_TAG_STATE] = sub {
 if ($Input =~ /\G([\!])/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
 $State = DOCTYPE_MDO_STATE;
 } elsif ($Input =~ /\G([\?])/gcs) {
 $State = DOCTYPE_PI_STATE;
@@ -8965,14 +8689,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -9021,14 +8744,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -9080,14 +8802,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -9152,14 +8873,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -9243,14 +8963,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -9300,6 +9019,9 @@ $Token->{q<value>} = [['', $DI, $Offset + pos $Input]];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
+push @$Tokens, $Token;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
+return 1 if $Token->{type} == ENTITY_TOKEN;
 } else {
 if ($EOF) {
 
@@ -9320,14 +9042,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -9383,14 +9104,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -9450,14 +9170,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -9513,14 +9232,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -9580,14 +9298,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -9664,14 +9381,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -9710,14 +9426,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -9760,14 +9475,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -9806,14 +9520,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -9856,14 +9569,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -9914,14 +9626,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -10011,14 +9722,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -10366,14 +10076,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -10721,14 +10430,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -10805,14 +10513,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -10912,14 +10619,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -11048,14 +10754,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -11110,14 +10815,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -11168,14 +10872,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -11265,14 +10968,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -11620,14 +11322,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -11975,14 +11676,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -12059,14 +11759,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -12166,14 +11865,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -12302,14 +12000,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -12364,14 +12061,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -12420,14 +12116,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -12510,14 +12205,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -12826,14 +12520,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -13142,14 +12835,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -13222,14 +12914,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -13322,14 +13013,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -13459,14 +13149,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -13519,14 +13208,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -13534,12 +13222,10 @@ return 1;
 return 0;
 };
 $StateActions->[NDATA_ID_STATE] = sub {
-if ($Input =~ /\G([^\ \	\\ \
-\\%\>]+)/gcs) {
+if ($Input =~ /\G([^\	\\ \
+\\%\>\ ]+)/gcs) {
 $Token->{q<notation_name>} .= $1;
 
-} elsif ($Input =~ /\G([\ ])/gcs) {
-$Token->{q<notation_name>} .= q@�@;
 } elsif ($Input =~ /\G([\	\\ \
 \])/gcs) {
 $State = A_ENT_PARAMETER_STATE;
@@ -13561,6 +13247,12 @@ $State = DTD_STATE;
 push @$Tokens, $Token;
 $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 return 1 if $Token->{type} == ENTITY_TOKEN;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Token->{q<notation_name>} .= q@�@;
 } else {
 if ($EOF) {
 
@@ -13581,14 +13273,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -13646,14 +13337,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -13708,14 +13398,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -13774,14 +13463,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -13836,14 +13524,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -13902,14 +13589,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -13993,14 +13679,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -14039,14 +13724,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -14089,14 +13773,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -14135,14 +13818,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -14185,14 +13867,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -14226,8 +13907,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -14265,8 +13946,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -14349,8 +14030,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -14413,8 +14094,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -14455,8 +14136,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -14536,14 +14217,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -14628,14 +14308,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -14643,22 +14322,31 @@ return 1;
 return 0;
 };
 $StateActions->[A_ATTLIST_ATTR_DEFAULT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
-if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+if ($Input =~ /\G([^\\>\ \!\%\&\<]+)/gcs) {
 $Temp .= $1;
 
-} elsif ($Input =~ /\G([\ ])/gcs) {
-$Temp .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 $Temp .= q@
 @;
 $State = A_ATTLIST_ATTR_DEFAULT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = A_ATTLIST_ATTR_DEFAULT_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'after-attlist-attribute-default-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -14707,14 +14395,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -14722,10 +14409,7 @@ return 1;
 return 0;
 };
 $StateActions->[A_ATTLIST_ATTR_DEFAULT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-$State = A_ATTLIST_ATTR_DEFAULT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
-$Temp .= q@�@;
-} elsif ($Input =~ /\G([\
+if ($Input =~ /\G([\
 ])/gcs) {
 $State = A_ATTLIST_ATTR_DEFAULT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
@@ -14733,12 +14417,23 @@ $Temp .= q@
 @;
 $State = A_ATTLIST_ATTR_DEFAULT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = A_ATTLIST_ATTR_DEFAULT_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'after-attlist-attribute-default-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -14790,14 +14485,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -14853,14 +14547,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -14921,14 +14614,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -14936,22 +14628,31 @@ return 1;
 return 0;
 };
 $StateActions->[A_ATTLIST_ATTR_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
-if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+if ($Input =~ /\G([^\\>\ \!\%\&\<]+)/gcs) {
 $Temp .= $1;
 
-} elsif ($Input =~ /\G([\ ])/gcs) {
-$Temp .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 $Temp .= q@
 @;
 $State = A_ATTLIST_ATTR_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = A_ATTLIST_ATTR_NAME_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'after-attlist-attribute-name-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -15000,14 +14701,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -15015,10 +14715,7 @@ return 1;
 return 0;
 };
 $StateActions->[A_ATTLIST_ATTR_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-$State = A_ATTLIST_ATTR_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
-$Temp .= q@�@;
-} elsif ($Input =~ /\G([\
+if ($Input =~ /\G([\
 ])/gcs) {
 $State = A_ATTLIST_ATTR_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
@@ -15026,12 +14723,23 @@ $Temp .= q@
 @;
 $State = A_ATTLIST_ATTR_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = A_ATTLIST_ATTR_NAME_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'after-attlist-attribute-name-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -15083,14 +14791,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -15157,14 +14864,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -15236,14 +14942,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -15251,22 +14956,31 @@ return 1;
 return 0;
 };
 $StateActions->[A_ATTLIST_ATTR_TYPE_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
-if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+if ($Input =~ /\G([^\\>\ \!\%\&\<]+)/gcs) {
 $Temp .= $1;
 
-} elsif ($Input =~ /\G([\ ])/gcs) {
-$Temp .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 $Temp .= q@
 @;
 $State = A_ATTLIST_ATTR_TYPE_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = A_ATTLIST_ATTR_TYPE_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'after-attlist-attribute-type-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -15315,14 +15029,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -15330,10 +15043,7 @@ return 1;
 return 0;
 };
 $StateActions->[A_ATTLIST_ATTR_TYPE_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-$State = A_ATTLIST_ATTR_TYPE_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
-$Temp .= q@�@;
-} elsif ($Input =~ /\G([\
+if ($Input =~ /\G([\
 ])/gcs) {
 $State = A_ATTLIST_ATTR_TYPE_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
@@ -15341,12 +15051,23 @@ $Temp .= q@
 @;
 $State = A_ATTLIST_ATTR_TYPE_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = A_ATTLIST_ATTR_TYPE_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'after-attlist-attribute-type-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -15398,14 +15119,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -15494,14 +15214,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -15516,8 +15235,8 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
+return 1;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-doctype-internal-subset-else', level => 'm',
@@ -15537,14 +15256,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -15600,9 +15318,8 @@ push @$Tokens, $Token;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
-return 1 if $Token->{type} == DOCTYPE_TOKEN;
+return 1;
 } else {
 return 1;
 }
@@ -15636,9 +15353,8 @@ push @$Tokens, $Token;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
-return 1 if $Token->{type} == DOCTYPE_TOKEN;
+return 1;
 } else {
 return 1;
 }
@@ -15672,9 +15388,8 @@ push @$Tokens, $Token;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
-return 1 if $Token->{type} == DOCTYPE_TOKEN;
+return 1;
 } else {
 return 1;
 }
@@ -15708,9 +15423,8 @@ push @$Tokens, $Token;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
-return 1 if $Token->{type} == DOCTYPE_TOKEN;
+return 1;
 } else {
 return 1;
 }
@@ -15744,9 +15458,8 @@ push @$Tokens, $Token;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
-return 1 if $Token->{type} == DOCTYPE_TOKEN;
+return 1;
 } else {
 return 1;
 }
@@ -15794,9 +15507,8 @@ push @$Tokens, $Token;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
-return 1 if $Token->{type} == DOCTYPE_TOKEN;
+return 1;
 } else {
 return 1;
 }
@@ -15830,9 +15542,8 @@ push @$Tokens, $Token;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
-return 1 if $Token->{type} == DOCTYPE_TOKEN;
+return 1;
 } else {
 return 1;
 }
@@ -15866,9 +15577,8 @@ push @$Tokens, $Token;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
-return 1 if $Token->{type} == DOCTYPE_TOKEN;
+return 1;
 } else {
 return 1;
 }
@@ -15902,9 +15612,8 @@ push @$Tokens, $Token;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
-return 1 if $Token->{type} == DOCTYPE_TOKEN;
+return 1;
 } else {
 return 1;
 }
@@ -15938,9 +15647,8 @@ push @$Tokens, $Token;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
-return 1 if $Token->{type} == DOCTYPE_TOKEN;
+return 1;
 } else {
 return 1;
 }
@@ -15988,9 +15696,8 @@ push @$Tokens, $Token;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
-return 1 if $Token->{type} == DOCTYPE_TOKEN;
+return 1;
 } else {
 return 1;
 }
@@ -16001,12 +15708,6 @@ $StateActions->[A_DOCTYPE_PUBLIC_ID_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \])/gcs) {
 $State = BETWEEN_DOCTYPE_PUBLIC_AND_SYSTEM_IDS_STATE;
-} elsif ($Input =~ /\G([\[])/gcs) {
-$State = DTD_STATE;
-$Token->{q<has_internal_subset_flag>} = 1;
-$DTDMode = q{internal subset};
-push @$Tokens, $Token;
-return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
             push @$Errors, {type => 'no space before literal', level => 'm',
@@ -16029,6 +15730,16 @@ $State = DOCTYPE_SYSTEM_ID__SQ__STATE;
 $State = DATA_STATE;
 push @$Tokens, $Token;
 return 1 if $Token->{type} == DOCTYPE_TOKEN;
+} elsif ($Input =~ /\G([\[])/gcs) {
+
+            push @$Errors, {type => 'after-doctype-public-identifier-005b', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = DTD_STATE;
+$Token->{q<has_internal_subset_flag>} = 1;
+$DTDMode = q{internal subset};
+push @$Tokens, $Token;
+return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
@@ -16049,9 +15760,8 @@ push @$Tokens, $Token;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
-return 1 if $Token->{type} == DOCTYPE_TOKEN;
+return 1;
 } else {
 return 1;
 }
@@ -16085,6 +15795,16 @@ $Token->{q<force_quirks_flag>} = 1;
 $State = DATA_STATE;
 push @$Tokens, $Token;
 return 1 if $Token->{type} == DOCTYPE_TOKEN;
+} elsif ($Input =~ /\G([\[])/gcs) {
+
+            push @$Errors, {type => 'after-doctype-public-keyword-005b', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = DTD_STATE;
+$Token->{q<has_internal_subset_flag>} = 1;
+$DTDMode = q{internal subset};
+push @$Tokens, $Token;
+return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
@@ -16105,9 +15825,8 @@ push @$Tokens, $Token;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
-return 1 if $Token->{type} == DOCTYPE_TOKEN;
+return 1;
 } else {
 return 1;
 }
@@ -16146,9 +15865,8 @@ push @$Tokens, $Token;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
-return 1 if $Token->{type} == DOCTYPE_TOKEN;
+return 1;
 } else {
 return 1;
 }
@@ -16159,12 +15877,6 @@ $StateActions->[A_DOCTYPE_SYSTEM_KWD_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \])/gcs) {
 $State = B_DOCTYPE_SYSTEM_ID_STATE;
-} elsif ($Input =~ /\G([\[])/gcs) {
-$State = DTD_STATE;
-$Token->{q<has_internal_subset_flag>} = 1;
-$DTDMode = q{internal subset};
-push @$Tokens, $Token;
-return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
             push @$Errors, {type => 'no space before literal', level => 'm',
@@ -16188,6 +15900,16 @@ $Token->{q<force_quirks_flag>} = 1;
 $State = DATA_STATE;
 push @$Tokens, $Token;
 return 1 if $Token->{type} == DOCTYPE_TOKEN;
+} elsif ($Input =~ /\G([\[])/gcs) {
+
+            push @$Errors, {type => 'after-doctype-system-keyword-005b', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = DTD_STATE;
+$Token->{q<has_internal_subset_flag>} = 1;
+$DTDMode = q{internal subset};
+push @$Tokens, $Token;
+return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
@@ -16208,9 +15930,8 @@ push @$Tokens, $Token;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
-return 1 if $Token->{type} == DOCTYPE_TOKEN;
+return 1;
 } else {
 return 1;
 }
@@ -16251,14 +15972,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -16311,14 +16031,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -16376,14 +16095,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -16391,22 +16109,31 @@ return 1;
 return 0;
 };
 $StateActions->[A_ELEMENT_CONTENT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
-if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+if ($Input =~ /\G([^\\>\ \!\%\&\<]+)/gcs) {
 $Temp .= $1;
 
-} elsif ($Input =~ /\G([\ ])/gcs) {
-$Temp .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 $Temp .= q@
 @;
 $State = A_ELEMENT_CONTENT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = A_ELEMENT_CONTENT_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'after-element-content-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -16455,14 +16182,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -16470,10 +16196,7 @@ return 1;
 return 0;
 };
 $StateActions->[A_ELEMENT_CONTENT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-$State = A_ELEMENT_CONTENT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
-$Temp .= q@�@;
-} elsif ($Input =~ /\G([\
+if ($Input =~ /\G([\
 ])/gcs) {
 $State = A_ELEMENT_CONTENT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
@@ -16481,12 +16204,23 @@ $Temp .= q@
 @;
 $State = A_ELEMENT_CONTENT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = A_ELEMENT_CONTENT_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'after-element-content-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -16538,14 +16272,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -16596,6 +16329,9 @@ $State = A_ENT_NAME_STATE_S;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
+push @$Tokens, $Token;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
+return 1 if $Token->{type} == ENTITY_TOKEN;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-entity-name-else', level => 'm',
@@ -16622,14 +16358,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -16685,6 +16420,9 @@ $State = A_ENT_NAME_STATE_S;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
+push @$Tokens, $Token;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
+return 1 if $Token->{type} == ENTITY_TOKEN;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-entity-name-else', level => 'm',
@@ -16711,14 +16449,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -16726,22 +16463,31 @@ return 1;
 return 0;
 };
 $StateActions->[A_ENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
-if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+if ($Input =~ /\G([^\\>\ \!\%\&\<]+)/gcs) {
 $Temp .= $1;
 
-} elsif ($Input =~ /\G([\ ])/gcs) {
-$Temp .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 $Temp .= q@
 @;
 $State = A_ENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = A_ENT_NAME_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'after-entity-name-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -16790,14 +16536,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -16805,10 +16550,7 @@ return 1;
 return 0;
 };
 $StateActions->[A_ENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-$State = A_ENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
-$Temp .= q@�@;
-} elsif ($Input =~ /\G([\
+if ($Input =~ /\G([\
 ])/gcs) {
 $State = A_ENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
@@ -16816,12 +16558,23 @@ $Temp .= q@
 @;
 $State = A_ENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = A_ENT_NAME_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'after-entity-name-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -16873,14 +16626,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -16920,14 +16672,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -16967,14 +16718,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -17014,14 +16764,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -17061,14 +16810,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -17122,14 +16870,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -17169,14 +16916,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -17216,14 +16962,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -17263,14 +17008,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -17310,14 +17054,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -17371,14 +17114,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -17432,14 +17174,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -17498,14 +17239,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -17513,22 +17253,31 @@ return 1;
 return 0;
 };
 $StateActions->[A_ENT_PARAMETER_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
-if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+if ($Input =~ /\G([^\\>\ \!\%\&\<]+)/gcs) {
 $Temp .= $1;
 
-} elsif ($Input =~ /\G([\ ])/gcs) {
-$Temp .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 $Temp .= q@
 @;
 $State = A_ENT_PARAMETER_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = A_ENT_PARAMETER_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'after-entity-parameter-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -17577,14 +17326,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -17592,10 +17340,7 @@ return 1;
 return 0;
 };
 $StateActions->[A_ENT_PARAMETER_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-$State = A_ENT_PARAMETER_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
-$Temp .= q@�@;
-} elsif ($Input =~ /\G([\
+if ($Input =~ /\G([\
 ])/gcs) {
 $State = A_ENT_PARAMETER_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
@@ -17603,12 +17348,23 @@ $Temp .= q@
 @;
 $State = A_ENT_PARAMETER_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = A_ENT_PARAMETER_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'after-entity-parameter-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -17660,14 +17416,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -17738,14 +17493,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -17787,6 +17541,9 @@ $State = B_ENT_PUBLIC_ID_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
+push @$Tokens, $Token;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
+return 1 if $Token->{type} == ENTITY_TOKEN;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-entity-public-keyword-else', level => 'm',
@@ -17813,14 +17570,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -17849,12 +17605,32 @@ $State = DTD_STATE;
 push @$Tokens, $Token;
 $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 return 1 if $Token->{type} == ENTITY_TOKEN;
+} elsif ($Input =~ /\G([N])/gcs) {
+
+            push @$Errors, {type => 'after-entity-system-identifier-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = B_NDATA_KWD_STATE_N;
+} elsif ($Input =~ /\G([n])/gcs) {
+
+            push @$Errors, {type => 'after-entity-system-identifier-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = B_NDATA_KWD_STATE_N;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-entity-system-identifier-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = B_NDATA_KWD_STATE;
+
+            push @$Errors, {type => 'before-ndata-keyword-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
@@ -17875,14 +17651,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -17924,6 +17699,9 @@ $State = ENT_SYSTEM_ID__SQ__STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
+push @$Tokens, $Token;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
+return 1 if $Token->{type} == ENTITY_TOKEN;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-entity-system-keyword-else', level => 'm',
@@ -17950,14 +17728,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -18055,14 +17832,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -18150,14 +17926,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -18165,22 +17940,31 @@ return 1;
 return 0;
 };
 $StateActions->[A_IGNORE_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
-if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+if ($Input =~ /\G([^\\>\ \!\%\&\<]+)/gcs) {
 $Temp .= $1;
 
-} elsif ($Input =~ /\G([\ ])/gcs) {
-$Temp .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 $Temp .= q@
 @;
 $State = A_IGNORE_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = A_IGNORE_KWD_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'after-ignore-keyword-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -18229,14 +18013,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -18244,10 +18027,7 @@ return 1;
 return 0;
 };
 $StateActions->[A_IGNORE_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-$State = A_IGNORE_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
-$Temp .= q@�@;
-} elsif ($Input =~ /\G([\
+if ($Input =~ /\G([\
 ])/gcs) {
 $State = A_IGNORE_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
@@ -18255,12 +18035,23 @@ $Temp .= q@
 @;
 $State = A_IGNORE_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = A_IGNORE_KWD_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'after-ignore-keyword-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -18312,14 +18103,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -18409,14 +18199,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -18496,14 +18285,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -18511,22 +18299,31 @@ return 1;
 return 0;
 };
 $StateActions->[A_INCLUDE_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
-if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+if ($Input =~ /\G([^\\>\ \!\%\&\<]+)/gcs) {
 $Temp .= $1;
 
-} elsif ($Input =~ /\G([\ ])/gcs) {
-$Temp .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 $Temp .= q@
 @;
 $State = A_INCLUDE_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = A_INCLUDE_KWD_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'after-include-keyword-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -18575,14 +18372,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -18590,10 +18386,7 @@ return 1;
 return 0;
 };
 $StateActions->[A_INCLUDE_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-$State = A_INCLUDE_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
-$Temp .= q@�@;
-} elsif ($Input =~ /\G([\
+if ($Input =~ /\G([\
 ])/gcs) {
 $State = A_INCLUDE_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
@@ -18601,12 +18394,23 @@ $Temp .= q@
 @;
 $State = A_INCLUDE_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = A_INCLUDE_KWD_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'after-include-keyword-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -18658,14 +18462,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -18681,6 +18484,17 @@ $Temp = q@%@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $OriginalState = [B_NDATA_ID_STATE, B_NDATA_ID_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'after-ndata-keyword-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Token->{q<notation_name>} = q@�@;
+$State = NDATA_ID_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
         if (defined $InMDEntity) {
@@ -18703,7 +18517,8 @@ return 1 if $Token->{type} == ENTITY_TOKEN;
             push @$Errors, {type => 'after-ndata-keyword-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = B_NDATA_ID_STATE;
+$Token->{q<notation_name>} = $1;
+$State = NDATA_ID_STATE;
 } else {
 if ($EOF) {
 
@@ -18724,14 +18539,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -18804,14 +18618,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -18889,14 +18702,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -18904,22 +18716,31 @@ return 1;
 return 0;
 };
 $StateActions->[A_NOTATION_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
-if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+if ($Input =~ /\G([^\\>\ \!\%\&\<]+)/gcs) {
 $Temp .= $1;
 
-} elsif ($Input =~ /\G([\ ])/gcs) {
-$Temp .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 $Temp .= q@
 @;
 $State = A_NOTATION_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = A_NOTATION_NAME_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'after-notation-name-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -18968,14 +18789,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -18983,10 +18803,7 @@ return 1;
 return 0;
 };
 $StateActions->[A_NOTATION_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-$State = A_NOTATION_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
-$Temp .= q@�@;
-} elsif ($Input =~ /\G([\
+if ($Input =~ /\G([\
 ])/gcs) {
 $State = A_NOTATION_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
@@ -18994,12 +18811,23 @@ $Temp .= q@
 @;
 $State = A_NOTATION_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = A_NOTATION_NAME_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'after-notation-name-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -19051,14 +18879,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -19098,14 +18925,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -19145,14 +18971,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -19192,14 +19017,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -19239,14 +19063,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -19300,14 +19123,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -19347,14 +19169,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -19394,14 +19215,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -19441,14 +19261,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -19488,14 +19307,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -19549,14 +19367,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -19622,14 +19439,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -19699,14 +19515,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -19759,14 +19574,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -19824,14 +19638,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -19839,22 +19652,31 @@ return 1;
 return 0;
 };
 $StateActions->[A_NOTATION_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
-if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+if ($Input =~ /\G([^\\>\ \!\%\&\<]+)/gcs) {
 $Temp .= $1;
 
-} elsif ($Input =~ /\G([\ ])/gcs) {
-$Temp .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 $Temp .= q@
 @;
 $State = A_NOTATION_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = A_NOTATION_SYSTEM_ID_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'after-notation-system-identifier-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -19903,14 +19725,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -19918,10 +19739,7 @@ return 1;
 return 0;
 };
 $StateActions->[A_NOTATION_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-$State = A_NOTATION_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
-$Temp .= q@�@;
-} elsif ($Input =~ /\G([\
+if ($Input =~ /\G([\
 ])/gcs) {
 $State = A_NOTATION_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
@@ -19929,12 +19747,23 @@ $Temp .= q@
 @;
 $State = A_NOTATION_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = A_NOTATION_SYSTEM_ID_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'after-notation-system-identifier-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -19986,14 +19815,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -20063,14 +19891,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -20108,8 +19935,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -20150,8 +19977,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -20216,14 +20043,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -20293,14 +20119,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -20308,22 +20133,31 @@ return 1;
 return 0;
 };
 $StateActions->[A_AFTER_ALLOWED_TOKEN_LIST_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
-if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+if ($Input =~ /\G([^\\>\ \!\%\&\<]+)/gcs) {
 $Temp .= $1;
 
-} elsif ($Input =~ /\G([\ ])/gcs) {
-$Temp .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 $Temp .= q@
 @;
 $State = A_AFTER_ALLOWED_TOKEN_LIST_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = A_AFTER_ALLOWED_TOKEN_LIST_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'after-after-allowed-token-list-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -20372,14 +20206,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -20387,10 +20220,7 @@ return 1;
 return 0;
 };
 $StateActions->[A_AFTER_ALLOWED_TOKEN_LIST_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-$State = A_AFTER_ALLOWED_TOKEN_LIST_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
-$Temp .= q@�@;
-} elsif ($Input =~ /\G([\
+if ($Input =~ /\G([\
 ])/gcs) {
 $State = A_AFTER_ALLOWED_TOKEN_LIST_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
@@ -20398,12 +20228,23 @@ $Temp .= q@
 @;
 $State = A_AFTER_ALLOWED_TOKEN_LIST_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = A_AFTER_ALLOWED_TOKEN_LIST_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'after-after-allowed-token-list-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -20455,14 +20296,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -20544,14 +20384,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -20612,14 +20451,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -20685,14 +20523,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -20700,22 +20537,31 @@ return 1;
 return 0;
 };
 $StateActions->[A_ALLOWED_TOKEN_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
-if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+if ($Input =~ /\G([^\\>\ \!\%\&\<]+)/gcs) {
 $Temp .= $1;
 
-} elsif ($Input =~ /\G([\ ])/gcs) {
-$Temp .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 $Temp .= q@
 @;
 $State = A_ALLOWED_TOKEN_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = A_ALLOWED_TOKEN_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'after-allowed-token-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -20764,14 +20610,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -20779,10 +20624,7 @@ return 1;
 return 0;
 };
 $StateActions->[A_ALLOWED_TOKEN_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-$State = A_ALLOWED_TOKEN_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
-$Temp .= q@�@;
-} elsif ($Input =~ /\G([\
+if ($Input =~ /\G([\
 ])/gcs) {
 $State = A_ALLOWED_TOKEN_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
@@ -20790,12 +20632,23 @@ $Temp .= q@
 @;
 $State = A_ALLOWED_TOKEN_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = A_ALLOWED_TOKEN_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'after-allowed-token-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -20847,14 +20700,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -20989,8 +20841,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -21146,8 +20998,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -21306,14 +21158,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -21459,14 +21310,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -21621,14 +21471,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -21636,22 +21485,31 @@ return 1;
 return 0;
 };
 $StateActions->[A_CM_ITEM_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
-if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+if ($Input =~ /\G([^\\>\ \!\%\&\<]+)/gcs) {
 $Temp .= $1;
 
-} elsif ($Input =~ /\G([\ ])/gcs) {
-$Temp .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 $Temp .= q@
 @;
 $State = A_CM_ITEM_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = A_CM_ITEM_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'after-content-model-item-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -21700,14 +21558,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -21715,10 +21572,7 @@ return 1;
 return 0;
 };
 $StateActions->[A_CM_ITEM_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-$State = A_CM_ITEM_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
-$Temp .= q@�@;
-} elsif ($Input =~ /\G([\
+if ($Input =~ /\G([\
 ])/gcs) {
 $State = A_CM_ITEM_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
@@ -21726,12 +21580,23 @@ $Temp .= q@
 @;
 $State = A_CM_ITEM_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = A_CM_ITEM_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'after-content-model-item-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -21783,14 +21648,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -21823,14 +21687,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -21893,8 +21756,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -22004,14 +21867,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -22111,14 +21973,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -22126,22 +21987,31 @@ return 1;
 return 0;
 };
 $StateActions->[A_MSS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
-if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+if ($Input =~ /\G([^\\>\ \!\%\&\<]+)/gcs) {
 $Temp .= $1;
 
-} elsif ($Input =~ /\G([\ ])/gcs) {
-$Temp .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 $Temp .= q@
 @;
 $State = A_MSS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = A_MSS_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'after-mss-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -22190,14 +22060,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -22205,10 +22074,7 @@ return 1;
 return 0;
 };
 $StateActions->[A_MSS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-$State = A_MSS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
-$Temp .= q@�@;
-} elsif ($Input =~ /\G([\
+if ($Input =~ /\G([\
 ])/gcs) {
 $State = A_MSS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
@@ -22216,12 +22082,23 @@ $Temp .= q@
 @;
 $State = A_MSS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = A_MSS_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'after-mss-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -22273,14 +22150,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -22334,14 +22210,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -22389,14 +22264,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -22444,14 +22318,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -22499,14 +22372,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -22568,14 +22440,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -22623,14 +22494,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -22678,14 +22548,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -22733,14 +22602,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -22788,14 +22656,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -22857,14 +22724,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -22928,14 +22794,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -23106,8 +22971,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -23154,8 +23019,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -23247,8 +23112,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -23567,8 +23432,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -23887,8 +23752,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -25682,9 +25547,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
-return 1 if $return;
+return 1;
 } else {
 return 1;
 }
@@ -25786,8 +25650,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -25909,8 +25773,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -25961,8 +25825,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -26009,8 +25873,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -26102,8 +25966,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -26422,8 +26286,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -26742,8 +26606,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -28537,9 +28401,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
-return 1 if $return;
+return 1;
 } else {
 return 1;
 }
@@ -28641,8 +28504,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -28764,8 +28627,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -28816,8 +28679,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -28925,8 +28788,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -29104,8 +28967,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -29610,8 +29473,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -30116,8 +29979,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -31965,9 +31828,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
-return 1 if $return;
+return 1;
 } else {
 return 1;
 }
@@ -32155,8 +32017,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -32332,8 +32194,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -32450,8 +32312,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -32492,8 +32354,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -32574,8 +32436,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -32858,8 +32720,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -33142,8 +33004,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -34934,9 +34796,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
-return 1 if $return;
+return 1;
 } else {
 return 1;
 }
@@ -35027,8 +34888,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -35147,8 +35008,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -35193,8 +35054,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -35266,14 +35127,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -35338,14 +35198,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -35415,14 +35274,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -35430,22 +35288,31 @@ return 1;
 return 0;
 };
 $StateActions->[B_ATTLIST_ATTR_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
-if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+if ($Input =~ /\G([^\\>\ \!\%\&\<]+)/gcs) {
 $Temp .= $1;
 
-} elsif ($Input =~ /\G([\ ])/gcs) {
-$Temp .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 $Temp .= q@
 @;
 $State = B_ATTLIST_ATTR_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = B_ATTLIST_ATTR_NAME_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'before-attlist-attribute-name-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -35494,14 +35361,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -35509,10 +35375,7 @@ return 1;
 return 0;
 };
 $StateActions->[B_ATTLIST_ATTR_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-$State = B_ATTLIST_ATTR_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
-$Temp .= q@�@;
-} elsif ($Input =~ /\G([\
+if ($Input =~ /\G([\
 ])/gcs) {
 $State = B_ATTLIST_ATTR_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
@@ -35520,12 +35383,23 @@ $Temp .= q@
 @;
 $State = B_ATTLIST_ATTR_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = B_ATTLIST_ATTR_NAME_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'before-attlist-attribute-name-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -35577,14 +35451,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -35643,14 +35516,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -35714,14 +35586,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -35729,22 +35600,31 @@ return 1;
 return 0;
 };
 $StateActions->[B_ATTLIST_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
-if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+if ($Input =~ /\G([^\\>\ \!\%\&\<]+)/gcs) {
 $Temp .= $1;
 
-} elsif ($Input =~ /\G([\ ])/gcs) {
-$Temp .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 $Temp .= q@
 @;
 $State = B_ATTLIST_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = B_ATTLIST_NAME_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'before-attlist-name-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -35793,14 +35673,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -35808,10 +35687,7 @@ return 1;
 return 0;
 };
 $StateActions->[B_ATTLIST_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-$State = B_ATTLIST_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
-$Temp .= q@�@;
-} elsif ($Input =~ /\G([\
+if ($Input =~ /\G([\
 ])/gcs) {
 $State = B_ATTLIST_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
@@ -35819,12 +35695,23 @@ $Temp .= q@
 @;
 $State = B_ATTLIST_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = B_ATTLIST_NAME_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'before-attlist-name-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -35876,14 +35763,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -35924,6 +35810,21 @@ $Token->{q<force_quirks_flag>} = 1;
 $State = DATA_STATE;
 push @$Tokens, $Token;
 return 1 if $Token->{type} == DOCTYPE_TOKEN;
+} elsif ($Input =~ /\G([\[])/gcs) {
+
+            push @$Errors, {type => 'before-doctype-name-005b', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+
+        $Token = {type => DOCTYPE_TOKEN, tn => 0,
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<force_quirks_flag>} = 1;
+$State = DTD_STATE;
+$Token->{q<has_internal_subset_flag>} = 1;
+$DTDMode = q{internal subset};
+push @$Tokens, $Token;
+return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } elsif ($Input =~ /\G(.)/gcs) {
 
         $Token = {type => DOCTYPE_TOKEN, tn => 0,
@@ -35948,9 +35849,8 @@ push @$Tokens, $Token;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
-return 1 if $Token->{type} == DOCTYPE_TOKEN;
+return 1;
 } else {
 return 1;
 }
@@ -35975,6 +35875,16 @@ $Token->{q<force_quirks_flag>} = 1;
 $State = DATA_STATE;
 push @$Tokens, $Token;
 return 1 if $Token->{type} == DOCTYPE_TOKEN;
+} elsif ($Input =~ /\G([\[])/gcs) {
+
+            push @$Errors, {type => 'before-doctype-public-identifier-005b', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = DTD_STATE;
+$Token->{q<has_internal_subset_flag>} = 1;
+$DTDMode = q{internal subset};
+push @$Tokens, $Token;
+return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
@@ -35995,9 +35905,8 @@ push @$Tokens, $Token;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
-return 1 if $Token->{type} == DOCTYPE_TOKEN;
+return 1;
 } else {
 return 1;
 }
@@ -36013,12 +35922,6 @@ $State = DOCTYPE_SYSTEM_ID__DQ__STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 $Token->{q<system_identifier>} = '';
 $State = DOCTYPE_SYSTEM_ID__SQ__STATE;
-} elsif ($Input =~ /\G([\[])/gcs) {
-$State = DTD_STATE;
-$Token->{q<has_internal_subset_flag>} = 1;
-$DTDMode = q{internal subset};
-push @$Tokens, $Token;
-return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'no DOCTYPE literal', level => 'm',
@@ -36026,6 +35929,16 @@ return 1 if $Token->{type} == DOCTYPE_TOKEN;
           
 $Token->{q<force_quirks_flag>} = 1;
 $State = DATA_STATE;
+push @$Tokens, $Token;
+return 1 if $Token->{type} == DOCTYPE_TOKEN;
+} elsif ($Input =~ /\G([\[])/gcs) {
+
+            push @$Errors, {type => 'before-doctype-system-identifier-005b', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = DTD_STATE;
+$Token->{q<has_internal_subset_flag>} = 1;
+$DTDMode = q{internal subset};
 push @$Tokens, $Token;
 return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -36048,9 +35961,8 @@ push @$Tokens, $Token;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
-return 1 if $Token->{type} == DOCTYPE_TOKEN;
+return 1;
 } else {
 return 1;
 }
@@ -36143,14 +36055,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -36248,14 +36159,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -36263,22 +36173,31 @@ return 1;
 return 0;
 };
 $StateActions->[B_ELEMENT_CONTENT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
-if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+if ($Input =~ /\G([^\\>\ \!\%\&\<]+)/gcs) {
 $Temp .= $1;
 
-} elsif ($Input =~ /\G([\ ])/gcs) {
-$Temp .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 $Temp .= q@
 @;
 $State = B_ELEMENT_CONTENT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = B_ELEMENT_CONTENT_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'before-element-content-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -36327,14 +36246,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -36342,10 +36260,7 @@ return 1;
 return 0;
 };
 $StateActions->[B_ELEMENT_CONTENT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-$State = B_ELEMENT_CONTENT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
-$Temp .= q@�@;
-} elsif ($Input =~ /\G([\
+if ($Input =~ /\G([\
 ])/gcs) {
 $State = B_ELEMENT_CONTENT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
@@ -36353,12 +36268,23 @@ $Temp .= q@
 @;
 $State = B_ELEMENT_CONTENT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = B_ELEMENT_CONTENT_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'before-element-content-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -36410,14 +36336,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -36476,14 +36401,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -36547,14 +36471,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -36562,22 +36485,31 @@ return 1;
 return 0;
 };
 $StateActions->[B_ELEMENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
-if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+if ($Input =~ /\G([^\\>\ \!\%\&\<]+)/gcs) {
 $Temp .= $1;
 
-} elsif ($Input =~ /\G([\ ])/gcs) {
-$Temp .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 $Temp .= q@
 @;
 $State = B_ELEMENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = B_ELEMENT_NAME_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'before-element-name-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -36626,14 +36558,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -36641,10 +36572,7 @@ return 1;
 return 0;
 };
 $StateActions->[B_ELEMENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-$State = B_ELEMENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
-$Temp .= q@�@;
-} elsif ($Input =~ /\G([\
+if ($Input =~ /\G([\
 ])/gcs) {
 $State = B_ELEMENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
@@ -36652,12 +36580,23 @@ $Temp .= q@
 @;
 $State = B_ELEMENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = B_ELEMENT_NAME_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'before-element-name-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -36709,14 +36648,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -36771,14 +36709,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -36838,14 +36775,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -36853,22 +36789,31 @@ return 1;
 return 0;
 };
 $StateActions->[B_ENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
-if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+if ($Input =~ /\G([^\\>\ \!\%\&\<]+)/gcs) {
 $Temp .= $1;
 
-} elsif ($Input =~ /\G([\ ])/gcs) {
-$Temp .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 $Temp .= q@
 @;
 $State = B_ENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = B_ENT_NAME_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'before-entity-name-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -36917,14 +36862,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -36932,10 +36876,7 @@ return 1;
 return 0;
 };
 $StateActions->[B_ENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-$State = B_ENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
-$Temp .= q@�@;
-} elsif ($Input =~ /\G([\
+if ($Input =~ /\G([\
 ])/gcs) {
 $State = B_ENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
@@ -36943,12 +36884,23 @@ $Temp .= q@
 @;
 $State = B_ENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = B_ENT_NAME_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'before-entity-name-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -37000,14 +36952,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -37040,6 +36991,9 @@ $State = ENT_PUBLIC_ID__SQ__STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
+push @$Tokens, $Token;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
+return 1 if $Token->{type} == ENTITY_TOKEN;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'before-entity-public-identifier-else', level => 'm',
@@ -37066,14 +37020,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -37111,6 +37064,9 @@ $State = B_ENT_PUBLIC_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
+push @$Tokens, $Token;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
+return 1 if $Token->{type} == ENTITY_TOKEN;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'before-entity-public-identifier-else', level => 'm',
@@ -37137,14 +37093,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -37152,22 +37107,31 @@ return 1;
 return 0;
 };
 $StateActions->[B_ENT_PUBLIC_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
-if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+if ($Input =~ /\G([^\\>\ \!\%\&\<]+)/gcs) {
 $Temp .= $1;
 
-} elsif ($Input =~ /\G([\ ])/gcs) {
-$Temp .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 $Temp .= q@
 @;
 $State = B_ENT_PUBLIC_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = B_ENT_PUBLIC_ID_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'before-entity-public-identifier-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -37216,14 +37180,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -37231,10 +37194,7 @@ return 1;
 return 0;
 };
 $StateActions->[B_ENT_PUBLIC_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-$State = B_ENT_PUBLIC_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
-$Temp .= q@�@;
-} elsif ($Input =~ /\G([\
+if ($Input =~ /\G([\
 ])/gcs) {
 $State = B_ENT_PUBLIC_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
@@ -37242,12 +37202,23 @@ $Temp .= q@
 @;
 $State = B_ENT_PUBLIC_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = B_ENT_PUBLIC_ID_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'before-entity-public-identifier-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -37299,14 +37270,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -37339,6 +37309,9 @@ $State = ENT_SYSTEM_ID__SQ__STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
+push @$Tokens, $Token;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
+return 1 if $Token->{type} == ENTITY_TOKEN;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'before-entity-system-identifier-else', level => 'm',
@@ -37365,14 +37338,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -37410,6 +37382,9 @@ $State = B_ENT_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
+push @$Tokens, $Token;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
+return 1 if $Token->{type} == ENTITY_TOKEN;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'before-entity-system-identifier-else', level => 'm',
@@ -37436,14 +37411,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -37451,22 +37425,31 @@ return 1;
 return 0;
 };
 $StateActions->[B_ENT_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
-if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+if ($Input =~ /\G([^\\>\ \!\%\&\<]+)/gcs) {
 $Temp .= $1;
 
-} elsif ($Input =~ /\G([\ ])/gcs) {
-$Temp .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 $Temp .= q@
 @;
 $State = B_ENT_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = B_ENT_SYSTEM_ID_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'before-entity-system-identifier-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -37515,14 +37498,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -37530,10 +37512,7 @@ return 1;
 return 0;
 };
 $StateActions->[B_ENT_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-$State = B_ENT_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
-$Temp .= q@�@;
-} elsif ($Input =~ /\G([\
+if ($Input =~ /\G([\
 ])/gcs) {
 $State = B_ENT_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
@@ -37541,12 +37520,23 @@ $Temp .= q@
 @;
 $State = B_ENT_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = B_ENT_SYSTEM_ID_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'before-entity-system-identifier-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -37598,14 +37588,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -37657,14 +37646,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -37721,14 +37709,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -37736,22 +37723,31 @@ return 1;
 return 0;
 };
 $StateActions->[B_ENT_TYPE_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
-if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+if ($Input =~ /\G([^\\>\ \!\%\&\<]+)/gcs) {
 $Temp .= $1;
 
-} elsif ($Input =~ /\G([\ ])/gcs) {
-$Temp .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 $Temp .= q@
 @;
 $State = B_ENT_TYPE_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = B_ENT_TYPE_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'before-entity-type-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -37800,14 +37796,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -37815,10 +37810,7 @@ return 1;
 return 0;
 };
 $StateActions->[B_ENT_TYPE_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-$State = B_ENT_TYPE_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
-$Temp .= q@�@;
-} elsif ($Input =~ /\G([\
+if ($Input =~ /\G([\
 ])/gcs) {
 $State = B_ENT_TYPE_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
@@ -37826,12 +37818,23 @@ $Temp .= q@
 @;
 $State = B_ENT_TYPE_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = B_ENT_TYPE_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'before-entity-type-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -37883,14 +37886,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -37906,45 +37908,30 @@ push @{$Token->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
 $State = B_ENT_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\!])/gcs) {
-# XXX IndexedString
-        if ($Token->{value} =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
-        }
-      
 $State = ENT_VALUE_IN_ENT_STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\%])/gcs) {
-# XXX IndexedString
-        if ($Token->{value} =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
-        }
-      
 $Temp = q@%@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = PE_NAME_IN_ENT_VALUE_IN_ENT_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
-# XXX IndexedString
-        if ($Token->{value} =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
-        }
-      
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = ENT_VALUE_IN_ENT_STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
-# XXX IndexedString
-        if ($Token->{value} =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+
+        my $v = join '', map { $_->[0] } @{$Token->{value}}; # IndexedString
+        if ($v =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          my $text_decl = {data => $1,
+                           di => $Token->{di}, index => $Token->{index}};
+          $Token->{index} += length $1;
+          _process_xml_decl $text_decl;
         }
       
 $State = ENT_VALUE_IN_ENT_STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\ ])/gcs) {
-# XXX IndexedString
-        if ($Token->{value} =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
-        }
-      
 $State = ENT_VALUE_IN_ENT_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
@@ -37953,11 +37940,6 @@ $State = ENT_VALUE_IN_ENT_STATE;
 push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
-# XXX IndexedString
-        if ($Token->{value} =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
-        }
-      
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -37976,14 +37958,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -37999,45 +37980,30 @@ push @{$Token->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
 $State = B_ENT_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\!])/gcs) {
-# XXX IndexedString
-        if ($Token->{value} =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
-        }
-      
 $State = ENT_VALUE_IN_ENT_STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\%])/gcs) {
-# XXX IndexedString
-        if ($Token->{value} =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
-        }
-      
 $Temp = q@%@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = PE_NAME_IN_ENT_VALUE_IN_ENT_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
-# XXX IndexedString
-        if ($Token->{value} =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
-        }
-      
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = ENT_VALUE_IN_ENT_STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
-# XXX IndexedString
-        if ($Token->{value} =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+
+        my $v = join '', map { $_->[0] } @{$Token->{value}}; # IndexedString
+        if ($v =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          my $text_decl = {data => $1,
+                           di => $Token->{di}, index => $Token->{index}};
+          $Token->{index} += length $1;
+          _process_xml_decl $text_decl;
         }
       
 $State = ENT_VALUE_IN_ENT_STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\ ])/gcs) {
-# XXX IndexedString
-        if ($Token->{value} =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
-        }
-      
 $State = ENT_VALUE_IN_ENT_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
@@ -38049,11 +38015,6 @@ $State = B_ENT_VALUE_IN_ENT_STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
-# XXX IndexedString
-        if ($Token->{value} =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
-        }
-      
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -38072,14 +38033,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -38087,16 +38047,20 @@ return 1;
 return 0;
 };
 $StateActions->[B_NDATA_ID_STATE] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-$Token->{q<notation_name>} = q@�@;
-$State = NDATA_ID_STATE;
-} elsif ($Input =~ /\G([\	\\ \
+if ($Input =~ /\G([\	\\ \
 \]+)/gcs) {
 } elsif ($Input =~ /\G([\%])/gcs) {
 $Temp = q@%@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $OriginalState = [B_NDATA_ID_STATE, B_NDATA_ID_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Token->{q<notation_name>} = q@�@;
+$State = NDATA_ID_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
         if (defined $InMDEntity) {
@@ -38137,14 +38101,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -38152,10 +38115,7 @@ return 1;
 return 0;
 };
 $StateActions->[B_NDATA_ID_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-$Token->{q<notation_name>} = q@�@;
-$State = NDATA_ID_STATE;
-} elsif ($Input =~ /\G([\	\\ \
+if ($Input =~ /\G([\	\\ \
 \])/gcs) {
 $State = B_NDATA_ID_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
@@ -38167,6 +38127,13 @@ $State = PE_NAME_IN_MARKUP_DECL_STATE;
 $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = B_NDATA_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Token->{q<notation_name>} = q@�@;
+$State = NDATA_ID_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
         if (defined $InMDEntity) {
@@ -38207,14 +38174,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -38222,22 +38188,31 @@ return 1;
 return 0;
 };
 $StateActions->[B_NDATA_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
-if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+if ($Input =~ /\G([^\\>\ \!\%\&\<]+)/gcs) {
 $Temp .= $1;
 
-} elsif ($Input =~ /\G([\ ])/gcs) {
-$Temp .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 $Temp .= q@
 @;
 $State = B_NDATA_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = B_NDATA_ID_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'before-ndata-identifier-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -38286,14 +38261,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -38301,10 +38275,7 @@ return 1;
 return 0;
 };
 $StateActions->[B_NDATA_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-$State = B_NDATA_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
-$Temp .= q@�@;
-} elsif ($Input =~ /\G([\
+if ($Input =~ /\G([\
 ])/gcs) {
 $State = B_NDATA_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
@@ -38312,12 +38283,23 @@ $Temp .= q@
 @;
 $State = B_NDATA_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = B_NDATA_ID_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'before-ndata-identifier-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -38369,14 +38351,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -38438,14 +38419,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -38512,14 +38492,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -38527,22 +38506,31 @@ return 1;
 return 0;
 };
 $StateActions->[B_NDATA_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
-if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+if ($Input =~ /\G([^\\>\ \!\%\&\<]+)/gcs) {
 $Temp .= $1;
 
-} elsif ($Input =~ /\G([\ ])/gcs) {
-$Temp .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 $Temp .= q@
 @;
 $State = B_NDATA_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = B_NDATA_KWD_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'before-ndata-keyword-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -38591,14 +38579,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -38606,10 +38593,7 @@ return 1;
 return 0;
 };
 $StateActions->[B_NDATA_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-$State = B_NDATA_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
-$Temp .= q@�@;
-} elsif ($Input =~ /\G([\
+if ($Input =~ /\G([\
 ])/gcs) {
 $State = B_NDATA_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
@@ -38617,12 +38601,23 @@ $Temp .= q@
 @;
 $State = B_NDATA_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = B_NDATA_KWD_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'before-ndata-keyword-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -38674,14 +38669,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -38721,14 +38715,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -38768,14 +38761,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -38815,14 +38807,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -38876,14 +38867,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -38946,14 +38936,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -39021,14 +39010,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -39036,22 +39024,31 @@ return 1;
 return 0;
 };
 $StateActions->[B_NOTATION_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
-if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+if ($Input =~ /\G([^\\>\ \!\%\&\<]+)/gcs) {
 $Temp .= $1;
 
-} elsif ($Input =~ /\G([\ ])/gcs) {
-$Temp .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 $Temp .= q@
 @;
 $State = B_NOTATION_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = B_NOTATION_NAME_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'before-notation-name-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -39100,14 +39097,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -39115,10 +39111,7 @@ return 1;
 return 0;
 };
 $StateActions->[B_NOTATION_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-$State = B_NOTATION_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
-$Temp .= q@�@;
-} elsif ($Input =~ /\G([\
+if ($Input =~ /\G([\
 ])/gcs) {
 $State = B_NOTATION_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
@@ -39126,12 +39119,23 @@ $Temp .= q@
 @;
 $State = B_NOTATION_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = B_NOTATION_NAME_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'before-notation-name-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -39183,14 +39187,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -39251,14 +39254,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -39324,14 +39326,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -39339,22 +39340,31 @@ return 1;
 return 0;
 };
 $StateActions->[B_NOTATION_PUBLIC_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
-if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+if ($Input =~ /\G([^\\>\ \!\%\&\<]+)/gcs) {
 $Temp .= $1;
 
-} elsif ($Input =~ /\G([\ ])/gcs) {
-$Temp .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 $Temp .= q@
 @;
 $State = B_NOTATION_PUBLIC_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = B_NOTATION_PUBLIC_ID_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'before-notation-public-identifier-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -39403,14 +39413,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -39418,10 +39427,7 @@ return 1;
 return 0;
 };
 $StateActions->[B_NOTATION_PUBLIC_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-$State = B_NOTATION_PUBLIC_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
-$Temp .= q@�@;
-} elsif ($Input =~ /\G([\
+if ($Input =~ /\G([\
 ])/gcs) {
 $State = B_NOTATION_PUBLIC_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
@@ -39429,12 +39435,23 @@ $Temp .= q@
 @;
 $State = B_NOTATION_PUBLIC_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = B_NOTATION_PUBLIC_ID_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'before-notation-public-identifier-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -39486,14 +39503,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -39554,14 +39570,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -39627,14 +39642,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -39642,22 +39656,31 @@ return 1;
 return 0;
 };
 $StateActions->[B_NOTATION_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
-if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+if ($Input =~ /\G([^\\>\ \!\%\&\<]+)/gcs) {
 $Temp .= $1;
 
-} elsif ($Input =~ /\G([\ ])/gcs) {
-$Temp .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 $Temp .= q@
 @;
 $State = B_NOTATION_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = B_NOTATION_SYSTEM_ID_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'before-notation-system-identifier-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -39706,14 +39729,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -39721,10 +39743,7 @@ return 1;
 return 0;
 };
 $StateActions->[B_NOTATION_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-$State = B_NOTATION_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
-$Temp .= q@�@;
-} elsif ($Input =~ /\G([\
+if ($Input =~ /\G([\
 ])/gcs) {
 $State = B_NOTATION_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
@@ -39732,12 +39751,23 @@ $Temp .= q@
 @;
 $State = B_NOTATION_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = B_NOTATION_SYSTEM_ID_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'before-notation-system-identifier-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -39789,14 +39819,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -39870,14 +39899,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -39957,14 +39985,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -39972,22 +39999,31 @@ return 1;
 return 0;
 };
 $StateActions->[B_ALLOWED_TOKEN_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
-if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+if ($Input =~ /\G([^\\>\ \!\%\&\<]+)/gcs) {
 $Temp .= $1;
 
-} elsif ($Input =~ /\G([\ ])/gcs) {
-$Temp .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 $Temp .= q@
 @;
 $State = B_ALLOWED_TOKEN_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = B_ALLOWED_TOKEN_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'before-allowed-token-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -40036,14 +40072,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -40051,10 +40086,7 @@ return 1;
 return 0;
 };
 $StateActions->[B_ALLOWED_TOKEN_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-$State = B_ALLOWED_TOKEN_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
-$Temp .= q@�@;
-} elsif ($Input =~ /\G([\
+if ($Input =~ /\G([\
 ])/gcs) {
 $State = B_ALLOWED_TOKEN_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
@@ -40062,12 +40094,23 @@ $Temp .= q@
 @;
 $State = B_ALLOWED_TOKEN_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = B_ALLOWED_TOKEN_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'before-allowed-token-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -40119,14 +40162,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -41755,8 +41797,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -41870,8 +41912,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -41978,14 +42020,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -42098,14 +42139,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -42113,22 +42153,31 @@ return 1;
 return 0;
 };
 $StateActions->[B_CM_ITEM_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
-if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+if ($Input =~ /\G([^\\>\ \!\%\&\<]+)/gcs) {
 $Temp .= $1;
 
-} elsif ($Input =~ /\G([\ ])/gcs) {
-$Temp .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 $Temp .= q@
 @;
 $State = B_CM_ITEM_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = B_CM_ITEM_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'before-content-model-item-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -42177,14 +42226,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -42192,10 +42240,7 @@ return 1;
 return 0;
 };
 $StateActions->[B_CM_ITEM_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-$State = B_CM_ITEM_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
-$Temp .= q@�@;
-} elsif ($Input =~ /\G([\
+if ($Input =~ /\G([\
 ])/gcs) {
 $State = B_CM_ITEM_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
@@ -42203,12 +42248,23 @@ $Temp .= q@
 @;
 $State = B_CM_ITEM_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = B_CM_ITEM_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'before-content-model-item-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -42260,14 +42316,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -42283,18 +42338,22 @@ $State = DOCTYPE_SYSTEM_ID__DQ__STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 $Token->{q<system_identifier>} = '';
 $State = DOCTYPE_SYSTEM_ID__SQ__STATE;
-} elsif ($Input =~ /\G([\[])/gcs) {
-$State = DTD_STATE;
-$Token->{q<has_internal_subset_flag>} = 1;
-$DTDMode = q{internal subset};
-push @$Tokens, $Token;
-return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'between-doctype-public-and-system-identifiers-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DATA_STATE;
+push @$Tokens, $Token;
+return 1 if $Token->{type} == DOCTYPE_TOKEN;
+} elsif ($Input =~ /\G([\[])/gcs) {
+
+            push @$Errors, {type => 'between-doctype-public-and-system-identifiers-005b', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = DTD_STATE;
+$Token->{q<has_internal_subset_flag>} = 1;
+$DTDMode = q{internal subset};
 push @$Tokens, $Token;
 return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -42317,9 +42376,8 @@ push @$Tokens, $Token;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
-return 1 if $Token->{type} == DOCTYPE_TOKEN;
+return 1;
 } else {
 return 1;
 }
@@ -42381,14 +42439,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -42455,14 +42512,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -42470,22 +42526,31 @@ return 1;
 return 0;
 };
 $StateActions->[BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
-if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+if ($Input =~ /\G([^\\>\ \!\%\&\<]+)/gcs) {
 $Temp .= $1;
 
-} elsif ($Input =~ /\G([\ ])/gcs) {
-$Temp .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 $Temp .= q@
 @;
 $State = BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'between-entity-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -42534,14 +42599,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -42549,10 +42613,7 @@ return 1;
 return 0;
 };
 $StateActions->[BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-$State = BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
-$Temp .= q@�@;
-} elsif ($Input =~ /\G([\
+if ($Input =~ /\G([\
 ])/gcs) {
 $State = BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
@@ -42560,12 +42621,23 @@ $Temp .= q@
 @;
 $State = BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'between-entity-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -42617,14 +42689,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -42681,14 +42752,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -42750,14 +42820,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -42765,22 +42834,31 @@ return 1;
 return 0;
 };
 $StateActions->[BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
-if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+if ($Input =~ /\G([^\\>\ \!\%\&\<]+)/gcs) {
 $Temp .= $1;
 
-} elsif ($Input =~ /\G([\ ])/gcs) {
-$Temp .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 $Temp .= q@
 @;
 $State = BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'between-notation-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -42829,14 +42907,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -42844,10 +42921,7 @@ return 1;
 return 0;
 };
 $StateActions->[BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-$State = BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
-$Temp .= q@�@;
-} elsif ($Input =~ /\G([\
+if ($Input =~ /\G([\
 ])/gcs) {
 $State = BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
@@ -42855,12 +42929,23 @@ $Temp .= q@
 @;
 $State = BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
+$Temp .= $1;
 $State = BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE;
-# XXX IndexedString
+
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>"; # XXXXXX
+          my $text_decl = {data => $1,
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          _process_xml_decl $text_decl;
         }
       
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
             push @$Errors, {type => 'between-notation-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0021', level => 'm',
@@ -42912,14 +42997,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -42947,9 +43031,8 @@ push @$Tokens, $Token;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
-return 1 if $Token->{type} == DOCTYPE_TOKEN;
+return 1;
 } else {
 return 1;
 }
@@ -42965,8 +43048,8 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
+return 1;
 } else {
 if ($EOF) {
 $State = DATA_STATE;
@@ -42974,14 +43057,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -43009,8 +43091,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -43042,8 +43124,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -43086,14 +43168,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -43322,8 +43403,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -43365,8 +43446,8 @@ push @$Tokens, $Token;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -43404,8 +43485,8 @@ push @$Tokens, $Token;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -43464,8 +43545,8 @@ push @$Tokens, $Token;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -43510,8 +43591,8 @@ push @$Tokens, $Token;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -43554,8 +43635,8 @@ push @$Tokens, $Token;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -43590,8 +43671,8 @@ push @$Tokens, $Token;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -43630,8 +43711,8 @@ push @$Tokens, $Token;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -43783,14 +43864,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -43841,8 +43921,8 @@ if ($EOF) {
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -43968,8 +44048,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -44358,8 +44438,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -44748,8 +44828,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -46571,9 +46651,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
-return 1 if $return;
+return 1;
 } else {
 return 1;
 }
@@ -46709,8 +46788,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -46911,8 +46990,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -47116,8 +47195,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -47173,8 +47252,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -47230,14 +47309,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -47338,14 +47416,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -47673,14 +47750,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -48008,14 +48084,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -49818,15 +49893,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
-return 1 if $return;
+return 1;
 } else {
 return 1;
 }
@@ -49937,14 +50010,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -50075,14 +50147,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -50142,14 +50213,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -50205,14 +50275,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -50313,14 +50382,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -50648,14 +50716,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -50983,14 +51050,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -52793,15 +52859,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
-return 1 if $return;
+return 1;
 } else {
 return 1;
 }
@@ -52912,14 +52976,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -53050,14 +53113,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -53117,14 +53179,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -53165,8 +53226,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -53247,8 +53308,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -53531,8 +53592,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -53815,8 +53876,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -55607,9 +55668,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
-return 1 if $return;
+return 1;
 } else {
 return 1;
 }
@@ -55700,8 +55760,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -55820,8 +55880,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -55866,8 +55926,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -55973,8 +56033,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -56006,14 +56066,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -56049,14 +56108,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -56088,14 +56146,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -56148,8 +56205,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -56191,8 +56248,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -56287,8 +56344,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -56374,8 +56431,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -56460,8 +56517,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -56546,8 +56603,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -56632,8 +56689,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -56718,8 +56775,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -56804,8 +56861,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -56904,8 +56961,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -56987,8 +57044,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -57070,8 +57127,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -57153,8 +57210,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -57236,8 +57293,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -57319,8 +57376,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -57407,8 +57464,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -57447,7 +57504,11 @@ $Temp .= $1;
 
         my $return;
         REF: {
-          if (defined $DTDDefs->{pe}->{$Temp}) {
+          if ($DTDDefs->{StopProcessing}) {
+            $TempIndex += length $Temp;
+            $Temp = '';
+            last REF;
+          } elsif (defined $DTDDefs->{pe}->{$Temp}) {
             my $ent = $DTDDefs->{pe}->{$Temp};
             if ($ent->{open}) {
               push @$Errors, {level => 'm',
@@ -57558,14 +57619,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -57582,7 +57642,11 @@ $Temp .= $1;
 
         my $return;
         REF: {
-          if (defined $DTDDefs->{pe}->{$Temp}) {
+          if ($DTDDefs->{StopProcessing}) {
+            $TempIndex += length $Temp;
+            $Temp = '';
+            last REF;
+          } elsif (defined $DTDDefs->{pe}->{$Temp}) {
             my $ent = $DTDDefs->{pe}->{$Temp};
             if ($ent->{open}) {
               push @$Errors, {level => 'm',
@@ -57755,14 +57819,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -57779,7 +57842,11 @@ $Temp .= $1;
 
         my $return;
         REF: {
-          if (defined $DTDDefs->{pe}->{$Temp}) {
+          if ($DTDDefs->{StopProcessing}) {
+            $TempIndex += length $Temp;
+            $Temp = '';
+            last REF;
+          } elsif (defined $DTDDefs->{pe}->{$Temp}) {
             my $ent = $DTDDefs->{pe}->{$Temp};
             if ($ent->{open}) {
               push @$Errors, {level => 'm',
@@ -57939,14 +58006,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -57963,7 +58029,11 @@ $Temp .= $1;
 
         my $return;
         REF: {
-          if (defined $DTDDefs->{pe}->{$Temp}) {
+          if ($DTDDefs->{StopProcessing}) {
+            $TempIndex += length $Temp;
+            $Temp = '';
+            last REF;
+          } elsif (defined $DTDDefs->{pe}->{$Temp}) {
             my $ent = $DTDDefs->{pe}->{$Temp};
             if ($ent->{open}) {
               push @$Errors, {level => 'm',
@@ -58118,14 +58188,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -58142,7 +58211,11 @@ $Temp .= $1;
 
         my $return;
         REF: {
-          if (defined $DTDDefs->{pe}->{$Temp}) {
+          if ($DTDDefs->{StopProcessing}) {
+            $TempIndex += length $Temp;
+            $Temp = '';
+            last REF;
+          } elsif (defined $DTDDefs->{pe}->{$Temp}) {
             my $ent = $DTDDefs->{pe}->{$Temp};
             if ($ent->{open}) {
               push @$Errors, {level => 'm',
@@ -58297,14 +58370,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -58321,7 +58393,11 @@ $Temp .= $1;
 
         my $return;
         REF: {
-          if (defined $DTDDefs->{pe}->{$Temp}) {
+          if ($DTDDefs->{StopProcessing}) {
+            $TempIndex += length $Temp;
+            $Temp = '';
+            last REF;
+          } elsif (defined $DTDDefs->{pe}->{$Temp}) {
             my $ent = $DTDDefs->{pe}->{$Temp};
             if ($ent->{open}) {
               push @$Errors, {level => 'm',
@@ -58482,14 +58558,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -58506,7 +58581,11 @@ $Temp .= $1;
 
         my $return;
         REF: {
-          if (defined $DTDDefs->{pe}->{$Temp}) {
+          if ($DTDDefs->{StopProcessing}) {
+            $TempIndex += length $Temp;
+            $Temp = '';
+            last REF;
+          } elsif (defined $DTDDefs->{pe}->{$Temp}) {
             my $ent = $DTDDefs->{pe}->{$Temp};
             if ($ent->{open}) {
               push @$Errors, {level => 'm',
@@ -58646,14 +58725,13 @@ $State = DATA_STATE;
         push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
-        return 1;
       
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -58818,8 +58896,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -58897,8 +58975,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
@@ -59470,8 +59548,8 @@ $State = DATA_STATE;
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
                           index => $Offset + pos $Input};
-          return 1;
         
+return 1;
 } else {
 return 1;
 }
