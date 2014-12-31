@@ -3447,16 +3447,15 @@ sub actions_to_code ($;%) {
         }
       };
     } elsif ($act->{type} eq 'process an ENTITY token') {
-# XXXXXXXXXXXXXXXXXXXXXXXXX
       push @code, q{
         if ($token->{StopProcessing}) {
           push @$Errors, {level => 'w',
                           type => 'xml:dtd:entity ignored',
-                          di => $DI, index => $Offset + pos $Input};
+                          di => $token->{di}, index => $token->{index}};
           $SC->check_hidden_name
               (name => $token->{name},
                onerror => sub {
-                 push @$Errors, {@_, di => $DI, index => $Offset + pos $Input};
+                 push @$Errors, {@_, di => $token->{di}, index => $token->{index}};
                })
               if defined $token->{name};
         } elsif (not defined $token->{name}) {
@@ -3466,20 +3465,20 @@ sub actions_to_code ($;%) {
             if (not $DTDDefs->{pe}->{'%'.$token->{name} . ';'}) {
               push @$Errors, {level => 'w',
                               type => 'xml:dtd:ext decl',
-                              di => $DI, index => $Offset + pos $Input}
+                              di => $token->{di}, index => $token->{index}}
                   unless $token->{DTDMode} eq 'internal subset'; # and not in param entity
               $SC->check_hidden_name
                   (name => $token->{name},
                    onerror => sub {
-                     push @$Errors, {@_, di => $DI,
-                                     index => $Offset + pos $Input};
+                     push @$Errors, {@_,
+                                     di => $token->{di}, index => $token->{index}};
                    });
               $DTDDefs->{pe}->{'%'.$token->{name} . ';'} = $token;
             } else {
               push @$Errors, {level => 'w',
-                              type => 'duplicate para entity decl', ## TODO: type
-                              value => $token->{name},
-                              di => $DI, index => $Offset + pos $Input};
+                              type => 'duplicate entity decl',
+                              value => '%'.$token->{name}.';',
+                              di => $token->{di}, index => $token->{index}};
             }
           } else { # general entity
             if ({
@@ -3494,9 +3493,9 @@ sub actions_to_code ($;%) {
                     apos => qr/\A(?>&#(?:x0*27|0*39);|')\z/,
                   }->{$token->{name}}) {
                 push @$Errors, {level => 'm',
-                                type => 'bad predefined entity decl', ## TODO: type
+                                type => 'bad predefined entity decl',
                                 value => $token->{name},
-                                di => $DI, index => $Offset + pos $Input};
+                                di => $token->{di}, index => $token->{index}};
               }
 
               $DTDDefs->{ge}->{'&'.$token->{name}.';'} = {
@@ -3514,13 +3513,13 @@ sub actions_to_code ($;%) {
               my $is_external = not $token->{DTDMode} eq 'internal subset'; # not in param entity
               push @$Errors, {level => 'w',
                               type => 'xml:dtd:ext decl',
-                              di => $DI, index => $Offset + pos $Input}
+                              di => $token->{di}, index => $token->{index}}
                   if $is_external;
               $SC->check_hidden_name
                   (name => $token->{name},
                    onerror => sub {
-                     push @$Errors, {@_, di => $DI,
-                                     index => $Offset + pos $Input};
+                     push @$Errors, {@_,
+                                     di => $token->{di}, index => $token->{index}};
                    });
 
               $DTDDefs->{ge}->{'&'.$token->{name}.';'} = $token;
@@ -3531,9 +3530,9 @@ sub actions_to_code ($;%) {
               $token->{external} = {} if $is_external;
             } else {
               push @$Errors, {level => 'w',
-                              type => 'duplicate general entity decl', ## TODO: type
-                              value => $token->{name},
-                              di => $DI, index => $Offset + pos $Input};
+                              type => 'duplicate entity decl',
+                              value => '&'.$token->{name}.';',
+                              di => $token->{di}, index => $token->{index}};
             }
           }
 
@@ -3541,30 +3540,30 @@ sub actions_to_code ($;%) {
             $SC->check_hidden_pubid
                 (name => $token->{public_identifier},
                  onerror => sub {
-                   push @$Errors, {@_, di => $DI,
-                                   index => $Offset + pos $Input};
+                   push @$Errors, {@_,
+                                   di => $token->{di}, index => $token->{index}};
                  });
           }
           if (defined $token->{system_identifier}) {
             $SC->check_hidden_sysid
                 (name => $token->{system_identifier},
                  onerror => sub {
-                   push @$Errors, {@_, di => $DI,
-                                   index => $Offset + pos $Input};
+                   push @$Errors, {@_,
+                                   di => $token->{di}, index => $token->{index}};
                  });
           }
           if (defined $token->{notation_name}) {
             $SC->check_hidden_name
                 (name => $token->{notation_name},
                  onerror => sub {
-                   push @$Errors, {@_, di => $DI,
-                                   index => $Offset + pos $Input};
+                   push @$Errors, {@_,
+                                   di => $token->{di}, index => $token->{index}};
                  });
             if ($token->{is_parameter_entity_flag}) {
               push @$Errors, {level => 'm',
                               type => 'xml:dtd:param entity with ndata',
-                              value => $token->{name},
-                              di => $DI, index => $Offset + pos $Input};
+                              value => '%'.$token->{name}.';',
+                              di => $token->{di}, index => $token->{index}};
               delete $token->{notation_name};
             }
           }
@@ -3575,19 +3574,19 @@ sub actions_to_code ($;%) {
         if (defined $token->{name}) {
           if (defined $DTDDefs->{notations}->{$token->{name}}) {
             push @$Errors, {level => 'm',
-                            type => 'duplicate notation decl', ## TODO: type
+                            type => 'duplicate notation decl',
                             value => $token->{name},
-                            di => $DI, index => $Offset + pos $Input};
+                            di => $token->{di}, index => $token->{index}};
           } else {
             push @$Errors, {level => 'w',
                             type => 'xml:dtd:ext decl',
-                            di => $DI, index => $Offset + pos $Input}
+                            di => $token->{di}, index => $token->{index}}
                 unless $token->{DTDMode} eq 'internal subset'; # not in param entity
             $SC->check_hidden_name
                 (name => $token->{name},
                  onerror => sub {
-                   push @$Errors, {@_, di => $DI,
-                                   index => $Offset + pos $Input};
+                   push @$Errors, {@_,
+                                   di => $token->{di}, index => $token->{index}};
                  });
             # XXX $token->{base_url}
             $DTDDefs->{notations}->{$token->{name}} = $token;
@@ -3596,16 +3595,16 @@ sub actions_to_code ($;%) {
             $SC->check_hidden_pubid
                 (name => $token->{public_identifier},
                  onerror => sub {
-                   push @$Errors, {@_, di => $DI,
-                                   index => $Offset + pos $Input};
+                   push @$Errors, {@_,
+                                   di => $token->{di}, index => $token->{index}};
                  });
           }
           if (defined $token->{system_identifier}) {
             $SC->check_hidden_sysid
                 (name => $token->{system_identifier},
                  onerror => sub {
-                   push @$Errors, {@_, di => $DI,
-                                   index => $Offset + pos $Input};
+                   push @$Errors, {@_,
+                                   di => $token->{di}, index => $token->{index}};
                  });
           }
         }
