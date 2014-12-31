@@ -105,11 +105,23 @@ sub onextentref ($;$) {
   }
   return $_[0]->{onextentref} || sub {
     my ($self, $data, $sub) = @_;
+#XXX
     $self->onerrors->($self, [{level => 'i',
                                type => 'external entref',
                                value => (defined $data->{entity}->{name} ? ($data->{entity}->{is_parameter_entity_flag} ? '%' : '&').$data->{entity}->{name}.';' : undef),
-                               di => $data->{entity}->{di},
-                               index => $data->{entity}->{index}}]);
+                               di => $data->{ref}->{di},
+                               index => $data->{ref}->{index}}]);
+    if (not $self->{saved_states}->{DTDDefs}->{StopProcessing} and
+        not $self->{saved_states}->{DTDDefs}->{XMLStandalone}) {
+      $self->onerrors->($self, [{level => 'i',
+                                 type => 'stop processing',
+                                 di => $data->{ref}->{di},
+                               index => $data->{ref}->{index}}])
+          if defined $data->{entity}->{name} and
+             $data->{entity}->{is_parameter_entity_flag};
+      $self->{saved_maps}->{DTDDefs}->{StopProcessing} = 1;
+    }
+
     $sub->parse_bytes_start (undef, $self);
     $sub->parse_bytes_feed ('<?xml encoding="utf-8"?>');
     $sub->parse_bytes_end;
@@ -479,7 +491,7 @@ sub DOCTYPE_SYSTEM_ID__DQ__STATE () { 58 }
 sub DOCTYPE_SYSTEM_ID__DQ__STATE_CR () { 59 }
 sub DOCTYPE_SYSTEM_ID__SQ__STATE () { 60 }
 sub DOCTYPE_SYSTEM_ID__SQ__STATE_CR () { 61 }
-sub DOCTYPE_TAG_STATE () { 62 }
+sub DOCTYPE_TAG_OPEN_STATE () { 62 }
 sub DTD_STATE () { 63 }
 sub ELEMENT_CONTENT_KWD_STATE () { 64 }
 sub ELEMENT_NAME_STATE () { 65 }
@@ -819,7 +831,7 @@ sub DEFAULT_ATTR_VALUE_IN_ENT_STATE_CR () { 398 }
 sub END_TAG_OPEN_STATE () { 399 }
 sub IGNORED_SECTION_MDO_STATE () { 400 }
 sub IGNORED_SECTION_STATE () { 401 }
-sub IGNORED_SECTION_TAG_STATE () { 402 }
+sub IGNORED_SECTION_TAG_OPEN_STATE () { 402 }
 sub IN_IGNORED_SECTION_MSC_STATE () { 403 }
 sub IN_MSC_STATE () { 404 }
 sub IN_PIC_STATE () { 405 }
@@ -924,12 +936,19 @@ sub _sc ($) {
 
     sub _process_xml_decl ($) {
       my $token = $_[0];
+      my $data = join '', map { $_->[0] } @{$token->{data}}; # IndexedString
 
-        my $pos = $token->{index}; # XXX + target + space
-        my $req_sp = 0;
+      my $di = $token->{data}->[0]->[1];
+      my $pos = $token->{data}->[0]->[2];
+      for (@{$token->{data}}) {
+        $di = $_->[1];
+        $pos = $_->[2];
+        last if length $_->[0];
+      }
+      my $req_sp = 0;
 
-        if ($token->{data} =~ s/\Aversion[\x09\x0A\x20]*=[\x09\x0A\x20]*
-                                  (?>"([^"]*)"|'([^']*)')([\x09\x0A\x20]*)//x) {
+      if ($data =~ s/\Aversion[\x09\x0A\x20]*=[\x09\x0A\x20]*
+                       (?>"([^"]*)"|'([^']*)')([\x09\x0A\x20]*)//x) {
           my $v = defined $1 ? $1 : $2;
           my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
           $pos += $+[0] - $-[0];
@@ -937,59 +956,59 @@ sub _sc ($) {
           $SC->check_hidden_version
               (name => $v,
                onerror => sub {
-                 push @$Errors, {@_, di => $DI, index => $p};
+                 push @$Errors, {@_, di => $di, index => $p};
                });
           unless (defined $CONTEXT) { # XML declaration
             push @$OP, ['xml-version', $v];
           }
-        } else {
+      } else {
           if (not defined $CONTEXT) { # XML declaration
             push @$Errors, {level => 'm',
                             type => 'attribute missing:version',
-                            di => $DI, index => $pos};
+                            di => $di, index => $pos};
           }
-        }
+      }
 
-        if ($token->{data} =~ s/\Aencoding[\x09\x0A\x20]*=[\x09\x0A\x20]*
-                                  (?>"([^"]*)"|'([^']*)')([\x09\x0A\x20]*)//x) {
+      if ($data =~ s/\Aencoding[\x09\x0A\x20]*=[\x09\x0A\x20]*
+                       (?>"([^"]*)"|'([^']*)')([\x09\x0A\x20]*)//x) {
           my $v = defined $1 ? $1 : $2;
           my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
           if ($req_sp) {
             push @$Errors, {level => 'm',
                             type => 'no space before attr name',
-                            di => $DI, index => $p};
+                            di => $di, index => $pos};
           }
           $pos += $+[0] - $-[0];
           $req_sp = not length $3;
           $SC->check_hidden_encoding
               (name => $v,
                onerror => sub {
-                 push @$Errors, {@_, di => $DI, index => $p};
+                 push @$Errors, {@_, di => $di, index => $p};
                });
           unless (defined $CONTEXT) { # XML declaration
             push @$OP, ['xml-encoding', $v];
           }
-        } else {
-          if (defined $CONTEXT) { # text declaration
-            push @$Errors, {level => 'm',
-                            type => 'attribute missing:encoding',
-                            di => $DI, index => $pos};
-          }
+      } else {
+        if (defined $CONTEXT) { # text declaration
+          push @$Errors, {level => 'm',
+                          type => 'attribute missing:encoding',
+                          di => $di, index => $pos};
         }
+      }
 
-        if ($token->{data} =~ s/\Astandalone[\x09\x0A\x20]*=[\x09\x0A\x20]*
-                                  (?>"([^"]*)"|'([^']*)')[\x09\x0A\x20]*//x) {
+      if ($data =~ s/\Astandalone[\x09\x0A\x20]*=[\x09\x0A\x20]*
+                       (?>"([^"]*)"|'([^']*)')[\x09\x0A\x20]*//x) {
           my $v = defined $1 ? $1 : $2;
           if ($req_sp) {
             push @$Errors, {level => 'm',
                             type => 'no space before attr name',
-                            di => $DI, index => $pos};
+                            di => $di, index => $pos};
           }
           if ($v eq 'yes' or $v eq 'no') {
             if (defined $CONTEXT) { # text declaration
               push @$Errors, {level => 'm',
                               type => 'attribute not allowed:standalone',
-                              di => $DI, index => $pos};
+                              di => $di, index => $pos};
             } else {
               push @$OP, ['xml-standalone',
                           $DTDDefs->{XMLStandalone} = ($v ne 'no')];
@@ -998,17 +1017,16 @@ sub _sc ($) {
             my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
             push @$Errors, {level => 'm',
                             type => 'XML standalone:syntax error',
-                            di => $DI, index => $p, value => $v};
+                            di => $di, index => $p, value => $v};
           }
           $pos += $+[0] - $-[0];
-        }
+      }
 
-        if (length $token->{data}) {
+      if (length $data) {
           push @$Errors, {level => 'm',
                           type => 'bogus XML declaration',
-                          di => $DI, index => $pos};
-        }
-
+                          di => $di, index => $pos};
+      }
     } # _process_xml_decl
   
     ## ------ Tree constructor defs ------
@@ -1376,7 +1394,7 @@ return;
         if (defined $token->{public_identifier} and
             $Web::HTML::_SyntaxDefs->{charrefs_pubids}->{$token->{public_identifier}}) {
           $DTDDefs->{has_charref_decls} = 1;
-          $DTDDefs->{is_charref_declarations_entity};
+          $DTDDefs->{is_charref_declarations_entity} = 1;
         } else {
           $DTDDefs->{need_predefined_decls} = 1;
         }
@@ -1397,9 +1415,9 @@ return;
           if (length $DTDDefs->{system_identifier}) {
             
         push @$Callbacks, [$OnDTDEntityReference,
-                           {entity => {system_identifier => $DTDDefs->{system_identifier},
-                                       di => $DTDDefs->{di},
-                                       index => $DTDDefs->{index}}}]
+                           {entity => {system_identifier => $DTDDefs->{system_identifier}},
+                            ref => {di => $DTDDefs->{di},
+                                    index => $DTDDefs->{index}}}]
             unless $DTDDefs->{is_charref_declarations_entity};
       
 
@@ -2290,8 +2308,8 @@ push @$OP, ['stop-parsing'];
                 $DTDDefs->{XMLStandalone}) {
               push @$Errors, {level => 'm',
                               type => 'VC:Standalone Document Declaration:attr',
-                                di => $def->{di}, index => $def->{index},
-                                value => $attr_name};
+                              di => $def->{di}, index => $def->{index},
+                              value => $attr_name};
               $def->{external}->{vc_error_reported} = 1;
             }
           }
@@ -2623,8 +2641,8 @@ push @$OP, ['stop-parsing'];
                 $DTDDefs->{XMLStandalone}) {
               push @$Errors, {level => 'm',
                               type => 'VC:Standalone Document Declaration:attr',
-                                di => $def->{di}, index => $def->{index},
-                                value => $attr_name};
+                              di => $def->{di}, index => $def->{index},
+                              value => $attr_name};
               $def->{external}->{vc_error_reported} = 1;
             }
           }
@@ -2989,16 +3007,16 @@ return;
           $SC->check_hidden_name
               (name => $token->{name},
                onerror => sub {
-                 push @$Errors, {@_, di => $DI, index => $Offset + pos $Input};
+                 push @$Errors, {@_, di => $token->{di}, index => $token->{index}};
                });
           if ($token->{StopProcessing}) {
             push @$Errors, {level => 'w',
                             type => 'xml:dtd:attlist ignored',
-                            di => $DI, index => $Offset + pos $Input};
+                            di => $token->{di}, index => $token->{index}};
           } else { # not $StopProcessing
             push @$Errors, {level => 'w',
                             type => 'xml:dtd:ext decl',
-                            di => $DI, index => $Offset + pos $Input}
+                            di => $token->{di}, index => $token->{index}}
                 unless $token->{DTDMode} eq 'internal subset'; # not in parameter entity
 
             if (not defined $DTDDefs->{elements}->{$token->{name}}) {
@@ -3007,17 +3025,17 @@ return;
               $DTDDefs->{elements}->{$token->{name}}->{index} = $token->{index};
             } elsif ($DTDDefs->{elements}->{$token->{name}}->{has_attlist}) {
               push @$Errors, {level => 'w',
-                              type => 'duplicate attlist decl', ## TODO: type
+                              type => 'duplicate attlist decl',
                               value => $token->{name},
-                              di => $DI, index => $Offset + pos $Input};
+                              di => $token->{di}, index => $token->{index}};
             }
             $DTDDefs->{elements}->{$token->{name}}->{has_attlist} = 1;
 
             unless (@{$token->{attr_list} or []}) {
               push @$Errors, {level => 'w',
-                              type => 'empty attlist decl', ## TODO: type
+                              type => 'empty attlist decl',
                               value => $token->{name},
-                              di => $DI, index => $Offset + pos $Input};
+                              di => $token->{di}, index => $token->{index}};
             }
           } # not $StopProcessing
           
@@ -3029,11 +3047,11 @@ return;
             if (defined $type) {
               $at->{declared_type} = $type;
             } else {
-              $at->{declared_type} = $type = 0;
               push @$Errors, {level => 'm',
-                              type => 'unknown declared type', ## TODO: type
+                              type => 'unknown declared type',
                               value => $at->{declared_type},
-                              di => $DI, index => $Offset + pos $Input};
+                              di => $at->{di}, index => $at->{index}};
+              $at->{declared_type} = $type = 0;
             }
             
             my $default = defined $at->{default_type} ? {
@@ -3041,30 +3059,30 @@ return;
             }->{$at->{default_type}} : 4;
             if (defined $default) {
               $at->{default_type} = $default;
-              if (defined $at->{value}) { # XXX IndexedString
+              if (defined $at->{value}) {
                 if ($default == 1 or $default == 4) {
                   #
                 } elsif (length $at->{value}) {
                   push @$Errors, {level => 'm',
                                   type => 'default value not allowed',
-                                  di => $DI, index => $Offset + pos $Input};
+                                  di => $at->{di}, index => $at->{index}};
                 }
               } else {
                 if ($default == 1 or $default == 4) {
                   push @$Errors, {level => 'm',
                                   type => 'default value not provided',
-                                  di => $DI, index => $Offset + pos $Input};
+                                  di => $at->{di}, index => $at->{index}};
                 }
               }
             } else {
-              $at->{default_type} = 0;
               push @$Errors, {level => 'm',
-                              type => 'unknown default type', ## TODO: type
+                              type => 'unknown default type',
                               value => $at->{default_type},
-                              di => $DI, index => $Offset + pos $Input};
+                              di => $at->{di}, index => $at->{index}};
+              $at->{default_type} = 0;
             }
             $at->{value} = ($at->{default_type} and ($at->{default_type} == 1 or $at->{default_type} == 4))
-                ? defined $at->{value} ? $at->{value} : '' : undef;
+                ? defined $at->{value} ? $at->{value} : [['', $at->{di}, $at->{index}]] : undef;
 
             $at->{tokenize} = (2 <= $type and $type <= 10);
 
@@ -3079,16 +3097,16 @@ return;
                 $at->{external} = {} unless $token->{DTDMode} eq 'internal subset'; # not in parameter entity
               } else {
                 push @$Errors, {level => 'w',
-                                type => 'duplicate attrdef', ## TODO: type
+                                type => 'duplicate attrdef',
                                 value => $at->{name},
-                                di => $DI, index => $Offset + pos $Input};
+                                di => $at->{di}, index => $at->{index}};
                 if ($at->{declared_type} == 10) { # ENUMERATION
                   for (@{$at->{allowed_tokens} or []}) {
                     $SC->check_hidden_nmtoken
                         (name => $_,
                          onerror => sub {
-                           push @$Errors, {@_, di => $DI,
-                                           index => $Offset + pos $Input};
+                           push @$Errors, {@_,
+                                           di => $at->{di}, index => $at->{index}};
                          });
                   }
                 } elsif ($at->{declared_type} == 9) { # NOTATION
@@ -3096,8 +3114,8 @@ return;
                     $SC->check_hidden_name
                         (name => $_,
                          onerror => sub {
-                           push @$Errors, {@_, di => $DI,
-                                           index => $Offset + pos $Input};
+                           push @$Errors, {@_,
+                                           di => $at->{di}, index => $at->{index}};
                          });
                   }
                 }
@@ -3127,12 +3145,12 @@ return;
         } elsif (not $DTDDefs->{elements}->{$token->{name}}->{has_element_decl}) {
           push @$Errors, {level => 'w',
                           type => 'xml:dtd:ext decl',
-                          di => $DI, index => $Offset + pos $Input}
+                          di => $token->{di}, index => $token->{index}}
               unless $token->{DTDMode} eq 'internal subset'; # not in parameter entity
           $SC->check_hidden_name
               (name => $token->{name},
                onerror => sub {
-                 push @$Errors, {@_, di => $DI, index => $Offset + pos $Input};
+                 push @$Errors, {@_, di => $token->{di}, index => $token->{index}};
                });
           my $def = $DTDDefs->{elements}->{$token->{name}};
           for (qw(name di index cmgroup)) {
@@ -3145,16 +3163,16 @@ return;
               push @$Errors, {level => 'm',
                               type => 'xml:dtd:unknown content keyword',
                               value => $token->{content_keyword},
-                              di => $DI, index => $Offset + pos $Input};
+                              di => $token->{di}, index => $token->{index}};
             }
           }
           ## XXX $self->{t}->{content} syntax check.
           $DTDDefs->{elements}->{$token->{name}}->{has_element_decl} = 1;
         } else {
           push @$Errors, {level => 'm',
-                          type => 'duplicate element decl', ## TODO: type
+                          type => 'duplicate element decl',
                           value => $token->{name},
-                          di => $DI, index => $Offset + pos $Input};
+                          di => $token->{di}, index => $token->{index}};
         }
       
         },
@@ -3297,9 +3315,9 @@ return;
           if (length $DTDDefs->{system_identifier}) {
             
         push @$Callbacks, [$OnDTDEntityReference,
-                           {entity => {system_identifier => $DTDDefs->{system_identifier},
-                                       di => $DTDDefs->{di},
-                                       index => $DTDDefs->{index}}}]
+                           {entity => {system_identifier => $DTDDefs->{system_identifier}},
+                            ref => {di => $DTDDefs->{di},
+                                    index => $DTDDefs->{index}}}]
             unless $DTDDefs->{is_charref_declarations_entity};
       
           }
@@ -3366,7 +3384,7 @@ return;
             push @$OP, ['pi', $token => 1];
             push @$Errors, {level => 'w',
                             type => 'xml:dtd:pi',
-                            di => $DI, index => $Offset + pos $Input};
+                            di => $token->{di}, index => $token->{index}};
           
 
           $SC->check_pi_target
@@ -4621,11 +4639,11 @@ return 0;
 };
 $StateActions->[DOCTYPE_PI_DATA_STATE] = sub {
 if ($Input =~ /\G([^\\?\ ]+)/gcs) {
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 
 } elsif ($Input =~ /\G([\])/gcs) {
-$Token->{q<data>} .= q@
-@;
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_PI_DATA_STATE_CR;
 } elsif ($Input =~ /\G([\?])/gcs) {
 $State = DOCTYPE_IN_PIC_STATE;
@@ -4634,7 +4652,7 @@ $State = DOCTYPE_IN_PIC_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 $State = DTD_STATE;
@@ -4674,8 +4692,8 @@ if ($Input =~ /\G([\
 ])/gcs) {
 $State = DOCTYPE_PI_DATA_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
-$Token->{q<data>} .= q@
-@;
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_PI_DATA_STATE_CR;
 } elsif ($Input =~ /\G([\?])/gcs) {
 $State = DOCTYPE_IN_PIC_STATE;
@@ -4685,10 +4703,10 @@ $State = DOCTYPE_PI_DATA_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = DOCTYPE_PI_DATA_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 $State = DTD_STATE;
@@ -4734,7 +4752,7 @@ if ($Input =~ /\G([\ ])/gcs) {
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<target>} = q@�@;
-$Token->{q<data>} = '';
+$Token->{q<data>} = [['', $DI, $Offset + (pos $Input) - 1]];
 $State = DOCTYPE_PI_TARGET_STATE;
 } elsif ($Input =~ /\G([\	\\ \
 ])/gcs) {
@@ -4746,9 +4764,9 @@ $State = DOCTYPE_PI_TARGET_STATE;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = q@?@;
+$Token->{q<data>} = [[q@?@, $DI, $Offset + (pos $Input) - length $1]];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'pi-ws', level => 'm',
@@ -4758,9 +4776,9 @@ $Token->{q<data>} .= $1;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = q@?@;
-$Token->{q<data>} .= q@
-@;
+$Token->{q<data>} = [[q@?@, $DI, $Offset + (pos $Input) - length $1]];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\?])/gcs) {
 
@@ -4771,16 +4789,16 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = q@?@;
+$Token->{q<data>} = [[q@?@, $DI, $Offset + (pos $Input) - length $1]];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G(.)/gcs) {
 
         $Token = {type => PROCESSING_INSTRUCTION_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<target>} = $1;
-$Token->{q<data>} = '';
+$Token->{q<data>} = [['', $DI, $Offset + (pos $Input) - 1]];
 $State = DOCTYPE_PI_TARGET_STATE;
 } else {
 if ($EOF) {
@@ -4788,7 +4806,7 @@ if ($EOF) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = q@?@;
+$Token->{q<data>} = [[q@?@, $DI, $Offset + (pos $Input)]];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 
@@ -4831,44 +4849,44 @@ push @$Tokens, $Token;
             push @$Errors, {type => 'pi-target-question-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<data>} = q@?@;
+$Token->{q<data>} = [[q@?@, $DI, $Offset + (pos $Input) - length $1]];
 $State = DOCTYPE_PI_DATA_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'pi-target-question-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<data>} = q@?@;
-$Token->{q<data>} .= q@
-@;
+$Token->{q<data>} = [[q@?@, $DI, $Offset + (pos $Input) - length $1]];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_PI_DATA_STATE_CR;
 } elsif ($Input =~ /\G([\?])/gcs) {
 
             push @$Errors, {type => 'pi-target-question-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<data>} = q@?@;
+$Token->{q<data>} = [[q@?@, $DI, $Offset + (pos $Input) - length $1]];
 $State = DOCTYPE_IN_PIC_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'pi-target-question-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<data>} = q@?@;
+$Token->{q<data>} = [[q@?@, $DI, $Offset + (pos $Input) - length $1]];
 $State = DOCTYPE_PI_DATA_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
             push @$Errors, {type => 'pi-target-question-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$Token->{q<data>} = q@?@;
+$Token->{q<data>} = [[q@?@, $DI, $Offset + (pos $Input)]];
 $State = DTD_STATE;
 
             if (defined $CONTEXT) {
@@ -4974,10 +4992,10 @@ $State = DOCTYPE_PI_DATA_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = DOCTYPE_PI_DATA_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 $State = DTD_STATE;
@@ -5031,10 +5049,10 @@ $State = DOCTYPE_PI_DATA_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = DOCTYPE_PI_DATA_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 $State = DTD_STATE;
@@ -5071,13 +5089,13 @@ return 0;
 };
 $StateActions->[DOCTYPE_BOGUS_COMMENT_STATE] = sub {
 if ($Input =~ /\G([^\ \\>]+)/gcs) {
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 
 } elsif ($Input =~ /\G([\ ])/gcs) {
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
-$Token->{q<data>} .= q@
-@;
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 push @$Tokens, $Token;
@@ -5120,20 +5138,20 @@ return 0;
 $StateActions->[DOCTYPE_BOGUS_COMMENT_STATE_CR] = sub {
 if ($Input =~ /\G([\ ])/gcs) {
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\
 ])/gcs) {
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
-$Token->{q<data>} .= q@
-@;
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 push @$Tokens, $Token;
 $State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 push @$Tokens, $Token;
@@ -5171,12 +5189,12 @@ return 0;
 };
 $StateActions->[DOCTYPE_COMMENT_END_BANG_STATE] = sub {
 if ($Input =~ /\G([\])/gcs) {
-$Token->{q<data>} .= q@--!@;
-$Token->{q<data>} .= q@
-@;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\-])/gcs) {
-$Token->{q<data>} .= q@--!@;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_COMMENT_END_DASH_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 $State = DTD_STATE;
@@ -5186,11 +5204,11 @@ push @$Tokens, $Token;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<data>} .= q@--!�@;
+push @{$Token->{q<data>}}, [q@--!�@, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_COMMENT_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
-$Token->{q<data>} .= q@--!@;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_COMMENT_STATE;
 } else {
 if ($EOF) {
@@ -5229,9 +5247,9 @@ return 0;
 };
 $StateActions->[DOCTYPE_COMMENT_END_DASH_STATE] = sub {
 if ($Input =~ /\G([\])/gcs) {
-$Token->{q<data>} .= q@-@;
-$Token->{q<data>} .= q@
-@;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\-])/gcs) {
 $State = DOCTYPE_COMMENT_END_STATE;
@@ -5240,11 +5258,11 @@ $State = DOCTYPE_COMMENT_END_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<data>} .= q@-�@;
+push @{$Token->{q<data>}}, [q@-�@, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_COMMENT_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
-$Token->{q<data>} .= q@-@;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_COMMENT_STATE;
 } else {
 if ($EOF) {
@@ -5290,16 +5308,16 @@ push @$Tokens, $Token;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<data>} .= q@--�@;
+push @{$Token->{q<data>}}, [q@--�@, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_COMMENT_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'parser:comment not closed', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<data>} .= q@--@;
-$Token->{q<data>} .= q@
-@;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
@@ -5312,14 +5330,14 @@ $State = DOCTYPE_COMMENT_END_BANG_STATE;
             push @$Errors, {type => 'parser:comment not closed', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<data>} .= q@-@;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'parser:comment not closed', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<data>} .= q@--@;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_COMMENT_STATE;
 } else {
 if ($EOF) {
@@ -5358,9 +5376,9 @@ return 0;
 };
 $StateActions->[DOCTYPE_COMMENT_START_DASH_STATE] = sub {
 if ($Input =~ /\G([\])/gcs) {
-$Token->{q<data>} .= q@-@;
-$Token->{q<data>} .= q@
-@;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\-])/gcs) {
 $State = DOCTYPE_COMMENT_END_STATE;
@@ -5369,7 +5387,7 @@ $State = DOCTYPE_COMMENT_END_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<data>} .= q@-�@;
+push @{$Token->{q<data>}}, [q@-�@, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_COMMENT_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -5379,8 +5397,8 @@ $State = DOCTYPE_COMMENT_STATE;
 $State = DTD_STATE;
 push @$Tokens, $Token;
 } elsif ($Input =~ /\G(.)/gcs) {
-$Token->{q<data>} .= q@-@;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_COMMENT_STATE;
 } else {
 if ($EOF) {
@@ -5419,8 +5437,8 @@ return 0;
 };
 $StateActions->[DOCTYPE_COMMENT_START_STATE] = sub {
 if ($Input =~ /\G([\])/gcs) {
-$Token->{q<data>} .= q@
-@;
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\-])/gcs) {
 $State = DOCTYPE_COMMENT_START_DASH_STATE;
@@ -5429,7 +5447,7 @@ $State = DOCTYPE_COMMENT_START_DASH_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_COMMENT_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -5439,7 +5457,7 @@ $State = DOCTYPE_COMMENT_STATE;
 $State = DTD_STATE;
 push @$Tokens, $Token;
 } elsif ($Input =~ /\G(.)/gcs) {
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_COMMENT_STATE;
 } else {
 if ($EOF) {
@@ -5478,11 +5496,11 @@ return 0;
 };
 $StateActions->[DOCTYPE_COMMENT_STATE] = sub {
 if ($Input =~ /\G([^\\-\ ]+)/gcs) {
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 
 } elsif ($Input =~ /\G([\])/gcs) {
-$Token->{q<data>} .= q@
-@;
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\-])/gcs) {
 $State = DOCTYPE_COMMENT_END_DASH_STATE;
@@ -5491,7 +5509,7 @@ $State = DOCTYPE_COMMENT_END_DASH_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 $State = DTD_STATE;
@@ -5532,8 +5550,8 @@ if ($Input =~ /\G([\
 ])/gcs) {
 $State = DOCTYPE_COMMENT_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
-$Token->{q<data>} .= q@
-@;
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\-])/gcs) {
 $State = DOCTYPE_COMMENT_END_DASH_STATE;
@@ -5543,10 +5561,10 @@ $State = DOCTYPE_COMMENT_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = DOCTYPE_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 $State = DTD_STATE;
@@ -5584,30 +5602,30 @@ return 0;
 };
 $StateActions->[DOCTYPE_IN_PIC_STATE] = sub {
 if ($Input =~ /\G([\])/gcs) {
-$Token->{q<data>} .= q@?@;
-$Token->{q<data>} .= q@
-@;
+push @{$Token->{q<data>}}, [q@?@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_PI_DATA_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 $State = DTD_STATE;
 push @$Tokens, $Token;
 } elsif ($Input =~ /\G([\?])/gcs) {
-$Token->{q<data>} .= q@?@;
+push @{$Token->{q<data>}}, [q@?@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\ ])/gcs) {
-$Token->{q<data>} .= q@?@;
+push @{$Token->{q<data>}}, [q@?@, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_PI_DATA_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G(.)/gcs) {
-$Token->{q<data>} .= q@?@;
+push @{$Token->{q<data>}}, [q@?@, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_PI_DATA_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
-$Token->{q<data>} .= q@?@;
+push @{$Token->{q<data>}}, [q@?@, $DI, $Offset + (pos $Input)];
 $State = DTD_STATE;
 
             if (defined $CONTEXT) {
@@ -5678,10 +5696,10 @@ $State = DOCTYPE_MDO_STATE_N;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'doctype-markup-declaration-open-else', level => 'm',
@@ -5691,10 +5709,10 @@ $Token->{q<data>} .= q@�@;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
-$Token->{q<data>} .= q@
-@;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -5705,8 +5723,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 } elsif ($Input =~ /\G([\[])/gcs) {
@@ -5732,10 +5750,10 @@ $State = IGNORED_SECTION_STATE;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -5746,8 +5764,8 @@ if ($EOF) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 
@@ -5787,7 +5805,7 @@ if ($Input =~ /\G([\-])/gcs) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 $State = DOCTYPE_COMMENT_START_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
@@ -5798,10 +5816,10 @@ $State = DOCTYPE_COMMENT_START_STATE;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'doctype-markup-declaration-open-else', level => 'm',
@@ -5811,10 +5829,10 @@ $Token->{q<data>} .= q@�@;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
-$Token->{q<data>} .= q@
-@;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -5825,8 +5843,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -5838,10 +5856,10 @@ $State = DTD_STATE;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -5852,8 +5870,8 @@ if ($EOF) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 
@@ -5903,10 +5921,10 @@ $State = DOCTYPE_MDO_STATE_AT;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'doctype-markup-declaration-open-else', level => 'm',
@@ -5916,10 +5934,10 @@ $Token->{q<data>} .= q@�@;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
-$Token->{q<data>} .= q@
-@;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -5930,8 +5948,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -5943,10 +5961,10 @@ $State = DTD_STATE;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -5957,8 +5975,8 @@ if ($EOF) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 
@@ -6008,10 +6026,10 @@ $State = DOCTYPE_MDO_STATE_ATT;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'doctype-markup-declaration-open-else', level => 'm',
@@ -6021,10 +6039,10 @@ $Token->{q<data>} .= q@�@;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
-$Token->{q<data>} .= q@
-@;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -6035,8 +6053,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -6048,10 +6066,10 @@ $State = DTD_STATE;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -6062,8 +6080,8 @@ if ($EOF) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 
@@ -6113,10 +6131,10 @@ $State = DOCTYPE_MDO_STATE_ATTL;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'doctype-markup-declaration-open-else', level => 'm',
@@ -6126,10 +6144,10 @@ $Token->{q<data>} .= q@�@;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
-$Token->{q<data>} .= q@
-@;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -6140,8 +6158,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -6153,10 +6171,10 @@ $State = DTD_STATE;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -6167,8 +6185,8 @@ if ($EOF) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 
@@ -6218,10 +6236,10 @@ $State = DOCTYPE_MDO_STATE_ATTLI;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'doctype-markup-declaration-open-else', level => 'm',
@@ -6231,10 +6249,10 @@ $Token->{q<data>} .= q@�@;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
-$Token->{q<data>} .= q@
-@;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -6245,8 +6263,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -6258,10 +6276,10 @@ $State = DTD_STATE;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -6272,8 +6290,8 @@ if ($EOF) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 
@@ -6323,10 +6341,10 @@ $State = DOCTYPE_MDO_STATE_ATTLIS;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'doctype-markup-declaration-open-else', level => 'm',
@@ -6336,10 +6354,10 @@ $Token->{q<data>} .= q@�@;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
-$Token->{q<data>} .= q@
-@;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -6350,8 +6368,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -6363,10 +6381,10 @@ $State = DTD_STATE;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -6377,8 +6395,8 @@ if ($EOF) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 
@@ -6422,10 +6440,10 @@ if ($Input =~ /\G([\ ])/gcs) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'doctype-markup-declaration-open-else', level => 'm',
@@ -6435,10 +6453,10 @@ $Token->{q<data>} .= q@�@;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
-$Token->{q<data>} .= q@
-@;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -6449,8 +6467,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 } elsif ($Input =~ /\G([T])/gcs) {
@@ -6482,10 +6500,10 @@ $State = ATTLIST_STATE;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -6496,8 +6514,8 @@ if ($EOF) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 
@@ -6553,10 +6571,10 @@ $State = DOCTYPE_MDO_STATE_EN;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'doctype-markup-declaration-open-else', level => 'm',
@@ -6566,10 +6584,10 @@ $Token->{q<data>} .= q@�@;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
-$Token->{q<data>} .= q@
-@;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -6580,8 +6598,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -6593,10 +6611,10 @@ $State = DTD_STATE;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -6607,8 +6625,8 @@ if ($EOF) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 
@@ -6658,10 +6676,10 @@ $State = DOCTYPE_MDO_STATE_ELE;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'doctype-markup-declaration-open-else', level => 'm',
@@ -6671,10 +6689,10 @@ $Token->{q<data>} .= q@�@;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
-$Token->{q<data>} .= q@
-@;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -6685,8 +6703,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -6698,10 +6716,10 @@ $State = DTD_STATE;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -6712,8 +6730,8 @@ if ($EOF) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 
@@ -6763,10 +6781,10 @@ $State = DOCTYPE_MDO_STATE_ELEM;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'doctype-markup-declaration-open-else', level => 'm',
@@ -6776,10 +6794,10 @@ $Token->{q<data>} .= q@�@;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
-$Token->{q<data>} .= q@
-@;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -6790,8 +6808,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -6803,10 +6821,10 @@ $State = DTD_STATE;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -6817,8 +6835,8 @@ if ($EOF) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 
@@ -6868,10 +6886,10 @@ $State = DOCTYPE_MDO_STATE_ELEME;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'doctype-markup-declaration-open-else', level => 'm',
@@ -6881,10 +6899,10 @@ $Token->{q<data>} .= q@�@;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
-$Token->{q<data>} .= q@
-@;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -6895,8 +6913,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -6908,10 +6926,10 @@ $State = DTD_STATE;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -6922,8 +6940,8 @@ if ($EOF) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 
@@ -6973,10 +6991,10 @@ $State = DOCTYPE_MDO_STATE_ELEMEN;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'doctype-markup-declaration-open-else', level => 'm',
@@ -6986,10 +7004,10 @@ $Token->{q<data>} .= q@�@;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
-$Token->{q<data>} .= q@
-@;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -7000,8 +7018,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -7013,10 +7031,10 @@ $State = DTD_STATE;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -7027,8 +7045,8 @@ if ($EOF) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 
@@ -7072,10 +7090,10 @@ if ($Input =~ /\G([\ ])/gcs) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'doctype-markup-declaration-open-else', level => 'm',
@@ -7085,10 +7103,10 @@ $Token->{q<data>} .= q@�@;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
-$Token->{q<data>} .= q@
-@;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -7099,8 +7117,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 } elsif ($Input =~ /\G([T])/gcs) {
@@ -7132,10 +7150,10 @@ $State = ELEMENT_STATE;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -7146,8 +7164,8 @@ if ($EOF) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 
@@ -7197,10 +7215,10 @@ $State = DOCTYPE_MDO_STATE_ENT;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'doctype-markup-declaration-open-else', level => 'm',
@@ -7210,10 +7228,10 @@ $Token->{q<data>} .= q@�@;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
-$Token->{q<data>} .= q@
-@;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -7224,8 +7242,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -7237,10 +7255,10 @@ $State = DTD_STATE;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -7251,8 +7269,8 @@ if ($EOF) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 
@@ -7302,10 +7320,10 @@ $State = DOCTYPE_MDO_STATE_ENTI;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'doctype-markup-declaration-open-else', level => 'm',
@@ -7315,10 +7333,10 @@ $Token->{q<data>} .= q@�@;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
-$Token->{q<data>} .= q@
-@;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -7329,8 +7347,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -7342,10 +7360,10 @@ $State = DTD_STATE;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -7356,8 +7374,8 @@ if ($EOF) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 
@@ -7407,10 +7425,10 @@ $State = DOCTYPE_MDO_STATE_ENTIT;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'doctype-markup-declaration-open-else', level => 'm',
@@ -7420,10 +7438,10 @@ $Token->{q<data>} .= q@�@;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
-$Token->{q<data>} .= q@
-@;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -7434,8 +7452,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -7447,10 +7465,10 @@ $State = DTD_STATE;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -7461,8 +7479,8 @@ if ($EOF) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 
@@ -7506,10 +7524,10 @@ if ($Input =~ /\G([\ ])/gcs) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'doctype-markup-declaration-open-else', level => 'm',
@@ -7519,10 +7537,10 @@ $Token->{q<data>} .= q@�@;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
-$Token->{q<data>} .= q@
-@;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -7533,8 +7551,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 } elsif ($Input =~ /\G([Y])/gcs) {
@@ -7566,10 +7584,10 @@ $State = ENT_STATE;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -7580,8 +7598,8 @@ if ($EOF) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 
@@ -7631,10 +7649,10 @@ $State = DOCTYPE_MDO_STATE_NO;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'doctype-markup-declaration-open-else', level => 'm',
@@ -7644,10 +7662,10 @@ $Token->{q<data>} .= q@�@;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
-$Token->{q<data>} .= q@
-@;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -7658,8 +7676,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -7671,10 +7689,10 @@ $State = DTD_STATE;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -7685,8 +7703,8 @@ if ($EOF) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 
@@ -7736,10 +7754,10 @@ $State = DOCTYPE_MDO_STATE_NOT;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'doctype-markup-declaration-open-else', level => 'm',
@@ -7749,10 +7767,10 @@ $Token->{q<data>} .= q@�@;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
-$Token->{q<data>} .= q@
-@;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -7763,8 +7781,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -7776,10 +7794,10 @@ $State = DTD_STATE;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -7790,8 +7808,8 @@ if ($EOF) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 
@@ -7841,10 +7859,10 @@ $State = DOCTYPE_MDO_STATE_NOTA;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'doctype-markup-declaration-open-else', level => 'm',
@@ -7854,10 +7872,10 @@ $Token->{q<data>} .= q@�@;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
-$Token->{q<data>} .= q@
-@;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -7868,8 +7886,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -7881,10 +7899,10 @@ $State = DTD_STATE;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -7895,8 +7913,8 @@ if ($EOF) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 
@@ -7946,10 +7964,10 @@ $State = DOCTYPE_MDO_STATE_NOTAT;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'doctype-markup-declaration-open-else', level => 'm',
@@ -7959,10 +7977,10 @@ $Token->{q<data>} .= q@�@;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
-$Token->{q<data>} .= q@
-@;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -7973,8 +7991,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -7986,10 +8004,10 @@ $State = DTD_STATE;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -8000,8 +8018,8 @@ if ($EOF) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 
@@ -8051,10 +8069,10 @@ $State = DOCTYPE_MDO_STATE_NOTATI;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'doctype-markup-declaration-open-else', level => 'm',
@@ -8064,10 +8082,10 @@ $Token->{q<data>} .= q@�@;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
-$Token->{q<data>} .= q@
-@;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -8078,8 +8096,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -8091,10 +8109,10 @@ $State = DTD_STATE;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -8105,8 +8123,8 @@ if ($EOF) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 
@@ -8156,10 +8174,10 @@ $State = DOCTYPE_MDO_STATE_NOTATIO;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'doctype-markup-declaration-open-else', level => 'm',
@@ -8169,10 +8187,10 @@ $Token->{q<data>} .= q@�@;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
-$Token->{q<data>} .= q@
-@;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -8183,8 +8201,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -8196,10 +8214,10 @@ $State = DTD_STATE;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -8210,8 +8228,8 @@ if ($EOF) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 
@@ -8255,10 +8273,10 @@ if ($Input =~ /\G([\ ])/gcs) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'doctype-markup-declaration-open-else', level => 'm',
@@ -8268,10 +8286,10 @@ $Token->{q<data>} .= q@�@;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
-$Token->{q<data>} .= q@
-@;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -8282,8 +8300,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 } elsif ($Input =~ /\G([N])/gcs) {
@@ -8315,10 +8333,10 @@ $State = NOTATION_STATE;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -8329,8 +8347,8 @@ if ($EOF) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 
@@ -8871,7 +8889,7 @@ return 1;
 }
 return 0;
 };
-$StateActions->[DOCTYPE_TAG_STATE] = sub {
+$StateActions->[DOCTYPE_TAG_OPEN_STATE] = sub {
 if ($Input =~ /\G([\!])/gcs) {
 
         $Temp = '';
@@ -8882,53 +8900,53 @@ $State = DOCTYPE_MDO_STATE;
 $State = DOCTYPE_PI_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-            push @$Errors, {type => 'doctype-tag-else', level => 'm',
+            push @$Errors, {type => 'doctype-tag-open-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
-            push @$Errors, {type => 'doctype-tag-else', level => 'm',
+            push @$Errors, {type => 'doctype-tag-open-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= q@
-@;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-            push @$Errors, {type => 'doctype-tag-else', level => 'm',
+            push @$Errors, {type => 'doctype-tag-open-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'doctype-tag-else', level => 'm',
+            push @$Errors, {type => 'doctype-tag-open-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 $State = DTD_STATE;
@@ -8971,7 +8989,8 @@ $Temp = q@%@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = PE_NAME_IN_DTD_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
-$State = DOCTYPE_TAG_STATE;
+$State = DOCTYPE_TAG_OPEN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\]])/gcs) {
 $State = A_DOCTYPE_INTERNAL_SUBSET_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -14561,11 +14580,11 @@ return 0;
 };
 $StateActions->[PI_DATA_STATE] = sub {
 if ($Input =~ /\G([^\\?\ ]+)/gcs) {
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 
 } elsif ($Input =~ /\G([\])/gcs) {
-$Token->{q<data>} .= q@
-@;
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = PI_DATA_STATE_CR;
 } elsif ($Input =~ /\G([\?])/gcs) {
 $State = IN_PIC_STATE;
@@ -14574,7 +14593,7 @@ $State = IN_PIC_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -14599,8 +14618,8 @@ if ($Input =~ /\G([\
 ])/gcs) {
 $State = PI_DATA_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
-$Token->{q<data>} .= q@
-@;
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = PI_DATA_STATE_CR;
 } elsif ($Input =~ /\G([\?])/gcs) {
 $State = IN_PIC_STATE;
@@ -14610,10 +14629,10 @@ $State = PI_DATA_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = PI_DATA_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -14644,7 +14663,7 @@ if ($Input =~ /\G([\ ])/gcs) {
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<target>} = q@�@;
-$Token->{q<data>} = '';
+$Token->{q<data>} = [['', $DI, $Offset + (pos $Input) - 1]];
 $State = PI_TARGET_STATE;
 } elsif ($Input =~ /\G([\	\\ \
 ])/gcs) {
@@ -14656,9 +14675,9 @@ $State = PI_TARGET_STATE;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = q@?@;
+$Token->{q<data>} = [[q@?@, $DI, $Offset + (pos $Input) - length $1]];
 $State = BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'pi-ws', level => 'm',
@@ -14668,9 +14687,9 @@ $Token->{q<data>} .= $1;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = q@?@;
-$Token->{q<data>} .= q@
-@;
+$Token->{q<data>} = [[q@?@, $DI, $Offset + (pos $Input) - length $1]];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\?])/gcs) {
 
@@ -14681,16 +14700,16 @@ $State = BOGUS_COMMENT_STATE_CR;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = q@?@;
+$Token->{q<data>} = [[q@?@, $DI, $Offset + (pos $Input) - length $1]];
 $State = BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G(.)/gcs) {
 
         $Token = {type => PROCESSING_INSTRUCTION_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<target>} = $1;
-$Token->{q<data>} = '';
+$Token->{q<data>} = [['', $DI, $Offset + (pos $Input) - 1]];
 $State = PI_TARGET_STATE;
 } else {
 if ($EOF) {
@@ -14702,7 +14721,7 @@ if ($EOF) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = q@?@;
+$Token->{q<data>} = [[q@?@, $DI, $Offset + (pos $Input)]];
 push @$Tokens, $Token;
 $State = DATA_STATE;
 
@@ -14726,44 +14745,44 @@ push @$Tokens, $Token;
             push @$Errors, {type => 'pi-target-question-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<data>} = q@?@;
+$Token->{q<data>} = [[q@?@, $DI, $Offset + (pos $Input) - length $1]];
 $State = PI_DATA_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'pi-target-question-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<data>} = q@?@;
-$Token->{q<data>} .= q@
-@;
+$Token->{q<data>} = [[q@?@, $DI, $Offset + (pos $Input) - length $1]];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = PI_DATA_STATE_CR;
 } elsif ($Input =~ /\G([\?])/gcs) {
 
             push @$Errors, {type => 'pi-target-question-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<data>} = q@?@;
+$Token->{q<data>} = [[q@?@, $DI, $Offset + (pos $Input) - length $1]];
 $State = IN_PIC_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'pi-target-question-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<data>} = q@?@;
+$Token->{q<data>} = [[q@?@, $DI, $Offset + (pos $Input) - length $1]];
 $State = PI_DATA_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
             push @$Errors, {type => 'pi-target-question-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$Token->{q<data>} = q@?@;
+$Token->{q<data>} = [[q@?@, $DI, $Offset + (pos $Input)]];
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
@@ -14924,10 +14943,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -14942,10 +14962,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -14962,10 +14983,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -14983,10 +15005,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -15007,10 +15030,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -15039,10 +15063,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -15069,10 +15094,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -15096,10 +15122,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -15159,10 +15186,11 @@ $Temp .= $1;
 $State = A_ATTLIST_ATTR_DEFAULT_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -15183,10 +15211,11 @@ $State = A_ATTLIST_ATTR_DEFAULT_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -15208,10 +15237,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -15233,10 +15263,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -15258,10 +15289,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -15283,10 +15315,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -15309,10 +15342,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -15377,10 +15411,11 @@ $Temp .= $1;
 $State = A_ATTLIST_ATTR_DEFAULT_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -15401,10 +15436,11 @@ $State = A_ATTLIST_ATTR_DEFAULT_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -15426,10 +15462,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -15451,10 +15488,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -15476,10 +15514,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -15501,10 +15540,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -15530,10 +15570,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -15660,10 +15701,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -15678,10 +15720,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -15699,10 +15742,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -15721,10 +15765,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -15754,10 +15799,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -15774,10 +15820,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -15837,10 +15884,11 @@ $Temp .= $1;
 $State = A_ATTLIST_ATTR_NAME_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -15861,10 +15909,11 @@ $State = A_ATTLIST_ATTR_NAME_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -15886,10 +15935,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -15911,10 +15961,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -15936,10 +15987,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -15961,10 +16013,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -15987,10 +16040,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -16055,10 +16109,11 @@ $Temp .= $1;
 $State = A_ATTLIST_ATTR_NAME_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -16079,10 +16134,11 @@ $State = A_ATTLIST_ATTR_NAME_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -16104,10 +16160,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -16129,10 +16186,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -16154,10 +16212,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -16179,10 +16238,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -16208,10 +16268,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -16351,10 +16412,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -16369,10 +16431,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -16389,10 +16452,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -16407,10 +16471,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -16428,10 +16493,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -16448,10 +16514,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -16470,10 +16537,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -16503,10 +16571,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -16526,10 +16595,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -16589,10 +16659,11 @@ $Temp .= $1;
 $State = A_ATTLIST_ATTR_TYPE_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -16613,10 +16684,11 @@ $State = A_ATTLIST_ATTR_TYPE_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -16638,10 +16710,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -16663,10 +16736,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -16688,10 +16762,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -16713,10 +16788,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -16739,10 +16815,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -16807,10 +16884,11 @@ $Temp .= $1;
 $State = A_ATTLIST_ATTR_TYPE_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -16831,10 +16909,11 @@ $State = A_ATTLIST_ATTR_TYPE_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -16856,10 +16935,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -16881,10 +16961,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -16906,10 +16987,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -16931,10 +17013,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -16960,10 +17043,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -17998,10 +18082,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -18016,10 +18101,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -18041,10 +18127,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -18070,10 +18157,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -18093,10 +18181,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -18156,10 +18245,11 @@ $Temp .= $1;
 $State = A_ELEMENT_CONTENT_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -18180,10 +18270,11 @@ $State = A_ELEMENT_CONTENT_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -18205,10 +18296,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -18230,10 +18322,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -18255,10 +18348,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -18280,10 +18374,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -18306,10 +18401,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -18374,10 +18470,11 @@ $Temp .= $1;
 $State = A_ELEMENT_CONTENT_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -18398,10 +18495,11 @@ $State = A_ELEMENT_CONTENT_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -18423,10 +18521,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -18448,10 +18547,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -18473,10 +18573,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -18498,10 +18599,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -18527,10 +18629,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -18683,10 +18786,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -18701,10 +18805,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -18721,10 +18826,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -18742,10 +18848,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -18766,10 +18873,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -18786,10 +18894,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -18806,10 +18915,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -18826,10 +18936,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -18846,10 +18957,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -18880,10 +18992,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -18903,10 +19016,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -18966,10 +19080,11 @@ $Temp .= $1;
 $State = A_ENT_NAME_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -18990,10 +19105,11 @@ $State = A_ENT_NAME_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -19015,10 +19131,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -19040,10 +19157,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -19065,10 +19183,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -19090,10 +19209,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -19116,10 +19236,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -19184,10 +19305,11 @@ $Temp .= $1;
 $State = A_ENT_NAME_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -19208,10 +19330,11 @@ $State = A_ENT_NAME_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -19233,10 +19356,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -19258,10 +19382,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -19283,10 +19408,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -19308,10 +19434,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -19337,10 +19464,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -20023,10 +20151,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -20041,10 +20170,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -20066,10 +20196,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -20096,10 +20227,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -20119,10 +20251,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -20182,10 +20315,11 @@ $Temp .= $1;
 $State = A_ENT_PARAMETER_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -20206,10 +20340,11 @@ $State = A_ENT_PARAMETER_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -20231,10 +20366,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -20256,10 +20392,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -20281,10 +20418,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -20306,10 +20444,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -20332,10 +20471,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -20400,10 +20540,11 @@ $Temp .= $1;
 $State = A_ENT_PARAMETER_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -20424,10 +20565,11 @@ $State = A_ENT_PARAMETER_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -20449,10 +20591,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -20474,10 +20617,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -20499,10 +20643,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -20524,10 +20669,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -20553,10 +20699,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -20990,7 +21137,8 @@ $State = BOGUS_STATUS_KWD_STATE;
           }
         
 push @$OpenMarkedSections, 'IGNORE';
-$State = IGNORED_SECTION_TAG_STATE;
+$State = IGNORED_SECTION_TAG_OPEN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
@@ -21091,10 +21239,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -21109,10 +21258,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -21134,10 +21284,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -21162,10 +21313,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -21203,10 +21355,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -21244,10 +21397,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -21267,10 +21421,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -21330,10 +21485,11 @@ $Temp .= $1;
 $State = A_IGNORE_KWD_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -21354,10 +21510,11 @@ $State = A_IGNORE_KWD_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -21379,10 +21536,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -21404,10 +21562,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -21429,10 +21588,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -21454,10 +21614,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -21480,10 +21641,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -21548,10 +21710,11 @@ $Temp .= $1;
 $State = A_IGNORE_KWD_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -21572,10 +21735,11 @@ $State = A_IGNORE_KWD_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -21597,10 +21761,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -21622,10 +21787,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -21647,10 +21813,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -21672,10 +21839,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -21701,10 +21869,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -21798,7 +21967,8 @@ $State = BOGUS_STATUS_KWD_STATE;
           }
         
 push @$OpenMarkedSections, 'IGNORE';
-$State = IGNORED_SECTION_TAG_STATE;
+$State = IGNORED_SECTION_TAG_OPEN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
@@ -21899,10 +22069,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -21917,10 +22088,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -21942,10 +22114,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -21970,10 +22143,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -22011,10 +22185,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -22052,10 +22227,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -22075,10 +22251,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -22138,10 +22315,11 @@ $Temp .= $1;
 $State = A_INCLUDE_KWD_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -22162,10 +22340,11 @@ $State = A_INCLUDE_KWD_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -22187,10 +22366,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -22212,10 +22392,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -22237,10 +22418,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -22262,10 +22444,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -22288,10 +22471,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -22356,10 +22540,11 @@ $Temp .= $1;
 $State = A_INCLUDE_KWD_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -22380,10 +22565,11 @@ $State = A_INCLUDE_KWD_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -22405,10 +22591,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -22430,10 +22617,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -22455,10 +22643,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -22480,10 +22669,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -22509,10 +22699,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -22739,10 +22930,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -22757,10 +22949,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -22782,10 +22975,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -22802,10 +22996,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -22822,10 +23017,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -22842,10 +23038,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -22862,10 +23059,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -22895,10 +23093,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -22918,10 +23117,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -22981,10 +23181,11 @@ $Temp .= $1;
 $State = A_NOTATION_NAME_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -23005,10 +23206,11 @@ $State = A_NOTATION_NAME_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -23030,10 +23232,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -23055,10 +23258,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -23080,10 +23284,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -23105,10 +23310,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -23131,10 +23337,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -23199,10 +23406,11 @@ $Temp .= $1;
 $State = A_NOTATION_NAME_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -23223,10 +23431,11 @@ $State = A_NOTATION_NAME_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -23248,10 +23457,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -23273,10 +23483,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -23298,10 +23509,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -23323,10 +23535,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -23352,10 +23565,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -24199,10 +24413,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -24217,10 +24432,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -24242,10 +24458,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -24271,10 +24488,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -24294,10 +24512,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -24357,10 +24576,11 @@ $Temp .= $1;
 $State = A_NOTATION_SYSTEM_ID_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -24381,10 +24601,11 @@ $State = A_NOTATION_SYSTEM_ID_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -24406,10 +24627,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -24431,10 +24653,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -24456,10 +24679,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -24481,10 +24705,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -24507,10 +24732,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -24575,10 +24801,11 @@ $Temp .= $1;
 $State = A_NOTATION_SYSTEM_ID_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -24599,10 +24826,11 @@ $State = A_NOTATION_SYSTEM_ID_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -24624,10 +24852,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -24649,10 +24878,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -24674,10 +24904,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -24699,10 +24930,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -24728,10 +24960,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -24881,10 +25114,10 @@ $State = PI_DATA_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = PI_DATA_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -24923,10 +25156,10 @@ $State = PI_DATA_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = PI_DATA_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -25032,10 +25265,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -25050,10 +25284,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -25070,10 +25305,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -25088,10 +25324,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -25109,10 +25346,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -25133,10 +25371,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -25166,10 +25405,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -25189,10 +25429,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -25252,10 +25493,11 @@ $Temp .= $1;
 $State = A_AFTER_ALLOWED_TOKEN_LIST_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -25276,10 +25518,11 @@ $State = A_AFTER_ALLOWED_TOKEN_LIST_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -25301,10 +25544,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -25326,10 +25570,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -25351,10 +25596,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -25376,10 +25622,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -25402,10 +25649,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -25470,10 +25718,11 @@ $Temp .= $1;
 $State = A_AFTER_ALLOWED_TOKEN_LIST_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -25494,10 +25743,11 @@ $State = A_AFTER_ALLOWED_TOKEN_LIST_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -25519,10 +25769,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -25544,10 +25795,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -25569,10 +25821,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -25594,10 +25847,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -25623,10 +25877,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -25854,10 +26109,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -25872,10 +26128,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -25893,10 +26150,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -25915,10 +26173,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -25933,10 +26192,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -25966,10 +26226,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -25989,10 +26250,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -26052,10 +26314,11 @@ $Temp .= $1;
 $State = A_ALLOWED_TOKEN_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -26076,10 +26339,11 @@ $State = A_ALLOWED_TOKEN_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -26101,10 +26365,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -26126,10 +26391,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -26151,10 +26417,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -26176,10 +26443,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -26202,10 +26470,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -26270,10 +26539,11 @@ $Temp .= $1;
 $State = A_ALLOWED_TOKEN_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -26294,10 +26564,11 @@ $State = A_ALLOWED_TOKEN_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -26319,10 +26590,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -26344,10 +26616,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -26369,10 +26642,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -26394,10 +26668,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -26423,10 +26698,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -27188,10 +27464,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -27206,10 +27483,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -27227,10 +27505,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -27258,10 +27537,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -27297,10 +27577,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -27345,10 +27626,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -27380,10 +27662,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -27402,10 +27685,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -27424,10 +27708,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -27446,10 +27731,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -27468,10 +27754,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -27491,10 +27778,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -27554,10 +27842,11 @@ $Temp .= $1;
 $State = A_CM_ITEM_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -27578,10 +27867,11 @@ $State = A_CM_ITEM_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -27603,10 +27893,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -27628,10 +27919,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -27653,10 +27945,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -27678,10 +27971,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -27704,10 +27998,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -27772,10 +28067,11 @@ $Temp .= $1;
 $State = A_CM_ITEM_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -27796,10 +28092,11 @@ $State = A_CM_ITEM_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -27821,10 +28118,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -27846,10 +28144,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -27871,10 +28170,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -27896,10 +28196,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -27925,10 +28226,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -28145,7 +28447,8 @@ $State = BOGUS_STATUS_KWD_STATE;
           }
         
 push @$OpenMarkedSections, 'IGNORE';
-$State = IGNORED_SECTION_TAG_STATE;
+$State = IGNORED_SECTION_TAG_OPEN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
@@ -28270,10 +28573,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -28288,10 +28592,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -28313,10 +28618,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -28333,10 +28639,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -28353,10 +28660,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -28394,10 +28702,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -28435,10 +28744,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -28476,10 +28786,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -28499,10 +28810,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -28562,10 +28874,11 @@ $Temp .= $1;
 $State = A_MSS_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -28586,10 +28899,11 @@ $State = A_MSS_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -28611,10 +28925,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -28636,10 +28951,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -28661,10 +28977,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -28686,10 +29003,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -28712,10 +29030,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -28780,10 +29099,11 @@ $Temp .= $1;
 $State = A_MSS_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -28804,10 +29124,11 @@ $State = A_MSS_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -28829,10 +29150,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -28854,10 +29176,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -28879,10 +29202,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -28904,10 +29228,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -28933,10 +29258,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -29032,7 +29358,8 @@ $State = BOGUS_STATUS_KWD_STATE;
           }
         
 push @$OpenMarkedSections, 'IGNORE';
-$State = IGNORED_SECTION_TAG_STATE;
+$State = IGNORED_SECTION_TAG_OPEN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'after-mss-else', level => 'm',
@@ -29165,7 +29492,8 @@ $State = BOGUS_STATUS_KWD_STATE;
           }
         
 push @$OpenMarkedSections, 'IGNORE';
-$State = IGNORED_SECTION_TAG_STATE;
+$State = IGNORED_SECTION_TAG_OPEN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'after-mss-else', level => 'm',
@@ -29298,7 +29626,8 @@ $State = BOGUS_STATUS_KWD_STATE;
           }
         
 push @$OpenMarkedSections, 'IGNORE';
-$State = IGNORED_SECTION_TAG_STATE;
+$State = IGNORED_SECTION_TAG_OPEN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'after-mss-else', level => 'm',
@@ -29431,7 +29760,8 @@ $State = BOGUS_STATUS_KWD_STATE;
           }
         
 push @$OpenMarkedSections, 'IGNORE';
-$State = IGNORED_SECTION_TAG_STATE;
+$State = IGNORED_SECTION_TAG_OPEN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'after-mss-else', level => 'm',
@@ -29558,7 +29888,8 @@ $State = BOGUS_STATUS_KWD_STATE;
           }
         
 push @$OpenMarkedSections, 'IGNORE';
-$State = IGNORED_SECTION_TAG_STATE;
+$State = IGNORED_SECTION_TAG_OPEN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'after-mss-else', level => 'm',
@@ -29711,7 +30042,8 @@ $State = BOGUS_STATUS_KWD_STATE;
           }
         
 push @$OpenMarkedSections, 'IGNORE';
-$State = IGNORED_SECTION_TAG_STATE;
+$State = IGNORED_SECTION_TAG_OPEN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'after-mss-else', level => 'm',
@@ -29844,7 +30176,8 @@ $State = BOGUS_STATUS_KWD_STATE;
           }
         
 push @$OpenMarkedSections, 'IGNORE';
-$State = IGNORED_SECTION_TAG_STATE;
+$State = IGNORED_SECTION_TAG_OPEN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'after-mss-else', level => 'm',
@@ -29977,7 +30310,8 @@ $State = BOGUS_STATUS_KWD_STATE;
           }
         
 push @$OpenMarkedSections, 'IGNORE';
-$State = IGNORED_SECTION_TAG_STATE;
+$State = IGNORED_SECTION_TAG_OPEN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'after-mss-else', level => 'm',
@@ -30110,7 +30444,8 @@ $State = BOGUS_STATUS_KWD_STATE;
           }
         
 push @$OpenMarkedSections, 'IGNORE';
-$State = IGNORED_SECTION_TAG_STATE;
+$State = IGNORED_SECTION_TAG_OPEN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'after-mss-else', level => 'm',
@@ -30237,7 +30572,8 @@ $State = BOGUS_STATUS_KWD_STATE;
           }
         
 push @$OpenMarkedSections, 'IGNORE';
-$State = IGNORED_SECTION_TAG_STATE;
+$State = IGNORED_SECTION_TAG_OPEN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'after-mss-else', level => 'm',
@@ -31428,9 +31764,9 @@ $Temp .= $1;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -31489,7 +31825,7 @@ $Temp .= $1;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -31497,7 +31833,7 @@ $Temp .= $1;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -31573,9 +31909,9 @@ $Temp .= q@�@;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -31634,7 +31970,7 @@ $Temp .= q@�@;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -31642,7 +31978,7 @@ $Temp .= q@�@;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -31712,9 +32048,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -31773,7 +32109,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -31781,7 +32117,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -31851,9 +32187,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -31912,7 +32248,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -31920,7 +32256,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -31989,9 +32325,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -32050,7 +32386,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -32058,7 +32394,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -32128,9 +32464,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -32189,7 +32525,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -32197,7 +32533,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -32267,9 +32603,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -32328,7 +32664,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -32336,7 +32672,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -32407,9 +32743,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -32468,7 +32804,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -32476,7 +32812,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -32546,9 +32882,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -32607,7 +32943,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -32615,7 +32951,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -32689,9 +33025,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -32750,7 +33086,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -32758,7 +33094,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -32828,9 +33164,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -32889,7 +33225,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -32897,7 +33233,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -32967,9 +33303,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -33028,7 +33364,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -33036,7 +33372,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -33107,9 +33443,9 @@ if ($EOF) {
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -33168,7 +33504,7 @@ if ($EOF) {
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -33176,7 +33512,7 @@ if ($EOF) {
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -34321,9 +34657,9 @@ $Temp .= $1;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -34382,7 +34718,7 @@ $Temp .= $1;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -34390,7 +34726,7 @@ $Temp .= $1;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -34466,9 +34802,9 @@ $Temp .= q@�@;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -34527,7 +34863,7 @@ $Temp .= q@�@;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -34535,7 +34871,7 @@ $Temp .= q@�@;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -34605,9 +34941,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -34666,7 +35002,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -34674,7 +35010,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -34744,9 +35080,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -34805,7 +35141,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -34813,7 +35149,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -34883,9 +35219,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -34944,7 +35280,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -34952,7 +35288,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -35022,9 +35358,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -35083,7 +35419,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -35091,7 +35427,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -35161,9 +35497,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -35222,7 +35558,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -35230,7 +35566,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -35301,9 +35637,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -35362,7 +35698,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -35370,7 +35706,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -35439,9 +35775,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -35500,7 +35836,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -35508,7 +35844,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -35582,9 +35918,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -35643,7 +35979,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -35651,7 +35987,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -35721,9 +36057,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -35782,7 +36118,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -35790,7 +36126,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -35860,9 +36196,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -35921,7 +36257,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -35929,7 +36265,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -36000,9 +36336,9 @@ if ($EOF) {
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -36061,7 +36397,7 @@ if ($EOF) {
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -36069,7 +36405,7 @@ if ($EOF) {
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -37733,9 +38069,9 @@ $Temp .= $1;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -37794,7 +38130,7 @@ $Temp .= $1;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -37802,7 +38138,7 @@ $Temp .= $1;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -37878,9 +38214,9 @@ $Temp .= q@�@;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -37939,7 +38275,7 @@ $Temp .= q@�@;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -37947,7 +38283,7 @@ $Temp .= q@�@;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -38016,9 +38352,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -38077,7 +38413,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -38085,7 +38421,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -38154,9 +38490,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -38215,7 +38551,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -38223,7 +38559,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -38297,9 +38633,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -38358,7 +38694,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -38366,7 +38702,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -38436,9 +38772,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -38497,7 +38833,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -38505,7 +38841,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -38575,9 +38911,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -38636,7 +38972,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -38644,7 +38980,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -38715,9 +39051,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -38776,7 +39112,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -38784,7 +39120,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -38858,9 +39194,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -38919,7 +39255,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -38927,7 +39263,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -39001,9 +39337,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -39062,7 +39398,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -39070,7 +39406,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -39144,9 +39480,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -39205,7 +39541,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -39213,7 +39549,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -39322,9 +39658,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -39383,7 +39719,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -39391,7 +39727,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -39466,9 +39802,9 @@ if ($EOF) {
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -39527,7 +39863,7 @@ if ($EOF) {
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -39535,7 +39871,7 @@ if ($EOF) {
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -40797,9 +41133,9 @@ $Temp .= $1;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -40858,7 +41194,7 @@ $Temp .= $1;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -40866,7 +41202,7 @@ $Temp .= $1;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -40942,9 +41278,9 @@ $Temp .= q@�@;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -41003,7 +41339,7 @@ $Temp .= q@�@;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -41011,7 +41347,7 @@ $Temp .= q@�@;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -41081,9 +41417,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -41142,7 +41478,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -41150,7 +41486,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -41220,9 +41556,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -41281,7 +41617,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -41289,7 +41625,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -41359,9 +41695,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -41420,7 +41756,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -41428,7 +41764,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -41498,9 +41834,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -41559,7 +41895,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -41567,7 +41903,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -41637,9 +41973,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -41698,7 +42034,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -41706,7 +42042,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -41777,9 +42113,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -41838,7 +42174,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -41846,7 +42182,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -41916,9 +42252,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -41977,7 +42313,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -41985,7 +42321,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -42059,9 +42395,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -42120,7 +42456,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -42128,7 +42464,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -42198,9 +42534,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -42259,7 +42595,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -42267,7 +42603,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -42337,9 +42673,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -42398,7 +42734,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -42406,7 +42742,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -42477,9 +42813,9 @@ if ($EOF) {
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -42538,7 +42874,7 @@ if ($EOF) {
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -42546,7 +42882,7 @@ if ($EOF) {
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -43007,10 +43343,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -43025,10 +43362,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -43050,10 +43388,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -43079,10 +43418,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -43106,10 +43446,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -43130,10 +43471,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -43193,10 +43535,11 @@ $Temp .= $1;
 $State = B_ATTLIST_ATTR_NAME_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -43217,10 +43560,11 @@ $State = B_ATTLIST_ATTR_NAME_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -43242,10 +43586,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -43267,10 +43612,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -43292,10 +43638,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -43317,10 +43664,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -43343,10 +43691,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -43411,10 +43760,11 @@ $Temp .= $1;
 $State = B_ATTLIST_ATTR_NAME_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -43435,10 +43785,11 @@ $State = B_ATTLIST_ATTR_NAME_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -43460,10 +43811,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -43485,10 +43837,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -43510,10 +43863,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -43535,10 +43889,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -43564,10 +43919,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -43697,10 +44053,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -43715,10 +44072,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -43740,10 +44098,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -43763,10 +44122,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -43794,10 +44154,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -43814,10 +44175,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -43877,10 +44239,11 @@ $Temp .= $1;
 $State = B_ATTLIST_NAME_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -43901,10 +44264,11 @@ $State = B_ATTLIST_NAME_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -43926,10 +44290,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -43951,10 +44316,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -43976,10 +44342,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -44001,10 +44368,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -44027,10 +44395,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -44095,10 +44464,11 @@ $Temp .= $1;
 $State = B_ATTLIST_NAME_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -44119,10 +44489,11 @@ $State = B_ATTLIST_NAME_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -44144,10 +44515,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -44169,10 +44541,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -44194,10 +44567,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -44219,10 +44593,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -44248,10 +44623,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -44608,10 +44984,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -44626,10 +45003,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -44647,10 +45025,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -44672,10 +45051,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -44694,10 +45074,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -44716,10 +45097,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -44738,10 +45120,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -44760,10 +45143,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -44791,10 +45175,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -44813,10 +45198,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -44835,10 +45221,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -44855,10 +45242,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -44918,10 +45306,11 @@ $Temp .= $1;
 $State = B_ELEMENT_CONTENT_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -44942,10 +45331,11 @@ $State = B_ELEMENT_CONTENT_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -44967,10 +45357,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -44992,10 +45383,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -45017,10 +45409,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -45042,10 +45435,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -45068,10 +45462,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -45136,10 +45531,11 @@ $Temp .= $1;
 $State = B_ELEMENT_CONTENT_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -45160,10 +45556,11 @@ $State = B_ELEMENT_CONTENT_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -45185,10 +45582,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -45210,10 +45608,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -45235,10 +45634,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -45260,10 +45660,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -45289,10 +45690,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -45422,10 +45824,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -45440,10 +45843,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -45465,10 +45869,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -45488,10 +45893,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -45519,10 +45925,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -45539,10 +45946,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -45602,10 +46010,11 @@ $Temp .= $1;
 $State = B_ELEMENT_NAME_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -45626,10 +46035,11 @@ $State = B_ELEMENT_NAME_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -45651,10 +46061,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -45676,10 +46087,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -45701,10 +46113,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -45726,10 +46139,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -45752,10 +46166,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -45820,10 +46235,11 @@ $Temp .= $1;
 $State = B_ELEMENT_NAME_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -45844,10 +46260,11 @@ $State = B_ELEMENT_NAME_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -45869,10 +46286,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -45894,10 +46312,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -45919,10 +46338,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -45944,10 +46364,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -45973,10 +46394,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -46101,10 +46523,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -46121,10 +46544,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -46139,10 +46563,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -46164,10 +46589,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -46195,10 +46621,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -46215,10 +46642,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -46278,10 +46706,11 @@ $Temp .= $1;
 $State = B_ENT_NAME_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -46302,10 +46731,11 @@ $State = B_ENT_NAME_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -46327,10 +46757,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -46352,10 +46783,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -46377,10 +46809,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -46402,10 +46835,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -46428,10 +46862,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -46496,10 +46931,11 @@ $Temp .= $1;
 $State = B_ENT_NAME_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -46520,10 +46956,11 @@ $State = B_ENT_NAME_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -46545,10 +46982,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -46570,10 +47008,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -46595,10 +47034,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -46620,10 +47060,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -46649,10 +47090,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -46787,10 +47229,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -46805,10 +47248,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -46824,10 +47268,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -46845,10 +47290,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -46868,10 +47314,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -46902,10 +47349,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -46925,10 +47373,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -46988,10 +47437,11 @@ $Temp .= $1;
 $State = B_ENT_PUBLIC_ID_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -47012,10 +47462,11 @@ $State = B_ENT_PUBLIC_ID_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -47037,10 +47488,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -47062,10 +47514,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -47087,10 +47540,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -47112,10 +47566,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -47138,10 +47593,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -47206,10 +47662,11 @@ $Temp .= $1;
 $State = B_ENT_PUBLIC_ID_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -47230,10 +47687,11 @@ $State = B_ENT_PUBLIC_ID_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -47255,10 +47713,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -47280,10 +47739,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -47305,10 +47765,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -47330,10 +47791,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -47359,10 +47821,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -47497,10 +47960,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -47515,10 +47979,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -47534,10 +47999,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -47555,10 +48021,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -47578,10 +48045,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -47612,10 +48080,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -47635,10 +48104,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -47698,10 +48168,11 @@ $Temp .= $1;
 $State = B_ENT_SYSTEM_ID_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -47722,10 +48193,11 @@ $State = B_ENT_SYSTEM_ID_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -47747,10 +48219,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -47772,10 +48245,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -47797,10 +48271,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -47822,10 +48297,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -47848,10 +48324,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -47916,10 +48393,11 @@ $Temp .= $1;
 $State = B_ENT_SYSTEM_ID_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -47940,10 +48418,11 @@ $State = B_ENT_SYSTEM_ID_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -47965,10 +48444,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -47990,10 +48470,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -48015,10 +48496,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -48040,10 +48522,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -48069,10 +48552,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -48195,10 +48679,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -48215,10 +48700,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -48233,10 +48719,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -48255,10 +48742,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -48286,10 +48774,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -48306,10 +48795,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -48369,10 +48859,11 @@ $Temp .= $1;
 $State = B_ENT_TYPE_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -48393,10 +48884,11 @@ $State = B_ENT_TYPE_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -48418,10 +48910,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -48443,10 +48936,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -48468,10 +48962,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -48493,10 +48988,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -48519,10 +49015,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -48587,10 +49084,11 @@ $Temp .= $1;
 $State = B_ENT_TYPE_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -48611,10 +49109,11 @@ $State = B_ENT_TYPE_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -48636,10 +49135,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -48661,10 +49161,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -48686,10 +49187,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -48711,10 +49213,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -48740,10 +49243,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -48803,10 +49307,11 @@ if ($Input =~ /\G([\])/gcs) {
       
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -48825,10 +49330,11 @@ $State = ENT_VALUE_IN_ENT_STATE_CR;
       
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -48847,10 +49353,11 @@ $State = PE_NAME_IN_ENT_VALUE_IN_ENT_STATE;
       
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -48873,10 +49380,11 @@ $State = TEXT_DECL_IN_ENT_VALUE_IN_ENT_STATE;
       
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -48898,10 +49406,11 @@ push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
       
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -48920,10 +49429,11 @@ if ($EOF) {
       
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -49047,10 +49557,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -49065,10 +49576,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -49090,10 +49602,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -49113,10 +49626,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -49147,10 +49661,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -49167,10 +49682,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -49230,10 +49746,11 @@ $Temp .= $1;
 $State = B_NDATA_ID_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -49254,10 +49771,11 @@ $State = B_NDATA_ID_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -49279,10 +49797,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -49304,10 +49823,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -49329,10 +49849,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -49354,10 +49875,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -49380,10 +49902,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -49448,10 +49971,11 @@ $Temp .= $1;
 $State = B_NDATA_ID_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -49472,10 +49996,11 @@ $State = B_NDATA_ID_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -49497,10 +50022,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -49522,10 +50048,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -49547,10 +50074,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -49572,10 +50100,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -49601,10 +50130,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -49737,10 +50267,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -49755,10 +50286,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -49780,10 +50312,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -49810,10 +50343,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -49830,10 +50364,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -49850,10 +50385,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -49873,10 +50409,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -49936,10 +50473,11 @@ $Temp .= $1;
 $State = B_NDATA_KWD_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -49960,10 +50498,11 @@ $State = B_NDATA_KWD_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -49985,10 +50524,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -50010,10 +50550,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -50035,10 +50576,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -50060,10 +50602,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -50086,10 +50629,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -50154,10 +50698,11 @@ $Temp .= $1;
 $State = B_NDATA_KWD_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -50178,10 +50723,11 @@ $State = B_NDATA_KWD_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -50203,10 +50749,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -50228,10 +50775,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -50253,10 +50801,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -50278,10 +50827,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -50307,10 +50857,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -50670,10 +51221,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -50688,10 +51240,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -50713,10 +51266,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -50736,10 +51290,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -50771,10 +51326,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -50791,10 +51347,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -50854,10 +51411,11 @@ $Temp .= $1;
 $State = B_NOTATION_NAME_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -50878,10 +51436,11 @@ $State = B_NOTATION_NAME_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -50903,10 +51462,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -50928,10 +51488,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -50953,10 +51514,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -50978,10 +51540,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -51004,10 +51567,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -51072,10 +51636,11 @@ $Temp .= $1;
 $State = B_NOTATION_NAME_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -51096,10 +51661,11 @@ $State = B_NOTATION_NAME_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -51121,10 +51687,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -51146,10 +51713,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -51171,10 +51739,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -51196,10 +51765,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -51225,10 +51795,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -51362,10 +51933,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -51380,10 +51952,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -51399,10 +51972,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -51420,10 +51994,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -51443,10 +52018,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -51476,10 +52052,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -51499,10 +52076,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -51562,10 +52140,11 @@ $Temp .= $1;
 $State = B_NOTATION_PUBLIC_ID_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -51586,10 +52165,11 @@ $State = B_NOTATION_PUBLIC_ID_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -51611,10 +52191,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -51636,10 +52217,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -51661,10 +52243,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -51686,10 +52269,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -51712,10 +52296,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -51780,10 +52365,11 @@ $Temp .= $1;
 $State = B_NOTATION_PUBLIC_ID_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -51804,10 +52390,11 @@ $State = B_NOTATION_PUBLIC_ID_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -51829,10 +52416,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -51854,10 +52442,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -51879,10 +52468,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -51904,10 +52494,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -51933,10 +52524,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -52070,10 +52662,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -52088,10 +52681,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -52107,10 +52701,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -52128,10 +52723,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -52151,10 +52747,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -52184,10 +52781,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -52207,10 +52805,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -52270,10 +52869,11 @@ $Temp .= $1;
 $State = B_NOTATION_SYSTEM_ID_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -52294,10 +52894,11 @@ $State = B_NOTATION_SYSTEM_ID_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -52319,10 +52920,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -52344,10 +52946,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -52369,10 +52972,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -52394,10 +52998,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -52420,10 +53025,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -52488,10 +53094,11 @@ $Temp .= $1;
 $State = B_NOTATION_SYSTEM_ID_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -52512,10 +53119,11 @@ $State = B_NOTATION_SYSTEM_ID_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -52537,10 +53145,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -52562,10 +53171,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -52587,10 +53197,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -52612,10 +53223,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -52641,10 +53253,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -52789,10 +53402,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -52807,10 +53421,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -52832,10 +53447,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -52856,10 +53472,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -52878,10 +53495,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -52911,10 +53529,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -52933,10 +53552,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -52954,10 +53574,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -53017,10 +53638,11 @@ $Temp .= $1;
 $State = B_ALLOWED_TOKEN_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -53041,10 +53663,11 @@ $State = B_ALLOWED_TOKEN_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -53066,10 +53689,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -53091,10 +53715,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -53116,10 +53741,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -53141,10 +53767,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -53167,10 +53794,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -53235,10 +53863,11 @@ $Temp .= $1;
 $State = B_ALLOWED_TOKEN_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -53259,10 +53888,11 @@ $State = B_ALLOWED_TOKEN_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -53284,10 +53914,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -53309,10 +53940,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -53334,10 +53966,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -53359,10 +53992,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -53388,10 +54022,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -55314,10 +55949,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -55332,10 +55968,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -55353,10 +55990,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -55378,10 +56016,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -55405,10 +56044,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -55427,10 +56067,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -55449,10 +56090,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -55471,10 +56113,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -55493,10 +56136,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -55524,10 +56168,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -55546,10 +56191,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -55568,10 +56214,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -55592,10 +56239,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -55655,10 +56303,11 @@ $Temp .= $1;
 $State = B_CM_ITEM_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -55679,10 +56328,11 @@ $State = B_CM_ITEM_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -55704,10 +56354,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -55729,10 +56380,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -55754,10 +56406,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -55779,10 +56432,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -55805,10 +56459,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -55873,10 +56528,11 @@ $Temp .= $1;
 $State = B_CM_ITEM_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -55897,10 +56553,11 @@ $State = B_CM_ITEM_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -55922,10 +56579,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -55947,10 +56605,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -55972,10 +56631,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -55997,10 +56657,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -56026,10 +56687,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -56219,10 +56881,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -56237,10 +56900,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -56256,10 +56920,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -56277,10 +56942,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -56300,10 +56966,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -56334,10 +57001,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -56357,10 +57025,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -56420,10 +57089,11 @@ $Temp .= $1;
 $State = BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -56444,10 +57114,11 @@ $State = BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -56469,10 +57140,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -56494,10 +57166,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -56519,10 +57192,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -56544,10 +57218,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -56570,10 +57245,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -56638,10 +57314,11 @@ $Temp .= $1;
 $State = BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -56662,10 +57339,11 @@ $State = BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -56687,10 +57365,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -56712,10 +57391,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -56737,10 +57417,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -56762,10 +57443,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -56791,10 +57473,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -56924,10 +57607,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -56942,10 +57626,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -56961,10 +57646,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -56982,10 +57668,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -57005,10 +57692,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -57034,10 +57722,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -57057,10 +57746,11 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -57120,10 +57810,11 @@ $Temp .= $1;
 $State = BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -57144,10 +57835,11 @@ $State = BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -57169,10 +57861,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -57194,10 +57887,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -57219,10 +57913,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -57244,10 +57939,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -57270,10 +57966,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -57338,10 +58035,11 @@ $Temp .= $1;
 $State = BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -57362,10 +58060,11 @@ $State = BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -57387,10 +58086,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -57412,10 +58112,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -57437,10 +58138,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -57462,10 +58164,11 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -57491,10 +58194,11 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -57608,13 +58312,13 @@ return 0;
 };
 $StateActions->[BOGUS_COMMENT_STATE] = sub {
 if ($Input =~ /\G([^\ \\>]+)/gcs) {
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 
 } elsif ($Input =~ /\G([\ ])/gcs) {
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
-$Token->{q<data>} .= q@
-@;
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 push @$Tokens, $Token;
@@ -57638,20 +58342,20 @@ return 0;
 $StateActions->[BOGUS_COMMENT_STATE_CR] = sub {
 if ($Input =~ /\G([\ ])/gcs) {
 $State = BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\
 ])/gcs) {
 $State = BOGUS_COMMENT_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
-$Token->{q<data>} .= q@
-@;
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 push @$Tokens, $Token;
 $State = DATA_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 push @$Tokens, $Token;
@@ -57747,7 +58451,8 @@ $State = IGNORED_SECTION_STATE;
           }
         
 push @$OpenMarkedSections, 'IGNORE';
-$State = IGNORED_SECTION_TAG_STATE;
+$State = IGNORED_SECTION_TAG_OPEN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
@@ -58052,12 +58757,12 @@ return 0;
 };
 $StateActions->[COMMENT_END_BANG_STATE] = sub {
 if ($Input =~ /\G([\])/gcs) {
-$Token->{q<data>} .= q@--!@;
-$Token->{q<data>} .= q@
-@;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\-])/gcs) {
-$Token->{q<data>} .= q@--!@;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - length $1];
 $State = COMMENT_END_DASH_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 $State = DATA_STATE;
@@ -58067,11 +58772,11 @@ push @$Tokens, $Token;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<data>} .= q@--!�@;
+push @{$Token->{q<data>}}, [q@--!�@, $DI, $Offset + (pos $Input) - length $1];
 $State = COMMENT_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
-$Token->{q<data>} .= q@--!@;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 $State = COMMENT_STATE;
 } else {
 if ($EOF) {
@@ -58095,9 +58800,9 @@ return 0;
 };
 $StateActions->[COMMENT_END_DASH_STATE] = sub {
 if ($Input =~ /\G([\])/gcs) {
-$Token->{q<data>} .= q@-@;
-$Token->{q<data>} .= q@
-@;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\-])/gcs) {
 $State = COMMENT_END_STATE;
@@ -58106,11 +58811,11 @@ $State = COMMENT_END_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<data>} .= q@-�@;
+push @{$Token->{q<data>}}, [q@-�@, $DI, $Offset + (pos $Input) - length $1];
 $State = COMMENT_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
-$Token->{q<data>} .= q@-@;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 $State = COMMENT_STATE;
 } else {
 if ($EOF) {
@@ -58141,16 +58846,16 @@ push @$Tokens, $Token;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<data>} .= q@--�@;
+push @{$Token->{q<data>}}, [q@--�@, $DI, $Offset + (pos $Input) - length $1];
 $State = COMMENT_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'parser:comment not closed', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<data>} .= q@--@;
-$Token->{q<data>} .= q@
-@;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
@@ -58163,14 +58868,14 @@ $State = COMMENT_END_BANG_STATE;
             push @$Errors, {type => 'parser:comment not closed', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<data>} .= q@-@;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'parser:comment not closed', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<data>} .= q@--@;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 $State = COMMENT_STATE;
 } else {
 if ($EOF) {
@@ -58194,9 +58899,9 @@ return 0;
 };
 $StateActions->[COMMENT_START_DASH_STATE] = sub {
 if ($Input =~ /\G([\])/gcs) {
-$Token->{q<data>} .= q@-@;
-$Token->{q<data>} .= q@
-@;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\-])/gcs) {
 $State = COMMENT_END_STATE;
@@ -58205,7 +58910,7 @@ $State = COMMENT_END_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<data>} .= q@-�@;
+push @{$Token->{q<data>}}, [q@-�@, $DI, $Offset + (pos $Input) - length $1];
 $State = COMMENT_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -58215,8 +58920,8 @@ $State = COMMENT_STATE;
 $State = DATA_STATE;
 push @$Tokens, $Token;
 } elsif ($Input =~ /\G(.)/gcs) {
-$Token->{q<data>} .= q@-@;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 $State = COMMENT_STATE;
 } else {
 if ($EOF) {
@@ -58240,8 +58945,8 @@ return 0;
 };
 $StateActions->[COMMENT_START_STATE] = sub {
 if ($Input =~ /\G([\])/gcs) {
-$Token->{q<data>} .= q@
-@;
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\-])/gcs) {
 $State = COMMENT_START_DASH_STATE;
@@ -58250,7 +58955,7 @@ $State = COMMENT_START_DASH_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 $State = COMMENT_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -58260,7 +58965,7 @@ $State = COMMENT_STATE;
 $State = DATA_STATE;
 push @$Tokens, $Token;
 } elsif ($Input =~ /\G(.)/gcs) {
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 $State = COMMENT_STATE;
 } else {
 if ($EOF) {
@@ -58284,11 +58989,11 @@ return 0;
 };
 $StateActions->[COMMENT_STATE] = sub {
 if ($Input =~ /\G([^\\-\ ]+)/gcs) {
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 
 } elsif ($Input =~ /\G([\])/gcs) {
-$Token->{q<data>} .= q@
-@;
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\-])/gcs) {
 $State = COMMENT_END_DASH_STATE;
@@ -58297,7 +59002,7 @@ $State = COMMENT_END_DASH_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -58323,8 +59028,8 @@ if ($Input =~ /\G([\
 ])/gcs) {
 $State = COMMENT_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
-$Token->{q<data>} .= q@
-@;
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\-])/gcs) {
 $State = COMMENT_END_DASH_STATE;
@@ -58334,10 +59039,10 @@ $State = COMMENT_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -59545,6 +60250,7 @@ $Temp .= $1;
                 ## External parsed entity
                 push @$Callbacks, [$OnContentEntityReference,
                                    {entity => $ent,
+                                    ref => {di => $DI, index => $TempIndex},
                                     ops => $OP}];
                 $TempIndex += length $Temp;
                 $Temp = '';
@@ -59586,7 +60292,7 @@ $Temp .= $1;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -59594,7 +60300,7 @@ $Temp .= $1;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -59605,8 +60311,9 @@ $Temp .= $1;
               }
             }
             if ($Temp =~ /;\z/) {
-              push @$Errors, {type => 'entity not declared', value => $Temp,
-                              level => 'm',
+              push @$Errors, {level => 'm',
+                              type => 'entity not declared',
+                              value => $Temp,
                               di => $DI, index => $TempIndex};
               $DTDDefs->{entity_names}->{$Temp}
                   ||= {di => $DI, index => $TempIndex};
@@ -59690,6 +60397,7 @@ $Temp .= q@�@;
                 ## External parsed entity
                 push @$Callbacks, [$OnContentEntityReference,
                                    {entity => $ent,
+                                    ref => {di => $DI, index => $TempIndex},
                                     ops => $OP}];
                 $TempIndex += length $Temp;
                 $Temp = '';
@@ -59731,7 +60439,7 @@ $Temp .= q@�@;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -59739,7 +60447,7 @@ $Temp .= q@�@;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -59750,8 +60458,9 @@ $Temp .= q@�@;
               }
             }
             if ($Temp =~ /;\z/) {
-              push @$Errors, {type => 'entity not declared', value => $Temp,
-                              level => 'm',
+              push @$Errors, {level => 'm',
+                              type => 'entity not declared',
+                              value => $Temp,
                               di => $DI, index => $TempIndex};
               $DTDDefs->{entity_names}->{$Temp}
                   ||= {di => $DI, index => $TempIndex};
@@ -59833,6 +60542,7 @@ return 1 if $return;
                 ## External parsed entity
                 push @$Callbacks, [$OnContentEntityReference,
                                    {entity => $ent,
+                                    ref => {di => $DI, index => $TempIndex},
                                     ops => $OP}];
                 $TempIndex += length $Temp;
                 $Temp = '';
@@ -59874,7 +60584,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -59882,7 +60592,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -59893,8 +60603,9 @@ return 1 if $return;
               }
             }
             if ($Temp =~ /;\z/) {
-              push @$Errors, {type => 'entity not declared', value => $Temp,
-                              level => 'm',
+              push @$Errors, {level => 'm',
+                              type => 'entity not declared',
+                              value => $Temp,
                               di => $DI, index => $TempIndex};
               $DTDDefs->{entity_names}->{$Temp}
                   ||= {di => $DI, index => $TempIndex};
@@ -59977,6 +60688,7 @@ return 1 if $return;
                 ## External parsed entity
                 push @$Callbacks, [$OnContentEntityReference,
                                    {entity => $ent,
+                                    ref => {di => $DI, index => $TempIndex},
                                     ops => $OP}];
                 $TempIndex += length $Temp;
                 $Temp = '';
@@ -60018,7 +60730,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -60026,7 +60738,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -60037,8 +60749,9 @@ return 1 if $return;
               }
             }
             if ($Temp =~ /;\z/) {
-              push @$Errors, {type => 'entity not declared', value => $Temp,
-                              level => 'm',
+              push @$Errors, {level => 'm',
+                              type => 'entity not declared',
+                              value => $Temp,
                               di => $DI, index => $TempIndex};
               $DTDDefs->{entity_names}->{$Temp}
                   ||= {di => $DI, index => $TempIndex};
@@ -60120,6 +60833,7 @@ return 1 if $return;
                 ## External parsed entity
                 push @$Callbacks, [$OnContentEntityReference,
                                    {entity => $ent,
+                                    ref => {di => $DI, index => $TempIndex},
                                     ops => $OP}];
                 $TempIndex += length $Temp;
                 $Temp = '';
@@ -60161,7 +60875,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -60169,7 +60883,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -60180,8 +60894,9 @@ return 1 if $return;
               }
             }
             if ($Temp =~ /;\z/) {
-              push @$Errors, {type => 'entity not declared', value => $Temp,
-                              level => 'm',
+              push @$Errors, {level => 'm',
+                              type => 'entity not declared',
+                              value => $Temp,
                               di => $DI, index => $TempIndex};
               $DTDDefs->{entity_names}->{$Temp}
                   ||= {di => $DI, index => $TempIndex};
@@ -60263,6 +60978,7 @@ return 1 if $return;
                 ## External parsed entity
                 push @$Callbacks, [$OnContentEntityReference,
                                    {entity => $ent,
+                                    ref => {di => $DI, index => $TempIndex},
                                     ops => $OP}];
                 $TempIndex += length $Temp;
                 $Temp = '';
@@ -60304,7 +61020,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -60312,7 +61028,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -60323,8 +61039,9 @@ return 1 if $return;
               }
             }
             if ($Temp =~ /;\z/) {
-              push @$Errors, {type => 'entity not declared', value => $Temp,
-                              level => 'm',
+              push @$Errors, {level => 'm',
+                              type => 'entity not declared',
+                              value => $Temp,
                               di => $DI, index => $TempIndex};
               $DTDDefs->{entity_names}->{$Temp}
                   ||= {di => $DI, index => $TempIndex};
@@ -60406,6 +61123,7 @@ return 1 if $return;
                 ## External parsed entity
                 push @$Callbacks, [$OnContentEntityReference,
                                    {entity => $ent,
+                                    ref => {di => $DI, index => $TempIndex},
                                     ops => $OP}];
                 $TempIndex += length $Temp;
                 $Temp = '';
@@ -60447,7 +61165,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -60455,7 +61173,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -60466,8 +61184,9 @@ return 1 if $return;
               }
             }
             if ($Temp =~ /;\z/) {
-              push @$Errors, {type => 'entity not declared', value => $Temp,
-                              level => 'm',
+              push @$Errors, {level => 'm',
+                              type => 'entity not declared',
+                              value => $Temp,
                               di => $DI, index => $TempIndex};
               $DTDDefs->{entity_names}->{$Temp}
                   ||= {di => $DI, index => $TempIndex};
@@ -60544,6 +61263,7 @@ return 1 if $return;
                 ## External parsed entity
                 push @$Callbacks, [$OnContentEntityReference,
                                    {entity => $ent,
+                                    ref => {di => $DI, index => $TempIndex},
                                     ops => $OP}];
                 $TempIndex += length $Temp;
                 $Temp = '';
@@ -60585,7 +61305,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -60593,7 +61313,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -60604,8 +61324,9 @@ return 1 if $return;
               }
             }
             if ($Temp =~ /;\z/) {
-              push @$Errors, {type => 'entity not declared', value => $Temp,
-                              level => 'm',
+              push @$Errors, {level => 'm',
+                              type => 'entity not declared',
+                              value => $Temp,
                               di => $DI, index => $TempIndex};
               $DTDDefs->{entity_names}->{$Temp}
                   ||= {di => $DI, index => $TempIndex};
@@ -60687,6 +61408,7 @@ return 1 if $return;
                 ## External parsed entity
                 push @$Callbacks, [$OnContentEntityReference,
                                    {entity => $ent,
+                                    ref => {di => $DI, index => $TempIndex},
                                     ops => $OP}];
                 $TempIndex += length $Temp;
                 $Temp = '';
@@ -60728,7 +61450,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -60736,7 +61458,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -60747,8 +61469,9 @@ return 1 if $return;
               }
             }
             if ($Temp =~ /;\z/) {
-              push @$Errors, {type => 'entity not declared', value => $Temp,
-                              level => 'm',
+              push @$Errors, {level => 'm',
+                              type => 'entity not declared',
+                              value => $Temp,
                               di => $DI, index => $TempIndex};
               $DTDDefs->{entity_names}->{$Temp}
                   ||= {di => $DI, index => $TempIndex};
@@ -60826,6 +61549,7 @@ return 1 if $return;
                 ## External parsed entity
                 push @$Callbacks, [$OnContentEntityReference,
                                    {entity => $ent,
+                                    ref => {di => $DI, index => $TempIndex},
                                     ops => $OP}];
                 $TempIndex += length $Temp;
                 $Temp = '';
@@ -60867,7 +61591,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -60875,7 +61599,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -60886,8 +61610,9 @@ return 1 if $return;
               }
             }
             if ($Temp =~ /;\z/) {
-              push @$Errors, {type => 'entity not declared', value => $Temp,
-                              level => 'm',
+              push @$Errors, {level => 'm',
+                              type => 'entity not declared',
+                              value => $Temp,
                               di => $DI, index => $TempIndex};
               $DTDDefs->{entity_names}->{$Temp}
                   ||= {di => $DI, index => $TempIndex};
@@ -60969,6 +61694,7 @@ return 1 if $return;
                 ## External parsed entity
                 push @$Callbacks, [$OnContentEntityReference,
                                    {entity => $ent,
+                                    ref => {di => $DI, index => $TempIndex},
                                     ops => $OP}];
                 $TempIndex += length $Temp;
                 $Temp = '';
@@ -61010,7 +61736,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -61018,7 +61744,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -61029,8 +61755,9 @@ return 1 if $return;
               }
             }
             if ($Temp =~ /;\z/) {
-              push @$Errors, {type => 'entity not declared', value => $Temp,
-                              level => 'm',
+              push @$Errors, {level => 'm',
+                              type => 'entity not declared',
+                              value => $Temp,
                               di => $DI, index => $TempIndex};
               $DTDDefs->{entity_names}->{$Temp}
                   ||= {di => $DI, index => $TempIndex};
@@ -61112,6 +61839,7 @@ return 1 if $return;
                 ## External parsed entity
                 push @$Callbacks, [$OnContentEntityReference,
                                    {entity => $ent,
+                                    ref => {di => $DI, index => $TempIndex},
                                     ops => $OP}];
                 $TempIndex += length $Temp;
                 $Temp = '';
@@ -61153,7 +61881,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -61161,7 +61889,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -61172,8 +61900,9 @@ return 1 if $return;
               }
             }
             if ($Temp =~ /;\z/) {
-              push @$Errors, {type => 'entity not declared', value => $Temp,
-                              level => 'm',
+              push @$Errors, {level => 'm',
+                              type => 'entity not declared',
+                              value => $Temp,
                               di => $DI, index => $TempIndex};
               $DTDDefs->{entity_names}->{$Temp}
                   ||= {di => $DI, index => $TempIndex};
@@ -61256,6 +61985,7 @@ if ($EOF) {
                 ## External parsed entity
                 push @$Callbacks, [$OnContentEntityReference,
                                    {entity => $ent,
+                                    ref => {di => $DI, index => $TempIndex},
                                     ops => $OP}];
                 $TempIndex += length $Temp;
                 $Temp = '';
@@ -61297,7 +62027,7 @@ if ($EOF) {
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -61305,7 +62035,7 @@ if ($EOF) {
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -61316,8 +62046,9 @@ if ($EOF) {
               }
             }
             if ($Temp =~ /;\z/) {
-              push @$Errors, {type => 'entity not declared', value => $Temp,
-                              level => 'm',
+              push @$Errors, {level => 'm',
+                              type => 'entity not declared',
+                              value => $Temp,
                               di => $DI, index => $TempIndex};
               $DTDDefs->{entity_names}->{$Temp}
                   ||= {di => $DI, index => $TempIndex};
@@ -62859,9 +63590,9 @@ $Temp .= $1;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -62920,7 +63651,7 @@ $Temp .= $1;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -62928,7 +63659,7 @@ $Temp .= $1;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -63004,9 +63735,9 @@ $Temp .= q@�@;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -63065,7 +63796,7 @@ $Temp .= q@�@;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -63073,7 +63804,7 @@ $Temp .= q@�@;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -63143,9 +63874,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -63204,7 +63935,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -63212,7 +63943,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -63282,9 +64013,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -63343,7 +64074,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -63351,7 +64082,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -63421,9 +64152,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -63482,7 +64213,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -63490,7 +64221,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -63560,9 +64291,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -63621,7 +64352,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -63629,7 +64360,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -63699,9 +64430,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -63760,7 +64491,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -63768,7 +64499,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -63839,9 +64570,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -63900,7 +64631,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -63908,7 +64639,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -63978,9 +64709,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -64039,7 +64770,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -64047,7 +64778,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -64121,9 +64852,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -64182,7 +64913,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -64190,7 +64921,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -64260,9 +64991,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -64321,7 +65052,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -64329,7 +65060,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -64399,9 +65130,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -64460,7 +65191,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -64468,7 +65199,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -64539,9 +65270,9 @@ if ($EOF) {
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -64600,7 +65331,7 @@ if ($EOF) {
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -64608,7 +65339,7 @@ if ($EOF) {
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -65927,9 +66658,9 @@ $Temp .= $1;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -65988,7 +66719,7 @@ $Temp .= $1;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -65996,7 +66727,7 @@ $Temp .= $1;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -66072,9 +66803,9 @@ $Temp .= q@�@;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -66133,7 +66864,7 @@ $Temp .= q@�@;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -66141,7 +66872,7 @@ $Temp .= q@�@;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -66211,9 +66942,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -66272,7 +67003,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -66280,7 +67011,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -66350,9 +67081,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -66411,7 +67142,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -66419,7 +67150,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -66489,9 +67220,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -66550,7 +67281,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -66558,7 +67289,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -66628,9 +67359,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -66689,7 +67420,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -66697,7 +67428,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -66767,9 +67498,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -66828,7 +67559,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -66836,7 +67567,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -66907,9 +67638,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -66968,7 +67699,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -66976,7 +67707,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -67046,9 +67777,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -67107,7 +67838,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -67115,7 +67846,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -67189,9 +67920,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -67250,7 +67981,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -67258,7 +67989,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -67328,9 +68059,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -67389,7 +68120,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -67397,7 +68128,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -67467,9 +68198,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -67528,7 +68259,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -67536,7 +68267,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -67607,9 +68338,9 @@ if ($EOF) {
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -67668,7 +68399,7 @@ if ($EOF) {
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -67676,7 +68407,7 @@ if ($EOF) {
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -68819,9 +69550,9 @@ $Temp .= $1;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -68880,7 +69611,7 @@ $Temp .= $1;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -68888,7 +69619,7 @@ $Temp .= $1;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -68964,9 +69695,9 @@ $Temp .= q@�@;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -69025,7 +69756,7 @@ $Temp .= q@�@;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -69033,7 +69764,7 @@ $Temp .= q@�@;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -69103,9 +69834,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -69164,7 +69895,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -69172,7 +69903,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -69242,9 +69973,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -69303,7 +70034,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -69311,7 +70042,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -69381,9 +70112,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -69442,7 +70173,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -69450,7 +70181,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -69520,9 +70251,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -69581,7 +70312,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -69589,7 +70320,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -69659,9 +70390,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -69720,7 +70451,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -69728,7 +70459,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -69799,9 +70530,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -69860,7 +70591,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -69868,7 +70599,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -69938,9 +70669,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -69999,7 +70730,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -70007,7 +70738,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -70081,9 +70812,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -70142,7 +70873,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -70150,7 +70881,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -70220,9 +70951,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -70281,7 +71012,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -70289,7 +71020,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -70359,9 +71090,9 @@ return 1 if $return;
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -70420,7 +71151,7 @@ return 1 if $return;
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -70428,7 +71159,7 @@ return 1 if $return;
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -70499,9 +71230,9 @@ if ($EOF) {
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -70560,7 +71291,7 @@ if ($EOF) {
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -70568,7 +71299,7 @@ if ($EOF) {
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -70883,9 +71614,9 @@ $State = TAG_NAME_STATE;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 $State = BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'end-tag-open-ws', level => 'm',
@@ -70895,9 +71626,9 @@ $Token->{q<data>} .= $1;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= q@
-@;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -70953,7 +71684,7 @@ if ($EOF) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @$Tokens, $Token;
 $State = DATA_STATE;
 
@@ -70970,7 +71701,8 @@ return 0;
 };
 $StateActions->[IGNORED_SECTION_MDO_STATE] = sub {
 if ($Input =~ /\G([\<])/gcs) {
-$State = IGNORED_SECTION_TAG_STATE;
+$State = IGNORED_SECTION_TAG_OPEN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\[])/gcs) {
 push @$OpenMarkedSections, 'IGNORE';
 $State = IGNORED_SECTION_STATE;
@@ -71020,7 +71752,8 @@ $StateActions->[IGNORED_SECTION_STATE] = sub {
 if ($Input =~ /\G([^\<\]]+)/gcs) {
 
 } elsif ($Input =~ /\G([\<])/gcs) {
-$State = IGNORED_SECTION_TAG_STATE;
+$State = IGNORED_SECTION_TAG_OPEN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\]])/gcs) {
 $State = IN_IGNORED_SECTION_MSC_STATE;
 } else {
@@ -71061,11 +71794,12 @@ return 1;
 }
 return 0;
 };
-$StateActions->[IGNORED_SECTION_TAG_STATE] = sub {
+$StateActions->[IGNORED_SECTION_TAG_OPEN_STATE] = sub {
 if ($Input =~ /\G([\!])/gcs) {
 $State = IGNORED_SECTION_MDO_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
-$State = IGNORED_SECTION_TAG_STATE;
+$State = IGNORED_SECTION_TAG_OPEN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\]])/gcs) {
 $State = IN_IGNORED_SECTION_MSC_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -71207,30 +71941,30 @@ return 0;
 };
 $StateActions->[IN_PIC_STATE] = sub {
 if ($Input =~ /\G([\])/gcs) {
-$Token->{q<data>} .= q@?@;
-$Token->{q<data>} .= q@
-@;
+push @{$Token->{q<data>}}, [q@?@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = PI_DATA_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 $State = DATA_STATE;
 push @$Tokens, $Token;
 } elsif ($Input =~ /\G([\?])/gcs) {
-$Token->{q<data>} .= q@?@;
+push @{$Token->{q<data>}}, [q@?@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\ ])/gcs) {
-$Token->{q<data>} .= q@?@;
+push @{$Token->{q<data>}}, [q@?@, $DI, $Offset + (pos $Input) - length $1];
 $State = PI_DATA_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G(.)/gcs) {
-$Token->{q<data>} .= q@?@;
+push @{$Token->{q<data>}}, [q@?@, $DI, $Offset + (pos $Input) - length $1];
 $State = PI_DATA_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
-$Token->{q<data>} .= q@?@;
+push @{$Token->{q<data>}}, [q@?@, $DI, $Offset + (pos $Input)];
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
@@ -71274,10 +72008,10 @@ $State = MDO_STATE_D;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -71287,10 +72021,10 @@ $Token->{q<data>} .= q@�@;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
-$Token->{q<data>} .= q@
-@;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -71301,8 +72035,8 @@ $State = BOGUS_COMMENT_STATE_CR;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DATA_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -71314,10 +72048,10 @@ $State = DATA_STATE;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -71328,8 +72062,8 @@ if ($EOF) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DATA_STATE;
 
@@ -71350,7 +72084,7 @@ if ($Input =~ /\G([\-])/gcs) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 $State = COMMENT_START_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
@@ -71361,10 +72095,10 @@ $State = COMMENT_START_STATE;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -71374,10 +72108,10 @@ $Token->{q<data>} .= q@�@;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
-$Token->{q<data>} .= q@
-@;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -71388,8 +72122,8 @@ $State = BOGUS_COMMENT_STATE_CR;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DATA_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -71401,10 +72135,10 @@ $State = DATA_STATE;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -71415,8 +72149,8 @@ if ($EOF) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DATA_STATE;
 
@@ -71447,10 +72181,10 @@ $State = MDO_STATE_DO;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -71460,10 +72194,10 @@ $Token->{q<data>} .= q@�@;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
-$Token->{q<data>} .= q@
-@;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -71474,8 +72208,8 @@ $State = BOGUS_COMMENT_STATE_CR;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DATA_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -71487,10 +72221,10 @@ $State = DATA_STATE;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -71501,8 +72235,8 @@ if ($EOF) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DATA_STATE;
 
@@ -71533,10 +72267,10 @@ $State = MDO_STATE_DOC;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -71546,10 +72280,10 @@ $Token->{q<data>} .= q@�@;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
-$Token->{q<data>} .= q@
-@;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -71560,8 +72294,8 @@ $State = BOGUS_COMMENT_STATE_CR;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DATA_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -71573,10 +72307,10 @@ $State = DATA_STATE;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -71587,8 +72321,8 @@ if ($EOF) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DATA_STATE;
 
@@ -71619,10 +72353,10 @@ $State = MDO_STATE_DOCT;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -71632,10 +72366,10 @@ $Token->{q<data>} .= q@�@;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
-$Token->{q<data>} .= q@
-@;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -71646,8 +72380,8 @@ $State = BOGUS_COMMENT_STATE_CR;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DATA_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -71659,10 +72393,10 @@ $State = DATA_STATE;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -71673,8 +72407,8 @@ if ($EOF) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DATA_STATE;
 
@@ -71705,10 +72439,10 @@ $State = MDO_STATE_DOCTY;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -71718,10 +72452,10 @@ $Token->{q<data>} .= q@�@;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
-$Token->{q<data>} .= q@
-@;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -71732,8 +72466,8 @@ $State = BOGUS_COMMENT_STATE_CR;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DATA_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -71745,10 +72479,10 @@ $State = DATA_STATE;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -71759,8 +72493,8 @@ if ($EOF) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DATA_STATE;
 
@@ -71791,10 +72525,10 @@ $State = MDO_STATE_DOCTYP;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -71804,10 +72538,10 @@ $Token->{q<data>} .= q@�@;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
-$Token->{q<data>} .= q@
-@;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -71818,8 +72552,8 @@ $State = BOGUS_COMMENT_STATE_CR;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DATA_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -71831,10 +72565,10 @@ $State = DATA_STATE;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -71845,8 +72579,8 @@ if ($EOF) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DATA_STATE;
 
@@ -71871,10 +72605,10 @@ if ($Input =~ /\G([\ ])/gcs) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -71884,10 +72618,10 @@ $Token->{q<data>} .= q@�@;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
-$Token->{q<data>} .= q@
-@;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -71898,8 +72632,8 @@ $State = BOGUS_COMMENT_STATE_CR;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DATA_STATE;
 } elsif ($Input =~ /\G([E])/gcs) {
@@ -71931,10 +72665,10 @@ $State = DOCTYPE_STATE;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -71945,8 +72679,8 @@ if ($EOF) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DATA_STATE;
 
@@ -71974,10 +72708,10 @@ $State = MDO_STATE__5BC;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -71987,10 +72721,10 @@ $Token->{q<data>} .= q@�@;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
-$Token->{q<data>} .= q@
-@;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -72001,8 +72735,8 @@ $State = BOGUS_COMMENT_STATE_CR;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DATA_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -72014,10 +72748,10 @@ $State = DATA_STATE;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -72028,8 +72762,8 @@ if ($EOF) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DATA_STATE;
 
@@ -72057,10 +72791,10 @@ $State = MDO_STATE__5BCD;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -72070,10 +72804,10 @@ $Token->{q<data>} .= q@�@;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
-$Token->{q<data>} .= q@
-@;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -72084,8 +72818,8 @@ $State = BOGUS_COMMENT_STATE_CR;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DATA_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -72097,10 +72831,10 @@ $State = DATA_STATE;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -72111,8 +72845,8 @@ if ($EOF) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DATA_STATE;
 
@@ -72140,10 +72874,10 @@ $State = MDO_STATE__5BCDA;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -72153,10 +72887,10 @@ $Token->{q<data>} .= q@�@;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
-$Token->{q<data>} .= q@
-@;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -72167,8 +72901,8 @@ $State = BOGUS_COMMENT_STATE_CR;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DATA_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -72180,10 +72914,10 @@ $State = DATA_STATE;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -72194,8 +72928,8 @@ if ($EOF) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DATA_STATE;
 
@@ -72223,10 +72957,10 @@ $State = MDO_STATE__5BCDAT;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -72236,10 +72970,10 @@ $Token->{q<data>} .= q@�@;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
-$Token->{q<data>} .= q@
-@;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -72250,8 +72984,8 @@ $State = BOGUS_COMMENT_STATE_CR;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DATA_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -72263,10 +72997,10 @@ $State = DATA_STATE;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -72277,8 +73011,8 @@ if ($EOF) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DATA_STATE;
 
@@ -72306,10 +73040,10 @@ $State = MDO_STATE__5BCDATA;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -72319,10 +73053,10 @@ $Token->{q<data>} .= q@�@;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
-$Token->{q<data>} .= q@
-@;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -72333,8 +73067,8 @@ $State = BOGUS_COMMENT_STATE_CR;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DATA_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -72346,10 +73080,10 @@ $State = DATA_STATE;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -72360,8 +73094,8 @@ if ($EOF) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DATA_STATE;
 
@@ -72386,10 +73120,10 @@ if ($Input =~ /\G([\ ])/gcs) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= q@�@;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -72399,10 +73133,10 @@ $Token->{q<data>} .= q@�@;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
-$Token->{q<data>} .= q@
-@;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -72413,8 +73147,8 @@ $State = BOGUS_COMMENT_STATE_CR;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DATA_STATE;
 } elsif ($Input =~ /\G([\[])/gcs) {
@@ -72434,10 +73168,10 @@ $State = CDATA_SECTION_STATE;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-$Token->{q<data>} .= $1;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -72448,8 +73182,8 @@ if ($EOF) {
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
-$Token->{q<data>} .= $Temp;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DATA_STATE;
 
@@ -72516,15 +73250,17 @@ $Temp .= $1;
                               di => $DI, index => $TempIndex};
             } else {
               push @$Callbacks, [$OnMDEntityReference,
-                                 {entity => $ent}];
+                                 {entity => $ent,
+                                  ref => {di => $DI, index => $TempIndex}}];
               $TempIndex += length $Temp;
               $Temp = '';
               $return = 1;
               last REF;
             }
           } else {
-            push @$Errors, {type => 'entity not declared', value => $Temp,
-                            level => 'm',
+            push @$Errors, {level => 'm',
+                            type => 'entity not declared',
+                            value => $Temp,
                             di => $DI, index => $TempIndex};
             $DTDDefs->{entity_names}->{$Temp}
               ||= {di => $DI, index => $TempIndex};
@@ -72665,15 +73401,17 @@ $Temp .= $1;
                               di => $DI, index => $TempIndex};
             } else {
               push @$Callbacks, [$OnMDEntityReference,
-                                 {entity => $ent}];
+                                 {entity => $ent,
+                                  ref => {di => $DI, index => $TempIndex}}];
               $TempIndex += length $Temp;
               $Temp = '';
               $return = 1;
               last REF;
             }
           } else {
-            push @$Errors, {type => 'entity not declared', value => $Temp,
-                            level => 'm',
+            push @$Errors, {level => 'm',
+                            type => 'entity not declared',
+                            value => $Temp,
                             di => $DI, index => $TempIndex};
             $DTDDefs->{entity_names}->{$Temp}
               ||= {di => $DI, index => $TempIndex};
@@ -72880,15 +73618,17 @@ $Temp .= $1;
               last REF;
             } else {
               push @$Callbacks, [$OnDTDEntityReference,
-                                 {entity => $ent}];
+                                 {entity => $ent,
+                                  ref => {di => $DI, index => $TempIndex}}];
               $TempIndex += length $Temp;
               $Temp = '';
               $return = 1;
               last REF;
             }
           } else {
-            push @$Errors, {type => 'entity not declared', value => $Temp,
-                            level => 'm',
+            push @$Errors, {level => 'm',
+                            type => 'entity not declared',
+                            value => $Temp,
                             di => $DI, index => $TempIndex};
             $DTDDefs->{entity_names}->{$Temp}
               ||= {di => $DI, index => $TempIndex};
@@ -72971,7 +73711,8 @@ $State = DTD_STATE;
             push @$Errors, {type => 'parameter-entity-name-in-dtd-003c', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = DOCTYPE_TAG_STATE;
+$State = DOCTYPE_TAG_OPEN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\=])/gcs) {
 
             push @$Errors, {type => 'parameter-entity-name-in-dtd-003d', level => 'm',
@@ -73071,15 +73812,17 @@ $Temp .= $1;
                               di => $DI, index => $TempIndex};
             } else {
               push @$Callbacks, [$OnEntityValueEntityReference,
-                                 {entity => $ent}];
+                                 {entity => $ent,
+                                  ref => {di => $DI, index => $TempIndex}}];
               $TempIndex += length $Temp;
               $Temp = '';
               $return = 1;
               last REF;
             }
           } else {
-            push @$Errors, {type => 'entity not declared', value => $Temp,
-                            level => 'm',
+            push @$Errors, {level => 'm',
+                            type => 'entity not declared',
+                            value => $Temp,
                             di => $DI, index => $TempIndex};
             $DTDDefs->{entity_names}->{$Temp}
               ||= {di => $DI, index => $TempIndex};
@@ -73263,15 +74006,17 @@ $Temp .= $1;
                               di => $DI, index => $TempIndex};
             } else {
               push @$Callbacks, [$OnEntityValueEntityReference,
-                                 {entity => $ent}];
+                                 {entity => $ent,
+                                  ref => {di => $DI, index => $TempIndex}}];
               $TempIndex += length $Temp;
               $Temp = '';
               $return = 1;
               last REF;
             }
           } else {
-            push @$Errors, {type => 'entity not declared', value => $Temp,
-                            level => 'm',
+            push @$Errors, {level => 'm',
+                            type => 'entity not declared',
+                            value => $Temp,
                             di => $DI, index => $TempIndex};
             $DTDDefs->{entity_names}->{$Temp}
               ||= {di => $DI, index => $TempIndex};
@@ -73455,15 +74200,17 @@ $Temp .= $1;
                               di => $DI, index => $TempIndex};
             } else {
               push @$Callbacks, [$OnEntityValueEntityReference,
-                                 {entity => $ent}];
+                                 {entity => $ent,
+                                  ref => {di => $DI, index => $TempIndex}}];
               $TempIndex += length $Temp;
               $Temp = '';
               $return = 1;
               last REF;
             }
           } else {
-            push @$Errors, {type => 'entity not declared', value => $Temp,
-                            level => 'm',
+            push @$Errors, {level => 'm',
+                            type => 'entity not declared',
+                            value => $Temp,
                             di => $DI, index => $TempIndex};
             $DTDDefs->{entity_names}->{$Temp}
               ||= {di => $DI, index => $TempIndex};
@@ -73649,15 +74396,17 @@ $Temp .= $1;
                               di => $DI, index => $TempIndex};
             } else {
               push @$Callbacks, [$OnMDEntityReference,
-                                 {entity => $ent}];
+                                 {entity => $ent,
+                                  ref => {di => $DI, index => $TempIndex}}];
               $TempIndex += length $Temp;
               $Temp = '';
               $return = 1;
               last REF;
             }
           } else {
-            push @$Errors, {type => 'entity not declared', value => $Temp,
-                            level => 'm',
+            push @$Errors, {level => 'm',
+                            type => 'entity not declared',
+                            value => $Temp,
                             di => $DI, index => $TempIndex};
             $DTDDefs->{entity_names}->{$Temp}
               ||= {di => $DI, index => $TempIndex};
@@ -73827,15 +74576,17 @@ $Temp .= $1;
                               di => $DI, index => $TempIndex};
             } else {
               push @$Callbacks, [$OnMDEntityReference,
-                                 {entity => $ent}];
+                                 {entity => $ent,
+                                  ref => {di => $DI, index => $TempIndex}}];
               $TempIndex += length $Temp;
               $Temp = '';
               $return = 1;
               last REF;
             }
           } else {
-            push @$Errors, {type => 'entity not declared', value => $Temp,
-                            level => 'm',
+            push @$Errors, {level => 'm',
+                            type => 'entity not declared',
+                            value => $Temp,
                             di => $DI, index => $TempIndex};
             $DTDDefs->{entity_names}->{$Temp}
               ||= {di => $DI, index => $TempIndex};
@@ -73920,7 +74671,8 @@ $State = BOGUS_STATUS_KWD_STATE;
           }
         
 push @$OpenMarkedSections, 'IGNORE';
-$State = IGNORED_SECTION_TAG_STATE;
+$State = IGNORED_SECTION_TAG_OPEN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\=])/gcs) {
 
             push @$Errors, {type => 'parameter-entity-name-in-status-keyword-003d', level => 'm',
@@ -74239,84 +74991,7 @@ return 1;
 return 0;
 };
 $StateActions->[TAG_OPEN_STATE] = sub {
-if ($Input =~ /\G\?([^\ \	\
-\\\ \?])([^\ \	\
-\\\ \?]*)([\	\
-\\ ])([\	\
-\\ ]*)([^\ \	\
-\\\ \?])([^\ \\?]*)\?([^\ \\>\?])([^\ \\?]*)/gcs) {
-$State = PI_STATE;
-
-        $Token = {type => PROCESSING_INSTRUCTION_TOKEN, tn => 0, DTDMode => $DTDMode,
-                  di => $DI, index => $AnchoredIndex};
-      
-$Token->{q<target>} = $1;
-$Token->{q<data>} = '';
-$State = PI_TARGET_STATE;
-$Token->{q<target>} .= $2;
-$State = A_PI_TARGET_STATE;
-$Temp = $3;
-$TempIndex = $Offset + (pos $Input) - (length $1);
-$Temp .= $4;
-$State = PI_DATA_STATE;
-$Token->{q<data>} .= $5;
-$Token->{q<data>} .= $6;
-$State = IN_PIC_STATE;
-$Token->{q<data>} .= q@?@;
-$State = PI_DATA_STATE;
-$Token->{q<data>} .= $7;
-$Token->{q<data>} .= $8;
-} elsif ($Input =~ /\G\?([^\ \	\
-\\\ \?])([^\ \	\
-\\\ \?]*)([\	\
-\\ ])([\	\
-\\ ]*)([^\ \	\
-\\\ \?])([^\ \\?]*)\?\>/gcs) {
-$State = PI_STATE;
-
-        $Token = {type => PROCESSING_INSTRUCTION_TOKEN, tn => 0, DTDMode => $DTDMode,
-                  di => $DI, index => $AnchoredIndex};
-      
-$Token->{q<target>} = $1;
-$Token->{q<data>} = '';
-$State = PI_TARGET_STATE;
-$Token->{q<target>} .= $2;
-$State = A_PI_TARGET_STATE;
-$Temp = $3;
-$TempIndex = $Offset + (pos $Input) - (length $1);
-$Temp .= $4;
-$State = PI_DATA_STATE;
-$Token->{q<data>} .= $5;
-$Token->{q<data>} .= $6;
-$State = IN_PIC_STATE;
-$State = DATA_STATE;
-push @$Tokens, $Token;
-} elsif ($Input =~ /\G\?([^\ \	\
-\\\ \?])([^\ \	\
-\\\ \?]*)([\	\
-\\ ])([\	\
-\\ ]*)\?([^\ \\>\?])([^\ \\?]*)\?/gcs) {
-$State = PI_STATE;
-
-        $Token = {type => PROCESSING_INSTRUCTION_TOKEN, tn => 0, DTDMode => $DTDMode,
-                  di => $DI, index => $AnchoredIndex};
-      
-$Token->{q<target>} = $1;
-$Token->{q<data>} = '';
-$State = PI_TARGET_STATE;
-$Token->{q<target>} .= $2;
-$State = A_PI_TARGET_STATE;
-$Temp = $3;
-$TempIndex = $Offset + (pos $Input) - (length $1);
-$Temp .= $4;
-$State = PI_DATA_STATE;
-$State = IN_PIC_STATE;
-$Token->{q<data>} .= q@?@;
-$State = PI_DATA_STATE;
-$Token->{q<data>} .= $5;
-$Token->{q<data>} .= $6;
-$State = IN_PIC_STATE;
-} elsif ($Input =~ /\G([^\ \	\
+if ($Input =~ /\G([^\ \	\
 \\\ \!\/\>\?])([^\ \	\
 \\\ \/\>A-Z]*)([A-Z]*)[\	\
 \\\ ][\	\
@@ -74336,6 +75011,7 @@ $State = B_ATTR_NAME_STATE;
 \\\ ][\	\
 \\\ ]*/gcs) {
 $State = END_TAG_OPEN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 
         $Token = {type => END_TAG_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
@@ -74345,28 +75021,6 @@ $State = TAG_NAME_STATE;
 $Token->{q<tag_name>} .= $2;
 $Token->{q<tag_name>} .= $3;
 $State = B_ATTR_NAME_STATE;
-} elsif ($Input =~ /\G\?([^\ \	\
-\\\ \?])([^\ \	\
-\\\ \?]*)([\	\
-\\ ])([\	\
-\\ ]*)\?\>/gcs) {
-$State = PI_STATE;
-
-        $Token = {type => PROCESSING_INSTRUCTION_TOKEN, tn => 0, DTDMode => $DTDMode,
-                  di => $DI, index => $AnchoredIndex};
-      
-$Token->{q<target>} = $1;
-$Token->{q<data>} = '';
-$State = PI_TARGET_STATE;
-$Token->{q<target>} .= $2;
-$State = A_PI_TARGET_STATE;
-$Temp = $3;
-$TempIndex = $Offset + (pos $Input) - (length $1);
-$Temp .= $4;
-$State = PI_DATA_STATE;
-$State = IN_PIC_STATE;
-$State = DATA_STATE;
-push @$Tokens, $Token;
 } elsif ($Input =~ /\G([^\ \	\
 \\\ \!\/\>\?])([^\ \	\
 \\\ \/\>A-Z]*)([A-Z]*)\/\>/gcs) {
@@ -74434,18 +75088,18 @@ $State = MDO_STATE__;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 $State = COMMENT_START_STATE;
 $State = COMMENT_START_DASH_STATE;
-$Token->{q<data>} .= q@-@;
-$Token->{q<data>} .= $2;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
 $State = COMMENT_STATE;
-$Token->{q<data>} .= $3;
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
 $State = COMMENT_END_DASH_STATE;
-$Token->{q<data>} .= q@-@;
-$Token->{q<data>} .= $4;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
 $State = COMMENT_STATE;
-$Token->{q<data>} .= $5;
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
 } elsif ($Input =~ /\G([^\ \	\
 \\\ \!\/\>\?])([^\ \	\
 \\\ \/\>A-Z]*)([A-Z]*)\>/gcs) {
@@ -74457,61 +75111,6 @@ $Token->{q<tag_name>} = $1;
 $State = TAG_NAME_STATE;
 $Token->{q<tag_name>} .= $2;
 $Token->{q<tag_name>} .= $3;
-$State = DATA_STATE;
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            if (keys %{$Token->{attrs} or {}}) {
-              push @$Errors, {type => 'end tag attribute',
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-            if ($Token->{self_closing_flag}) {
-              push @$Errors, {type => 'nestc',
-                              text => $Token->{tag_name},
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-          }
-        
-push @$Tokens, $Token;
-
-          if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            if (not defined $LastStartTagName) { # "first start tag"
-              $LastStartTagName = $Token->{tag_name};
-              return 1;
-            } else {
-              $LastStartTagName = $Token->{tag_name};
-            }
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
-          }
-        
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
-          }
-        
-} elsif ($Input =~ /\G\/([^\ \	\
-\\\ \>])([^\ \	\
-\\\ \/\>A-Z]*)([A-Z]*)\/\>/gcs) {
-$State = END_TAG_OPEN_STATE;
-
-        $Token = {type => END_TAG_TOKEN, tn => 0, DTDMode => $DTDMode,
-                  di => $DI, index => $AnchoredIndex};
-      
-$Token->{q<tag_name>} = $1;
-$State = TAG_NAME_STATE;
-$Token->{q<tag_name>} .= $2;
-$Token->{q<tag_name>} .= $3;
-$State = SELF_CLOSING_START_TAG_STATE;
-$Token->{q<self_closing_flag>} = 1;
 $State = DATA_STATE;
 
           if ($Token->{type} == END_TAG_TOKEN) {
@@ -74566,20 +75165,77 @@ $State = MDO_STATE__;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 $State = COMMENT_START_STATE;
-$Token->{q<data>} .= $2;
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
 $State = COMMENT_STATE;
-$Token->{q<data>} .= $3;
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
 $State = COMMENT_END_DASH_STATE;
-$Token->{q<data>} .= q@-@;
-$Token->{q<data>} .= $4;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
 $State = COMMENT_STATE;
-$Token->{q<data>} .= $5;
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+} elsif ($Input =~ /\G\/([^\ \	\
+\\\ \>])([^\ \	\
+\\\ \/\>A-Z]*)([A-Z]*)\/\>/gcs) {
+$State = END_TAG_OPEN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+
+        $Token = {type => END_TAG_TOKEN, tn => 0, DTDMode => $DTDMode,
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<tag_name>} = $1;
+$State = TAG_NAME_STATE;
+$Token->{q<tag_name>} .= $2;
+$Token->{q<tag_name>} .= $3;
+$State = SELF_CLOSING_START_TAG_STATE;
+$Token->{q<self_closing_flag>} = 1;
+$State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
+push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
+          }
+        
 } elsif ($Input =~ /\G\/([^\ \	\
 \\\ \>])([^\ \	\
 \\\ \/\>A-Z]*)([A-Z]*)\>/gcs) {
 $State = END_TAG_OPEN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 
         $Token = {type => END_TAG_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
@@ -74629,21 +75285,6 @@ push @$Tokens, $Token;
             return 1 if @$OE <= 1;
           }
         
-} elsif ($Input =~ /\G\?([^\ \	\
-\\\ \?])([^\ \	\
-\\\ \?]*)\?\>/gcs) {
-$State = PI_STATE;
-
-        $Token = {type => PROCESSING_INSTRUCTION_TOKEN, tn => 0, DTDMode => $DTDMode,
-                  di => $DI, index => $AnchoredIndex};
-      
-$Token->{q<target>} = $1;
-$Token->{q<data>} = '';
-$State = PI_TARGET_STATE;
-$Token->{q<target>} .= $2;
-$State = PI_TARGET_QUESTION_STATE;
-$State = DATA_STATE;
-push @$Tokens, $Token;
 } elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\>])([^\ \\-]*)\-\-\>/gcs) {
 
         $Temp = '';
@@ -74657,13 +75298,13 @@ $State = MDO_STATE__;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 $State = COMMENT_START_STATE;
 $State = COMMENT_START_DASH_STATE;
-$Token->{q<data>} .= q@-@;
-$Token->{q<data>} .= $2;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
 $State = COMMENT_STATE;
-$Token->{q<data>} .= $3;
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
 $State = COMMENT_END_DASH_STATE;
 $State = COMMENT_END_STATE;
 $State = DATA_STATE;
@@ -74681,11 +75322,11 @@ $State = MDO_STATE__;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 $State = COMMENT_START_STATE;
-$Token->{q<data>} .= $2;
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
 $State = COMMENT_STATE;
-$Token->{q<data>} .= $3;
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
 $State = COMMENT_END_DASH_STATE;
 $State = COMMENT_END_STATE;
 $State = DATA_STATE;
@@ -74703,7 +75344,7 @@ $State = MDO_STATE__;
         $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<data>} = '';
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 $State = COMMENT_START_STATE;
 $State = COMMENT_START_DASH_STATE;
 $State = COMMENT_END_STATE;
@@ -74717,6 +75358,7 @@ push @$Tokens, $Token;
 $State = MDO_STATE;
 } elsif ($Input =~ /\G([\/])/gcs) {
 $State = END_TAG_OPEN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\?])/gcs) {
 $State = PI_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -74822,10 +75464,11 @@ $State = TEXT_DECL_IN_ENT_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -74840,10 +75483,11 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\%])/gcs) {
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -74859,10 +75503,11 @@ $State = PE_NAME_IN_ENT_VALUE_IN_ENT_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -74879,10 +75524,11 @@ $State = ENT_VALUE_IN_ENT_STATE___CHARREF_STATE;
 $Temp .= $1;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -74896,10 +75542,11 @@ $State = ENT_VALUE_IN_ENT_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -74919,10 +75566,11 @@ push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 if ($EOF) {
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -74977,10 +75625,11 @@ $State = TEXT_DECL_IN_ENT_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -74995,10 +75644,11 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\%])/gcs) {
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -75014,10 +75664,11 @@ $State = PE_NAME_IN_ENT_VALUE_IN_ENT_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -75034,10 +75685,11 @@ $State = ENT_VALUE_IN_ENT_STATE___CHARREF_STATE;
 $Temp .= $1;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -75051,10 +75703,11 @@ $State = ENT_VALUE_IN_ENT_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -75077,10 +75730,11 @@ $Temp .= $1;
 if ($EOF) {
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -75253,13 +75907,13 @@ sub dom_tree ($$) {
       }
 
     } elsif ($op->[0] eq 'comment') {
-      my $comment = $doc->create_comment ($op->[1]->{data});
+      my $comment = $doc->create_comment (join '', map { $_->[0] } @{$op->[1]->{data}}); # IndexedString
       $comment->manakai_set_source_location
           (['', $op->[1]->{di}, $op->[1]->{index}]);
       $nodes->[$op->[2]]->append_child ($comment);
     } elsif ($op->[0] eq 'pi') {
       my $pi = $doc->create_processing_instruction
-          ($op->[1]->{target}, $op->[1]->{data});
+          ($op->[1]->{target}, join '', map { $_->[0] } @{$op->[1]->{data}}); # IndexedString
       $pi->manakai_set_source_location
           (['', $op->[1]->{di}, $op->[1]->{index}]);
       if ($op->[2] == 1) { # DOCTYPE

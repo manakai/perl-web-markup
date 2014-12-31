@@ -515,7 +515,7 @@ sub switch_state_code ($) {
   my $state = $_[0];
   my @code;
   push @code, sprintf q{$State = %s;}, state_const $state;
-  if ($state eq 'tag open state' or
+  if ($state =~ /tag open state/ or
       $state =~ /less-than sign state/) {
     push @code,
         q{$AnchoredIndex = $Offset + (pos $Input) - 1;};
@@ -818,9 +818,20 @@ sub serialize_actions ($;%) {
         $value = sprintf q[$%d], $index;
       }
       if ($type eq 'set') {
-        push @result, sprintf q[$Token->{q<%s>} = %s;], $field, $value;
+        if ($field eq 'value' or $field eq 'data') {
+          # IndexedString
+          if (defined $_->{capture_index}) {
+            push @result, sprintf q[$Token->{q<%s>} = [[%s, $DI, $Offset + $-[%d]]];], $field, $value, $_->{capture_index};
+          } elsif ($args{in_eof}) {
+            push @result, sprintf q[$Token->{q<%s>} = [[%s, $DI, $Offset + (pos $Input)]];], $field, $value;
+          } else {
+            push @result, sprintf q[$Token->{q<%s>} = [[%s, $DI, $Offset + (pos $Input) - length $1]];], $field, $value;
+          }
+        } else {
+          push @result, sprintf q[$Token->{q<%s>} = %s;], $field, $value;
+        }
       } elsif ($type eq 'set-to-attr') {
-        #die if $field eq 'value';
+        #die if $field eq 'value' or $field eq 'data';
         push @result, sprintf q[$Attr->{q<%s>} = %s;], $field, $value;
         if ($field eq 'name') {
           if (defined $_->{capture_index}) {
@@ -831,10 +842,12 @@ sub serialize_actions ($;%) {
           }
         }
       } elsif ($type eq 'append') {
-        if ($field eq 'value') {
+        if ($field eq 'value' or $field eq 'data') {
           # IndexedString
           if (defined $_->{capture_index}) {
             push @result, sprintf q[push @{$Token->{q<%s>}}, [%s, $DI, $Offset + $-[%d]];], $field, $value, $_->{capture_index};
+          } elsif ($args{in_eof}) {
+            push @result, sprintf q[push @{$Token->{q<%s>}}, [%s, $DI, $Offset + (pos $Input)];], $field, $value;
           } else {
             push @result, sprintf q[push @{$Token->{q<%s>}}, [%s, $DI, $Offset + (pos $Input) - length $1];], $field, $value;
           }
@@ -842,7 +855,7 @@ sub serialize_actions ($;%) {
           push @result, sprintf q[$Token->{q<%s>} .= %s;], $field, $value;
         }
       } elsif ($type eq 'append-to-attr') {
-        if ($field eq 'value') {
+        if ($field eq 'value' or $field eq 'data') {
           # IndexedString
           if (defined $_->{capture_index}) {
             push @result, sprintf q[push @{$Attr->{q<%s>}}, [%s, $DI, $Offset + $-[%d]];], $field, $value, $_->{capture_index};
@@ -898,15 +911,19 @@ sub serialize_actions ($;%) {
     } elsif ($type eq 'set-empty') {
       my $field = $_->{field};
       $field =~ tr/ -/__/ if defined $field;
-      if ($field eq 'value') {
-        push @result, sprintf q[$Token->{q<%s>} = [['', $DI, $Offset + pos $Input]];], $field; # IndexedString
+      if ($field eq 'value' or $field eq 'data') {
+        if (defined $_->{index_offset}) {
+          push @result, sprintf q[$Token->{q<%s>} = [['', $DI, $Offset + (pos $Input) - %d]];], $field, $_->{index_offset}; # IndexedString
+        } else {
+          push @result, sprintf q[$Token->{q<%s>} = [['', $DI, $Offset + pos $Input]];], $field; # IndexedString
+        }
       } else {
         push @result, sprintf q[$Token->{q<%s>} = '';], $field;
       }
     } elsif ($type eq 'set-empty-to-attr') {
       my $field = $_->{field};
       $field =~ tr/ -/__/ if defined $field;
-      if ($field eq 'value') {
+      if ($field eq 'value' or $field eq 'data') {
         push @result, sprintf q[$Attr->{q<%s>} = [['', $Attr->{di}, $Attr->{index}]];], $field; # IndexedString
       } else {
         push @result, sprintf q[$Attr->{q<%s>} = '';], $field;
@@ -919,7 +936,7 @@ sub serialize_actions ($;%) {
     } elsif ($type eq 'append-temp') {
       my $field = $_->{field};
       $field =~ tr/ -/__/ if defined $field;
-      if ($field eq 'value') {
+      if ($field eq 'value' or $field eq 'data') {
         push @result, sprintf q[push @{$Token->{q<%s>}}, [$Temp, $DI, $TempIndex];], $field; # IndexedString
       } else {
         push @result, sprintf q[$Token->{q<%s>} .= $Temp;], $field;
@@ -927,7 +944,7 @@ sub serialize_actions ($;%) {
     } elsif ($type eq 'append-temp-to-attr') {
       my $field = $_->{field};
       $field =~ tr/ -/__/ if defined $field;
-      if ($field eq 'value') {
+      if ($field eq 'value' or $field eq 'data') {
         push @result, sprintf q[push @{$Attr->{q<%s>}}, [$Temp, $DI, $TempIndex];], $field; # IndexedString
       } else {
         push @result, sprintf q[$Attr->{q<%s>} .= $Temp;], $field;
@@ -1049,9 +1066,9 @@ sub serialize_actions ($;%) {
                                   di => $DI, index => $TempIndex};
                   last REF;
                 } else {
-                  # XXX IndexedString mapping
                   push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
                                       in_default_attr => %d}];
                   $TempIndex += length $Temp;
                   $Temp = '';
@@ -1110,7 +1127,7 @@ sub serialize_actions ($;%) {
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -1118,7 +1135,7 @@ sub serialize_actions ($;%) {
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -1199,6 +1216,7 @@ sub serialize_actions ($;%) {
                 ## External parsed entity
                 push @$Callbacks, [$OnContentEntityReference,
                                    {entity => $ent,
+                                    ref => {di => $DI, index => $TempIndex},
                                     ops => $OP}];
                 $TempIndex += length $Temp;
                 $Temp = '';
@@ -1240,7 +1258,7 @@ sub serialize_actions ($;%) {
                   if ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
-                                    type => 'entity not declared', ## TODO: type,
+                                    type => 'entity not declared',
                                     value => $Temp,
                                     di => $DI, index => $TempIndex};
                   }
@@ -1248,7 +1266,7 @@ sub serialize_actions ($;%) {
                 } else {
                   ## Not a declared XML entity.
                   push @$Errors, {level => 'm',
-                                  type => 'entity not declared', ## TODO: type,
+                                  type => 'entity not declared',
                                   value => $Temp,
                                   di => $DI, index => $TempIndex};
                 }
@@ -1259,8 +1277,9 @@ sub serialize_actions ($;%) {
               }
             }
             if ($Temp =~ /;\z/) {
-              push @$Errors, {type => 'entity not declared', value => $Temp,
-                              level => 'm',
+              push @$Errors, {level => 'm',
+                              type => 'entity not declared',
+                              value => $Temp,
                               di => $DI, index => $TempIndex};
               $DTDDefs->{entity_names}->{$Temp}
                   ||= {di => $DI, index => $TempIndex};
@@ -1303,15 +1322,17 @@ sub serialize_actions ($;%) {
               last REF;
             } else {
               push @$Callbacks, [$OnDTDEntityReference,
-                                 {entity => $ent}];
+                                 {entity => $ent,
+                                  ref => {di => $DI, index => $TempIndex}}];
               $TempIndex += length $Temp;
               $Temp = '';
               $return = 1;
               last REF;
             }
           } else {
-            push @$Errors, {type => 'entity not declared', value => $Temp,
-                            level => 'm',
+            push @$Errors, {level => 'm',
+                            type => 'entity not declared',
+                            value => $Temp,
                             di => $DI, index => $TempIndex};
             $DTDDefs->{entity_names}->{$Temp}
               ||= {di => $DI, index => $TempIndex};
@@ -1351,15 +1372,17 @@ sub serialize_actions ($;%) {
                               di => $DI, index => $TempIndex};
             } else {
               push @$Callbacks, [$OnEntityValueEntityReference,
-                                 {entity => $ent}];
+                                 {entity => $ent,
+                                  ref => {di => $DI, index => $TempIndex}}];
               $TempIndex += length $Temp;
               $Temp = '';
               $return = 1;
               last REF;
             }
           } else {
-            push @$Errors, {type => 'entity not declared', value => $Temp,
-                            level => 'm',
+            push @$Errors, {level => 'm',
+                            type => 'entity not declared',
+                            value => $Temp,
                             di => $DI, index => $TempIndex};
             $DTDDefs->{entity_names}->{$Temp}
               ||= {di => $DI, index => $TempIndex};
@@ -1399,15 +1422,17 @@ sub serialize_actions ($;%) {
                               di => $DI, index => $TempIndex};
             } else {
               push @$Callbacks, [$OnMDEntityReference,
-                                 {entity => $ent}];
+                                 {entity => $ent,
+                                  ref => {di => $DI, index => $TempIndex}}];
               $TempIndex += length $Temp;
               $Temp = '';
               $return = 1;
               last REF;
             }
           } else {
-            push @$Errors, {type => 'entity not declared', value => $Temp,
-                            level => 'm',
+            push @$Errors, {level => 'm',
+                            type => 'entity not declared',
+                            value => $Temp,
                             di => $DI, index => $TempIndex};
             $DTDDefs->{entity_names}->{$Temp}
               ||= {di => $DI, index => $TempIndex};
@@ -1431,10 +1456,11 @@ sub serialize_actions ($;%) {
     } elsif ($type eq 'process-xml-declaration-in-temp') {
       push @result, sprintf q{
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => $1,
+          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
-          $text_decl->{data} =~ s/^[\x09\x0A\x0C\x20]+//;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
           _process_xml_decl $text_decl;
         } else {
           push @$Errors, {level => 's',
@@ -1770,12 +1796,19 @@ sub _sc ($) {
 
     sub _process_xml_decl ($) {
       my $token = $_[0];
+      my $data = join '', map { $_->[0] } @{$token->{data}}; # IndexedString
 
-        my $pos = $token->{index}; # XXX + target + space
-        my $req_sp = 0;
+      my $di = $token->{data}->[0]->[1];
+      my $pos = $token->{data}->[0]->[2];
+      for (@{$token->{data}}) {
+        $di = $_->[1];
+        $pos = $_->[2];
+        last if length $_->[0];
+      }
+      my $req_sp = 0;
 
-        if ($token->{data} =~ s/\Aversion[\x09\x0A\x20]*=[\x09\x0A\x20]*
-                                  (?>"([^"]*)"|'([^']*)')([\x09\x0A\x20]*)//x) {
+      if ($data =~ s/\Aversion[\x09\x0A\x20]*=[\x09\x0A\x20]*
+                       (?>"([^"]*)"|'([^']*)')([\x09\x0A\x20]*)//x) {
           my $v = defined $1 ? $1 : $2;
           my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
           $pos += $+[0] - $-[0];
@@ -1783,59 +1816,59 @@ sub _sc ($) {
           $SC->check_hidden_version
               (name => $v,
                onerror => sub {
-                 push @$Errors, {@_, di => $DI, index => $p};
+                 push @$Errors, {@_, di => $di, index => $p};
                });
           unless (defined $CONTEXT) { # XML declaration
             push @$OP, ['xml-version', $v];
           }
-        } else {
+      } else {
           if (not defined $CONTEXT) { # XML declaration
             push @$Errors, {level => 'm',
                             type => 'attribute missing:version',
-                            di => $DI, index => $pos};
+                            di => $di, index => $pos};
           }
-        }
+      }
 
-        if ($token->{data} =~ s/\Aencoding[\x09\x0A\x20]*=[\x09\x0A\x20]*
-                                  (?>"([^"]*)"|'([^']*)')([\x09\x0A\x20]*)//x) {
+      if ($data =~ s/\Aencoding[\x09\x0A\x20]*=[\x09\x0A\x20]*
+                       (?>"([^"]*)"|'([^']*)')([\x09\x0A\x20]*)//x) {
           my $v = defined $1 ? $1 : $2;
           my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
           if ($req_sp) {
             push @$Errors, {level => 'm',
                             type => 'no space before attr name',
-                            di => $DI, index => $p};
+                            di => $di, index => $pos};
           }
           $pos += $+[0] - $-[0];
           $req_sp = not length $3;
           $SC->check_hidden_encoding
               (name => $v,
                onerror => sub {
-                 push @$Errors, {@_, di => $DI, index => $p};
+                 push @$Errors, {@_, di => $di, index => $p};
                });
           unless (defined $CONTEXT) { # XML declaration
             push @$OP, ['xml-encoding', $v];
           }
-        } else {
-          if (defined $CONTEXT) { # text declaration
-            push @$Errors, {level => 'm',
-                            type => 'attribute missing:encoding',
-                            di => $DI, index => $pos};
-          }
+      } else {
+        if (defined $CONTEXT) { # text declaration
+          push @$Errors, {level => 'm',
+                          type => 'attribute missing:encoding',
+                          di => $di, index => $pos};
         }
+      }
 
-        if ($token->{data} =~ s/\Astandalone[\x09\x0A\x20]*=[\x09\x0A\x20]*
-                                  (?>"([^"]*)"|'([^']*)')[\x09\x0A\x20]*//x) {
+      if ($data =~ s/\Astandalone[\x09\x0A\x20]*=[\x09\x0A\x20]*
+                       (?>"([^"]*)"|'([^']*)')[\x09\x0A\x20]*//x) {
           my $v = defined $1 ? $1 : $2;
           if ($req_sp) {
             push @$Errors, {level => 'm',
                             type => 'no space before attr name',
-                            di => $DI, index => $pos};
+                            di => $di, index => $pos};
           }
           if ($v eq 'yes' or $v eq 'no') {
             if (defined $CONTEXT) { # text declaration
               push @$Errors, {level => 'm',
                               type => 'attribute not allowed:standalone',
-                              di => $DI, index => $pos};
+                              di => $di, index => $pos};
             } else {
               push @$OP, ['xml-standalone',
                           $DTDDefs->{XMLStandalone} = ($v ne 'no')];
@@ -1844,17 +1877,16 @@ sub _sc ($) {
             my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
             push @$Errors, {level => 'm',
                             type => 'XML standalone:syntax error',
-                            di => $DI, index => $p, value => $v};
+                            di => $di, index => $p, value => $v};
           }
           $pos += $+[0] - $-[0];
-        }
+      }
 
-        if (length $token->{data}) {
+      if (length $data) {
           push @$Errors, {level => 'm',
                           type => 'bogus XML declaration',
-                          di => $DI, index => $pos};
-        }
-
+                          di => $di, index => $pos};
+      }
     } # _process_xml_decl
   } if $LANG eq 'XML';
 
@@ -2507,8 +2539,8 @@ sub actions_to_code ($;%) {
                 $DTDDefs->{XMLStandalone}) {
               push @$Errors, {level => 'm',
                               type => 'VC:Standalone Document Declaration:attr',
-                                di => $def->{di}, index => $def->{index},
-                                value => $attr_name};
+                              di => $def->{di}, index => $def->{index},
+                              value => $attr_name};
               $def->{external}->{vc_error_reported} = 1;
             }
           }
@@ -2620,7 +2652,7 @@ sub actions_to_code ($;%) {
         if (defined $token->{public_identifier} and
             $Web::HTML::_SyntaxDefs->{charrefs_pubids}->{$token->{public_identifier}}) {
           $DTDDefs->{has_charref_decls} = 1;
-          $DTDDefs->{is_charref_declarations_entity};
+          $DTDDefs->{is_charref_declarations_entity} = 1;
         } else {
           $DTDDefs->{need_predefined_decls} = 1;
         }
@@ -2711,7 +2743,7 @@ sub actions_to_code ($;%) {
             push @$OP, ['%s', $token => 1];
             push @$Errors, {level => 'w',
                             type => 'xml:dtd:pi',
-                            di => $DI, index => $Offset + pos $Input};
+                            di => $token->{di}, index => $token->{index}};
           }, $type;
         } elsif ($act->{position} eq 'oe[0]') {
           push @code, sprintf q{
@@ -2811,7 +2843,8 @@ sub actions_to_code ($;%) {
     } elsif ($act->{type} eq 'doctype-switch') {
       push @code, q{
         if (not defined $token->{name} or not $token->{name} eq 'html') {
-          push @$Errors, {type => 'bad DOCTYPE name', level => 'm',
+          push @$Errors, {level => 'm',
+                          type => 'bad DOCTYPE name',
                           value => $token->{name},
                           di => $token->{di}, index => $token->{index}};
           unless ($IframeSrcdoc) {
@@ -3260,12 +3293,12 @@ sub actions_to_code ($;%) {
         } elsif (not $DTDDefs->{elements}->{$token->{name}}->{has_element_decl}) {
           push @$Errors, {level => 'w',
                           type => 'xml:dtd:ext decl',
-                          di => $DI, index => $Offset + pos $Input}
+                          di => $token->{di}, index => $token->{index}}
               unless $token->{DTDMode} eq 'internal subset'; # not in parameter entity
           $SC->check_hidden_name
               (name => $token->{name},
                onerror => sub {
-                 push @$Errors, {@_, di => $DI, index => $Offset + pos $Input};
+                 push @$Errors, {@_, di => $token->{di}, index => $token->{index}};
                });
           my $def = $DTDDefs->{elements}->{$token->{name}};
           for (qw(name di index cmgroup)) {
@@ -3278,16 +3311,16 @@ sub actions_to_code ($;%) {
               push @$Errors, {level => 'm',
                               type => 'xml:dtd:unknown content keyword',
                               value => $token->{content_keyword},
-                              di => $DI, index => $Offset + pos $Input};
+                              di => $token->{di}, index => $token->{index}};
             }
           }
           ## XXX $self->{t}->{content} syntax check.
           $DTDDefs->{elements}->{$token->{name}}->{has_element_decl} = 1;
         } else {
           push @$Errors, {level => 'm',
-                          type => 'duplicate element decl', ## TODO: type
+                          type => 'duplicate element decl',
                           value => $token->{name},
-                          di => $DI, index => $Offset + pos $Input};
+                          di => $token->{di}, index => $token->{index}};
         }
       };
     } elsif ($act->{type} eq 'process an ATTLIST token') {
@@ -3296,16 +3329,16 @@ sub actions_to_code ($;%) {
           $SC->check_hidden_name
               (name => $token->{name},
                onerror => sub {
-                 push @$Errors, {@_, di => $DI, index => $Offset + pos $Input};
+                 push @$Errors, {@_, di => $token->{di}, index => $token->{index}};
                });
           if ($token->{StopProcessing}) {
             push @$Errors, {level => 'w',
                             type => 'xml:dtd:attlist ignored',
-                            di => $DI, index => $Offset + pos $Input};
+                            di => $token->{di}, index => $token->{index}};
           } else { # not $StopProcessing
             push @$Errors, {level => 'w',
                             type => 'xml:dtd:ext decl',
-                            di => $DI, index => $Offset + pos $Input}
+                            di => $token->{di}, index => $token->{index}}
                 unless $token->{DTDMode} eq 'internal subset'; # not in parameter entity
 
             if (not defined $DTDDefs->{elements}->{$token->{name}}) {
@@ -3314,17 +3347,17 @@ sub actions_to_code ($;%) {
               $DTDDefs->{elements}->{$token->{name}}->{index} = $token->{index};
             } elsif ($DTDDefs->{elements}->{$token->{name}}->{has_attlist}) {
               push @$Errors, {level => 'w',
-                              type => 'duplicate attlist decl', ## TODO: type
+                              type => 'duplicate attlist decl',
                               value => $token->{name},
-                              di => $DI, index => $Offset + pos $Input};
+                              di => $token->{di}, index => $token->{index}};
             }
             $DTDDefs->{elements}->{$token->{name}}->{has_attlist} = 1;
 
             unless (@{$token->{attr_list} or []}) {
               push @$Errors, {level => 'w',
-                              type => 'empty attlist decl', ## TODO: type
+                              type => 'empty attlist decl',
                               value => $token->{name},
-                              di => $DI, index => $Offset + pos $Input};
+                              di => $token->{di}, index => $token->{index}};
             }
           } # not $StopProcessing
           
@@ -3336,11 +3369,11 @@ sub actions_to_code ($;%) {
             if (defined $type) {
               $at->{declared_type} = $type;
             } else {
-              $at->{declared_type} = $type = 0;
               push @$Errors, {level => 'm',
-                              type => 'unknown declared type', ## TODO: type
+                              type => 'unknown declared type',
                               value => $at->{declared_type},
-                              di => $DI, index => $Offset + pos $Input};
+                              di => $at->{di}, index => $at->{index}};
+              $at->{declared_type} = $type = 0;
             }
             
             my $default = defined $at->{default_type} ? {
@@ -3348,30 +3381,30 @@ sub actions_to_code ($;%) {
             }->{$at->{default_type}} : 4;
             if (defined $default) {
               $at->{default_type} = $default;
-              if (defined $at->{value}) { # XXX IndexedString
+              if (defined $at->{value}) {
                 if ($default == 1 or $default == 4) {
                   #
                 } elsif (length $at->{value}) {
                   push @$Errors, {level => 'm',
                                   type => 'default value not allowed',
-                                  di => $DI, index => $Offset + pos $Input};
+                                  di => $at->{di}, index => $at->{index}};
                 }
               } else {
                 if ($default == 1 or $default == 4) {
                   push @$Errors, {level => 'm',
                                   type => 'default value not provided',
-                                  di => $DI, index => $Offset + pos $Input};
+                                  di => $at->{di}, index => $at->{index}};
                 }
               }
             } else {
-              $at->{default_type} = 0;
               push @$Errors, {level => 'm',
-                              type => 'unknown default type', ## TODO: type
+                              type => 'unknown default type',
                               value => $at->{default_type},
-                              di => $DI, index => $Offset + pos $Input};
+                              di => $at->{di}, index => $at->{index}};
+              $at->{default_type} = 0;
             }
             $at->{value} = ($at->{default_type} and ($at->{default_type} == 1 or $at->{default_type} == 4))
-                ? defined $at->{value} ? $at->{value} : '' : undef;
+                ? defined $at->{value} ? $at->{value} : [['', $at->{di}, $at->{index}]] : undef;
 
             $at->{tokenize} = (2 <= $type and $type <= 10);
 
@@ -3386,16 +3419,16 @@ sub actions_to_code ($;%) {
                 $at->{external} = {} unless $token->{DTDMode} eq 'internal subset'; # not in parameter entity
               } else {
                 push @$Errors, {level => 'w',
-                                type => 'duplicate attrdef', ## TODO: type
+                                type => 'duplicate attrdef',
                                 value => $at->{name},
-                                di => $DI, index => $Offset + pos $Input};
+                                di => $at->{di}, index => $at->{index}};
                 if ($at->{declared_type} == 10) { # ENUMERATION
                   for (@{$at->{allowed_tokens} or []}) {
                     $SC->check_hidden_nmtoken
                         (name => $_,
                          onerror => sub {
-                           push @$Errors, {@_, di => $DI,
-                                           index => $Offset + pos $Input};
+                           push @$Errors, {@_,
+                                           di => $at->{di}, index => $at->{index}};
                          });
                   }
                 } elsif ($at->{declared_type} == 9) { # NOTATION
@@ -3403,8 +3436,8 @@ sub actions_to_code ($;%) {
                     $SC->check_hidden_name
                         (name => $_,
                          onerror => sub {
-                           push @$Errors, {@_, di => $DI,
-                                           index => $Offset + pos $Input};
+                           push @$Errors, {@_,
+                                           di => $at->{di}, index => $at->{index}};
                          });
                   }
                 }
@@ -3414,6 +3447,7 @@ sub actions_to_code ($;%) {
         }
       };
     } elsif ($act->{type} eq 'process an ENTITY token') {
+# XXXXXXXXXXXXXXXXXXXXXXXXX
       push @code, q{
         if ($token->{StopProcessing}) {
           push @$Errors, {level => 'w',
@@ -3580,9 +3614,9 @@ sub actions_to_code ($;%) {
     } elsif ($act->{type} eq 'process the external subset') { # XML
       push @code, q{
         push @$Callbacks, [$OnDTDEntityReference,
-                           {entity => {system_identifier => $DTDDefs->{system_identifier},
-                                       di => $DTDDefs->{di},
-                                       index => $DTDDefs->{index}}}]
+                           {entity => {system_identifier => $DTDDefs->{system_identifier}},
+                            ref => {di => $DTDDefs->{di},
+                                    index => $DTDDefs->{index}}}]
             unless $DTDDefs->{is_charref_declarations_entity};
       };
     } else {
@@ -4390,13 +4424,13 @@ sub dom_tree ($$) {
       }
 
     } elsif ($op->[0] eq 'comment') {
-      my $comment = $doc->create_comment ($op->[1]->{data});
+      my $comment = $doc->create_comment (join '', map { $_->[0] } @{$op->[1]->{data}}); # IndexedString
       $comment->manakai_set_source_location
           (['', $op->[1]->{di}, $op->[1]->{index}]);
       $nodes->[$op->[2]]->append_child ($comment);
     } elsif ($op->[0] eq 'pi') {
       my $pi = $doc->create_processing_instruction
-          ($op->[1]->{target}, $op->[1]->{data});
+          ($op->[1]->{target}, join '', map { $_->[0] } @{$op->[1]->{data}}); # IndexedString
       $pi->manakai_set_source_location
           (['', $op->[1]->{di}, $op->[1]->{index}]);
       if ($op->[2] == 1) { # DOCTYPE
@@ -6030,11 +6064,23 @@ sub onextentref ($;$) {
   }
   return $_[0]->{onextentref} || sub {
     my ($self, $data, $sub) = @_;
+#XXX
     $self->onerrors->($self, [{level => 'i',
                                type => 'external entref',
                                value => (defined $data->{entity}->{name} ? ($data->{entity}->{is_parameter_entity_flag} ? '%' : '&').$data->{entity}->{name}.';' : undef),
-                               di => $data->{entity}->{di},
-                               index => $data->{entity}->{index}}]);
+                               di => $data->{ref}->{di},
+                               index => $data->{ref}->{index}}]);
+    if (not $self->{saved_states}->{DTDDefs}->{StopProcessing} and
+        not $self->{saved_states}->{DTDDefs}->{XMLStandalone}) {
+      $self->onerrors->($self, [{level => 'i',
+                                 type => 'stop processing',
+                                 di => $data->{ref}->{di},
+                               index => $data->{ref}->{index}}])
+          if defined $data->{entity}->{name} and
+             $data->{entity}->{is_parameter_entity_flag};
+      $self->{saved_maps}->{DTDDefs}->{StopProcessing} = 1;
+    }
+
     $sub->parse_bytes_start (undef, $self);
     $sub->parse_bytes_feed ('<?xml encoding="utf-8"?>');
     $sub->parse_bytes_end;
