@@ -311,14 +311,19 @@ my $OnMDEntityReference = sub {
       } else {
         $main2->{saved_states}->{State} = $sub->{saved_states}->{State};
       }
+      if ($sub->{saved_states}->{InitialCMGroupDepth} < @{$sub->{saved_lists}->{OpenCMGroups}}) {
+        $main2->onerrors->($main2, [{level => 'm',
+                                     type => 'unclosed cmgroup',
+                                     di => $sub->{saved_states}->{Token}->{di},
+                                     index => $sub->{saved_states}->{Token}->{index}}]);
+        $#{$sub->{saved_lists}->{OpenCMGroups}} = $sub->{saved_states}->{InitialCMGroupDepth}-1;
+      }
       $main2->{saved_states}->{Attr} = $sub->{saved_states}->{Attr};
-      $main2->{saved_states}->{OpenCMGroups} = $sub->{saved_states}->{OpenCMGroups};
 
       my $sub2 = XXX::MDEntityParser->new;
       $sub2->onparsed (sub {
-        $main2->{saved_states}->{State} = $sub2->{saved_states}->{State};
-        $main2->{saved_states}->{Attr} = $sub2->{saved_states}->{Attr};
-        $main2->{saved_states}->{OpenCMGroups} = $sub2->{saved_states}->{OpenCMGroups};
+        $main2->{saved_states}->{State} = $_[0]->{saved_states}->{State};
+        $main2->{saved_states}->{Attr} = $_[0]->{saved_states}->{Attr};
       });
       {
         local $main2->{saved_states}->{OriginalState} = [$main2->{saved_states}->{State}];
@@ -333,6 +338,7 @@ my $OnMDEntityReference = sub {
     $data->{entity}->{open}++;
     $main->{pause}++;
     $main->{pause}++;
+    $sub->{saved_states}->{InitialCMGroupDepth} = $main->{saved_lists}->{OpenCMGroups};
     if (defined $data->{entity}->{value}) { # internal
       $sub->parse ($main, $data);
     } else { # external
@@ -397,7 +403,7 @@ sub onrestartwithencoding ($;$) {
     } # _cleanup_states
 
     ## ------ Common defs ------
-    our $AFE;our $AnchoredIndex;our $Attr;our $CONTEXT;our $Callbacks;our $Confident;our $DI;our $DTDDefs;our $DTDMode;our $EOF;our $Errors;our $FORM_ELEMENT;our $FRAMESET_OK;our $HEAD_ELEMENT;our $IM;our $IframeSrcdoc;our $InForeign;our $InLiteral;our $InMDEntity;our $Input;our $LastStartTagName;our $NEXT_ID;our $OE;our $OP;our $ORIGINAL_IM;our $Offset;our $OpenCMGroups;our $OpenMarkedSections;our $OriginalState;our $QUIRKS;our $SC;our $Scripting;our $State;our $TABLE_CHARS;our $TEMPLATE_IMS;our $Temp;our $TempIndex;our $Token;our $Tokens;
+    our $AFE;our $AnchoredIndex;our $Attr;our $CONTEXT;our $Callbacks;our $Confident;our $DI;our $DTDDefs;our $DTDMode;our $EOF;our $Errors;our $FORM_ELEMENT;our $FRAMESET_OK;our $HEAD_ELEMENT;our $IM;our $IframeSrcdoc;our $InForeign;our $InLiteral;our $InMDEntity;our $InitialCMGroupDepth;our $Input;our $LastStartTagName;our $NEXT_ID;our $OE;our $OP;our $ORIGINAL_IM;our $Offset;our $OpenCMGroups;our $OpenMarkedSections;our $OriginalState;our $QUIRKS;our $SC;our $Scripting;our $State;our $TABLE_CHARS;our $TEMPLATE_IMS;our $Temp;our $TempIndex;our $Token;our $Tokens;
     ## ------ Tokenizer defs ------
     my $InvalidCharRefs = $Web::HTML::_SyntaxDefs->{xml_charref_invalid};
 sub ATTLIST_TOKEN () { 1 }
@@ -10822,7 +10828,11 @@ return 1;
 return 0;
 };
 $StateActions->[ENT_VALUE__DQ__STATE___CHARREF_NAME_STATE] = sub {
-if ($Input =~ /\G([0123456789]+)/gcs) {
+if ($Input =~ /\G([^0123456789\;ABCDEFGHJKQVWZILMNOPRSTUXYabcdefghjkqvwzilmnoprstuxy\	\\ \
+\\"\#\%\&\'\<\=\>\`]+)/gcs) {
+$Temp .= $1;
+
+} elsif ($Input =~ /\G([0123456789]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
 $Temp .= $1;
@@ -10836,21 +10846,18 @@ $State = ENT_VALUE__DQ__STATE;
 $Temp .= $1;
 } elsif ($Input =~ /\G([abcdefghjkqvwzilmnoprstuxy]+)/gcs) {
 $Temp .= $1;
-} elsif ($Input =~ /\G([\ ])/gcs) {
+} elsif ($Input =~ /\G([\	\\ \
+])/gcs) {
 
-            push @$Errors, {type => 'entity-value-double-quoted-state-character-reference-name-else', level => 'm',
+            push @$Errors, {type => 'entity-value-double-quoted-state-character-reference-name-ws', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__DQ__STATE;
-
-            push @$Errors, {type => 'NULL', level => 'm',
-                            di => $DI, index => $Offset + (pos $Input) - 1};
-          
-push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
-            push @$Errors, {type => 'entity-value-double-quoted-state-character-reference-name-else', level => 'm',
+            push @$Errors, {type => 'entity-value-double-quoted-state-character-reference-name-ws', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -10859,15 +10866,23 @@ push @{$Token->{q<value>}}, [q@
 $State = ENT_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-            push @$Errors, {type => 'entity-value-double-quoted-state-character-reference-name-else', level => 'm',
+            push @$Errors, {type => 'entity-value-double-quoted-state-character-reference-name-0022', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 undef $InLiteral;
 $State = A_ENT_PARAMETER_STATE;
+} elsif ($Input =~ /\G([\#])/gcs) {
+
+            push @$Errors, {type => 'entity-value-double-quoted-state-character-reference-name-0023', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE__DQ__STATE;
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'entity-value-double-quoted-state-character-reference-name-else', level => 'm',
+            push @$Errors, {type => 'entity-value-double-quoted-state-character-reference-name-0025', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -10876,16 +10891,48 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = PE_NAME_IN_ENT_VALUE__DQ__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'entity-value-double-quoted-state-character-reference-name-else', level => 'm',
+            push @$Errors, {type => 'entity-value-double-quoted-state-character-reference-name-0026', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = ENT_VALUE__DQ__STATE___CHARREF_STATE;
-} elsif ($Input =~ /\G(.)/gcs) {
+} elsif ($Input =~ /\G([\'])/gcs) {
 
-            push @$Errors, {type => 'entity-value-double-quoted-state-character-reference-name-else', level => 'm',
+            push @$Errors, {type => 'entity-value-double-quoted-state-character-reference-name-0027', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE__DQ__STATE;
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'entity-value-double-quoted-state-character-reference-name-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE__DQ__STATE;
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\=])/gcs) {
+
+            push @$Errors, {type => 'entity-value-double-quoted-state-character-reference-name-003d', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE__DQ__STATE;
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'entity-value-double-quoted-state-character-reference-name-003e', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE__DQ__STATE;
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\`])/gcs) {
+
+            push @$Errors, {type => 'entity-value-double-quoted-state-character-reference-name-0060', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -10893,43 +10940,6 @@ $State = ENT_VALUE__DQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
-
-            push @$Errors, {type => 'entity-value-double-quoted-state-character-reference-name-else', level => 'm',
-                            di => $DI, index => $Offset + (pos $Input)};
-          
-push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENT_VALUE__DQ__STATE;
-
-            push @$Errors, {type => 'parser:EOF', level => 'm',
-                            di => $DI, index => $Offset + (pos $Input)};
-          
-if ($InMDEntity) { return 1 }
-$State = DTD_STATE;
-
-            if (defined $CONTEXT) {
-              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                              di => $DI,
-                              index => $Offset + pos $Input};
-              return 1;
-            }
-          
-
-            push @$Errors, {type => 'parser:EOF', level => 'm',
-                            di => $DI, index => $Offset + (pos $Input)};
-          
-$DTDMode = q{N/A};
-$State = DATA_STATE;
-
-        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-      
-
-          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                          di => $DI,
-                          index => $Offset + pos $Input};
-        
-return 1;
 } else {
 return 1;
 }
@@ -12155,7 +12165,11 @@ return 1;
 return 0;
 };
 $StateActions->[ENT_VALUE__SQ__STATE___CHARREF_NAME_STATE] = sub {
-if ($Input =~ /\G([0123456789]+)/gcs) {
+if ($Input =~ /\G([^0123456789\;ABCDEFGHJKQVWZILMNOPRSTUXYabcdefghjkqvwzilmnoprstuxy\	\\ \
+\\"\#\%\&\'\<\=\>\`]+)/gcs) {
+$Temp .= $1;
+
+} elsif ($Input =~ /\G([0123456789]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
 $Temp .= $1;
@@ -12169,30 +12183,43 @@ $State = ENT_VALUE__SQ__STATE;
 $Temp .= $1;
 } elsif ($Input =~ /\G([abcdefghjkqvwzilmnoprstuxy]+)/gcs) {
 $Temp .= $1;
-} elsif ($Input =~ /\G([\ ])/gcs) {
+} elsif ($Input =~ /\G([\	\\ \
+])/gcs) {
 
-            push @$Errors, {type => 'entity-value-single-quoted-state-character-reference-name-else', level => 'm',
+            push @$Errors, {type => 'entity-value-single-quoted-state-character-reference-name-ws', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__SQ__STATE;
-
-            push @$Errors, {type => 'NULL', level => 'm',
-                            di => $DI, index => $Offset + (pos $Input) - 1};
-          
-push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
-            push @$Errors, {type => 'entity-value-single-quoted-state-character-reference-name-else', level => 'm',
+            push @$Errors, {type => 'entity-value-single-quoted-state-character-reference-name-ws', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
 $State = ENT_VALUE__SQ__STATE_CR;
+} elsif ($Input =~ /\G([\"])/gcs) {
+
+            push @$Errors, {type => 'entity-value-single-quoted-state-character-reference-name-0022', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE__SQ__STATE;
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\#])/gcs) {
+
+            push @$Errors, {type => 'entity-value-single-quoted-state-character-reference-name-0023', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE__SQ__STATE;
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'entity-value-single-quoted-state-character-reference-name-else', level => 'm',
+            push @$Errors, {type => 'entity-value-single-quoted-state-character-reference-name-0025', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -12201,7 +12228,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = PE_NAME_IN_ENT_VALUE__SQ__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'entity-value-single-quoted-state-character-reference-name-else', level => 'm',
+            push @$Errors, {type => 'entity-value-single-quoted-state-character-reference-name-0026', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -12210,15 +12237,39 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = ENT_VALUE__SQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-            push @$Errors, {type => 'entity-value-single-quoted-state-character-reference-name-else', level => 'm',
+            push @$Errors, {type => 'entity-value-single-quoted-state-character-reference-name-0027', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 undef $InLiteral;
 $State = A_ENT_PARAMETER_STATE;
-} elsif ($Input =~ /\G(.)/gcs) {
+} elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'entity-value-single-quoted-state-character-reference-name-else', level => 'm',
+            push @$Errors, {type => 'entity-value-single-quoted-state-character-reference-name-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE__SQ__STATE;
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\=])/gcs) {
+
+            push @$Errors, {type => 'entity-value-single-quoted-state-character-reference-name-003d', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE__SQ__STATE;
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'entity-value-single-quoted-state-character-reference-name-003e', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE__SQ__STATE;
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\`])/gcs) {
+
+            push @$Errors, {type => 'entity-value-single-quoted-state-character-reference-name-0060', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -12226,43 +12277,6 @@ $State = ENT_VALUE__SQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
-
-            push @$Errors, {type => 'entity-value-single-quoted-state-character-reference-name-else', level => 'm',
-                            di => $DI, index => $Offset + (pos $Input)};
-          
-push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENT_VALUE__SQ__STATE;
-
-            push @$Errors, {type => 'parser:EOF', level => 'm',
-                            di => $DI, index => $Offset + (pos $Input)};
-          
-if ($InMDEntity) { return 1 }
-$State = DTD_STATE;
-
-            if (defined $CONTEXT) {
-              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                              di => $DI,
-                              index => $Offset + pos $Input};
-              return 1;
-            }
-          
-
-            push @$Errors, {type => 'parser:EOF', level => 'm',
-                            di => $DI, index => $Offset + (pos $Input)};
-          
-$DTDMode = q{N/A};
-$State = DATA_STATE;
-
-        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-      
-
-          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                          di => $DI,
-                          index => $Offset + pos $Input};
-        
-return 1;
 } else {
 return 1;
 }
@@ -13381,7 +13395,11 @@ return 1;
 return 0;
 };
 $StateActions->[ENT_VALUE_IN_ENT_STATE___CHARREF_NAME_STATE] = sub {
-if ($Input =~ /\G([0123456789]+)/gcs) {
+if ($Input =~ /\G([^0123456789\;ABCDEFGHJKQVWZILMNOPRSTUXYabcdefghjkqvwzilmnoprstuxy\	\\ \
+\\"\#\%\&\'\<\=\>\`]+)/gcs) {
+$Temp .= $1;
+
+} elsif ($Input =~ /\G([0123456789]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
 $Temp .= $1;
@@ -13395,30 +13413,43 @@ $State = ENT_VALUE_IN_ENT_STATE;
 $Temp .= $1;
 } elsif ($Input =~ /\G([abcdefghjkqvwzilmnoprstuxy]+)/gcs) {
 $Temp .= $1;
-} elsif ($Input =~ /\G([\ ])/gcs) {
+} elsif ($Input =~ /\G([\	\\ \
+])/gcs) {
 
-            push @$Errors, {type => 'entity-value-in-entity-state-character-reference-name-else', level => 'm',
+            push @$Errors, {type => 'entity-value-in-entity-state-character-reference-name-ws', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE_IN_ENT_STATE;
-
-            push @$Errors, {type => 'NULL', level => 'm',
-                            di => $DI, index => $Offset + (pos $Input) - 1};
-          
-push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
-            push @$Errors, {type => 'entity-value-in-entity-state-character-reference-name-else', level => 'm',
+            push @$Errors, {type => 'entity-value-in-entity-state-character-reference-name-ws', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
 $State = ENT_VALUE_IN_ENT_STATE_CR;
+} elsif ($Input =~ /\G([\"])/gcs) {
+
+            push @$Errors, {type => 'entity-value-in-entity-state-character-reference-name-0022', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE_IN_ENT_STATE;
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\#])/gcs) {
+
+            push @$Errors, {type => 'entity-value-in-entity-state-character-reference-name-0023', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE_IN_ENT_STATE;
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'entity-value-in-entity-state-character-reference-name-else', level => 'm',
+            push @$Errors, {type => 'entity-value-in-entity-state-character-reference-name-0025', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -13427,16 +13458,48 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = PE_NAME_IN_ENT_VALUE_IN_ENT_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'entity-value-in-entity-state-character-reference-name-else', level => 'm',
+            push @$Errors, {type => 'entity-value-in-entity-state-character-reference-name-0026', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = ENT_VALUE_IN_ENT_STATE___CHARREF_STATE;
-} elsif ($Input =~ /\G(.)/gcs) {
+} elsif ($Input =~ /\G([\'])/gcs) {
 
-            push @$Errors, {type => 'entity-value-in-entity-state-character-reference-name-else', level => 'm',
+            push @$Errors, {type => 'entity-value-in-entity-state-character-reference-name-0027', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE_IN_ENT_STATE;
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'entity-value-in-entity-state-character-reference-name-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE_IN_ENT_STATE;
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\=])/gcs) {
+
+            push @$Errors, {type => 'entity-value-in-entity-state-character-reference-name-003d', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE_IN_ENT_STATE;
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'entity-value-in-entity-state-character-reference-name-003e', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE_IN_ENT_STATE;
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\`])/gcs) {
+
+            push @$Errors, {type => 'entity-value-in-entity-state-character-reference-name-0060', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -13444,39 +13507,6 @@ $State = ENT_VALUE_IN_ENT_STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
-
-            push @$Errors, {type => 'entity-value-in-entity-state-character-reference-name-else', level => 'm',
-                            di => $DI, index => $Offset + (pos $Input)};
-          
-push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENT_VALUE_IN_ENT_STATE;
-if ($InMDEntity) { return 1 }
-$State = DTD_STATE;
-
-            if (defined $CONTEXT) {
-              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                              di => $DI,
-                              index => $Offset + pos $Input};
-              return 1;
-            }
-          
-
-            push @$Errors, {type => 'parser:EOF', level => 'm',
-                            di => $DI, index => $Offset + (pos $Input)};
-          
-$DTDMode = q{N/A};
-$State = DATA_STATE;
-
-        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-      
-
-          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                          di => $DI,
-                          index => $Offset + pos $Input};
-        
-return 1;
 } else {
 return 1;
 }
@@ -26744,16 +26774,43 @@ return 0;
 $StateActions->[A_CM_GROUP_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \])/gcs) {
-pop @$OpenCMGroups;
+
+        if ($InitialCMGroupDepth < @$OpenCMGroups) {
+          pop @$OpenCMGroups;
+        } else {
+          push @$Errors, {level => 'm',
+                          type => 'unmatched mgc',
+                          di => $DI, index => $Offset + (pos $Input)};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        }
+      
 $State = A_CM_ITEM_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
-pop @$OpenCMGroups;
+
+        if ($InitialCMGroupDepth < @$OpenCMGroups) {
+          pop @$OpenCMGroups;
+        } else {
+          push @$Errors, {level => 'm',
+                          type => 'unmatched mgc',
+                          di => $DI, index => $Offset + (pos $Input)};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        }
+      
 $Temp = q@%@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $OriginalState = [A_CM_ITEM_STATE, A_CM_ITEM_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\)])/gcs) {
-pop @$OpenCMGroups;
+
+        if ($InitialCMGroupDepth < @$OpenCMGroups) {
+          pop @$OpenCMGroups;
+        } else {
+          push @$Errors, {level => 'm',
+                          type => 'unmatched mgc',
+                          di => $DI, index => $Offset + (pos $Input)};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        }
+      
 $State = A_CM_ITEM_STATE;
 
         if (not @$OpenCMGroups) {
@@ -26770,14 +26827,41 @@ $State = BOGUS_MARKUP_DECL_STATE;
       
 } elsif ($Input =~ /\G([\*])/gcs) {
 $OpenCMGroups->[-1]->{q<repetition>} = $1;
-pop @$OpenCMGroups;
+
+        if ($InitialCMGroupDepth < @$OpenCMGroups) {
+          pop @$OpenCMGroups;
+        } else {
+          push @$Errors, {level => 'm',
+                          type => 'unmatched mgc',
+                          di => $DI, index => $Offset + (pos $Input)};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        }
+      
 $State = A_CM_ITEM_STATE;
 } elsif ($Input =~ /\G([\+])/gcs) {
 $OpenCMGroups->[-1]->{q<repetition>} = $1;
-pop @$OpenCMGroups;
+
+        if ($InitialCMGroupDepth < @$OpenCMGroups) {
+          pop @$OpenCMGroups;
+        } else {
+          push @$Errors, {level => 'm',
+                          type => 'unmatched mgc',
+                          di => $DI, index => $Offset + (pos $Input)};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        }
+      
 $State = A_CM_ITEM_STATE;
 } elsif ($Input =~ /\G([\,])/gcs) {
-pop @$OpenCMGroups;
+
+        if ($InitialCMGroupDepth < @$OpenCMGroups) {
+          pop @$OpenCMGroups;
+        } else {
+          push @$Errors, {level => 'm',
+                          type => 'unmatched mgc',
+                          di => $DI, index => $Offset + (pos $Input)};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        }
+      
 $State = A_CM_ITEM_STATE;
 
         if (not @$OpenCMGroups) {
@@ -26805,7 +26889,16 @@ $State = B_CM_ITEM_STATE;
             return 1;
           }
         
-pop @$OpenCMGroups;
+
+        if ($InitialCMGroupDepth < @$OpenCMGroups) {
+          pop @$OpenCMGroups;
+        } else {
+          push @$Errors, {level => 'm',
+                          type => 'unmatched mgc',
+                          di => $DI, index => $Offset + (pos $Input)};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        }
+      
 $State = A_CM_ITEM_STATE;
 
         if (not @$OpenCMGroups) {
@@ -26839,10 +26932,28 @@ $State = DTD_STATE;
       
 } elsif ($Input =~ /\G([\?])/gcs) {
 $OpenCMGroups->[-1]->{q<repetition>} = $1;
-pop @$OpenCMGroups;
+
+        if ($InitialCMGroupDepth < @$OpenCMGroups) {
+          pop @$OpenCMGroups;
+        } else {
+          push @$Errors, {level => 'm',
+                          type => 'unmatched mgc',
+                          di => $DI, index => $Offset + (pos $Input)};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        }
+      
 $State = A_CM_ITEM_STATE;
 } elsif ($Input =~ /\G([\|])/gcs) {
-pop @$OpenCMGroups;
+
+        if ($InitialCMGroupDepth < @$OpenCMGroups) {
+          pop @$OpenCMGroups;
+        } else {
+          push @$Errors, {level => 'm',
+                          type => 'unmatched mgc',
+                          di => $DI, index => $Offset + (pos $Input)};
+          $State = BOGUS_MARKUP_DECL_STATE;
+        }
+      
 $State = A_CM_ITEM_STATE;
 
         if (not @$OpenCMGroups) {
@@ -27033,6 +27144,10 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
@@ -27389,6 +27504,10 @@ $TempIndex = $Offset + (pos $Input);
         }
       
 $State = A_CM_ITEM_STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
@@ -31286,7 +31405,7 @@ $Temp .= $1;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -31336,16 +31455,16 @@ $Temp .= $1;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -31431,7 +31550,7 @@ $Temp .= q@�@;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -31481,16 +31600,16 @@ $Temp .= q@�@;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -31570,7 +31689,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -31620,16 +31739,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -31709,7 +31828,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -31759,16 +31878,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -31847,7 +31966,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -31897,16 +32016,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -31986,7 +32105,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -32036,16 +32155,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -32125,7 +32244,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -32175,16 +32294,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -32265,7 +32384,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -32315,16 +32434,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -32404,7 +32523,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -32454,16 +32573,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -32547,7 +32666,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -32596,17 +32715,17 @@ return 1 if $return;
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
-                  } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                  } elsif (1) { # before_equals
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -32686,7 +32805,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -32736,16 +32855,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -32825,7 +32944,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -32875,16 +32994,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -32965,7 +33084,7 @@ if ($EOF) {
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -33015,16 +33134,16 @@ if ($EOF) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -34179,7 +34298,7 @@ $Temp .= $1;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -34229,16 +34348,16 @@ $Temp .= $1;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -34324,7 +34443,7 @@ $Temp .= q@�@;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -34374,16 +34493,16 @@ $Temp .= q@�@;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -34463,7 +34582,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -34513,16 +34632,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -34602,7 +34721,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -34652,16 +34771,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -34741,7 +34860,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -34791,16 +34910,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -34880,7 +34999,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -34930,16 +35049,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -35019,7 +35138,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -35069,16 +35188,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -35159,7 +35278,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -35209,16 +35328,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -35297,7 +35416,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -35347,16 +35466,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -35440,7 +35559,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -35489,17 +35608,17 @@ return 1 if $return;
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
-                  } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                  } elsif (1) { # before_equals
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -35579,7 +35698,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -35629,16 +35748,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -35718,7 +35837,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -35768,16 +35887,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -35858,7 +35977,7 @@ if ($EOF) {
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -35908,16 +36027,16 @@ if ($EOF) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -37591,7 +37710,7 @@ $Temp .= $1;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -37641,16 +37760,16 @@ $Temp .= $1;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -37736,7 +37855,7 @@ $Temp .= q@�@;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -37786,16 +37905,16 @@ $Temp .= q@�@;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -37874,7 +37993,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -37924,16 +38043,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -38012,7 +38131,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -38062,16 +38181,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -38155,7 +38274,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -38205,16 +38324,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -38294,7 +38413,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -38344,16 +38463,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -38433,7 +38552,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -38483,16 +38602,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -38573,7 +38692,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -38623,16 +38742,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -38716,7 +38835,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -38766,16 +38885,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -38859,7 +38978,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -38908,17 +39027,17 @@ return 1 if $return;
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
-                  } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                  } elsif (1) { # before_equals
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -39002,7 +39121,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -39052,16 +39171,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -39180,7 +39299,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -39230,16 +39349,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -39324,7 +39443,7 @@ if ($EOF) {
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -39374,16 +39493,16 @@ if ($EOF) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -40655,7 +40774,7 @@ $Temp .= $1;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -40705,16 +40824,16 @@ $Temp .= $1;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -40800,7 +40919,7 @@ $Temp .= q@�@;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -40850,16 +40969,16 @@ $Temp .= q@�@;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -40939,7 +41058,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -40989,16 +41108,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -41078,7 +41197,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -41128,16 +41247,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -41217,7 +41336,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -41267,16 +41386,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -41356,7 +41475,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -41406,16 +41525,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -41495,7 +41614,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -41545,16 +41664,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -41635,7 +41754,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -41685,16 +41804,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -41774,7 +41893,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -41824,16 +41943,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -41917,7 +42036,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -41966,17 +42085,17 @@ return 1 if $return;
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
-                  } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                  } elsif (1) { # before_equals
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -42056,7 +42175,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -42106,16 +42225,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -42195,7 +42314,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -42245,16 +42364,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -42335,7 +42454,7 @@ if ($EOF) {
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -42385,16 +42504,16 @@ if ($EOF) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -59408,7 +59527,7 @@ $Temp .= $1;
                 $TempIndex += length $Temp;
                 $Temp = '';
                 last REF;
-              } elsif (defined $ent->{notation}) {
+              } elsif (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -59439,10 +59558,10 @@ $Temp .= $1;
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
                 unless (';' eq substr $Temp, $_-1, 1) {
-                  push @$Errors, {type => 'no refc',
-                                  level => 'm',
-                                  di => $DI,
-                                  index => $TempIndex + $_};
+                  #push @$Errors, {type => 'no refc',
+                  #                level => 'm',
+                  #                di => $DI,
+                  #                index => $TempIndex + $_};
 
                   ## A variant of |emit-temp|
                   push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -59553,7 +59672,7 @@ $Temp .= q@�@;
                 $TempIndex += length $Temp;
                 $Temp = '';
                 last REF;
-              } elsif (defined $ent->{notation}) {
+              } elsif (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -59584,10 +59703,10 @@ $Temp .= q@�@;
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
                 unless (';' eq substr $Temp, $_-1, 1) {
-                  push @$Errors, {type => 'no refc',
-                                  level => 'm',
-                                  di => $DI,
-                                  index => $TempIndex + $_};
+                  #push @$Errors, {type => 'no refc',
+                  #                level => 'm',
+                  #                di => $DI,
+                  #                index => $TempIndex + $_};
 
                   ## A variant of |emit-temp|
                   push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -59696,7 +59815,7 @@ return 1 if $return;
                 $TempIndex += length $Temp;
                 $Temp = '';
                 last REF;
-              } elsif (defined $ent->{notation}) {
+              } elsif (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -59727,10 +59846,10 @@ return 1 if $return;
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
                 unless (';' eq substr $Temp, $_-1, 1) {
-                  push @$Errors, {type => 'no refc',
-                                  level => 'm',
-                                  di => $DI,
-                                  index => $TempIndex + $_};
+                  #push @$Errors, {type => 'no refc',
+                  #                level => 'm',
+                  #                di => $DI,
+                  #                index => $TempIndex + $_};
 
                   ## A variant of |emit-temp|
                   push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -59840,7 +59959,7 @@ return 1 if $return;
                 $TempIndex += length $Temp;
                 $Temp = '';
                 last REF;
-              } elsif (defined $ent->{notation}) {
+              } elsif (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -59871,10 +59990,10 @@ return 1 if $return;
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
                 unless (';' eq substr $Temp, $_-1, 1) {
-                  push @$Errors, {type => 'no refc',
-                                  level => 'm',
-                                  di => $DI,
-                                  index => $TempIndex + $_};
+                  #push @$Errors, {type => 'no refc',
+                  #                level => 'm',
+                  #                di => $DI,
+                  #                index => $TempIndex + $_};
 
                   ## A variant of |emit-temp|
                   push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -59983,7 +60102,7 @@ return 1 if $return;
                 $TempIndex += length $Temp;
                 $Temp = '';
                 last REF;
-              } elsif (defined $ent->{notation}) {
+              } elsif (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -60014,10 +60133,10 @@ return 1 if $return;
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
                 unless (';' eq substr $Temp, $_-1, 1) {
-                  push @$Errors, {type => 'no refc',
-                                  level => 'm',
-                                  di => $DI,
-                                  index => $TempIndex + $_};
+                  #push @$Errors, {type => 'no refc',
+                  #                level => 'm',
+                  #                di => $DI,
+                  #                index => $TempIndex + $_};
 
                   ## A variant of |emit-temp|
                   push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -60126,7 +60245,7 @@ return 1 if $return;
                 $TempIndex += length $Temp;
                 $Temp = '';
                 last REF;
-              } elsif (defined $ent->{notation}) {
+              } elsif (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -60157,10 +60276,10 @@ return 1 if $return;
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
                 unless (';' eq substr $Temp, $_-1, 1) {
-                  push @$Errors, {type => 'no refc',
-                                  level => 'm',
-                                  di => $DI,
-                                  index => $TempIndex + $_};
+                  #push @$Errors, {type => 'no refc',
+                  #                level => 'm',
+                  #                di => $DI,
+                  #                index => $TempIndex + $_};
 
                   ## A variant of |emit-temp|
                   push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -60269,7 +60388,7 @@ return 1 if $return;
                 $TempIndex += length $Temp;
                 $Temp = '';
                 last REF;
-              } elsif (defined $ent->{notation}) {
+              } elsif (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -60300,10 +60419,10 @@ return 1 if $return;
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
                 unless (';' eq substr $Temp, $_-1, 1) {
-                  push @$Errors, {type => 'no refc',
-                                  level => 'm',
-                                  di => $DI,
-                                  index => $TempIndex + $_};
+                  #push @$Errors, {type => 'no refc',
+                  #                level => 'm',
+                  #                di => $DI,
+                  #                index => $TempIndex + $_};
 
                   ## A variant of |emit-temp|
                   push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -60407,7 +60526,7 @@ return 1 if $return;
                 $TempIndex += length $Temp;
                 $Temp = '';
                 last REF;
-              } elsif (defined $ent->{notation}) {
+              } elsif (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -60438,10 +60557,10 @@ return 1 if $return;
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
                 unless (';' eq substr $Temp, $_-1, 1) {
-                  push @$Errors, {type => 'no refc',
-                                  level => 'm',
-                                  di => $DI,
-                                  index => $TempIndex + $_};
+                  #push @$Errors, {type => 'no refc',
+                  #                level => 'm',
+                  #                di => $DI,
+                  #                index => $TempIndex + $_};
 
                   ## A variant of |emit-temp|
                   push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -60550,7 +60669,7 @@ return 1 if $return;
                 $TempIndex += length $Temp;
                 $Temp = '';
                 last REF;
-              } elsif (defined $ent->{notation}) {
+              } elsif (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -60581,10 +60700,10 @@ return 1 if $return;
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
                 unless (';' eq substr $Temp, $_-1, 1) {
-                  push @$Errors, {type => 'no refc',
-                                  level => 'm',
-                                  di => $DI,
-                                  index => $TempIndex + $_};
+                  #push @$Errors, {type => 'no refc',
+                  #                level => 'm',
+                  #                di => $DI,
+                  #                index => $TempIndex + $_};
 
                   ## A variant of |emit-temp|
                   push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -60689,7 +60808,7 @@ return 1 if $return;
                 $TempIndex += length $Temp;
                 $Temp = '';
                 last REF;
-              } elsif (defined $ent->{notation}) {
+              } elsif (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -60720,10 +60839,10 @@ return 1 if $return;
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
                 unless (';' eq substr $Temp, $_-1, 1) {
-                  push @$Errors, {type => 'no refc',
-                                  level => 'm',
-                                  di => $DI,
-                                  index => $TempIndex + $_};
+                  #push @$Errors, {type => 'no refc',
+                  #                level => 'm',
+                  #                di => $DI,
+                  #                index => $TempIndex + $_};
 
                   ## A variant of |emit-temp|
                   push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -60832,7 +60951,7 @@ return 1 if $return;
                 $TempIndex += length $Temp;
                 $Temp = '';
                 last REF;
-              } elsif (defined $ent->{notation}) {
+              } elsif (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -60863,10 +60982,10 @@ return 1 if $return;
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
                 unless (';' eq substr $Temp, $_-1, 1) {
-                  push @$Errors, {type => 'no refc',
-                                  level => 'm',
-                                  di => $DI,
-                                  index => $TempIndex + $_};
+                  #push @$Errors, {type => 'no refc',
+                  #                level => 'm',
+                  #                di => $DI,
+                  #                index => $TempIndex + $_};
 
                   ## A variant of |emit-temp|
                   push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -60975,7 +61094,7 @@ return 1 if $return;
                 $TempIndex += length $Temp;
                 $Temp = '';
                 last REF;
-              } elsif (defined $ent->{notation}) {
+              } elsif (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -61006,10 +61125,10 @@ return 1 if $return;
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
                 unless (';' eq substr $Temp, $_-1, 1) {
-                  push @$Errors, {type => 'no refc',
-                                  level => 'm',
-                                  di => $DI,
-                                  index => $TempIndex + $_};
+                  #push @$Errors, {type => 'no refc',
+                  #                level => 'm',
+                  #                di => $DI,
+                  #                index => $TempIndex + $_};
 
                   ## A variant of |emit-temp|
                   push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -61119,7 +61238,7 @@ if ($EOF) {
                 $TempIndex += length $Temp;
                 $Temp = '';
                 last REF;
-              } elsif (defined $ent->{notation}) {
+              } elsif (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -61150,10 +61269,10 @@ if ($EOF) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
                 unless (';' eq substr $Temp, $_-1, 1) {
-                  push @$Errors, {type => 'no refc',
-                                  level => 'm',
-                                  di => $DI,
-                                  index => $TempIndex + $_};
+                  #push @$Errors, {type => 'no refc',
+                  #                level => 'm',
+                  #                di => $DI,
+                  #                index => $TempIndex + $_};
 
                   ## A variant of |emit-temp|
                   push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -62717,7 +62836,7 @@ $Temp .= $1;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -62767,16 +62886,16 @@ $Temp .= $1;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -62862,7 +62981,7 @@ $Temp .= q@�@;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -62912,16 +63031,16 @@ $Temp .= q@�@;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -63001,7 +63120,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -63051,16 +63170,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -63140,7 +63259,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -63190,16 +63309,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -63279,7 +63398,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -63329,16 +63448,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -63418,7 +63537,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -63468,16 +63587,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -63557,7 +63676,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -63607,16 +63726,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -63697,7 +63816,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -63747,16 +63866,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -63836,7 +63955,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -63886,16 +64005,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -63979,7 +64098,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -64028,17 +64147,17 @@ return 1 if $return;
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
-                  } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                  } elsif (1) { # before_equals
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -64118,7 +64237,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -64168,16 +64287,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -64257,7 +64376,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -64307,16 +64426,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -64397,7 +64516,7 @@ if ($EOF) {
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -64447,16 +64566,16 @@ if ($EOF) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -65785,7 +65904,7 @@ $Temp .= $1;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -65835,16 +65954,16 @@ $Temp .= $1;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -65930,7 +66049,7 @@ $Temp .= q@�@;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -65980,16 +66099,16 @@ $Temp .= q@�@;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -66069,7 +66188,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -66119,16 +66238,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -66208,7 +66327,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -66258,16 +66377,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -66347,7 +66466,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -66397,16 +66516,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -66486,7 +66605,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -66536,16 +66655,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -66625,7 +66744,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -66675,16 +66794,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -66765,7 +66884,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -66815,16 +66934,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -66904,7 +67023,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -66954,16 +67073,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -67047,7 +67166,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -67096,17 +67215,17 @@ return 1 if $return;
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
-                  } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                  } elsif (1) { # before_equals
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -67186,7 +67305,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -67236,16 +67355,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -67325,7 +67444,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -67375,16 +67494,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -67465,7 +67584,7 @@ if ($EOF) {
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -67515,16 +67634,16 @@ if ($EOF) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -68677,7 +68796,7 @@ $Temp .= $1;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -68727,16 +68846,16 @@ $Temp .= $1;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -68822,7 +68941,7 @@ $Temp .= q@�@;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -68872,16 +68991,16 @@ $Temp .= q@�@;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -68961,7 +69080,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -69011,16 +69130,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -69100,7 +69219,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -69150,16 +69269,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -69239,7 +69358,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -69289,16 +69408,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -69378,7 +69497,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -69428,16 +69547,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -69517,7 +69636,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -69567,16 +69686,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -69657,7 +69776,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -69707,16 +69826,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -69796,7 +69915,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -69846,16 +69965,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -69939,7 +70058,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -69988,17 +70107,17 @@ return 1 if $return;
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
-                  } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                  } elsif (1) { # before_equals
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -70078,7 +70197,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -70128,16 +70247,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -70217,7 +70336,7 @@ return 1 if $return;
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -70267,16 +70386,16 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -70357,7 +70476,7 @@ if ($EOF) {
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -70407,16 +70526,16 @@ if ($EOF) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -75320,8 +75439,8 @@ sub dom_tree ($$) {
           $self->_tokenize;
           $self->_construct_tree;
 
-          if (@$Callbacks or @$Errors) {
-            $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, InLiteral => $InLiteral, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
+          if (@$Callbacks or @$Errors or $self->{is_sub_parser}) {
+            $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, InLiteral => $InLiteral, InitialCMGroupDepth => $InitialCMGroupDepth, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
             {
               my $Errors = $Errors;
               my $Callbacks = $Callbacks;
@@ -75346,7 +75465,7 @@ sub dom_tree ($$) {
                 return 1;
               }
             }
-            ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $InLiteral, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM InLiteral LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State Temp TempIndex Token)};
+            ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $InLiteral, $InitialCMGroupDepth, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM InLiteral InitialCMGroupDepth LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State Temp TempIndex Token)};
 ($AFE, $Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP OpenCMGroups OpenMarkedSections TABLE_CHARS TEMPLATE_IMS Tokens)};
 ($DTDDefs) = @{$self->{saved_maps}}{qw(DTDDefs)};
           }
@@ -75433,9 +75552,10 @@ sub dom_tree ($$) {
       $doc->manakai_compat_mode ('no quirks');
       $doc->remove_child ($_) for $doc->child_nodes->to_list;
       $self->{nodes} = [$doc];
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
       $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
+$InitialCMGroupDepth = 0;
 $NEXT_ID = 1;
 $Offset = 0;
 $DTDMode = q{N/A};
@@ -75474,9 +75594,10 @@ $Scripting = $self->{Scripting};
       $doc->remove_child ($_) for $doc->child_nodes->to_list;
       $self->{nodes} = [$doc];
 
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
       $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
+$InitialCMGroupDepth = 0;
 $NEXT_ID = 1;
 $Offset = 0;
 $DTDMode = q{N/A};
@@ -75499,7 +75620,7 @@ $Scripting = $self->{Scripting};
       ## Note that $DI != $source_di to support document.write()'s
       ## insertion.
 
-      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, InLiteral => $InLiteral, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
+      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, InLiteral => $InLiteral, InitialCMGroupDepth => $InitialCMGroupDepth, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
       return;
     } # parse_chars_start
   
@@ -75508,29 +75629,29 @@ $Scripting = $self->{Scripting};
       my $self = $_[0];
       my $input = [$_[1]]; # string copy
 
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
       $IframeSrcdoc = $self->{IframeSrcdoc};
 $InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
-      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $InLiteral, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM InLiteral LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State Temp TempIndex Token)};
+      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $InLiteral, $InitialCMGroupDepth, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM InLiteral InitialCMGroupDepth LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State Temp TempIndex Token)};
 ($AFE, $Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP OpenCMGroups OpenMarkedSections TABLE_CHARS TEMPLATE_IMS Tokens)};
 ($DTDDefs) = @{$self->{saved_maps}}{qw(DTDDefs)};
 
       $self->_feed_chars ($input) or die "Can't restart";
 
-      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, InLiteral => $InLiteral, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
+      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, InLiteral => $InLiteral, InitialCMGroupDepth => $InitialCMGroupDepth, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
       return;
     } # parse_chars_feed
 
     sub parse_chars_end ($) {
       my $self = $_[0];
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
       $IframeSrcdoc = $self->{IframeSrcdoc};
 $InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
-      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $InLiteral, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM InLiteral LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State Temp TempIndex Token)};
+      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $InLiteral, $InitialCMGroupDepth, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM InLiteral InitialCMGroupDepth LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State Temp TempIndex Token)};
 ($AFE, $Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP OpenCMGroups OpenMarkedSections TABLE_CHARS TEMPLATE_IMS Tokens)};
 ($DTDDefs) = @{$self->{saved_maps}}{qw(DTDDefs)};
 
@@ -75567,9 +75688,10 @@ $Scripting = $self->{Scripting};
         $self->{nodes} = [$doc];
         $doc->remove_child ($_) for $doc->child_nodes->to_list;
 
-        local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+        local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
         $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
+$InitialCMGroupDepth = 0;
 $NEXT_ID = 1;
 $Offset = 0;
 $DTDMode = q{N/A};
@@ -75618,6 +75740,7 @@ $Scripting = $self->{Scripting};
       $self->{input_stream} = [];
       $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
+$InitialCMGroupDepth = 0;
 $NEXT_ID = 1;
 $Offset = 0;
 $DTDMode = q{N/A};
@@ -75676,7 +75799,7 @@ $Scripting = $self->{Scripting};
       $doc->manakai_is_html (0);
       $self->{can_restart} = 1;
 
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
       PARSER: {
         $self->_parse_bytes_init;
         $self->_parse_bytes_start_parsing (no_body_data_yet => 1) or do {
@@ -75685,7 +75808,7 @@ $Scripting = $self->{Scripting};
         };
       } # PARSER
 
-      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, InLiteral => $InLiteral, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
+      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, InLiteral => $InLiteral, InitialCMGroupDepth => $InitialCMGroupDepth, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
       return;
     } # parse_bytes_start
   
@@ -75696,12 +75819,12 @@ $Scripting = $self->{Scripting};
     sub parse_bytes_feed ($$;%) {
       my ($self, undef, %args) = @_;
 
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
       $IframeSrcdoc = $self->{IframeSrcdoc};
 $InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
-      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $InLiteral, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM InLiteral LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State Temp TempIndex Token)};
+      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $InLiteral, $InitialCMGroupDepth, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM InLiteral InitialCMGroupDepth LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State Temp TempIndex Token)};
 ($AFE, $Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP OpenCMGroups OpenMarkedSections TABLE_CHARS TEMPLATE_IMS Tokens)};
 ($DTDDefs) = @{$self->{saved_maps}}{qw(DTDDefs)};
 
@@ -75731,18 +75854,18 @@ $Scripting = $self->{Scripting};
         }
       } # PARSER
 
-      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, InLiteral => $InLiteral, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
+      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, InLiteral => $InLiteral, InitialCMGroupDepth => $InitialCMGroupDepth, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
       return;
     } # parse_bytes_feed
 
     sub parse_bytes_end ($) {
       my $self = $_[0];
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
       $IframeSrcdoc = $self->{IframeSrcdoc};
 $InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
-      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $InLiteral, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM InLiteral LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State Temp TempIndex Token)};
+      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $InLiteral, $InitialCMGroupDepth, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM InLiteral InitialCMGroupDepth LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State Temp TempIndex Token)};
 ($AFE, $Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP OpenCMGroups OpenMarkedSections TABLE_CHARS TEMPLATE_IMS Tokens)};
 ($DTDDefs) = @{$self->{saved_maps}}{qw(DTDDefs)};
 
@@ -75783,9 +75906,10 @@ $Scripting = $self->{Scripting};
   sub parse ($$$) {
     my ($self, $main, $in) = @_;
 
-    local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+    local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
     $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
+$InitialCMGroupDepth = 0;
 $NEXT_ID = 1;
 $Offset = 0;
 $DTDMode = q{N/A};
@@ -75849,9 +75973,10 @@ $Scripting = $self->{Scripting};
   sub parse ($$$) {
     my ($self, $main, $in) = @_;
 
-    local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+    local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
     $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
+$InitialCMGroupDepth = 0;
 $NEXT_ID = 1;
 $Offset = 0;
 $DTDMode = q{N/A};
@@ -75920,7 +76045,7 @@ $Scripting = $self->{Scripting};
       $self->{main_parser} = $_[2];
       $self->{can_restart} = 1;
 
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
       PARSER: {
         $self->_parse_bytes_init;
         $self->_parse_bytes_start_parsing (no_body_data_yet => 1) or do {
@@ -75929,7 +76054,7 @@ $Scripting = $self->{Scripting};
         };
       } # PARSER
 
-      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, InLiteral => $InLiteral, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
+      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, InLiteral => $InLiteral, InitialCMGroupDepth => $InitialCMGroupDepth, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
       return;
     } # parse_bytes_start
 
@@ -75941,6 +76066,7 @@ $Scripting = $self->{Scripting};
 
     $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
+$InitialCMGroupDepth = 0;
 $NEXT_ID = 1;
 $Offset = 0;
 $DTDMode = q{N/A};
@@ -75999,9 +76125,10 @@ $Scripting = $self->{Scripting};
   sub parse ($$$) {
     my ($self, $main, $in) = @_;
 
-    local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+    local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
     $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
+$InitialCMGroupDepth = 0;
 $NEXT_ID = 1;
 $Offset = 0;
 $DTDMode = q{N/A};
@@ -76067,7 +76194,7 @@ $Scripting = $self->{Scripting};
       $self->{main_parser} = $_[2];
       $self->{can_restart} = 1;
 
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
       PARSER: {
         $self->_parse_bytes_init;
         $self->_parse_bytes_start_parsing (no_body_data_yet => 1) or do {
@@ -76076,7 +76203,7 @@ $Scripting = $self->{Scripting};
         };
       } # PARSER
 
-      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, InLiteral => $InLiteral, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
+      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, InLiteral => $InLiteral, InitialCMGroupDepth => $InitialCMGroupDepth, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
       return;
     } # parse_bytes_start
 
@@ -76088,6 +76215,7 @@ $Scripting = $self->{Scripting};
 
     $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
+$InitialCMGroupDepth = 0;
 $NEXT_ID = 1;
 $Offset = 0;
 $DTDMode = q{N/A};
@@ -76138,9 +76266,10 @@ $Scripting = $self->{Scripting};
   sub parse ($$$) {
     my ($self, $main, $in) = @_;
 
-    local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+    local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
     $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
+$InitialCMGroupDepth = 0;
 $NEXT_ID = 1;
 $Offset = 0;
 $DTDMode = q{N/A};
@@ -76207,7 +76336,7 @@ $Scripting = $self->{Scripting};
       $self->{main_parser} = $_[2];
       $self->{can_restart} = 1;
 
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
       PARSER: {
         $self->_parse_bytes_init;
         $self->_parse_bytes_start_parsing (no_body_data_yet => 1) or do {
@@ -76216,7 +76345,7 @@ $Scripting = $self->{Scripting};
         };
       } # PARSER
 
-      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, InLiteral => $InLiteral, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
+      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, InLiteral => $InLiteral, InitialCMGroupDepth => $InitialCMGroupDepth, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
       return;
     } # parse_bytes_start
 
@@ -76228,6 +76357,7 @@ $Scripting = $self->{Scripting};
 
     $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
+$InitialCMGroupDepth = 0;
 $NEXT_ID = 1;
 $Offset = 0;
 $DTDMode = q{N/A};
@@ -76280,9 +76410,10 @@ $Scripting = $self->{Scripting};
     my ($self, $main, $in) = @_;
 
     $self->{InMDEntity} = 1;
-    local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+    local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
     $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
+$InitialCMGroupDepth = 0;
 $NEXT_ID = 1;
 $Offset = 0;
 $DTDMode = q{N/A};
@@ -76328,7 +76459,7 @@ $Scripting = $self->{Scripting};
 
     $Token = $main->{saved_states}->{Token};
     $Attr = $main->{saved_states}->{Attr};
-    $OpenCMGroups = $main->{saved_states}->{OpenCMGroups};
+    $OpenCMGroups = $main->{saved_lists}->{OpenCMGroups};
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
     $self->{is_sub_parser} = 1;
     if ($main->{saved_states}->{DTDMode} eq 'internal subset' or
@@ -76357,7 +76488,7 @@ $Scripting = $self->{Scripting};
 
       $self->{InMDEntity} = 1;
 
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
       PARSER: {
         $self->_parse_bytes_init;
         $self->_parse_bytes_start_parsing (no_body_data_yet => 1) or do {
@@ -76366,7 +76497,7 @@ $Scripting = $self->{Scripting};
         };
       } # PARSER
 
-      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, InLiteral => $InLiteral, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
+      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, InLiteral => $InLiteral, InitialCMGroupDepth => $InitialCMGroupDepth, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
       return;
     } # parse_bytes_start
 
@@ -76378,6 +76509,7 @@ $Scripting = $self->{Scripting};
 
     $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
+$InitialCMGroupDepth = 0;
 $NEXT_ID = 1;
 $Offset = 0;
 $DTDMode = q{N/A};
@@ -76418,7 +76550,7 @@ $Scripting = $self->{Scripting};
 
     $Token = $main->{saved_states}->{Token};
     $Attr = $main->{saved_states}->{Attr};
-    $OpenCMGroups = $main->{saved_states}->{OpenCMGroups};
+    $OpenCMGroups = $main->{saved_lists}->{OpenCMGroups};
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
     $self->{is_sub_parser} = 1;
     $DTDMode = 'parameter entity';
@@ -76431,12 +76563,12 @@ $Scripting = $self->{Scripting};
 
     sub _parse_sub_done ($) {
       my $self = $_[0];
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
       $IframeSrcdoc = $self->{IframeSrcdoc};
 $InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
-      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $InLiteral, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM InLiteral LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State Temp TempIndex Token)};
+      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $InLiteral, $InitialCMGroupDepth, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM InLiteral InitialCMGroupDepth LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State Temp TempIndex Token)};
 ($AFE, $Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP OpenCMGroups OpenMarkedSections TABLE_CHARS TEMPLATE_IMS Tokens)};
 ($DTDDefs) = @{$self->{saved_maps}}{qw(DTDDefs)};
 

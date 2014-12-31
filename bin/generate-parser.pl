@@ -83,6 +83,7 @@ if ($LANG eq 'XML') {
   $Vars->{DTDMode} = {type => 'enum', save => 1, default => 'N/A'};
   $Vars->{OpenMarkedSections} = {unchanged => 1, type => 'list'};
   $Vars->{OpenCMGroups} = {unchanged => 1, type => 'list'};
+  $Vars->{InitialCMGroupDepth} = {save => 1, type => 'integer', default => 0};
   $Vars->{DTDDefs} = {unchanged => 1, type => 'map'};
   $Vars->{OriginalState} = {save => 1, type => 'enum'};
   $Vars->{SC} = {input => 1, from_method => 1};
@@ -1025,7 +1026,7 @@ sub serialize_actions ($;%) {
                 }
               }
 
-              if (defined $ent->{notation}) {
+              if (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -1075,16 +1076,16 @@ sub serialize_actions ($;%) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (%d) { # before_equals
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
+                    #push @$Errors, {type => 'no refc',
+                    #                level => 'm',
+                    #                di => $DI,
+                    #                index => $TempIndex + $_};
                   }
 
                   ## A variant of |append-to-attr|
@@ -1180,7 +1181,7 @@ sub serialize_actions ($;%) {
                 $TempIndex += length $Temp;
                 $Temp = '';
                 last REF;
-              } elsif (defined $ent->{notation}) {
+              } elsif (defined $ent->{notation_name}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -1211,10 +1212,10 @@ sub serialize_actions ($;%) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
                 unless (';' eq substr $Temp, $_-1, 1) {
-                  push @$Errors, {type => 'no refc',
-                                  level => 'm',
-                                  di => $DI,
-                                  index => $TempIndex + $_};
+                  #push @$Errors, {type => 'no refc',
+                  #                level => 'm',
+                  #                di => $DI,
+                  #                index => $TempIndex + $_};
 
                   ## A variant of |emit-temp|
                   push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -1506,7 +1507,16 @@ sub serialize_actions ($;%) {
     } elsif ($type eq 'append-cmgroup') {
       push @result, q{push @{$OpenCMGroups->[-1]->{items}}, $cmgroup;};
     } elsif ($type eq 'pop-cmgroup') {
-      push @result, q{pop @$OpenCMGroups;};
+      push @result, sprintf q{
+        if ($InitialCMGroupDepth < @$OpenCMGroups) {
+          pop @$OpenCMGroups;
+        } else {
+          push @$Errors, {level => 'm',
+                          type => 'unmatched mgc',
+                          di => $DI, index => $Offset + (pos $Input)};
+          %s
+        }
+      }, switch_state_code 'bogus markup declaration state';
     } elsif ($type eq 'insert-cmelement') {
       push @result, q{
         push @{$OpenCMGroups->[-1]->{items}},
@@ -4563,7 +4573,7 @@ sub generate_api ($) {
     push @init_code, map {
       sprintf q{$%s = %d;}, $_, $Vars->{$_}->{default};
     } sort { $a cmp $b } grep {
-      $Vars->{$_}->{type} eq 'index' and
+      ($Vars->{$_}->{type} eq 'index' or $Vars->{$_}->{type} eq 'integer') and
       defined $Vars->{$_}->{default};
     } keys %$Vars;
     push @init_code, map {
@@ -4649,7 +4659,7 @@ sub generate_api ($) {
           $self->_tokenize;
           $self->_construct_tree;
 
-          if (@$Callbacks or @$Errors) {
+          if (@$Callbacks or @$Errors or $self->{is_sub_parser}) {
             VARS::SAVE;
             {
               my $Errors = $Errors;
@@ -5731,7 +5741,7 @@ sub generate_api ($) {
 
     $Token = $main->{saved_states}->{Token};
     $Attr = $main->{saved_states}->{Attr};
-    $OpenCMGroups = $main->{saved_states}->{OpenCMGroups};
+    $OpenCMGroups = $main->{saved_lists}->{OpenCMGroups};
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
     $self->{is_sub_parser} = 1;
     if ($main->{saved_states}->{DTDMode} eq 'internal subset' or
@@ -5812,7 +5822,7 @@ sub generate_api ($) {
 
     $Token = $main->{saved_states}->{Token};
     $Attr = $main->{saved_states}->{Attr};
-    $OpenCMGroups = $main->{saved_states}->{OpenCMGroups};
+    $OpenCMGroups = $main->{saved_lists}->{OpenCMGroups};
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
     $self->{is_sub_parser} = 1;
     $DTDMode = 'parameter entity';
@@ -6165,14 +6175,19 @@ my $OnMDEntityReference = sub {
       } else {
         $main2->{saved_states}->{State} = $sub->{saved_states}->{State};
       }
+      if ($sub->{saved_states}->{InitialCMGroupDepth} < @{$sub->{saved_lists}->{OpenCMGroups}}) {
+        $main2->onerrors->($main2, [{level => 'm',
+                                     type => 'unclosed cmgroup',
+                                     di => $sub->{saved_states}->{Token}->{di},
+                                     index => $sub->{saved_states}->{Token}->{index}}]);
+        $#{$sub->{saved_lists}->{OpenCMGroups}} = $sub->{saved_states}->{InitialCMGroupDepth}-1;
+      }
       $main2->{saved_states}->{Attr} = $sub->{saved_states}->{Attr};
-      $main2->{saved_states}->{OpenCMGroups} = $sub->{saved_states}->{OpenCMGroups};
 
       my $sub2 = XXX::MDEntityParser->new;
       $sub2->onparsed (sub {
-        $main2->{saved_states}->{State} = $sub2->{saved_states}->{State};
-        $main2->{saved_states}->{Attr} = $sub2->{saved_states}->{Attr};
-        $main2->{saved_states}->{OpenCMGroups} = $sub2->{saved_states}->{OpenCMGroups};
+        $main2->{saved_states}->{State} = $_[0]->{saved_states}->{State};
+        $main2->{saved_states}->{Attr} = $_[0]->{saved_states}->{Attr};
       });
       {
         local $main2->{saved_states}->{OriginalState} = [$main2->{saved_states}->{State}];
@@ -6187,6 +6202,7 @@ my $OnMDEntityReference = sub {
     $data->{entity}->{open}++;
     $main->{pause}++;
     $main->{pause}++;
+    $sub->{saved_states}->{InitialCMGroupDepth} = $main->{saved_lists}->{OpenCMGroups};
     if (defined $data->{entity}->{value}) { # internal
       $sub->parse ($main, $data);
     } else { # external
