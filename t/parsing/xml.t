@@ -168,7 +168,6 @@ ok 1;
     eq_or_diff $result, $test->{document}->[0], 'Document tree';
     done $c;
     undef $c;
-    undef $p;
   }; # $code
 
   if (defined $test->{resource}) {
@@ -225,7 +224,11 @@ ok 1;
     }
     my $children = $p->parse_char_string_with_context
         ($ip->[$main_di]->{data}, $el, $dom->create_document);
-    $el->append_child ($_) for $children->to_list;
+    if ($el->manakai_element_type_match ('http://www.w3.org/1999/xhtml', 'template')) {
+      $el->content->append_child ($_) for $children->to_list;
+    } else {
+      $el->append_child ($_) for $children->to_list;
+    }
     $result = dumptree ($el);
     $code->();
   }

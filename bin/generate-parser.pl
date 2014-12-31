@@ -4829,26 +4829,31 @@ sub generate_api ($) {
       ## HTML fragment parsing algorithm
       ## <http://www.whatwg.org/specs/web-apps/current-work/#parsing-html-fragments>.
 
+      ## XML fragment parsing algorithm
+      ## <http://www.whatwg.org/specs/web-apps/current-work/#parsing-xhtml-fragments>
+
       ## 1.
       $self->{document} = my $doc = $_[3]; # an empty Document
       $self->{IframeSrcdoc} = $doc->manakai_is_srcdoc;
-      $doc->manakai_is_html (1);
       $doc->remove_child ($_) for $doc->child_nodes->to_list;
       my $nodes = $self->{nodes} = [$doc];
+      ## <HTML>
+      $doc->manakai_is_html (1);
 
-      ## 2.
+      ## HTML 2.
       if (defined $context) {
         $doc->manakai_compat_mode ($context->owner_document->manakai_compat_mode);
       } else {
         ## Not in spec
         $doc->manakai_compat_mode ('no quirks');
       }
+      ## </HTML>
 
       VARS::LOCAL;
       VARS::INIT;
       VARS::RESET;
       SWITCH_STATE ("data state");
-      $IM = IM (HTML => "initial", XML => "before XML declaration");
+      $IM = IM (HTML => "initial", XML => "in element");
 
       ## 3.
       my $input = [$_[1]]; # string copy
@@ -4857,18 +4862,20 @@ sub generate_api ($) {
       $self->{di} = $DI = defined $self->{di} ? $self->{di} : @$dids || 1;
       $dids->[$DI] ||= {} if $DI >= 0;
 
-      ## 4.
+      ## HTML 4. / XML 3. (cnt.)
       my $root;
       if (defined $context) {
-        ## 4.1.
+        ## HTML 4.1. / XML 2., 4., 6.
         my $node_ns = $context->namespace_uri || '';
         my $node_ln = $context->local_name;
         if ($node_ns eq 'http://www.w3.org/1999/xhtml') {
+          ## <HTML>
           if ($Scripting and $node_ln eq 'noscript') {
             SWITCH_STATE ("RAWTEXT state");
           } else {
             $State = $StateByElementName->{$node_ln} || $State;
           }
+          ## </HTML>
           $CONTEXT = {id => $NEXT_ID++,
                       #token => undef,
                       #di => $token->{di}, index => $token->{index},
@@ -4877,6 +4884,7 @@ sub generate_api ($) {
                       attr_list => {}, # not relevant
                       et => %s->{$node_ln} || %s->{'*'},
                       aet => %s->{$node_ln} || %s->{'*'}};
+        ## <HTML>
         } elsif ($node_ns eq 'http://www.w3.org/2000/svg') {
           $CONTEXT = {id => $NEXT_ID++,
                       #token => undef,
@@ -4906,6 +4914,7 @@ sub generate_api ($) {
               }
             }
           }
+        ## </HTML>
         } else {
           $CONTEXT = {id => $NEXT_ID++,
                       #token => undef,
@@ -4916,35 +4925,81 @@ sub generate_api ($) {
                       et => 0,
                       aet => 0};
         }
+        ## <XML>
+        my $nsmap = {};
+        {
+          my $prefixes = {};
+          my $p = $context;
+          while ($p and $p->node_type == 1) { # ELEMENT_NODE
+            $prefixes->{$_->local_name} = 1 for grep {
+              ($_->namespace_uri || '') eq q<http://www.w3.org/2000/xmlns/>;
+            } @{$p->attributes or []};
+            my $prefix = $p->prefix;
+            $prefixes->{$prefix} = 1 if defined $prefix;
+            $p = $p->parent_node;
+          }
+          for ('', keys %$prefixes) {
+            $nsmap->{$_} = $context->lookup_namespace_uri ($_);
+          }
+          $nsmap->{xml} = q<http://www.w3.org/XML/1998/namespace>;
+          $nsmap->{xmlns} = q<http://www.w3.org/2000/xmlns/>;
+        }
+        $CONTEXT->{nsmap} = $nsmap;
+        ## </XML>
         $nodes->[$CONTEXT->{id}] = $context;
 
-        ## 4.2.
+        ## <HTML>
+        ## HTML 4.2.
         $root = $doc->create_element ('html');
+        ## </HTML>
+        ## <XML>
+        $root = $doc->create_element_ns
+            ($context->namespace_uri, [$context->prefix, $context->local_name]);
+        ## </XML>
 
-        ## 4.3.
+        ## HTML 4.3.
         $doc->append_child ($root);
 
-        ## 4.4.
+        ## <HTML>
+        ## HTML 4.4.
         @$OE = ({id => $NEXT_ID++,
                  #token => undef,
                  #di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'html',
                  attr_list => {},
-                 et => %s->{html},
+                 et => %s,
                  aet => $CONTEXT->{aet}});
+        ## </HTML>
+        ## <XML>
+        @$OE = ({id => $NEXT_ID++,
+                 #token => undef,
+                 #di => $token->{di}, index => $token->{index},
+                 ns => $CONTEXT->{ns},
+                 local_name => $CONTEXT->{local_name},
+                 nsmap => $CONTEXT->{nsmap},
+                 attr_list => {},
+                 et => $CONTEXT->{et},
+                 aet => $CONTEXT->{aet}});
+        ## </XML>
 
-        ## 4.5.
+        ## HTML 4.5.
         if ($node_ns eq 'http://www.w3.org/1999/xhtml' and
             $node_ln eq 'template') {
+          ## <HTML>
           push @$TEMPLATE_IMS, IM ("in template");
+          ## </HTML>
+          ## <XML>
+          $root = $root->content;
+          ## </XML>
         }
         $nodes->[$OE->[-1]->{id}] = $root;
 
-        ## 4.6.
+        ## <HTML>
+        ## HTML 4.6.
         &reset_im;
 
-        ## 4.7.
+        ## HTML 4.7.
         my $anode = $context;
         while (defined $anode) {
           if ($anode->node_type == 1 and
@@ -4966,15 +5021,21 @@ sub generate_api ($) {
           }
           $anode = $anode->parent_node;
         }
+        ## </HTML>
       } # $context
 
-      ## 5.
+      ## HTML 5.
       $Confident = 1; # irrelevant
 
-      ## 6.
+      ## HTML 6. / XML 3. (cnt.)
       local $self->{onextentref};
       $self->_feed_chars ($input) or die "Can't restart";
       $self->_feed_eof or die "Can't restart";
+
+      ## XML 5. If not well-formed, throw SyntaxError - should be
+      ## handled by callee using $self->onerror.
+
+      ## XXX and well-formedness errors not detected by this parser
 
       ## 7.
       return defined $context ? $root->child_nodes : $doc->child_nodes;
@@ -4983,9 +5044,9 @@ sub generate_api ($) {
     E2Tns 'HTMLNS', E2Tns 'HTMLNS', E2Tns 'HTMLNS', E2Tns 'HTMLNS',
     E2Tns 'SVGNS', E2Tns 'SVGNS', E2Tns 'SVGNS', E2Tns 'SVGNS',
     E2Tns 'MATHMLNS', E2Tns 'MATHMLNS', E2Tns 'MATHMLNS', E2Tns 'MATHMLNS',
-    E2Tns 'HTMLNS', E2Tns 'HTMLNS', E2Tns 'HTMLNS',
-  if $LANG eq 'HTML';
-  # XXX XML
+    E2Tns 'HTMLNS', E2Tns 'HTMLNS', E2Tns 'HTMLNS';
+  $sub_code[-1] =~ s{<XML>.*?</XML>}{}gs unless $LANG eq 'XML';
+  $sub_code[-1] =~ s{<HTML>.*?</HTML>}{}gs unless $LANG eq 'HTML';
 
   push @sub_code, sprintf q{
     sub parse_chars_start ($$) {

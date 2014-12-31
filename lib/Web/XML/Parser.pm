@@ -75583,6 +75583,149 @@ $Scripting = $self->{Scripting};
     } # parse_char_string
   
 
+    sub parse_char_string_with_context ($$$$) {
+      my $self = $_[0];
+      my $context = $_[2]; # an Element or undef
+
+      ## HTML fragment parsing algorithm
+      ## <http://www.whatwg.org/specs/web-apps/current-work/#parsing-html-fragments>.
+
+      ## XML fragment parsing algorithm
+      ## <http://www.whatwg.org/specs/web-apps/current-work/#parsing-xhtml-fragments>
+
+      ## 1.
+      $self->{document} = my $doc = $_[3]; # an empty Document
+      $self->{IframeSrcdoc} = $doc->manakai_is_srcdoc;
+      $doc->remove_child ($_) for $doc->child_nodes->to_list;
+      my $nodes = $self->{nodes} = [$doc];
+      ## 
+
+      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+      $FRAMESET_OK = 1;
+$AnchoredIndex = 0;
+$InitialCMGroupDepth = 0;
+$NEXT_ID = 1;
+$Offset = 0;
+$DTDMode = q{N/A};
+$self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
+$self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
+      $IframeSrcdoc = $self->{IframeSrcdoc};
+$InMDEntity = $self->{InMDEntity};
+$SC = $self->_sc;
+$Scripting = $self->{Scripting};
+      $State = DATA_STATE;;
+      $IM = IN_ELEMENT_IM;
+
+      ## 3.
+      my $input = [$_[1]]; # string copy
+      $self->{input_stream} = [];
+      my $dids = $self->di_data_set;
+      $self->{di} = $DI = defined $self->{di} ? $self->{di} : @$dids || 1;
+      $dids->[$DI] ||= {} if $DI >= 0;
+
+      ## HTML 4. / XML 3. (cnt.)
+      my $root;
+      if (defined $context) {
+        ## HTML 4.1. / XML 2., 4., 6.
+        my $node_ns = $context->namespace_uri || '';
+        my $node_ln = $context->local_name;
+        if ($node_ns eq 'http://www.w3.org/1999/xhtml') {
+          ## 
+          $CONTEXT = {id => $NEXT_ID++,
+                      #token => undef,
+                      #di => $token->{di}, index => $token->{index},
+                      ns => HTMLNS,
+                      local_name => $node_ln,
+                      attr_list => {}, # not relevant
+                      et => $Element2Type->{(HTMLNS)}->{$node_ln} || $Element2Type->{(HTMLNS)}->{'*'},
+                      aet => $Element2Type->{(HTMLNS)}->{$node_ln} || $Element2Type->{(HTMLNS)}->{'*'}};
+        ## 
+        } else {
+          $CONTEXT = {id => $NEXT_ID++,
+                      #token => undef,
+                      #di => $token->{di}, index => $token->{index},
+                      ns => 0,
+                      local_name => $node_ln,
+                      attr_list => {}, # not relevant
+                      et => 0,
+                      aet => 0};
+        }
+        ## <XML>
+        my $nsmap = {};
+        {
+          my $prefixes = {};
+          my $p = $context;
+          while ($p and $p->node_type == 1) { # ELEMENT_NODE
+            $prefixes->{$_->local_name} = 1 for grep {
+              ($_->namespace_uri || '') eq q<http://www.w3.org/2000/xmlns/>;
+            } @{$p->attributes or []};
+            my $prefix = $p->prefix;
+            $prefixes->{$prefix} = 1 if defined $prefix;
+            $p = $p->parent_node;
+          }
+          for ('', keys %$prefixes) {
+            $nsmap->{$_} = $context->lookup_namespace_uri ($_);
+          }
+          $nsmap->{xml} = q<http://www.w3.org/XML/1998/namespace>;
+          $nsmap->{xmlns} = q<http://www.w3.org/2000/xmlns/>;
+        }
+        $CONTEXT->{nsmap} = $nsmap;
+        ## </XML>
+        $nodes->[$CONTEXT->{id}] = $context;
+
+        ## 
+        ## <XML>
+        $root = $doc->create_element_ns
+            ($context->namespace_uri, [$context->prefix, $context->local_name]);
+        ## </XML>
+
+        ## HTML 4.3.
+        $doc->append_child ($root);
+
+        ## 
+        ## <XML>
+        @$OE = ({id => $NEXT_ID++,
+                 #token => undef,
+                 #di => $token->{di}, index => $token->{index},
+                 ns => $CONTEXT->{ns},
+                 local_name => $CONTEXT->{local_name},
+                 nsmap => $CONTEXT->{nsmap},
+                 attr_list => {},
+                 et => $CONTEXT->{et},
+                 aet => $CONTEXT->{aet}});
+        ## </XML>
+
+        ## HTML 4.5.
+        if ($node_ns eq 'http://www.w3.org/1999/xhtml' and
+            $node_ln eq 'template') {
+          ## 
+          ## <XML>
+          $root = $root->content;
+          ## </XML>
+        }
+        $nodes->[$OE->[-1]->{id}] = $root;
+
+        ## 
+      } # $context
+
+      ## HTML 5.
+      $Confident = 1; # irrelevant
+
+      ## HTML 6. / XML 3. (cnt.)
+      local $self->{onextentref};
+      $self->_feed_chars ($input) or die "Can't restart";
+      $self->_feed_eof or die "Can't restart";
+
+      ## XML 5. If not well-formed, throw SyntaxError - should be
+      ## handled by callee using $self->onerror.
+
+      ## XXX and well-formedness errors not detected by this parser
+
+      ## 7.
+      return defined $context ? $root->child_nodes : $doc->child_nodes;
+    } # parse_char_string_with_context
+  
+
     sub parse_chars_start ($$) {
       my ($self, $doc) = @_;
 
