@@ -47,7 +47,8 @@ sub check_ncnames ($%) {
   for (keys %{$args{names}}) {
     if (not /\A\p{InXMLNCNameStartChar}\p{InXMLNCNameChar}*\z/) {
       $args{onerror}->(type => 'xml:not ncname',
-                       token => $args{names}->{$_},
+                       di => $args{names}->{$_}->{di},
+                       index => $args{names}->{$_}->{index},
                        value => $_,
                        level => 'm');
     }

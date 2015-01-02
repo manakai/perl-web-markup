@@ -62,6 +62,8 @@ $parser->onextentref (sub {
 push @$subs, $sub;
 });
 
+$parser->strict_checker ('Web::XML::Parser::ForValidatorChecker');
+
 $parser->onparsed (sub {
   print "Parsing done\n";
 });

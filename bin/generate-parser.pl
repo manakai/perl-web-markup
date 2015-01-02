@@ -515,7 +515,7 @@ sub switch_state_code ($) {
   my $state = $_[0];
   my @code;
   push @code, sprintf q{$State = %s;}, state_const $state;
-  if ($state =~ /tag open state/ or
+  if ($state =~ /(?<!end )tag open state/ or
       $state =~ /less-than sign state/) {
     push @code,
         q{$AnchoredIndex = $Offset + (pos $Input) - 1;};
@@ -558,13 +558,17 @@ sub serialize_actions ($;%) {
         if ($args{in_eof}) {
           push @result, sprintf q[
             push @$Errors, {type => '%s', level => 'm',
-                            di => $DI, index => $Offset + (pos $Input)};
-          ], $_->{error_type} // $_->{name};
+                            di => $DI, index => $Offset + (pos $Input)%s};
+          ],
+              $_->{error_type} // $_->{name},
+              (defined $_->{index_offset} ? sprintf q{ - %d}, $_->{index_offset} : '');
         } else {
           push @result, sprintf q[
             push @$Errors, {type => '%s', level => 'm',
-                            di => $DI, index => $Offset + (pos $Input) - 1};
-          ], $_->{error_type} // $_->{name};
+                            di => $DI, index => $Offset + (pos $Input) - 1%s};
+          ],
+              $_->{error_type} // $_->{name},
+              (defined $_->{index_offset} ? sprintf q{ - %d}, $_->{index_offset} : '');
         }
       }
     } elsif ($type eq 'switch') {
@@ -959,7 +963,7 @@ sub serialize_actions ($;%) {
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
                           type => 'ref outside of root element',
-                          value => $Temp,
+                          value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
       } if $LANG eq 'XML' and not $_->{in_attr};
@@ -994,7 +998,7 @@ sub serialize_actions ($;%) {
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
                           type => 'ref outside of root element',
-                          value => $Temp,
+                          value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
       } if $LANG eq 'XML' and not $_->{in_attr};
@@ -2762,7 +2766,7 @@ sub actions_to_code ($;%) {
           $SC->check_pi_target
               (name => $token->{target},
                onerror => sub {
-                 push @$Errors, {@_, di => $DI, index => $Offset + pos $Input};
+                 push @$Errors, {@_, di => $token->{di}, index => $token->{index}};
                });
         };
       }
@@ -3281,7 +3285,7 @@ sub actions_to_code ($;%) {
       push @code, q{
         push @$Errors, {level => 's',
                         type => 'no XML decl',
-                        di => $token->{di}, index => $token->{index}};
+                        di => $token->{di}, index => 0};
       };
     } elsif ($act->{type} eq 'process an XML declaration') {
       push @code, q{_process_xml_decl $token;};
@@ -4793,7 +4797,7 @@ sub generate_api ($) {
       while ($input->[0] =~ /[\x{0001}-\x{0008}\x{000B}\x{000C}\x{000E}-\x{001F}\x{D800}-\x{DFFF}\x{FFFE}\x{FFFF}\x{007F}-\x{009F}\x{FDD0}-\x{FDEF}\x{1FFFE}-\x{1FFFF}\x{2FFFE}-\x{2FFFF}\x{3FFFE}-\x{3FFFF}\x{4FFFE}-\x{4FFFF}\x{5FFFE}-\x{5FFFF}\x{6FFFE}-\x{6FFFF}\x{7FFFE}-\x{7FFFF}\x{8FFFE}-\x{8FFFF}\x{9FFFE}-\x{9FFFF}\x{AFFFE}-\x{AFFFF}\x{BFFFE}-\x{BFFFF}\x{CFFFE}-\x{CFFFF}\x{DFFFE}-\x{DFFFF}\x{EFFFE}-\x{EFFFF}\x{FFFFE}-\x{FFFFF}\x{10FFFE}-\x{10FFFF}]/gcx) {
         my $index = $-[0];
         my $char = ord substr $input->[0], $index, 1;
-        my $level = (substr $input->[0], $index, 1) =~ /\x{0001}-\x{0008}\x{000B}\x{000C}\x{000E}-\x{001F}\x{D800}-\x{DFFF}\x{FFFE}\x{FFFF}/ ? 'm' : 'w';
+        my $level = (substr $input->[0], $index, 1) =~ /[\x{0001}-\x{0008}\x{000B}\x{000C}\x{000E}-\x{001F}\x{D800}-\x{DFFF}\x{FFFE}\x{FFFF}]/ ? 'm' : 'w';
         if ($char < 0x100) {
           push @$Errors, {type => 'control char', level => $level,
                           text => (sprintf 'U+%%04X', $char),
@@ -6394,7 +6398,7 @@ sub onrestartwithencoding ($;$) {
 
 =head1 LICENSE
 
-Copyright 2007-2014 Wakaba <wakaba@suikawiki.org>.
+Copyright 2007-2015 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
