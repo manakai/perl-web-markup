@@ -1270,7 +1270,7 @@ push @$OP, ['construct-doctype'];
         ## [15] after root element;DOCTYPE
         sub {
           my $token = $_;
-push @$Errors, {type => 'after-root-element-doctype',
+push @$Errors, {type => 'doctype:bad context',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -2465,7 +2465,7 @@ delete $token->{self_closing_flag};
         ## [89] in element;DOCTYPE
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-element-doctype',
+push @$Errors, {type => 'doctype:bad context',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -2495,9 +2495,9 @@ my $tag_name = length $token->{tag_name} ? $token->{tag_name} : $OE->[-1]->{toke
             
           if ((defined $CONTEXT) and 
 ($_node eq $OE->[0])) {
-            push @$Errors, {type => 'in-element-end-else',
+            push @$Errors, {type => 'stray end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 return;
 return;
@@ -2562,9 +2562,9 @@ return;
           if (defined $CONTEXT) {
             
           if (@$OE > 1) {
-            push @$Errors, {type => 'in-element-eof',
+            push @$Errors, {type => 'in body:#eof',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $OE->[-1]->{local_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -4060,7 +4060,7 @@ push @$Tokens, $Token;
 $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-            push @$Errors, {type => 'attlist-attribute-default-0022', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $InLiteral = 1;
@@ -4068,7 +4068,7 @@ $State = DEFAULT_ATTR_VALUE__DQ__STATE;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-            push @$Errors, {type => 'attlist-attribute-default-0027', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $InLiteral = 1;
@@ -4134,21 +4134,21 @@ $State = PE_NAME_IN_MARKUP_DECL_STATE;
 $Attr->{q<name>} .= q@�@;
 } elsif ($Input =~ /\G([\(])/gcs) {
 
-            push @$Errors, {type => 'attlist-attribute-name-0028', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = B_ALLOWED_TOKEN_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'attlist-attribute-name-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
           }
         
 
-            push @$Errors, {type => 'attlist-attribute-name-003e', level => 'm',
+            push @$Errors, {type => 'no attr type', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -4208,7 +4208,7 @@ $OriginalState = [A_ATTLIST_ATTR_TYPE_STATE, A_ATTLIST_ATTR_TYPE_STATE___BEFORE_
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-            push @$Errors, {type => 'attlist-attribute-type-0022', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $InLiteral = 1;
@@ -4216,13 +4216,13 @@ $State = DEFAULT_ATTR_VALUE__DQ__STATE;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 } elsif ($Input =~ /\G([\#])/gcs) {
 
-            push @$Errors, {type => 'attlist-attribute-type-0023', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = B_ATTLIST_ATTR_DEFAULT_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-            push @$Errors, {type => 'attlist-attribute-type-0027', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $InLiteral = 1;
@@ -4230,21 +4230,21 @@ $State = DEFAULT_ATTR_VALUE__SQ__STATE;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 } elsif ($Input =~ /\G([\(])/gcs) {
 
-            push @$Errors, {type => 'attlist-attribute-type-0028', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = B_ALLOWED_TOKEN_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'attlist-attribute-type-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
           }
         
 
-            push @$Errors, {type => 'attlist-attribute-type-003e', level => 'm',
+            push @$Errors, {type => 'no attr default', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -4305,7 +4305,7 @@ $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'attlist-name-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -4378,7 +4378,7 @@ $OriginalState = [B_ATTLIST_NAME_STATE, B_ATTLIST_NAME_STATE___BEFORE_TEXT_DECL_
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-            push @$Errors, {type => 'attlist-else', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -4401,13 +4401,13 @@ $State = ATTLIST_NAME_STATE;
           }
         
 
-            push @$Errors, {type => 'attlist-003e', level => 'm',
+            push @$Errors, {type => 'no md name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'attlist-else', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -5736,8 +5736,8 @@ $State = DTD_STATE;
           }
         
 
-            push @$Errors, {type => 'doctype-markup-declaration-open-005b', level => 'm',
-                            di => $DI, index => $Offset + (pos $Input) - 1};
+            push @$Errors, {type => 'condsect in internal subset', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1 - 2};
           
 push @$OpenMarkedSections, 'IGNORE';
 $State = IGNORED_SECTION_STATE;
@@ -6477,7 +6477,7 @@ $Temp .= $1;
             unless ($Temp eq q{ATTLIST}) {
               push @$Errors, {type => 'keyword-wrong-case', level => 'm',
                               value => $Temp,
-                              di => $DI, index => $Offset + (pos $Input) - 1};
+                              di => $DI, index => $Offset + (pos $Input) - 1 - 6};
             }
           
 $State = ATTLIST_STATE;
@@ -6487,7 +6487,7 @@ $Temp .= $1;
             unless ($Temp eq q{ATTLIST}) {
               push @$Errors, {type => 'keyword-wrong-case', level => 'm',
                               value => $Temp,
-                              di => $DI, index => $Offset + (pos $Input) - 1};
+                              di => $DI, index => $Offset + (pos $Input) - 1 - 6};
             }
           
 $State = ATTLIST_STATE;
@@ -7127,7 +7127,7 @@ $Temp .= $1;
             unless ($Temp eq q{ELEMENT}) {
               push @$Errors, {type => 'keyword-wrong-case', level => 'm',
                               value => $Temp,
-                              di => $DI, index => $Offset + (pos $Input) - 1};
+                              di => $DI, index => $Offset + (pos $Input) - 1 - 6};
             }
           
 $State = ELEMENT_STATE;
@@ -7137,7 +7137,7 @@ $Temp .= $1;
             unless ($Temp eq q{ELEMENT}) {
               push @$Errors, {type => 'keyword-wrong-case', level => 'm',
                               value => $Temp,
-                              di => $DI, index => $Offset + (pos $Input) - 1};
+                              di => $DI, index => $Offset + (pos $Input) - 1 - 6};
             }
           
 $State = ELEMENT_STATE;
@@ -7561,7 +7561,7 @@ $Temp .= $1;
             unless ($Temp eq q{ENTITY}) {
               push @$Errors, {type => 'keyword-wrong-case', level => 'm',
                               value => $Temp,
-                              di => $DI, index => $Offset + (pos $Input) - 1};
+                              di => $DI, index => $Offset + (pos $Input) - 1 - 5};
             }
           
 $State = ENT_STATE;
@@ -7571,7 +7571,7 @@ $Temp .= $1;
             unless ($Temp eq q{ENTITY}) {
               push @$Errors, {type => 'keyword-wrong-case', level => 'm',
                               value => $Temp,
-                              di => $DI, index => $Offset + (pos $Input) - 1};
+                              di => $DI, index => $Offset + (pos $Input) - 1 - 5};
             }
           
 $State = ENT_STATE;
@@ -8310,7 +8310,7 @@ $Temp .= $1;
             unless ($Temp eq q{NOTATION}) {
               push @$Errors, {type => 'keyword-wrong-case', level => 'm',
                               value => $Temp,
-                              di => $DI, index => $Offset + (pos $Input) - 1};
+                              di => $DI, index => $Offset + (pos $Input) - 1 - 7};
             }
           
 $State = NOTATION_STATE;
@@ -8320,7 +8320,7 @@ $Temp .= $1;
             unless ($Temp eq q{NOTATION}) {
               push @$Errors, {type => 'keyword-wrong-case', level => 'm',
                               value => $Temp,
-                              di => $DI, index => $Offset + (pos $Input) - 1};
+                              di => $DI, index => $Offset + (pos $Input) - 1 - 7};
             }
           
 $State = NOTATION_STATE;
@@ -8674,7 +8674,7 @@ $State = DOCTYPE_NAME_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-            push @$Errors, {type => 'before-doctype-name-005b', level => 'm',
+            push @$Errors, {type => 'no DOCTYPE name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -9047,7 +9047,7 @@ $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'element-content-keyword-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -9191,7 +9191,7 @@ $OriginalState = [B_ELEMENT_NAME_STATE, B_ELEMENT_NAME_STATE___BEFORE_TEXT_DECL_
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-            push @$Errors, {type => 'element-else', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -9220,7 +9220,7 @@ $State = ELEMENT_NAME_STATE;
 $State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'element-else', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -9302,14 +9302,14 @@ $Token->{q<value>} = [['', $DI, $Offset + pos $Input]];
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'entity-name-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
           }
         
 
-            push @$Errors, {type => 'entity-name-003e', level => 'm',
+            push @$Errors, {type => 'no md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -9372,7 +9372,7 @@ $State = A_ENT_PUBLIC_ID_STATE;
 undef $InLiteral;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'entity-public-identifier-double-quoted-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -9444,7 +9444,7 @@ $State = ENT_PUBLIC_ID__DQ__STATE;
 undef $InLiteral;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'entity-public-identifier-double-quoted-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -9518,7 +9518,7 @@ $State = A_ENT_PUBLIC_ID_STATE;
 undef $InLiteral;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'entity-public-identifier-single-quoted-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -9590,7 +9590,7 @@ $State = ENT_PUBLIC_ID__SQ__STATE;
 undef $InLiteral;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'entity-public-identifier-single-quoted-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -9682,7 +9682,7 @@ $State = ENT_NAME_STATE;
           }
         
 
-            push @$Errors, {type => 'entity-003e', level => 'm',
+            push @$Errors, {type => 'no md name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -10885,7 +10885,7 @@ push @{$Token->{q<value>}}, [q@
 $State = ENT_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-            push @$Errors, {type => 'entity-value-double-quoted-state-character-reference-name-0022', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -11110,7 +11110,7 @@ push @{$Token->{q<value>}}, [q@
 $State = ENT_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-            push @$Errors, {type => 'character-reference-allowed-char', level => 'm',
+            push @$Errors, {type => 'bare ero', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -11127,7 +11127,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = PE_NAME_IN_ENT_VALUE__DQ__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'character-reference-0026', level => 'm',
+            push @$Errors, {type => 'bare ero', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -12464,7 +12464,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = PE_NAME_IN_ENT_VALUE__SQ__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'character-reference-0026', level => 'm',
+            push @$Errors, {type => 'bare ero', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -12473,7 +12473,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = ENT_VALUE__SQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-            push @$Errors, {type => 'character-reference-allowed-char', level => 'm',
+            push @$Errors, {type => 'bare ero', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -13682,7 +13682,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = PE_NAME_IN_ENT_VALUE_IN_ENT_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'character-reference-0026', level => 'm',
+            push @$Errors, {type => 'bare ero', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -13931,7 +13931,7 @@ $State = PE_NAME_IN_MARKUP_DECL_STATE;
           }
         
 
-            push @$Errors, {type => 'notation-name-003e', level => 'm',
+            push @$Errors, {type => 'no md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -14283,7 +14283,7 @@ $OriginalState = [B_NOTATION_NAME_STATE, B_NOTATION_NAME_STATE___BEFORE_TEXT_DEC
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-            push @$Errors, {type => 'notation-else', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -14306,13 +14306,13 @@ $State = NOTATION_NAME_STATE;
           }
         
 
-            push @$Errors, {type => 'notation-003e', level => 'm',
+            push @$Errors, {type => 'no md name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'notation-else', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -14943,7 +14943,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -14962,7 +14962,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -14983,7 +14983,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -15005,7 +15005,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -15030,7 +15030,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -15063,7 +15063,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -15094,7 +15094,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -15122,7 +15122,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -15186,7 +15186,7 @@ $Temp .= $1;
 $State = A_ATTLIST_ATTR_DEFAULT_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -15211,7 +15211,7 @@ $State = A_ATTLIST_ATTR_DEFAULT_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -15237,7 +15237,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -15263,7 +15263,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -15289,7 +15289,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -15315,7 +15315,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -15342,7 +15342,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -15411,7 +15411,7 @@ $Temp .= $1;
 $State = A_ATTLIST_ATTR_DEFAULT_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -15436,7 +15436,7 @@ $State = A_ATTLIST_ATTR_DEFAULT_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -15462,7 +15462,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -15488,7 +15488,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -15514,7 +15514,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -15540,7 +15540,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -15570,7 +15570,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -15646,7 +15646,7 @@ $State = B_ALLOWED_TOKEN_STATE;
           }
         
 
-            push @$Errors, {type => 'after-attlist-attribute-name-003e', level => 'm',
+            push @$Errors, {type => 'no attr type', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -15701,7 +15701,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -15720,7 +15720,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -15742,7 +15742,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -15765,7 +15765,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -15788,7 +15788,7 @@ $State = A_ATTLIST_ATTR_NAME_STATE;
           }
         
 
-            push @$Errors, {type => 'after-attlist-attribute-name-003e', level => 'm',
+            push @$Errors, {type => 'no attr type', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -15799,7 +15799,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -15820,7 +15820,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -15884,7 +15884,7 @@ $Temp .= $1;
 $State = A_ATTLIST_ATTR_NAME_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -15909,7 +15909,7 @@ $State = A_ATTLIST_ATTR_NAME_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -15935,7 +15935,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -15961,7 +15961,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -15987,7 +15987,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -16013,7 +16013,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -16040,7 +16040,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -16109,7 +16109,7 @@ $Temp .= $1;
 $State = A_ATTLIST_ATTR_NAME_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -16134,7 +16134,7 @@ $State = A_ATTLIST_ATTR_NAME_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -16160,7 +16160,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -16186,7 +16186,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -16212,7 +16212,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -16238,7 +16238,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -16268,7 +16268,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -16347,14 +16347,14 @@ $State = B_ALLOWED_TOKEN_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-attlist-attribute-type-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
           }
         
 
-            push @$Errors, {type => 'after-attlist-attribute-type-003e', level => 'm',
+            push @$Errors, {type => 'no attr default', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -16362,7 +16362,7 @@ push @$Tokens, $Token;
 $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-attlist-attribute-type-else', level => 'm',
+            push @$Errors, {type => 'unquoted attr value', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -16412,7 +16412,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -16431,7 +16431,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -16452,7 +16452,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -16471,7 +16471,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -16493,7 +16493,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -16514,7 +16514,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -16537,7 +16537,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -16553,14 +16553,14 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = A_ATTLIST_ATTR_TYPE_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-attlist-attribute-type-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
           }
         
 
-            push @$Errors, {type => 'after-attlist-attribute-type-003e', level => 'm',
+            push @$Errors, {type => 'no attr default', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -16571,7 +16571,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -16585,7 +16585,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
         }
       
 
-            push @$Errors, {type => 'after-attlist-attribute-type-else', level => 'm',
+            push @$Errors, {type => 'unquoted attr value', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -16595,7 +16595,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -16659,7 +16659,7 @@ $Temp .= $1;
 $State = A_ATTLIST_ATTR_TYPE_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -16684,7 +16684,7 @@ $State = A_ATTLIST_ATTR_TYPE_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -16710,7 +16710,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -16736,7 +16736,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -16762,7 +16762,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -16788,7 +16788,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -16815,7 +16815,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -16884,7 +16884,7 @@ $Temp .= $1;
 $State = A_ATTLIST_ATTR_TYPE_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -16909,7 +16909,7 @@ $State = A_ATTLIST_ATTR_TYPE_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -16935,7 +16935,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -16961,7 +16961,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -16987,7 +16987,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -17013,7 +17013,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -17043,7 +17043,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -17131,7 +17131,7 @@ push @$Tokens, $Token;
 $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-            push @$Errors, {type => 'after-attlist-default-value-else', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -17149,7 +17149,7 @@ $Attr->{q<name>} = q@�@;
 $Attr->{index} = $Offset + (pos $Input) - length $1;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-attlist-default-value-else', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -17204,7 +17204,7 @@ $StateActions->[A_DOCTYPE_INTERNAL_SUBSET_STATE] = sub {
 if ($Input =~ /\G([\>])/gcs) {
 
           if (defined $CONTEXT) {
-            push @$Errors, {type => 'after-doctype-internal-subset-003e-fragment', level => 'm',
+            push @$Errors, {type => 'string in internal subset', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
             $State = DTD_STATE;
             return 1;
@@ -17222,8 +17222,8 @@ return 1;
 $State = A_DTD_MSC_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-doctype-internal-subset-else', level => 'm',
-                            di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+            push @$Errors, {type => 'string after internal subset', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
           
 
           if (defined $CONTEXT) {
@@ -17475,7 +17475,7 @@ $Temp .= $1;
             unless ($Temp eq q{PUBLIC}) {
               push @$Errors, {type => 'keyword-wrong-case', level => 'm',
                               value => $Temp,
-                              di => $DI, index => $Offset + (pos $Input) - 1};
+                              di => $DI, index => $Offset + (pos $Input) - 1 - 5};
             }
           
 $State = A_DOCTYPE_PUBLIC_KWD_STATE;
@@ -17485,7 +17485,7 @@ $Temp .= $1;
             unless ($Temp eq q{PUBLIC}) {
               push @$Errors, {type => 'keyword-wrong-case', level => 'm',
                               value => $Temp,
-                              di => $DI, index => $Offset + (pos $Input) - 1};
+                              di => $DI, index => $Offset + (pos $Input) - 1 - 5};
             }
           
 $State = A_DOCTYPE_PUBLIC_KWD_STATE;
@@ -17664,7 +17664,7 @@ $Temp .= $1;
             unless ($Temp eq q{SYSTEM}) {
               push @$Errors, {type => 'keyword-wrong-case', level => 'm',
                               value => $Temp,
-                              di => $DI, index => $Offset + (pos $Input) - 1};
+                              di => $DI, index => $Offset + (pos $Input) - 1 - 5};
             }
           
 $State = A_DOCTYPE_SYSTEM_KWD_STATE;
@@ -17674,7 +17674,7 @@ $Temp .= $1;
             unless ($Temp eq q{SYSTEM}) {
               push @$Errors, {type => 'keyword-wrong-case', level => 'm',
                               value => $Temp,
-                              di => $DI, index => $Offset + (pos $Input) - 1};
+                              di => $DI, index => $Offset + (pos $Input) - 1 - 5};
             }
           
 $State = A_DOCTYPE_SYSTEM_KWD_STATE;
@@ -17726,7 +17726,7 @@ $Token->{q<system_identifier>} = '';
 $State = DOCTYPE_SYSTEM_ID__SQ__STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-            push @$Errors, {type => 'after-doctype-public-identifier-003e', level => 'm',
+            push @$Errors, {type => 'no DOCTYPE literal', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DATA_STATE;
@@ -17734,7 +17734,7 @@ push @$Tokens, $Token;
 return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } elsif ($Input =~ /\G([\[])/gcs) {
 
-            push @$Errors, {type => 'after-doctype-public-identifier-005b', level => 'm',
+            push @$Errors, {type => 'no DOCTYPE literal', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -17799,7 +17799,7 @@ push @$Tokens, $Token;
 return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } elsif ($Input =~ /\G([\[])/gcs) {
 
-            push @$Errors, {type => 'after-doctype-public-keyword-005b', level => 'm',
+            push @$Errors, {type => 'no DOCTYPE literal', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -17904,7 +17904,7 @@ push @$Tokens, $Token;
 return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } elsif ($Input =~ /\G([\[])/gcs) {
 
-            push @$Errors, {type => 'after-doctype-system-keyword-005b', level => 'm',
+            push @$Errors, {type => 'no DOCTYPE literal', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -17968,7 +17968,7 @@ if ($Input =~ /\G([\>])/gcs) {
           
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-dtd-msc-else', level => 'm',
+            push @$Errors, {type => 'string in internal subset', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1 - 2};
           
 $State = DTD_STATE;
@@ -18032,7 +18032,7 @@ push @$Tokens, $Token;
 $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-element-content-else', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -18082,7 +18082,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -18101,7 +18101,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -18127,7 +18127,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -18157,7 +18157,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -18171,7 +18171,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
         }
       
 
-            push @$Errors, {type => 'after-element-content-else', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -18181,7 +18181,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -18245,7 +18245,7 @@ $Temp .= $1;
 $State = A_ELEMENT_CONTENT_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -18270,7 +18270,7 @@ $State = A_ELEMENT_CONTENT_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -18296,7 +18296,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -18322,7 +18322,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -18348,7 +18348,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -18374,7 +18374,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -18401,7 +18401,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -18470,7 +18470,7 @@ $Temp .= $1;
 $State = A_ELEMENT_CONTENT_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -18495,7 +18495,7 @@ $State = A_ELEMENT_CONTENT_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -18521,7 +18521,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -18547,7 +18547,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -18573,7 +18573,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -18599,7 +18599,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -18629,7 +18629,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -18720,7 +18720,7 @@ $State = A_ENT_NAME_STATE_S;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-entity-name-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -18736,7 +18736,7 @@ $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 return 1 if $Token->{type} == ENTITY_TOKEN;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-entity-name-else', level => 'm',
+            push @$Errors, {type => 'xml:dtd:string after name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -18786,7 +18786,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -18805,7 +18805,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -18826,7 +18826,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -18848,7 +18848,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -18873,7 +18873,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -18894,7 +18894,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -18915,7 +18915,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -18936,7 +18936,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -18957,7 +18957,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -18973,7 +18973,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = A_ENT_NAME_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-entity-name-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -18992,7 +18992,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -19006,7 +19006,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
         }
       
 
-            push @$Errors, {type => 'after-entity-name-else', level => 'm',
+            push @$Errors, {type => 'xml:dtd:string after name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -19016,7 +19016,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -19080,7 +19080,7 @@ $Temp .= $1;
 $State = A_ENT_NAME_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -19105,7 +19105,7 @@ $State = A_ENT_NAME_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -19131,7 +19131,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -19157,7 +19157,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -19183,7 +19183,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -19209,7 +19209,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -19236,7 +19236,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -19305,7 +19305,7 @@ $Temp .= $1;
 $State = A_ENT_NAME_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -19330,7 +19330,7 @@ $State = A_ENT_NAME_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -19356,7 +19356,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -19382,7 +19382,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -19408,7 +19408,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -19434,7 +19434,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -19464,7 +19464,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -19529,7 +19529,7 @@ $Temp .= $1;
 $State = A_ENT_NAME_STATE_PU;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-entity-name-else', level => 'm',
+            push @$Errors, {type => 'xml:dtd:string after name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -19582,7 +19582,7 @@ $Temp .= $1;
 $State = A_ENT_NAME_STATE_PUB;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-entity-name-else', level => 'm',
+            push @$Errors, {type => 'xml:dtd:string after name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -19635,7 +19635,7 @@ $Temp .= $1;
 $State = A_ENT_NAME_STATE_PUBL;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-entity-name-else', level => 'm',
+            push @$Errors, {type => 'xml:dtd:string after name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -19688,7 +19688,7 @@ $Temp .= $1;
 $State = A_ENT_NAME_STATE_PUBLI;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-entity-name-else', level => 'm',
+            push @$Errors, {type => 'xml:dtd:string after name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -19739,7 +19739,7 @@ $Temp .= $1;
             unless ($Temp eq q{PUBLIC}) {
               push @$Errors, {type => 'keyword-wrong-case', level => 'm',
                               value => $Temp,
-                              di => $DI, index => $Offset + (pos $Input) - 1};
+                              di => $DI, index => $Offset + (pos $Input) - 1 - 5};
             }
           
 $State = A_ENT_PUBLIC_KWD_STATE;
@@ -19749,13 +19749,13 @@ $Temp .= $1;
             unless ($Temp eq q{PUBLIC}) {
               push @$Errors, {type => 'keyword-wrong-case', level => 'm',
                               value => $Temp,
-                              di => $DI, index => $Offset + (pos $Input) - 1};
+                              di => $DI, index => $Offset + (pos $Input) - 1 - 5};
             }
           
 $State = A_ENT_PUBLIC_KWD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-entity-name-else', level => 'm',
+            push @$Errors, {type => 'xml:dtd:string after name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -19808,7 +19808,7 @@ $Temp .= $1;
 $State = A_ENT_NAME_STATE_SY;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-entity-name-else', level => 'm',
+            push @$Errors, {type => 'xml:dtd:string after name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -19861,7 +19861,7 @@ $Temp .= $1;
 $State = A_ENT_NAME_STATE_SYS;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-entity-name-else', level => 'm',
+            push @$Errors, {type => 'xml:dtd:string after name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -19914,7 +19914,7 @@ $Temp .= $1;
 $State = A_ENT_NAME_STATE_SYST;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-entity-name-else', level => 'm',
+            push @$Errors, {type => 'xml:dtd:string after name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -19967,7 +19967,7 @@ $Temp .= $1;
 $State = A_ENT_NAME_STATE_SYSTE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-entity-name-else', level => 'm',
+            push @$Errors, {type => 'xml:dtd:string after name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -20018,7 +20018,7 @@ $Temp .= $1;
             unless ($Temp eq q{SYSTEM}) {
               push @$Errors, {type => 'keyword-wrong-case', level => 'm',
                               value => $Temp,
-                              di => $DI, index => $Offset + (pos $Input) - 1};
+                              di => $DI, index => $Offset + (pos $Input) - 1 - 5};
             }
           
 $State = A_ENT_SYSTEM_KWD_STATE;
@@ -20028,13 +20028,13 @@ $Temp .= $1;
             unless ($Temp eq q{SYSTEM}) {
               push @$Errors, {type => 'keyword-wrong-case', level => 'm',
                               value => $Temp,
-                              di => $DI, index => $Offset + (pos $Input) - 1};
+                              di => $DI, index => $Offset + (pos $Input) - 1 - 5};
             }
           
 $State = A_ENT_SYSTEM_KWD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-entity-name-else', level => 'm',
+            push @$Errors, {type => 'xml:dtd:string after name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -20101,7 +20101,7 @@ $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 return 1 if $Token->{type} == ENTITY_TOKEN;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-entity-parameter-else', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -20151,7 +20151,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -20170,7 +20170,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -20196,7 +20196,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -20227,7 +20227,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -20241,7 +20241,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
         }
       
 
-            push @$Errors, {type => 'after-entity-parameter-else', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -20251,7 +20251,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -20315,7 +20315,7 @@ $Temp .= $1;
 $State = A_ENT_PARAMETER_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -20340,7 +20340,7 @@ $State = A_ENT_PARAMETER_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -20366,7 +20366,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -20392,7 +20392,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -20418,7 +20418,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -20444,7 +20444,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -20471,7 +20471,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -20540,7 +20540,7 @@ $Temp .= $1;
 $State = A_ENT_PARAMETER_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -20565,7 +20565,7 @@ $State = A_ENT_PARAMETER_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -20591,7 +20591,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -20617,7 +20617,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -20643,7 +20643,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -20669,7 +20669,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -20699,7 +20699,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -20766,14 +20766,14 @@ $OriginalState = [BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE, BETWEEN_ENT_PUBLIC_AN
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-            push @$Errors, {type => 'after-entity-public-identifier-0022', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $InLiteral = 1;
 $State = ENT_SYSTEM_ID__DQ__STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-            push @$Errors, {type => 'after-entity-public-identifier-0027', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $InLiteral = 1;
@@ -20797,7 +20797,7 @@ $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 return 1 if $Token->{type} == ENTITY_TOKEN;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-entity-public-identifier-else', level => 'm',
+            push @$Errors, {type => 'no DOCTYPE literal', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -20871,7 +20871,7 @@ $State = B_ENT_PUBLIC_ID_STATE;
           }
         
 
-            push @$Errors, {type => 'after-entity-public-keyword-003e', level => 'm',
+            push @$Errors, {type => 'no DOCTYPE literal', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -20947,7 +20947,7 @@ $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 return 1 if $Token->{type} == ENTITY_TOKEN;
 } elsif ($Input =~ /\G([N])/gcs) {
 
-            push @$Errors, {type => 'after-entity-system-identifier-else', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $Temp = $1;
@@ -20955,7 +20955,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = B_NDATA_KWD_STATE_N;
 } elsif ($Input =~ /\G([n])/gcs) {
 
-            push @$Errors, {type => 'after-entity-system-identifier-else', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $Temp = $1;
@@ -20963,11 +20963,11 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = B_NDATA_KWD_STATE_N;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-entity-system-identifier-else', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-            push @$Errors, {type => 'before-ndata-keyword-else', level => 'm',
+            push @$Errors, {type => 'string after SYSTEM literal', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -21043,7 +21043,7 @@ $State = ENT_SYSTEM_ID__SQ__STATE;
           }
         
 
-            push @$Errors, {type => 'after-entity-system-keyword-003e', level => 'm',
+            push @$Errors, {type => 'no DOCTYPE literal', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -21189,7 +21189,7 @@ push @$OpenMarkedSections, 'IGNORE';
 $State = IN_IGNORED_SECTION_MSC_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-ignore-keyword-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -21239,7 +21239,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -21258,7 +21258,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -21284,7 +21284,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -21313,7 +21313,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -21355,7 +21355,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -21397,7 +21397,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -21411,7 +21411,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
         }
       
 
-            push @$Errors, {type => 'after-ignore-keyword-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -21421,7 +21421,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -21485,7 +21485,7 @@ $Temp .= $1;
 $State = A_IGNORE_KWD_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -21510,7 +21510,7 @@ $State = A_IGNORE_KWD_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -21536,7 +21536,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -21562,7 +21562,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -21588,7 +21588,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -21614,7 +21614,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -21641,7 +21641,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -21710,7 +21710,7 @@ $Temp .= $1;
 $State = A_IGNORE_KWD_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -21735,7 +21735,7 @@ $State = A_IGNORE_KWD_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -21761,7 +21761,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -21787,7 +21787,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -21813,7 +21813,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -21839,7 +21839,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -21869,7 +21869,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -21936,7 +21936,7 @@ $State = PE_NAME_IN_STATUS_KWD_STATE;
 } elsif ($Input =~ /\G([\[])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-include-keyword-005b-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -21954,7 +21954,7 @@ $State = DTD_STATE;
           }
         
 
-            push @$Errors, {type => 'after-include-keyword-003c', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -22019,7 +22019,7 @@ push @$OpenMarkedSections, 'IGNORE';
 $State = IN_IGNORED_SECTION_MSC_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-include-keyword-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -22069,7 +22069,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -22088,7 +22088,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -22114,7 +22114,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -22130,7 +22130,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = A_INCLUDE_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-include-keyword-005b-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -22143,7 +22143,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -22185,7 +22185,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -22227,7 +22227,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -22241,7 +22241,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
         }
       
 
-            push @$Errors, {type => 'after-include-keyword-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -22251,7 +22251,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -22315,7 +22315,7 @@ $Temp .= $1;
 $State = A_INCLUDE_KWD_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -22340,7 +22340,7 @@ $State = A_INCLUDE_KWD_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -22366,7 +22366,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -22392,7 +22392,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -22418,7 +22418,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -22444,7 +22444,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -22471,7 +22471,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -22540,7 +22540,7 @@ $Temp .= $1;
 $State = A_INCLUDE_KWD_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -22565,7 +22565,7 @@ $State = A_INCLUDE_KWD_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -22591,7 +22591,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -22617,7 +22617,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -22643,7 +22643,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -22669,7 +22669,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -22699,7 +22699,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -22766,7 +22766,7 @@ $OriginalState = [B_NDATA_ID_STATE, B_NDATA_ID_STATE___BEFORE_TEXT_DECL_IN_MARKU
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-            push @$Errors, {type => 'after-ndata-keyword-else', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -22778,14 +22778,14 @@ $State = NDATA_ID_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-ndata-keyword-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
           }
         
 
-            push @$Errors, {type => 'after-ndata-keyword-003e', level => 'm',
+            push @$Errors, {type => 'no notation name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -22794,7 +22794,7 @@ $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 return 1 if $Token->{type} == ENTITY_TOKEN;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-ndata-keyword-else', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $Token->{q<notation_name>} = $1;
@@ -22872,7 +22872,7 @@ $State = A_NOTATION_NAME_STATE_S;
           }
         
 
-            push @$Errors, {type => 'after-notation-name-003e', level => 'm',
+            push @$Errors, {type => 'no md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -22880,7 +22880,7 @@ push @$Tokens, $Token;
 $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-notation-name-else', level => 'm',
+            push @$Errors, {type => 'xml:dtd:string after name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -22930,7 +22930,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -22949,7 +22949,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -22975,7 +22975,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -22996,7 +22996,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -23017,7 +23017,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -23038,7 +23038,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -23059,7 +23059,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -23082,7 +23082,7 @@ $State = A_NOTATION_NAME_STATE;
           }
         
 
-            push @$Errors, {type => 'after-notation-name-003e', level => 'm',
+            push @$Errors, {type => 'no md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -23093,7 +23093,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -23107,7 +23107,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
         }
       
 
-            push @$Errors, {type => 'after-notation-name-else', level => 'm',
+            push @$Errors, {type => 'xml:dtd:string after name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -23117,7 +23117,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -23181,7 +23181,7 @@ $Temp .= $1;
 $State = A_NOTATION_NAME_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -23206,7 +23206,7 @@ $State = A_NOTATION_NAME_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -23232,7 +23232,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -23258,7 +23258,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -23284,7 +23284,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -23310,7 +23310,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -23337,7 +23337,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -23406,7 +23406,7 @@ $Temp .= $1;
 $State = A_NOTATION_NAME_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -23431,7 +23431,7 @@ $State = A_NOTATION_NAME_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -23457,7 +23457,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -23483,7 +23483,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -23509,7 +23509,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -23535,7 +23535,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -23565,7 +23565,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -23630,7 +23630,7 @@ $Temp .= $1;
 $State = A_NOTATION_NAME_STATE_PU;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-notation-name-else', level => 'm',
+            push @$Errors, {type => 'xml:dtd:string after name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -23683,7 +23683,7 @@ $Temp .= $1;
 $State = A_NOTATION_NAME_STATE_PUB;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-notation-name-else', level => 'm',
+            push @$Errors, {type => 'xml:dtd:string after name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -23736,7 +23736,7 @@ $Temp .= $1;
 $State = A_NOTATION_NAME_STATE_PUBL;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-notation-name-else', level => 'm',
+            push @$Errors, {type => 'xml:dtd:string after name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -23789,7 +23789,7 @@ $Temp .= $1;
 $State = A_NOTATION_NAME_STATE_PUBLI;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-notation-name-else', level => 'm',
+            push @$Errors, {type => 'xml:dtd:string after name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -23840,7 +23840,7 @@ $Temp .= $1;
             unless ($Temp eq q{PUBLIC}) {
               push @$Errors, {type => 'keyword-wrong-case', level => 'm',
                               value => $Temp,
-                              di => $DI, index => $Offset + (pos $Input) - 1};
+                              di => $DI, index => $Offset + (pos $Input) - 1 - 5};
             }
           
 $State = A_NOTATION_PUBLIC_KWD_STATE;
@@ -23850,13 +23850,13 @@ $Temp .= $1;
             unless ($Temp eq q{PUBLIC}) {
               push @$Errors, {type => 'keyword-wrong-case', level => 'm',
                               value => $Temp,
-                              di => $DI, index => $Offset + (pos $Input) - 1};
+                              di => $DI, index => $Offset + (pos $Input) - 1 - 5};
             }
           
 $State = A_NOTATION_PUBLIC_KWD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-notation-name-else', level => 'm',
+            push @$Errors, {type => 'xml:dtd:string after name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -23909,7 +23909,7 @@ $Temp .= $1;
 $State = A_NOTATION_NAME_STATE_SY;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-notation-name-else', level => 'm',
+            push @$Errors, {type => 'xml:dtd:string after name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -23962,7 +23962,7 @@ $Temp .= $1;
 $State = A_NOTATION_NAME_STATE_SYS;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-notation-name-else', level => 'm',
+            push @$Errors, {type => 'xml:dtd:string after name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -24015,7 +24015,7 @@ $Temp .= $1;
 $State = A_NOTATION_NAME_STATE_SYST;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-notation-name-else', level => 'm',
+            push @$Errors, {type => 'xml:dtd:string after name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -24068,7 +24068,7 @@ $Temp .= $1;
 $State = A_NOTATION_NAME_STATE_SYSTE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-notation-name-else', level => 'm',
+            push @$Errors, {type => 'xml:dtd:string after name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -24119,7 +24119,7 @@ $Temp .= $1;
             unless ($Temp eq q{SYSTEM}) {
               push @$Errors, {type => 'keyword-wrong-case', level => 'm',
                               value => $Temp,
-                              di => $DI, index => $Offset + (pos $Input) - 1};
+                              di => $DI, index => $Offset + (pos $Input) - 1 - 5};
             }
           
 $State = A_NOTATION_SYSTEM_KWD_STATE;
@@ -24129,13 +24129,13 @@ $Temp .= $1;
             unless ($Temp eq q{SYSTEM}) {
               push @$Errors, {type => 'keyword-wrong-case', level => 'm',
                               value => $Temp,
-                              di => $DI, index => $Offset + (pos $Input) - 1};
+                              di => $DI, index => $Offset + (pos $Input) - 1 - 5};
             }
           
 $State = A_NOTATION_SYSTEM_KWD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-notation-name-else', level => 'm',
+            push @$Errors, {type => 'xml:dtd:string after name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -24202,21 +24202,21 @@ push @$Tokens, $Token;
 $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-            push @$Errors, {type => 'after-notation-public-identifier-0022', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $InLiteral = 1;
 $State = NOTATION_SYSTEM_ID__DQ__STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-            push @$Errors, {type => 'after-notation-public-identifier-0027', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $InLiteral = 1;
 $State = NOTATION_SYSTEM_ID__SQ__STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-notation-public-identifier-else', level => 'm',
+            push @$Errors, {type => 'string after PUBLIC literal', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -24290,7 +24290,7 @@ $State = B_NOTATION_PUBLIC_ID_STATE;
           }
         
 
-            push @$Errors, {type => 'after-notation-public-keyword-003e', level => 'm',
+            push @$Errors, {type => 'no DOCTYPE literal', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -24363,7 +24363,7 @@ push @$Tokens, $Token;
 $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-notation-system-identifier-else', level => 'm',
+            push @$Errors, {type => 'string after SYSTEM literal', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -24413,7 +24413,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -24432,7 +24432,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -24458,7 +24458,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -24488,7 +24488,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -24502,7 +24502,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
         }
       
 
-            push @$Errors, {type => 'after-notation-system-identifier-else', level => 'm',
+            push @$Errors, {type => 'string after SYSTEM literal', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -24512,7 +24512,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -24576,7 +24576,7 @@ $Temp .= $1;
 $State = A_NOTATION_SYSTEM_ID_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -24601,7 +24601,7 @@ $State = A_NOTATION_SYSTEM_ID_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -24627,7 +24627,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -24653,7 +24653,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -24679,7 +24679,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -24705,7 +24705,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -24732,7 +24732,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -24801,7 +24801,7 @@ $Temp .= $1;
 $State = A_NOTATION_SYSTEM_ID_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -24826,7 +24826,7 @@ $State = A_NOTATION_SYSTEM_ID_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -24852,7 +24852,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -24878,7 +24878,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -24904,7 +24904,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -24930,7 +24930,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -24960,7 +24960,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -25047,7 +25047,7 @@ $State = B_NOTATION_SYSTEM_ID_STATE;
           }
         
 
-            push @$Errors, {type => 'after-notation-system-keyword-003e', level => 'm',
+            push @$Errors, {type => 'no DOCTYPE literal', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -25265,7 +25265,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -25284,7 +25284,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -25305,7 +25305,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -25324,7 +25324,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -25346,7 +25346,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -25371,7 +25371,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -25405,7 +25405,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -25429,7 +25429,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -25493,7 +25493,7 @@ $Temp .= $1;
 $State = A_AFTER_ALLOWED_TOKEN_LIST_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -25518,7 +25518,7 @@ $State = A_AFTER_ALLOWED_TOKEN_LIST_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -25544,7 +25544,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -25570,7 +25570,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -25596,7 +25596,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -25622,7 +25622,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -25649,7 +25649,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -25718,7 +25718,7 @@ $Temp .= $1;
 $State = A_AFTER_ALLOWED_TOKEN_LIST_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -25743,7 +25743,7 @@ $State = A_AFTER_ALLOWED_TOKEN_LIST_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -25769,7 +25769,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -25795,7 +25795,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -25821,7 +25821,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -25847,7 +25847,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -25877,7 +25877,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -25944,7 +25944,7 @@ $OriginalState = [A_AFTER_ALLOWED_TOKEN_LIST_STATE, A_AFTER_ALLOWED_TOKEN_LIST_S
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-            push @$Errors, {type => 'after-allowed-token-list-else', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $InLiteral = 1;
@@ -25952,13 +25952,13 @@ $State = DEFAULT_ATTR_VALUE__DQ__STATE;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 } elsif ($Input =~ /\G([\#])/gcs) {
 
-            push @$Errors, {type => 'after-allowed-token-list-else', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = B_ATTLIST_ATTR_DEFAULT_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-            push @$Errors, {type => 'after-allowed-token-list-else', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $InLiteral = 1;
@@ -25982,7 +25982,7 @@ push @$Tokens, $Token;
 $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-allowed-token-list-else', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -26051,7 +26051,7 @@ $State = B_ALLOWED_TOKEN_STATE;
           }
         
 
-            push @$Errors, {type => 'after-allowed-token-003e', level => 'm',
+            push @$Errors, {type => 'xml:dtd:no group delimiter', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -26059,7 +26059,7 @@ push @$Tokens, $Token;
 $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-allowed-token-else', level => 'm',
+            push @$Errors, {type => 'xml:dtd:no group delimiter', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -26109,7 +26109,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -26128,7 +26128,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -26150,7 +26150,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -26173,7 +26173,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -26192,7 +26192,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -26215,7 +26215,7 @@ $State = A_ALLOWED_TOKEN_STATE;
           }
         
 
-            push @$Errors, {type => 'after-allowed-token-003e', level => 'm',
+            push @$Errors, {type => 'xml:dtd:no group delimiter', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -26226,7 +26226,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -26240,7 +26240,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
         }
       
 
-            push @$Errors, {type => 'after-allowed-token-else', level => 'm',
+            push @$Errors, {type => 'xml:dtd:no group delimiter', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -26250,7 +26250,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -26314,7 +26314,7 @@ $Temp .= $1;
 $State = A_ALLOWED_TOKEN_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -26339,7 +26339,7 @@ $State = A_ALLOWED_TOKEN_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -26365,7 +26365,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -26391,7 +26391,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -26417,7 +26417,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -26443,7 +26443,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -26470,7 +26470,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -26539,7 +26539,7 @@ $Temp .= $1;
 $State = A_ALLOWED_TOKEN_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -26564,7 +26564,7 @@ $State = A_ALLOWED_TOKEN_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -26590,7 +26590,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -26616,7 +26616,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -26642,7 +26642,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -26668,7 +26668,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -26698,7 +26698,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -27091,7 +27091,7 @@ $State = A_CM_ITEM_STATE;
 
         if (not @$OpenCMGroups) {
           
-            push @$Errors, {type => 'after-content-model-item-0029', level => 'm',
+            push @$Errors, {type => 'xml:dtd:no group delimiter', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -27199,7 +27199,7 @@ push @$Tokens, $Token;
           }
         
 
-            push @$Errors, {type => 'after-content-model-item-003e', level => 'm',
+            push @$Errors, {type => 'unclosed cmgroup', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -27256,7 +27256,7 @@ $State = B_CM_ITEM_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-content-model-group-else', level => 'm',
+            push @$Errors, {type => 'xml:dtd:no group delimiter', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -27311,7 +27311,7 @@ $State = PE_NAME_IN_MARKUP_DECL_STATE;
 
         if (not @$OpenCMGroups) {
           
-            push @$Errors, {type => 'after-content-model-item-0029', level => 'm',
+            push @$Errors, {type => 'xml:dtd:no group delimiter', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -27363,7 +27363,7 @@ push @$Tokens, $Token;
           }
         
 
-            push @$Errors, {type => 'after-content-model-item-003e', level => 'm',
+            push @$Errors, {type => 'unclosed cmgroup', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -27396,25 +27396,25 @@ $State = B_CM_ITEM_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\*])/gcs) {
 
-            push @$Errors, {type => 'after-content-model-item-002a', level => 'm',
+            push @$Errors, {type => 'xml:dtd:no group delimiter', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\+])/gcs) {
 
-            push @$Errors, {type => 'after-content-model-item-002b', level => 'm',
+            push @$Errors, {type => 'xml:dtd:no group delimiter', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\?])/gcs) {
 
-            push @$Errors, {type => 'after-content-model-item-003f', level => 'm',
+            push @$Errors, {type => 'xml:dtd:no group delimiter', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-content-model-item-else', level => 'm',
+            push @$Errors, {type => 'xml:dtd:no group delimiter', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -27464,7 +27464,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -27483,7 +27483,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -27505,7 +27505,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -27522,7 +27522,7 @@ $State = A_CM_ITEM_STATE;
 
         if (not @$OpenCMGroups) {
           
-            push @$Errors, {type => 'after-content-model-item-0029', level => 'm',
+            push @$Errors, {type => 'xml:dtd:no group delimiter', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -27537,7 +27537,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -27577,7 +27577,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -27614,7 +27614,7 @@ push @$Tokens, $Token;
           }
         
 
-            push @$Errors, {type => 'after-content-model-item-003e', level => 'm',
+            push @$Errors, {type => 'unclosed cmgroup', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -27626,7 +27626,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -27662,7 +27662,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -27685,7 +27685,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -27699,7 +27699,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
         }
       
 
-            push @$Errors, {type => 'after-content-model-item-002a', level => 'm',
+            push @$Errors, {type => 'xml:dtd:no group delimiter', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -27708,7 +27708,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -27722,7 +27722,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
         }
       
 
-            push @$Errors, {type => 'after-content-model-item-002b', level => 'm',
+            push @$Errors, {type => 'xml:dtd:no group delimiter', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -27731,7 +27731,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -27745,7 +27745,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
         }
       
 
-            push @$Errors, {type => 'after-content-model-item-003f', level => 'm',
+            push @$Errors, {type => 'xml:dtd:no group delimiter', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -27754,7 +27754,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -27768,7 +27768,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
         }
       
 
-            push @$Errors, {type => 'after-content-model-item-else', level => 'm',
+            push @$Errors, {type => 'xml:dtd:no group delimiter', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -27778,7 +27778,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -27842,7 +27842,7 @@ $Temp .= $1;
 $State = A_CM_ITEM_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -27867,7 +27867,7 @@ $State = A_CM_ITEM_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -27893,7 +27893,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -27919,7 +27919,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -27945,7 +27945,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -27971,7 +27971,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -27998,7 +27998,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -28067,7 +28067,7 @@ $Temp .= $1;
 $State = A_CM_ITEM_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -28092,7 +28092,7 @@ $State = A_CM_ITEM_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -28118,7 +28118,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -28144,7 +28144,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -28170,7 +28170,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -28196,7 +28196,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -28226,7 +28226,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -28434,7 +28434,7 @@ $State = A_MSS_STATE_I;
           }
         
 
-            push @$Errors, {type => 'after-mss-003c', level => 'm',
+            push @$Errors, {type => 'ms:no status keyword', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -28483,7 +28483,7 @@ $State = IGNORED_SECTION_STATE;
           }
         
 
-            push @$Errors, {type => 'after-mss-005b', level => 'm',
+            push @$Errors, {type => 'ms:no status keyword', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -28523,7 +28523,7 @@ push @$OpenMarkedSections, 'IGNORE';
 $State = IN_IGNORED_SECTION_MSC_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -28573,7 +28573,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -28592,7 +28592,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -28618,7 +28618,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -28639,7 +28639,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -28660,7 +28660,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -28702,7 +28702,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -28725,7 +28725,7 @@ $State = A_MSS_STATE;
           }
         
 
-            push @$Errors, {type => 'after-mss-005b', level => 'm',
+            push @$Errors, {type => 'ms:no status keyword', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -28744,7 +28744,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -28786,7 +28786,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -28800,7 +28800,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
         }
       
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -28810,7 +28810,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -28874,7 +28874,7 @@ $Temp .= $1;
 $State = A_MSS_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -28899,7 +28899,7 @@ $State = A_MSS_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -28925,7 +28925,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -28951,7 +28951,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -28977,7 +28977,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -29003,7 +29003,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -29030,7 +29030,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -29099,7 +29099,7 @@ $Temp .= $1;
 $State = A_MSS_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -29124,7 +29124,7 @@ $State = A_MSS_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -29150,7 +29150,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -29176,7 +29176,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -29202,7 +29202,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -29228,7 +29228,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -29258,7 +29258,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -29329,7 +29329,7 @@ $Temp .= $1;
 $State = A_MSS_STATE_IN;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -29345,7 +29345,7 @@ push @$OpenMarkedSections, 'IGNORE';
 $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -29362,7 +29362,7 @@ $State = IGNORED_SECTION_TAG_OPEN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -29378,7 +29378,7 @@ push @$OpenMarkedSections, 'IGNORE';
 $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\[])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -29394,7 +29394,7 @@ push @$OpenMarkedSections, 'IGNORE';
 $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\]])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -29410,7 +29410,7 @@ push @$OpenMarkedSections, 'IGNORE';
 $State = IN_IGNORED_SECTION_MSC_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -29463,7 +29463,7 @@ $Temp .= $1;
 $State = A_MSS_STATE_IGN;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -29479,7 +29479,7 @@ push @$OpenMarkedSections, 'IGNORE';
 $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -29496,7 +29496,7 @@ $State = IGNORED_SECTION_TAG_OPEN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -29512,7 +29512,7 @@ push @$OpenMarkedSections, 'IGNORE';
 $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\[])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -29528,7 +29528,7 @@ push @$OpenMarkedSections, 'IGNORE';
 $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\]])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -29544,7 +29544,7 @@ push @$OpenMarkedSections, 'IGNORE';
 $State = IN_IGNORED_SECTION_MSC_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -29597,7 +29597,7 @@ $Temp .= $1;
 $State = A_MSS_STATE_IGNO;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -29613,7 +29613,7 @@ push @$OpenMarkedSections, 'IGNORE';
 $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -29630,7 +29630,7 @@ $State = IGNORED_SECTION_TAG_OPEN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -29646,7 +29646,7 @@ push @$OpenMarkedSections, 'IGNORE';
 $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\[])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -29662,7 +29662,7 @@ push @$OpenMarkedSections, 'IGNORE';
 $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\]])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -29678,7 +29678,7 @@ push @$OpenMarkedSections, 'IGNORE';
 $State = IN_IGNORED_SECTION_MSC_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -29731,7 +29731,7 @@ $Temp .= $1;
 $State = A_MSS_STATE_IGNOR;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -29747,7 +29747,7 @@ push @$OpenMarkedSections, 'IGNORE';
 $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -29764,7 +29764,7 @@ $State = IGNORED_SECTION_TAG_OPEN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -29780,7 +29780,7 @@ push @$OpenMarkedSections, 'IGNORE';
 $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\[])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -29796,7 +29796,7 @@ push @$OpenMarkedSections, 'IGNORE';
 $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\]])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -29812,7 +29812,7 @@ push @$OpenMarkedSections, 'IGNORE';
 $State = IN_IGNORED_SECTION_MSC_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -29859,7 +29859,7 @@ return 0;
 $StateActions->[A_MSS_STATE_IGNOR] = sub {
 if ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -29875,7 +29875,7 @@ push @$OpenMarkedSections, 'IGNORE';
 $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -29892,7 +29892,7 @@ $State = IGNORED_SECTION_TAG_OPEN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -29912,13 +29912,13 @@ $Temp .= $1;
             unless ($Temp eq q{IGNORE}) {
               push @$Errors, {type => 'keyword-wrong-case', level => 'm',
                               value => $Temp,
-                              di => $DI, index => $Offset + (pos $Input) - 1};
+                              di => $DI, index => $Offset + (pos $Input) - 1 - 5};
             }
           
 $State = A_IGNORE_KWD_STATE;
 } elsif ($Input =~ /\G([\[])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -29934,7 +29934,7 @@ push @$OpenMarkedSections, 'IGNORE';
 $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\]])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -29954,13 +29954,13 @@ $Temp .= $1;
             unless ($Temp eq q{IGNORE}) {
               push @$Errors, {type => 'keyword-wrong-case', level => 'm',
                               value => $Temp,
-                              di => $DI, index => $Offset + (pos $Input) - 1};
+                              di => $DI, index => $Offset + (pos $Input) - 1 - 5};
             }
           
 $State = A_IGNORE_KWD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -30013,7 +30013,7 @@ $Temp .= $1;
 $State = A_MSS_STATE_INC;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -30029,7 +30029,7 @@ push @$OpenMarkedSections, 'IGNORE';
 $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -30046,7 +30046,7 @@ $State = IGNORED_SECTION_TAG_OPEN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -30062,7 +30062,7 @@ push @$OpenMarkedSections, 'IGNORE';
 $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\[])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -30078,7 +30078,7 @@ push @$OpenMarkedSections, 'IGNORE';
 $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\]])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -30094,7 +30094,7 @@ push @$OpenMarkedSections, 'IGNORE';
 $State = IN_IGNORED_SECTION_MSC_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -30147,7 +30147,7 @@ $Temp .= $1;
 $State = A_MSS_STATE_INCL;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -30163,7 +30163,7 @@ push @$OpenMarkedSections, 'IGNORE';
 $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -30180,7 +30180,7 @@ $State = IGNORED_SECTION_TAG_OPEN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -30196,7 +30196,7 @@ push @$OpenMarkedSections, 'IGNORE';
 $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\[])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -30212,7 +30212,7 @@ push @$OpenMarkedSections, 'IGNORE';
 $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\]])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -30228,7 +30228,7 @@ push @$OpenMarkedSections, 'IGNORE';
 $State = IN_IGNORED_SECTION_MSC_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -30281,7 +30281,7 @@ $Temp .= $1;
 $State = A_MSS_STATE_INCLU;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -30297,7 +30297,7 @@ push @$OpenMarkedSections, 'IGNORE';
 $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -30314,7 +30314,7 @@ $State = IGNORED_SECTION_TAG_OPEN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -30330,7 +30330,7 @@ push @$OpenMarkedSections, 'IGNORE';
 $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\[])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -30346,7 +30346,7 @@ push @$OpenMarkedSections, 'IGNORE';
 $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\]])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -30362,7 +30362,7 @@ push @$OpenMarkedSections, 'IGNORE';
 $State = IN_IGNORED_SECTION_MSC_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -30415,7 +30415,7 @@ $Temp .= $1;
 $State = A_MSS_STATE_INCLUD;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -30431,7 +30431,7 @@ push @$OpenMarkedSections, 'IGNORE';
 $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -30448,7 +30448,7 @@ $State = IGNORED_SECTION_TAG_OPEN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -30464,7 +30464,7 @@ push @$OpenMarkedSections, 'IGNORE';
 $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\[])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -30480,7 +30480,7 @@ push @$OpenMarkedSections, 'IGNORE';
 $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\]])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -30496,7 +30496,7 @@ push @$OpenMarkedSections, 'IGNORE';
 $State = IN_IGNORED_SECTION_MSC_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -30543,7 +30543,7 @@ return 0;
 $StateActions->[A_MSS_STATE_INCLUD] = sub {
 if ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -30559,7 +30559,7 @@ push @$OpenMarkedSections, 'IGNORE';
 $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -30576,7 +30576,7 @@ $State = IGNORED_SECTION_TAG_OPEN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -30596,13 +30596,13 @@ $Temp .= $1;
             unless ($Temp eq q{INCLUDE}) {
               push @$Errors, {type => 'keyword-wrong-case', level => 'm',
                               value => $Temp,
-                              di => $DI, index => $Offset + (pos $Input) - 1};
+                              di => $DI, index => $Offset + (pos $Input) - 1 - 6};
             }
           
 $State = A_INCLUDE_KWD_STATE;
 } elsif ($Input =~ /\G([\[])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -30618,7 +30618,7 @@ push @$OpenMarkedSections, 'IGNORE';
 $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\]])/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -30638,13 +30638,13 @@ $Temp .= $1;
             unless ($Temp eq q{INCLUDE}) {
               push @$Errors, {type => 'keyword-wrong-case', level => 'm',
                               value => $Temp,
-                              di => $DI, index => $Offset + (pos $Input) - 1};
+                              di => $DI, index => $Offset + (pos $Input) - 1 - 6};
             }
           
 $State = A_INCLUDE_KWD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-mss-else', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -30717,7 +30717,7 @@ $Attr->{allowed_tokens}->[-1] .= q@�@;
           }
         
 
-            push @$Errors, {type => 'allowed-token-003e', level => 'm',
+            push @$Errors, {type => 'xml:dtd:no group delimiter', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -31787,6 +31787,8 @@ $Temp .= $1;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -31816,7 +31818,7 @@ $Temp .= $1;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -31827,7 +31829,7 @@ $Temp .= $1;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -31835,7 +31837,7 @@ $Temp .= $1;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -31866,7 +31868,7 @@ $Temp .= q@�@;
 } elsif ($Input =~ /\G([\	\\ \
 ])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-ws', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -31932,6 +31934,8 @@ $Temp .= q@�@;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -31961,7 +31965,7 @@ $Temp .= q@�@;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -31972,7 +31976,7 @@ $Temp .= q@�@;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -31980,7 +31984,7 @@ $Temp .= q@�@;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -32005,7 +32009,7 @@ push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
 } elsif ($Input =~ /\G([\])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-ws', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -32071,6 +32075,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -32100,7 +32106,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -32111,7 +32117,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -32119,7 +32125,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -32210,6 +32216,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -32239,7 +32247,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -32250,7 +32258,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -32258,7 +32266,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -32348,6 +32356,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -32377,7 +32387,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -32388,7 +32398,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -32396,7 +32406,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -32487,6 +32497,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -32516,7 +32528,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -32527,7 +32539,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -32535,7 +32547,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -32560,7 +32572,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-0026', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -32626,6 +32638,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -32655,7 +32669,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -32666,7 +32680,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -32674,7 +32688,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -32766,6 +32780,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -32795,7 +32811,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -32806,7 +32822,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -32814,7 +32830,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -32839,7 +32855,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-003c', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -32905,6 +32921,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -32934,7 +32952,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -32945,7 +32963,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -32953,7 +32971,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -33048,6 +33066,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -33077,7 +33097,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -33088,7 +33108,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -33096,7 +33116,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -33187,6 +33207,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -33216,7 +33238,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -33227,7 +33249,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -33235,7 +33257,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -33326,6 +33348,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -33355,7 +33379,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -33366,7 +33390,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -33374,7 +33398,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -33466,6 +33490,8 @@ if ($EOF) {
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -33495,7 +33521,7 @@ if ($EOF) {
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -33506,7 +33532,7 @@ if ($EOF) {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -33514,7 +33540,7 @@ if ($EOF) {
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -33684,7 +33710,7 @@ push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = ATTR_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-            push @$Errors, {type => 'character-reference-allowed-char', level => 'm',
+            push @$Errors, {type => 'bare ero', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -33699,7 +33725,7 @@ $State = ATTR_VALUE__DQ__STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'character-reference-0026', level => 'm',
+            push @$Errors, {type => 'bare ero', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -34680,6 +34706,8 @@ $Temp .= $1;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -34709,7 +34737,7 @@ $Temp .= $1;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -34720,7 +34748,7 @@ $Temp .= $1;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -34728,7 +34756,7 @@ $Temp .= $1;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -34759,7 +34787,7 @@ $Temp .= q@�@;
 } elsif ($Input =~ /\G([\	\\ \
 ])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-ws', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -34825,6 +34853,8 @@ $Temp .= q@�@;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -34854,7 +34884,7 @@ $Temp .= q@�@;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -34865,7 +34895,7 @@ $Temp .= q@�@;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -34873,7 +34903,7 @@ $Temp .= q@�@;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -34898,7 +34928,7 @@ push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
 } elsif ($Input =~ /\G([\])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-ws', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -34964,6 +34994,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -34993,7 +35025,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -35004,7 +35036,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -35012,7 +35044,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -35103,6 +35135,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -35132,7 +35166,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -35143,7 +35177,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -35151,7 +35185,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -35242,6 +35276,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -35271,7 +35307,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -35282,7 +35318,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -35290,7 +35326,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -35381,6 +35417,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -35410,7 +35448,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -35421,7 +35459,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -35429,7 +35467,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -35454,7 +35492,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-0026', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -35520,6 +35558,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -35549,7 +35589,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -35560,7 +35600,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -35568,7 +35608,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -35660,6 +35700,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -35689,7 +35731,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -35700,7 +35742,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -35708,7 +35750,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -35732,7 +35774,7 @@ $State = A_ATTR_VALUE__QUOTED__STATE;
 return 1 if $return;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-003c', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -35798,6 +35840,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -35827,7 +35871,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -35838,7 +35882,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -35846,7 +35890,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -35941,6 +35985,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -35970,7 +36016,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -35981,7 +36027,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -35989,7 +36035,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -36080,6 +36126,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -36109,7 +36157,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -36120,7 +36168,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -36128,7 +36176,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -36219,6 +36267,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -36248,7 +36298,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -36259,7 +36309,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -36267,7 +36317,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -36359,6 +36409,8 @@ if ($EOF) {
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -36388,7 +36440,7 @@ if ($EOF) {
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -36399,7 +36451,7 @@ if ($EOF) {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -36407,7 +36459,7 @@ if ($EOF) {
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -36593,7 +36645,7 @@ $State = ATTR_VALUE__SQ__STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'character-reference-0026', level => 'm',
+            push @$Errors, {type => 'bare ero', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -36602,7 +36654,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = ATTR_VALUE__SQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-            push @$Errors, {type => 'character-reference-allowed-char', level => 'm',
+            push @$Errors, {type => 'bare ero', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -38092,6 +38144,8 @@ $Temp .= $1;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -38121,7 +38175,7 @@ $Temp .= $1;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -38132,7 +38186,7 @@ $Temp .= $1;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -38140,7 +38194,7 @@ $Temp .= $1;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -38171,7 +38225,7 @@ $Temp .= q@�@;
 } elsif ($Input =~ /\G([\	\\ \
 ])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-ws', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -38237,6 +38291,8 @@ $Temp .= q@�@;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -38266,7 +38322,7 @@ $Temp .= q@�@;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -38277,7 +38333,7 @@ $Temp .= q@�@;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -38285,7 +38341,7 @@ $Temp .= q@�@;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -38309,7 +38365,7 @@ $State = B_ATTR_NAME_STATE;
 return 1 if $return;
 } elsif ($Input =~ /\G([\])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-ws', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -38375,6 +38431,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -38404,7 +38462,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -38415,7 +38473,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -38423,7 +38481,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -38513,6 +38571,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -38542,7 +38602,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -38553,7 +38613,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -38561,7 +38621,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -38656,6 +38716,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -38685,7 +38747,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -38696,7 +38758,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -38704,7 +38766,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -38795,6 +38857,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -38824,7 +38888,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -38835,7 +38899,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -38843,7 +38907,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -38868,7 +38932,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-0026', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -38934,6 +38998,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -38963,7 +39029,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -38974,7 +39040,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -38982,7 +39048,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -39074,6 +39140,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -39103,7 +39171,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -39114,7 +39182,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -39122,7 +39190,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -39217,6 +39285,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -39246,7 +39316,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -39257,7 +39327,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -39265,7 +39335,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -39360,6 +39430,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -39389,7 +39461,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -39400,7 +39472,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -39408,7 +39480,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -39503,6 +39575,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -39532,7 +39606,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -39543,7 +39617,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -39551,7 +39625,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -39681,6 +39755,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -39710,7 +39786,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -39721,7 +39797,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -39729,7 +39805,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -39825,6 +39901,8 @@ if ($EOF) {
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -39854,7 +39932,7 @@ if ($EOF) {
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -39865,7 +39943,7 @@ if ($EOF) {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -39873,7 +39951,7 @@ if ($EOF) {
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -40147,7 +40225,7 @@ $State = ATTR_VALUE__UNQUOTED__STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'character-reference-0026', level => 'm',
+            push @$Errors, {type => 'bare ero', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -41156,6 +41234,8 @@ $Temp .= $1;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -41185,7 +41265,7 @@ $Temp .= $1;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -41196,7 +41276,7 @@ $Temp .= $1;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -41204,7 +41284,7 @@ $Temp .= $1;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -41235,7 +41315,7 @@ $Temp .= q@�@;
 } elsif ($Input =~ /\G([\	\\ \
 ])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-ws', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -41301,6 +41381,8 @@ $Temp .= q@�@;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -41330,7 +41412,7 @@ $Temp .= q@�@;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -41341,7 +41423,7 @@ $Temp .= q@�@;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -41349,7 +41431,7 @@ $Temp .= q@�@;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -41374,7 +41456,7 @@ push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
 } elsif ($Input =~ /\G([\])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-ws', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -41440,6 +41522,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -41469,7 +41553,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -41480,7 +41564,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -41488,7 +41572,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -41579,6 +41663,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -41608,7 +41694,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -41619,7 +41705,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -41627,7 +41713,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -41718,6 +41804,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -41747,7 +41835,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -41758,7 +41846,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -41766,7 +41854,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -41857,6 +41945,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -41886,7 +41976,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -41897,7 +41987,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -41905,7 +41995,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -41930,7 +42020,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-0026', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -41996,6 +42086,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -42025,7 +42117,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -42036,7 +42128,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -42044,7 +42136,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -42136,6 +42228,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -42165,7 +42259,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -42176,7 +42270,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -42184,7 +42278,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -42209,7 +42303,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-003c', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -42275,6 +42369,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -42304,7 +42400,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -42315,7 +42411,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -42323,7 +42419,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -42418,6 +42514,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -42447,7 +42545,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -42458,7 +42556,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -42466,7 +42564,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -42557,6 +42655,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -42586,7 +42686,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -42597,7 +42697,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -42605,7 +42705,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -42696,6 +42796,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -42725,7 +42827,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -42736,7 +42838,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -42744,7 +42846,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -42836,6 +42938,8 @@ if ($EOF) {
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -42865,7 +42969,7 @@ if ($EOF) {
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -42876,7 +42980,7 @@ if ($EOF) {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -42884,7 +42988,7 @@ if ($EOF) {
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -43055,7 +43159,7 @@ $State = ATTR_VALUE_IN_ENT_STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'character-reference-0026', level => 'm',
+            push @$Errors, {type => 'bare ero', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -43179,7 +43283,7 @@ $StateActions->[B_ATTLIST_ATTR_DEFAULT_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \])/gcs) {
 
-            push @$Errors, {type => 'before-attlist-attribute-default-ws', level => 'm',
+            push @$Errors, {type => 'no attr default', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -43191,7 +43295,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'before-attlist-attribute-default-0025', level => 'm',
+            push @$Errors, {type => 'no attr default', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -43270,7 +43374,7 @@ $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'before-attlist-attribute-name-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -43343,7 +43447,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -43362,7 +43466,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -43388,7 +43492,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -43404,7 +43508,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = B_ATTLIST_ATTR_NAME_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'before-attlist-attribute-name-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -43418,7 +43522,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -43446,7 +43550,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -43471,7 +43575,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -43535,7 +43639,7 @@ $Temp .= $1;
 $State = B_ATTLIST_ATTR_NAME_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -43560,7 +43664,7 @@ $State = B_ATTLIST_ATTR_NAME_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -43586,7 +43690,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -43612,7 +43716,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -43638,7 +43742,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -43664,7 +43768,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -43691,7 +43795,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -43760,7 +43864,7 @@ $Temp .= $1;
 $State = B_ATTLIST_ATTR_NAME_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -43785,7 +43889,7 @@ $State = B_ATTLIST_ATTR_NAME_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -43811,7 +43915,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -43837,7 +43941,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -43863,7 +43967,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -43889,7 +43993,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -43919,7 +44023,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -43993,14 +44097,14 @@ $State = ATTLIST_NAME_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'before-attlist-name-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
           }
         
 
-            push @$Errors, {type => 'before-attlist-name-003e', level => 'm',
+            push @$Errors, {type => 'no md name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -44053,7 +44157,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -44072,7 +44176,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -44098,7 +44202,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -44122,7 +44226,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -44138,14 +44242,14 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = B_ATTLIST_NAME_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'before-attlist-name-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
           }
         
 
-            push @$Errors, {type => 'before-attlist-name-003e', level => 'm',
+            push @$Errors, {type => 'no md name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -44154,7 +44258,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -44175,7 +44279,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -44239,7 +44343,7 @@ $Temp .= $1;
 $State = B_ATTLIST_NAME_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -44264,7 +44368,7 @@ $State = B_ATTLIST_NAME_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -44290,7 +44394,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -44316,7 +44420,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -44342,7 +44446,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -44368,7 +44472,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -44395,7 +44499,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -44464,7 +44568,7 @@ $Temp .= $1;
 $State = B_ATTLIST_NAME_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -44489,7 +44593,7 @@ $State = B_ATTLIST_NAME_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -44515,7 +44619,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -44541,7 +44645,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -44567,7 +44671,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -44593,7 +44697,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -44623,7 +44727,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -44715,7 +44819,7 @@ push @$Tokens, $Token;
 return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } elsif ($Input =~ /\G([\[])/gcs) {
 
-            push @$Errors, {type => 'before-doctype-name-005b', level => 'm',
+            push @$Errors, {type => 'no DOCTYPE name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -44780,7 +44884,7 @@ push @$Tokens, $Token;
 return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } elsif ($Input =~ /\G([\[])/gcs) {
 
-            push @$Errors, {type => 'before-doctype-public-identifier-005b', level => 'm',
+            push @$Errors, {type => 'no DOCTYPE literal', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -44836,7 +44940,7 @@ push @$Tokens, $Token;
 return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } elsif ($Input =~ /\G([\[])/gcs) {
 
-            push @$Errors, {type => 'before-doctype-system-identifier-005b', level => 'm',
+            push @$Errors, {type => 'no DOCTYPE literal', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -44984,7 +45088,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -45003,7 +45107,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -45025,7 +45129,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -45051,7 +45155,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -45074,7 +45178,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -45097,7 +45201,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -45120,7 +45224,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -45143,7 +45247,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -45175,7 +45279,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -45198,7 +45302,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -45221,7 +45325,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -45242,7 +45346,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -45306,7 +45410,7 @@ $Temp .= $1;
 $State = B_ELEMENT_CONTENT_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -45331,7 +45435,7 @@ $State = B_ELEMENT_CONTENT_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -45357,7 +45461,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -45383,7 +45487,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -45409,7 +45513,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -45435,7 +45539,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -45462,7 +45566,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -45531,7 +45635,7 @@ $Temp .= $1;
 $State = B_ELEMENT_CONTENT_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -45556,7 +45660,7 @@ $State = B_ELEMENT_CONTENT_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -45582,7 +45686,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -45608,7 +45712,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -45634,7 +45738,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -45660,7 +45764,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -45690,7 +45794,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -45824,7 +45928,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -45843,7 +45947,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -45869,7 +45973,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -45893,7 +45997,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -45925,7 +46029,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -45946,7 +46050,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -46010,7 +46114,7 @@ $Temp .= $1;
 $State = B_ELEMENT_NAME_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -46035,7 +46139,7 @@ $State = B_ELEMENT_NAME_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -46061,7 +46165,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -46087,7 +46191,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -46113,7 +46217,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -46139,7 +46243,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -46166,7 +46270,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -46235,7 +46339,7 @@ $Temp .= $1;
 $State = B_ELEMENT_NAME_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -46260,7 +46364,7 @@ $State = B_ELEMENT_NAME_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -46286,7 +46390,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -46312,7 +46416,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -46338,7 +46442,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -46364,7 +46468,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -46394,7 +46498,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -46464,14 +46568,14 @@ $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'before-entity-name-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
           }
         
 
-            push @$Errors, {type => 'before-entity-name-003e', level => 'm',
+            push @$Errors, {type => 'no md name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -46523,7 +46627,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -46544,7 +46648,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -46563,7 +46667,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -46589,7 +46693,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -46605,14 +46709,14 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = B_ENT_NAME_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'before-entity-name-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
           }
         
 
-            push @$Errors, {type => 'before-entity-name-003e', level => 'm',
+            push @$Errors, {type => 'no md name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -46621,7 +46725,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -46642,7 +46746,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -46706,7 +46810,7 @@ $Temp .= $1;
 $State = B_ENT_NAME_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -46731,7 +46835,7 @@ $State = B_ENT_NAME_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -46757,7 +46861,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -46783,7 +46887,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -46809,7 +46913,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -46835,7 +46939,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -46862,7 +46966,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -46931,7 +47035,7 @@ $Temp .= $1;
 $State = B_ENT_NAME_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -46956,7 +47060,7 @@ $State = B_ENT_NAME_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -46982,7 +47086,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -47008,7 +47112,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -47034,7 +47138,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -47060,7 +47164,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -47090,7 +47194,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -47163,14 +47267,14 @@ $State = ENT_PUBLIC_ID__SQ__STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'before-entity-public-identifier-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
           }
         
 
-            push @$Errors, {type => 'before-entity-public-identifier-003e', level => 'm',
+            push @$Errors, {type => 'no DOCTYPE literal', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -47179,7 +47283,7 @@ $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 return 1 if $Token->{type} == ENTITY_TOKEN;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'before-entity-public-identifier-else', level => 'm',
+            push @$Errors, {type => 'no DOCTYPE literal', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -47229,7 +47333,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -47248,7 +47352,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -47268,7 +47372,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -47290,7 +47394,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -47314,7 +47418,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -47330,14 +47434,14 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = B_ENT_PUBLIC_ID_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'before-entity-public-identifier-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
           }
         
 
-            push @$Errors, {type => 'before-entity-public-identifier-003e', level => 'm',
+            push @$Errors, {type => 'no DOCTYPE literal', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -47349,7 +47453,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -47363,7 +47467,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
         }
       
 
-            push @$Errors, {type => 'before-entity-public-identifier-else', level => 'm',
+            push @$Errors, {type => 'no DOCTYPE literal', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -47373,7 +47477,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -47437,7 +47541,7 @@ $Temp .= $1;
 $State = B_ENT_PUBLIC_ID_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -47462,7 +47566,7 @@ $State = B_ENT_PUBLIC_ID_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -47488,7 +47592,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -47514,7 +47618,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -47540,7 +47644,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -47566,7 +47670,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -47593,7 +47697,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -47662,7 +47766,7 @@ $Temp .= $1;
 $State = B_ENT_PUBLIC_ID_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -47687,7 +47791,7 @@ $State = B_ENT_PUBLIC_ID_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -47713,7 +47817,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -47739,7 +47843,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -47765,7 +47869,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -47791,7 +47895,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -47821,7 +47925,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -47894,14 +47998,14 @@ $State = ENT_SYSTEM_ID__SQ__STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'before-entity-system-identifier-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
           }
         
 
-            push @$Errors, {type => 'before-entity-system-identifier-003e', level => 'm',
+            push @$Errors, {type => 'no DOCTYPE literal', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -47910,7 +48014,7 @@ $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 return 1 if $Token->{type} == ENTITY_TOKEN;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'before-entity-system-identifier-else', level => 'm',
+            push @$Errors, {type => 'no DOCTYPE literal', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -47960,7 +48064,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -47979,7 +48083,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -47999,7 +48103,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -48021,7 +48125,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -48045,7 +48149,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -48061,14 +48165,14 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = B_ENT_SYSTEM_ID_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'before-entity-system-identifier-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
           }
         
 
-            push @$Errors, {type => 'before-entity-system-identifier-003e', level => 'm',
+            push @$Errors, {type => 'no DOCTYPE literal', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -48080,7 +48184,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -48094,7 +48198,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
         }
       
 
-            push @$Errors, {type => 'before-entity-system-identifier-else', level => 'm',
+            push @$Errors, {type => 'no DOCTYPE literal', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -48104,7 +48208,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -48168,7 +48272,7 @@ $Temp .= $1;
 $State = B_ENT_SYSTEM_ID_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -48193,7 +48297,7 @@ $State = B_ENT_SYSTEM_ID_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -48219,7 +48323,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -48245,7 +48349,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -48271,7 +48375,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -48297,7 +48401,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -48324,7 +48428,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -48393,7 +48497,7 @@ $Temp .= $1;
 $State = B_ENT_SYSTEM_ID_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -48418,7 +48522,7 @@ $State = B_ENT_SYSTEM_ID_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -48444,7 +48548,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -48470,7 +48574,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -48496,7 +48600,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -48522,7 +48626,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -48552,7 +48656,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -48620,14 +48724,14 @@ $State = PE_DECL_OR_REF_AFTER_SPACE_STATE;
 $State = B_ENT_NAME_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'before-entity-name-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
           }
         
 
-            push @$Errors, {type => 'before-entity-name-003e', level => 'm',
+            push @$Errors, {type => 'no md name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -48679,7 +48783,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -48700,7 +48804,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -48719,7 +48823,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -48742,7 +48846,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -48758,14 +48862,14 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = B_ENT_NAME_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'before-entity-name-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
           }
         
 
-            push @$Errors, {type => 'before-entity-name-003e', level => 'm',
+            push @$Errors, {type => 'no md name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -48774,7 +48878,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -48795,7 +48899,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -48859,7 +48963,7 @@ $Temp .= $1;
 $State = B_ENT_TYPE_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -48870,7 +48974,7 @@ $State = B_ENT_TYPE_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-type-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'no md name', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -48884,7 +48988,7 @@ $State = B_ENT_TYPE_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -48910,7 +49014,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -48936,7 +49040,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -48962,7 +49066,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -48988,7 +49092,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -49015,7 +49119,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -49026,7 +49130,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-type-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'no md name', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -49084,7 +49188,7 @@ $Temp .= $1;
 $State = B_ENT_TYPE_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -49095,7 +49199,7 @@ $State = B_ENT_TYPE_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-type-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'no md name', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -49109,7 +49213,7 @@ $State = B_ENT_TYPE_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -49135,7 +49239,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -49161,7 +49265,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -49187,7 +49291,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -49213,7 +49317,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -49243,7 +49347,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -49254,7 +49358,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-type-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'no md name', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -49307,7 +49411,7 @@ if ($Input =~ /\G([\])/gcs) {
       
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -49330,7 +49434,7 @@ $State = ENT_VALUE_IN_ENT_STATE_CR;
       
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -49353,7 +49457,7 @@ $State = PE_NAME_IN_ENT_VALUE_IN_ENT_STATE;
       
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -49380,7 +49484,7 @@ $State = TEXT_DECL_IN_ENT_VALUE_IN_ENT_STATE;
       
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -49406,7 +49510,7 @@ push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
       
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -49429,7 +49533,7 @@ if ($EOF) {
       
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -49501,7 +49605,7 @@ $State = NDATA_ID_STATE;
           }
         
 
-            push @$Errors, {type => 'before-ndata-identifier-003e', level => 'm',
+            push @$Errors, {type => 'no notation name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -49557,7 +49661,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -49576,7 +49680,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -49602,7 +49706,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -49626,7 +49730,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -49649,7 +49753,7 @@ $State = B_NDATA_ID_STATE;
           }
         
 
-            push @$Errors, {type => 'before-ndata-identifier-003e', level => 'm',
+            push @$Errors, {type => 'no notation name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -49661,7 +49765,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -49682,7 +49786,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -49746,7 +49850,7 @@ $Temp .= $1;
 $State = B_NDATA_ID_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -49771,7 +49875,7 @@ $State = B_NDATA_ID_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -49797,7 +49901,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -49823,7 +49927,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -49849,7 +49953,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -49875,7 +49979,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -49902,7 +50006,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -49971,7 +50075,7 @@ $Temp .= $1;
 $State = B_NDATA_ID_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -49996,7 +50100,7 @@ $State = B_NDATA_ID_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -50022,7 +50126,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -50048,7 +50152,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -50074,7 +50178,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -50100,7 +50204,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -50130,7 +50234,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -50217,7 +50321,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = B_NDATA_KWD_STATE_N;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'before-ndata-keyword-else', level => 'm',
+            push @$Errors, {type => 'string after SYSTEM literal', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -50267,7 +50371,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -50286,7 +50390,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -50312,7 +50416,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -50343,7 +50447,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -50364,7 +50468,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -50385,7 +50489,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -50399,7 +50503,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
         }
       
 
-            push @$Errors, {type => 'before-ndata-keyword-else', level => 'm',
+            push @$Errors, {type => 'string after SYSTEM literal', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -50409,7 +50513,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -50473,7 +50577,7 @@ $Temp .= $1;
 $State = B_NDATA_KWD_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -50498,7 +50602,7 @@ $State = B_NDATA_KWD_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -50524,7 +50628,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -50550,7 +50654,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -50576,7 +50680,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -50602,7 +50706,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -50629,7 +50733,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -50698,7 +50802,7 @@ $Temp .= $1;
 $State = B_NDATA_KWD_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -50723,7 +50827,7 @@ $State = B_NDATA_KWD_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -50749,7 +50853,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -50775,7 +50879,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -50801,7 +50905,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -50827,7 +50931,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -50857,7 +50961,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -50922,7 +51026,7 @@ $Temp .= $1;
 $State = B_NDATA_KWD_STATE_ND;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'before-ndata-keyword-else', level => 'm',
+            push @$Errors, {type => 'string after SYSTEM literal', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -50975,7 +51079,7 @@ $Temp .= $1;
 $State = B_NDATA_KWD_STATE_NDA;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'before-ndata-keyword-else', level => 'm',
+            push @$Errors, {type => 'string after SYSTEM literal', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -51028,7 +51132,7 @@ $Temp .= $1;
 $State = B_NDATA_KWD_STATE_NDAT;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'before-ndata-keyword-else', level => 'm',
+            push @$Errors, {type => 'string after SYSTEM literal', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -51079,7 +51183,7 @@ $Temp .= $1;
             unless ($Temp eq q{NDATA}) {
               push @$Errors, {type => 'keyword-wrong-case', level => 'm',
                               value => $Temp,
-                              di => $DI, index => $Offset + (pos $Input) - 1};
+                              di => $DI, index => $Offset + (pos $Input) - 1 - 4};
             }
           
 $State = A_NDATA_KWD_STATE;
@@ -51089,13 +51193,13 @@ $Temp .= $1;
             unless ($Temp eq q{NDATA}) {
               push @$Errors, {type => 'keyword-wrong-case', level => 'm',
                               value => $Temp,
-                              di => $DI, index => $Offset + (pos $Input) - 1};
+                              di => $DI, index => $Offset + (pos $Input) - 1 - 4};
             }
           
 $State = A_NDATA_KWD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'before-ndata-keyword-else', level => 'm',
+            push @$Errors, {type => 'string after SYSTEM literal', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -51157,7 +51261,7 @@ $State = NOTATION_NAME_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'before-notation-name-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -51221,7 +51325,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -51240,7 +51344,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -51266,7 +51370,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -51290,7 +51394,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -51306,7 +51410,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = B_NOTATION_NAME_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'before-notation-name-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -51326,7 +51430,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -51347,7 +51451,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -51411,7 +51515,7 @@ $Temp .= $1;
 $State = B_NOTATION_NAME_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -51436,7 +51540,7 @@ $State = B_NOTATION_NAME_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -51462,7 +51566,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -51488,7 +51592,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -51514,7 +51618,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -51540,7 +51644,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -51567,7 +51671,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -51636,7 +51740,7 @@ $Temp .= $1;
 $State = B_NOTATION_NAME_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -51661,7 +51765,7 @@ $State = B_NOTATION_NAME_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -51687,7 +51791,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -51713,7 +51817,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -51739,7 +51843,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -51765,7 +51869,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -51795,7 +51899,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -51875,7 +51979,7 @@ $State = NOTATION_PUBLIC_ID__SQ__STATE;
           }
         
 
-            push @$Errors, {type => 'before-notation-public-identifier-003e', level => 'm',
+            push @$Errors, {type => 'no DOCTYPE literal', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -51883,7 +51987,7 @@ push @$Tokens, $Token;
 $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'before-notation-public-identifier-else', level => 'm',
+            push @$Errors, {type => 'no DOCTYPE literal', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -51933,7 +52037,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -51952,7 +52056,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -51972,7 +52076,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -51994,7 +52098,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -52018,7 +52122,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -52041,7 +52145,7 @@ $State = B_NOTATION_PUBLIC_ID_STATE;
           }
         
 
-            push @$Errors, {type => 'before-notation-public-identifier-003e', level => 'm',
+            push @$Errors, {type => 'no DOCTYPE literal', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -52052,7 +52156,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -52066,7 +52170,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
         }
       
 
-            push @$Errors, {type => 'before-notation-public-identifier-else', level => 'm',
+            push @$Errors, {type => 'no DOCTYPE literal', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -52076,7 +52180,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -52140,7 +52244,7 @@ $Temp .= $1;
 $State = B_NOTATION_PUBLIC_ID_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -52165,7 +52269,7 @@ $State = B_NOTATION_PUBLIC_ID_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -52191,7 +52295,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -52217,7 +52321,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -52243,7 +52347,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -52269,7 +52373,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -52296,7 +52400,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -52365,7 +52469,7 @@ $Temp .= $1;
 $State = B_NOTATION_PUBLIC_ID_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -52390,7 +52494,7 @@ $State = B_NOTATION_PUBLIC_ID_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -52416,7 +52520,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -52442,7 +52546,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -52468,7 +52572,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -52494,7 +52598,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -52524,7 +52628,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -52604,7 +52708,7 @@ $State = NOTATION_SYSTEM_ID__SQ__STATE;
           }
         
 
-            push @$Errors, {type => 'before-notation-system-identifier-003e', level => 'm',
+            push @$Errors, {type => 'no DOCTYPE literal', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -52662,7 +52766,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -52681,7 +52785,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -52701,7 +52805,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -52723,7 +52827,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -52747,7 +52851,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -52770,7 +52874,7 @@ $State = B_NOTATION_SYSTEM_ID_STATE;
           }
         
 
-            push @$Errors, {type => 'before-notation-system-identifier-003e', level => 'm',
+            push @$Errors, {type => 'no DOCTYPE literal', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -52781,7 +52885,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -52805,7 +52909,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -52869,7 +52973,7 @@ $Temp .= $1;
 $State = B_NOTATION_SYSTEM_ID_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -52894,7 +52998,7 @@ $State = B_NOTATION_SYSTEM_ID_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -52920,7 +53024,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -52946,7 +53050,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -52972,7 +53076,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -52998,7 +53102,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -53025,7 +53129,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -53094,7 +53198,7 @@ $Temp .= $1;
 $State = B_NOTATION_SYSTEM_ID_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -53119,7 +53223,7 @@ $State = B_NOTATION_SYSTEM_ID_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -53145,7 +53249,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -53171,7 +53275,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -53197,7 +53301,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -53223,7 +53327,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -53253,7 +53357,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -53327,21 +53431,21 @@ $Attr->{allowed_tokens}->[-1] = q@�@;
 $State = ALLOWED_TOKEN_STATE;
 } elsif ($Input =~ /\G([\)])/gcs) {
 
-            push @$Errors, {type => 'before-allowed-token-0029', level => 'm',
+            push @$Errors, {type => 'xml:dtd:no group item', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = A_ALLOWED_TOKEN_LIST_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'before-allowed-token-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
           }
         
 
-            push @$Errors, {type => 'before-allowed-token-003e', level => 'm',
+            push @$Errors, {type => 'xml:dtd:no group item', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -53349,7 +53453,7 @@ push @$Tokens, $Token;
 $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G([\|])/gcs) {
 
-            push @$Errors, {type => 'before-allowed-token-007c', level => 'm',
+            push @$Errors, {type => 'xml:dtd:no group item', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -53402,7 +53506,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -53421,7 +53525,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -53447,7 +53551,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -53472,7 +53576,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -53486,7 +53590,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
         }
       
 
-            push @$Errors, {type => 'before-allowed-token-0029', level => 'm',
+            push @$Errors, {type => 'xml:dtd:no group item', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = A_ALLOWED_TOKEN_LIST_STATE;
@@ -53495,7 +53599,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -53511,14 +53615,14 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = B_ALLOWED_TOKEN_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'before-allowed-token-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
           }
         
 
-            push @$Errors, {type => 'before-allowed-token-003e', level => 'm',
+            push @$Errors, {type => 'xml:dtd:no group item', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -53529,7 +53633,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -53544,7 +53648,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
       
 $State = B_ALLOWED_TOKEN_STATE;
 
-            push @$Errors, {type => 'before-allowed-token-007c', level => 'm',
+            push @$Errors, {type => 'xml:dtd:no group item', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -53552,7 +53656,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -53574,7 +53678,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -53638,7 +53742,7 @@ $Temp .= $1;
 $State = B_ALLOWED_TOKEN_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -53663,7 +53767,7 @@ $State = B_ALLOWED_TOKEN_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -53689,7 +53793,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -53715,7 +53819,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -53741,7 +53845,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -53767,7 +53871,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -53794,7 +53898,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -53863,7 +53967,7 @@ $Temp .= $1;
 $State = B_ALLOWED_TOKEN_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -53888,7 +53992,7 @@ $State = B_ALLOWED_TOKEN_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -53914,7 +54018,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -53940,7 +54044,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -53966,7 +54070,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -53992,7 +54096,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -54022,7 +54126,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -55848,7 +55952,7 @@ $OpenCMGroups->[-1]->{items}->[-1]->{q<name>} = q@�@;
 $State = CM_ELEMENT_STATE;
 } elsif ($Input =~ /\G([\)])/gcs) {
 
-            push @$Errors, {type => 'before-content-model-item-0029', level => 'm',
+            push @$Errors, {type => 'xml:dtd:no group item', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -55880,7 +55984,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           }
         
 
-            push @$Errors, {type => 'before-content-model-item-003e', level => 'm',
+            push @$Errors, {type => 'unclosed cmgroup', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -55949,7 +56053,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -55968,7 +56072,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -55990,7 +56094,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -56016,7 +56120,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -56044,7 +56148,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -56058,7 +56162,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
         }
       
 
-            push @$Errors, {type => 'before-content-model-item-0029', level => 'm',
+            push @$Errors, {type => 'xml:dtd:no group item', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -56067,7 +56171,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -56090,7 +56194,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -56113,7 +56217,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -56136,7 +56240,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -56159,7 +56263,7 @@ $State = B_CM_ITEM_STATE;
           }
         
 
-            push @$Errors, {type => 'before-content-model-item-003e', level => 'm',
+            push @$Errors, {type => 'unclosed cmgroup', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -56168,7 +56272,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -56191,7 +56295,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -56214,7 +56318,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -56239,7 +56343,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -56303,7 +56407,7 @@ $Temp .= $1;
 $State = B_CM_ITEM_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -56328,7 +56432,7 @@ $State = B_CM_ITEM_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -56354,7 +56458,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -56380,7 +56484,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -56406,7 +56510,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -56432,7 +56536,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -56459,7 +56563,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -56528,7 +56632,7 @@ $Temp .= $1;
 $State = B_CM_ITEM_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -56553,7 +56657,7 @@ $State = B_CM_ITEM_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -56579,7 +56683,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -56605,7 +56709,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -56631,7 +56735,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -56657,7 +56761,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -56687,7 +56791,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -56754,7 +56858,7 @@ $Token->{q<system_identifier>} = '';
 $State = DOCTYPE_SYSTEM_ID__SQ__STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-            push @$Errors, {type => 'between-doctype-public-and-system-identifiers-003e', level => 'm',
+            push @$Errors, {type => 'no DOCTYPE literal', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DATA_STATE;
@@ -56762,7 +56866,7 @@ push @$Tokens, $Token;
 return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } elsif ($Input =~ /\G([\[])/gcs) {
 
-            push @$Errors, {type => 'between-doctype-public-and-system-identifiers-005b', level => 'm',
+            push @$Errors, {type => 'no DOCTYPE literal', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -56815,7 +56919,7 @@ $State = ENT_SYSTEM_ID__SQ__STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'between-entity-public-and-system-identifiers-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -56831,7 +56935,7 @@ $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 return 1 if $Token->{type} == ENTITY_TOKEN;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'between-entity-public-and-system-identifiers-else', level => 'm',
+            push @$Errors, {type => 'no DOCTYPE literal', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -56881,7 +56985,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -56900,7 +57004,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -56920,7 +57024,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -56942,7 +57046,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -56966,7 +57070,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -56982,7 +57086,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'between-entity-public-and-system-identifiers-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -57001,7 +57105,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -57015,7 +57119,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
         }
       
 
-            push @$Errors, {type => 'between-entity-public-and-system-identifiers-else', level => 'm',
+            push @$Errors, {type => 'no DOCTYPE literal', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -57025,7 +57129,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -57089,7 +57193,7 @@ $Temp .= $1;
 $State = BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -57114,7 +57218,7 @@ $State = BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -57140,7 +57244,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -57166,7 +57270,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -57192,7 +57296,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -57218,7 +57322,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -57245,7 +57349,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -57314,7 +57418,7 @@ $Temp .= $1;
 $State = BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -57339,7 +57443,7 @@ $State = BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -57365,7 +57469,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -57391,7 +57495,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -57417,7 +57521,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -57443,7 +57547,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -57473,7 +57577,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -57557,7 +57661,7 @@ push @$Tokens, $Token;
 $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'between-notation-public-and-system-identifiers-else', level => 'm',
+            push @$Errors, {type => 'string after PUBLIC literal', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -57607,7 +57711,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -57626,7 +57730,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -57646,7 +57750,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -57668,7 +57772,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -57692,7 +57796,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -57722,7 +57826,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -57736,7 +57840,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
         }
       
 
-            push @$Errors, {type => 'between-notation-public-and-system-identifiers-else', level => 'm',
+            push @$Errors, {type => 'string after PUBLIC literal', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -57746,7 +57850,7 @@ $Temp = $1;
 $TempIndex = $Offset + (pos $Input);
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -57810,7 +57914,7 @@ $Temp .= $1;
 $State = BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -57835,7 +57939,7 @@ $State = BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -57861,7 +57965,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -57887,7 +57991,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -57913,7 +58017,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -57939,7 +58043,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -57966,7 +58070,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -58035,7 +58139,7 @@ $Temp .= $1;
 $State = BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -58060,7 +58164,7 @@ $State = BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -58086,7 +58190,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -58112,7 +58216,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -58138,7 +58242,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -58164,7 +58268,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -58194,7 +58298,7 @@ if ($EOF) {
           
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -58378,7 +58482,7 @@ if ($Input =~ /\G([^\>]+)/gcs) {
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-markup-declaration-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -58622,7 +58726,7 @@ $State = DATA_STATE;
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 
-            push @$Errors, {type => 'character-reference-0026', level => 'm',
+            push @$Errors, {type => 'bare ero', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 
@@ -59077,7 +59181,7 @@ $State = A_CM_ITEM_STATE;
 
         if (not @$OpenCMGroups) {
           
-            push @$Errors, {type => 'after-content-model-item-0029', level => 'm',
+            push @$Errors, {type => 'xml:dtd:no group delimiter', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -59115,7 +59219,7 @@ $State = B_CM_ITEM_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'content-model-element-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -59145,7 +59249,7 @@ push @$Tokens, $Token;
           }
         
 
-            push @$Errors, {type => 'after-content-model-item-003e', level => 'm',
+            push @$Errors, {type => 'unclosed cmgroup', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -60263,6 +60367,8 @@ $Temp .= $1;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   #push @$Errors, {type => 'no refc',
                   #                level => 'm',
@@ -60283,7 +60389,7 @@ $Temp .= $1;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -60294,7 +60400,7 @@ $Temp .= $1;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -60302,7 +60408,7 @@ $Temp .= $1;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -60337,7 +60443,7 @@ $Temp .= q@�@;
 } elsif ($Input =~ /\G([\	\\ \
 ])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-ws', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -60410,6 +60516,8 @@ $Temp .= q@�@;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   #push @$Errors, {type => 'no refc',
                   #                level => 'm',
@@ -60430,7 +60538,7 @@ $Temp .= q@�@;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -60441,7 +60549,7 @@ $Temp .= q@�@;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -60449,7 +60557,7 @@ $Temp .= q@�@;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -60482,7 +60590,7 @@ $State = DATA_STATE;
 return 1 if $return;
 } elsif ($Input =~ /\G([\])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-ws', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -60555,6 +60663,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   #push @$Errors, {type => 'no refc',
                   #                level => 'm',
@@ -60575,7 +60685,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -60586,7 +60696,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -60594,7 +60704,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -60701,6 +60811,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   #push @$Errors, {type => 'no refc',
                   #                level => 'm',
@@ -60721,7 +60833,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -60732,7 +60844,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -60740,7 +60852,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -60846,6 +60958,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   #push @$Errors, {type => 'no refc',
                   #                level => 'm',
@@ -60866,7 +60980,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -60877,7 +60991,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -60885,7 +60999,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -60991,6 +61105,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   #push @$Errors, {type => 'no refc',
                   #                level => 'm',
@@ -61011,7 +61127,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -61022,7 +61138,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -61030,7 +61146,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -61063,7 +61179,7 @@ $State = DATA_STATE;
 return 1 if $return;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-0026', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -61136,6 +61252,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   #push @$Errors, {type => 'no refc',
                   #                level => 'm',
@@ -61156,7 +61274,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -61167,7 +61285,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -61175,7 +61293,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -61276,6 +61394,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   #push @$Errors, {type => 'no refc',
                   #                level => 'm',
@@ -61296,7 +61416,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -61307,7 +61427,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -61315,7 +61435,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -61348,7 +61468,7 @@ $State = DATA_STATE;
 return 1 if $return;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-003c', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -61421,6 +61541,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   #push @$Errors, {type => 'no refc',
                   #                level => 'm',
@@ -61441,7 +61563,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -61452,7 +61574,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -61460,7 +61582,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -61562,6 +61684,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   #push @$Errors, {type => 'no refc',
                   #                level => 'm',
@@ -61582,7 +61706,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -61593,7 +61717,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -61601,7 +61725,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -61707,6 +61831,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   #push @$Errors, {type => 'no refc',
                   #                level => 'm',
@@ -61727,7 +61853,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -61738,7 +61864,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -61746,7 +61872,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -61852,6 +61978,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   #push @$Errors, {type => 'no refc',
                   #                level => 'm',
@@ -61872,7 +62000,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -61883,7 +62011,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -61891,7 +62019,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -61998,6 +62126,8 @@ if ($EOF) {
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   #push @$Errors, {type => 'no refc',
                   #                level => 'm',
@@ -62018,7 +62148,7 @@ if ($EOF) {
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -62029,7 +62159,7 @@ if ($EOF) {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -62037,7 +62167,7 @@ if ($EOF) {
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -62294,7 +62424,7 @@ $State = DATA_STATE;
         
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'character-reference-0026', level => 'm',
+            push @$Errors, {type => 'bare ero', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 
@@ -62499,7 +62629,7 @@ $State = DATA_STATE;
         
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'character-reference-0026', level => 'm',
+            push @$Errors, {type => 'bare ero', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 
@@ -62701,7 +62831,7 @@ $State = DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_STATE;
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'default-attribute-value-double-quoted-003c', level => 'm',
+            push @$Errors, {type => 'lt in attr value', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -62802,7 +62932,7 @@ $State = DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_STATE;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DEFAULT_ATTR_VALUE__DQ__STATE;
 
-            push @$Errors, {type => 'default-attribute-value-double-quoted-003c', level => 'm',
+            push @$Errors, {type => 'lt in attr value', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -63094,7 +63224,7 @@ $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DEFAULT_ATTR_VALUE__DQ__STATE;
 
-            push @$Errors, {type => 'default-attribute-value-double-quoted-003c', level => 'm',
+            push @$Errors, {type => 'lt in attr value', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -63436,7 +63566,7 @@ $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DEFAULT_ATTR_VALUE__DQ__STATE;
 
-            push @$Errors, {type => 'default-attribute-value-double-quoted-003c', level => 'm',
+            push @$Errors, {type => 'lt in attr value', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -63613,6 +63743,8 @@ $Temp .= $1;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -63642,7 +63774,7 @@ $Temp .= $1;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -63653,7 +63785,7 @@ $Temp .= $1;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -63661,7 +63793,7 @@ $Temp .= $1;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -63692,7 +63824,7 @@ $Temp .= q@�@;
 } elsif ($Input =~ /\G([\	\\ \
 ])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-ws', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -63758,6 +63890,8 @@ $Temp .= q@�@;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -63787,7 +63921,7 @@ $Temp .= q@�@;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -63798,7 +63932,7 @@ $Temp .= q@�@;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -63806,7 +63940,7 @@ $Temp .= q@�@;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -63831,7 +63965,7 @@ push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
 } elsif ($Input =~ /\G([\])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-ws', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -63897,6 +64031,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -63926,7 +64062,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -63937,7 +64073,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -63945,7 +64081,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -64036,6 +64172,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -64065,7 +64203,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -64076,7 +64214,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -64084,7 +64222,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -64175,6 +64313,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -64204,7 +64344,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -64215,7 +64355,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -64223,7 +64363,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -64314,6 +64454,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -64343,7 +64485,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -64354,7 +64496,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -64362,7 +64504,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -64387,7 +64529,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-0026', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -64453,6 +64595,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -64482,7 +64626,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -64493,7 +64637,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -64501,7 +64645,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -64593,6 +64737,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -64622,7 +64768,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -64633,7 +64779,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -64641,7 +64787,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -64666,7 +64812,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-003c', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -64732,6 +64878,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -64761,7 +64909,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -64772,7 +64920,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -64780,7 +64928,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -64802,7 +64950,7 @@ return 1 if $return;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DEFAULT_ATTR_VALUE__DQ__STATE;
 
-            push @$Errors, {type => 'default-attribute-value-double-quoted-003c', level => 'm',
+            push @$Errors, {type => 'lt in attr value', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -64875,6 +65023,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -64904,7 +65054,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -64915,7 +65065,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -64923,7 +65073,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -65014,6 +65164,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -65043,7 +65195,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -65054,7 +65206,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -65062,7 +65214,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -65153,6 +65305,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -65182,7 +65336,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -65193,7 +65347,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -65201,7 +65355,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -65293,6 +65447,8 @@ if ($EOF) {
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -65322,7 +65478,7 @@ if ($EOF) {
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -65333,7 +65489,7 @@ if ($EOF) {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -65341,7 +65497,7 @@ if ($EOF) {
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -65460,7 +65616,7 @@ $State = DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_STATE;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DEFAULT_ATTR_VALUE__DQ__STATE;
 
-            push @$Errors, {type => 'default-attribute-value-double-quoted-003c', level => 'm',
+            push @$Errors, {type => 'lt in attr value', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -65554,7 +65710,7 @@ push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = DEFAULT_ATTR_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-            push @$Errors, {type => 'character-reference-allowed-char', level => 'm',
+            push @$Errors, {type => 'bare ero', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -65570,7 +65726,7 @@ $State = DEFAULT_ATTR_VALUE__DQ__STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'character-reference-0026', level => 'm',
+            push @$Errors, {type => 'bare ero', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -65593,7 +65749,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DEFAULT_ATTR_VALUE__DQ__STATE;
 
-            push @$Errors, {type => 'default-attribute-value-double-quoted-003c', level => 'm',
+            push @$Errors, {type => 'lt in attr value', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -65696,7 +65852,7 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\<])/gcs) {
 $State = DEFAULT_ATTR_VALUE__DQ__STATE;
 
-            push @$Errors, {type => 'default-attribute-value-double-quoted-003c', level => 'm',
+            push @$Errors, {type => 'lt in attr value', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -65769,7 +65925,7 @@ $State = A_ATTLIST_DEFAULT_VALUE_STATE;
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'default-attribute-value-single-quoted-003c', level => 'm',
+            push @$Errors, {type => 'lt in attr value', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -65870,7 +66026,7 @@ $State = A_ATTLIST_DEFAULT_VALUE_STATE;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DEFAULT_ATTR_VALUE__SQ__STATE;
 
-            push @$Errors, {type => 'default-attribute-value-single-quoted-003c', level => 'm',
+            push @$Errors, {type => 'lt in attr value', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -66162,7 +66318,7 @@ $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DEFAULT_ATTR_VALUE__SQ__STATE;
 
-            push @$Errors, {type => 'default-attribute-value-single-quoted-003c', level => 'm',
+            push @$Errors, {type => 'lt in attr value', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -66504,7 +66660,7 @@ $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DEFAULT_ATTR_VALUE__SQ__STATE;
 
-            push @$Errors, {type => 'default-attribute-value-single-quoted-003c', level => 'm',
+            push @$Errors, {type => 'lt in attr value', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -66681,6 +66837,8 @@ $Temp .= $1;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -66710,7 +66868,7 @@ $Temp .= $1;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -66721,7 +66879,7 @@ $Temp .= $1;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -66729,7 +66887,7 @@ $Temp .= $1;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -66760,7 +66918,7 @@ $Temp .= q@�@;
 } elsif ($Input =~ /\G([\	\\ \
 ])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-ws', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -66826,6 +66984,8 @@ $Temp .= q@�@;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -66855,7 +67015,7 @@ $Temp .= q@�@;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -66866,7 +67026,7 @@ $Temp .= q@�@;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -66874,7 +67034,7 @@ $Temp .= q@�@;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -66899,7 +67059,7 @@ push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
 } elsif ($Input =~ /\G([\])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-ws', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -66965,6 +67125,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -66994,7 +67156,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -67005,7 +67167,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -67013,7 +67175,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -67104,6 +67266,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -67133,7 +67297,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -67144,7 +67308,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -67152,7 +67316,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -67243,6 +67407,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -67272,7 +67438,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -67283,7 +67449,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -67291,7 +67457,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -67382,6 +67548,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -67411,7 +67579,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -67422,7 +67590,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -67430,7 +67598,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -67455,7 +67623,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-0026', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -67521,6 +67689,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -67550,7 +67720,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -67561,7 +67731,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -67569,7 +67739,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -67661,6 +67831,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -67690,7 +67862,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -67701,7 +67873,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -67709,7 +67881,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -67734,7 +67906,7 @@ $State = A_ATTLIST_DEFAULT_VALUE_STATE;
 return 1 if $return;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-003c', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -67800,6 +67972,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -67829,7 +68003,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -67840,7 +68014,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -67848,7 +68022,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -67870,7 +68044,7 @@ return 1 if $return;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DEFAULT_ATTR_VALUE__SQ__STATE;
 
-            push @$Errors, {type => 'default-attribute-value-single-quoted-003c', level => 'm',
+            push @$Errors, {type => 'lt in attr value', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -67943,6 +68117,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -67972,7 +68148,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -67983,7 +68159,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -67991,7 +68167,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -68082,6 +68258,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -68111,7 +68289,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -68122,7 +68300,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -68130,7 +68308,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -68221,6 +68399,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -68250,7 +68430,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -68261,7 +68441,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -68269,7 +68449,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -68361,6 +68541,8 @@ if ($EOF) {
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -68390,7 +68572,7 @@ if ($EOF) {
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -68401,7 +68583,7 @@ if ($EOF) {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -68409,7 +68591,7 @@ if ($EOF) {
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -68528,7 +68710,7 @@ $State = A_ATTLIST_DEFAULT_VALUE_STATE;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DEFAULT_ATTR_VALUE__SQ__STATE;
 
-            push @$Errors, {type => 'default-attribute-value-single-quoted-003c', level => 'm',
+            push @$Errors, {type => 'lt in attr value', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -68638,7 +68820,7 @@ $State = DEFAULT_ATTR_VALUE__SQ__STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'character-reference-0026', level => 'm',
+            push @$Errors, {type => 'bare ero', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -68647,7 +68829,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-            push @$Errors, {type => 'character-reference-allowed-char', level => 'm',
+            push @$Errors, {type => 'bare ero', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -68661,7 +68843,7 @@ $State = A_ATTLIST_DEFAULT_VALUE_STATE;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DEFAULT_ATTR_VALUE__SQ__STATE;
 
-            push @$Errors, {type => 'default-attribute-value-single-quoted-003c', level => 'm',
+            push @$Errors, {type => 'lt in attr value', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -68764,7 +68946,7 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\<])/gcs) {
 $State = DEFAULT_ATTR_VALUE__SQ__STATE;
 
-            push @$Errors, {type => 'default-attribute-value-single-quoted-003c', level => 'm',
+            push @$Errors, {type => 'lt in attr value', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -69573,6 +69755,8 @@ $Temp .= $1;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -69602,7 +69786,7 @@ $Temp .= $1;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -69613,7 +69797,7 @@ $Temp .= $1;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -69621,7 +69805,7 @@ $Temp .= $1;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -69652,7 +69836,7 @@ $Temp .= q@�@;
 } elsif ($Input =~ /\G([\	\\ \
 ])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-ws', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -69718,6 +69902,8 @@ $Temp .= q@�@;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -69747,7 +69933,7 @@ $Temp .= q@�@;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -69758,7 +69944,7 @@ $Temp .= q@�@;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -69766,7 +69952,7 @@ $Temp .= q@�@;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -69791,7 +69977,7 @@ push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
 } elsif ($Input =~ /\G([\])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-ws', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -69857,6 +70043,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -69886,7 +70074,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -69897,7 +70085,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -69905,7 +70093,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -69996,6 +70184,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -70025,7 +70215,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -70036,7 +70226,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -70044,7 +70234,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -70135,6 +70325,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -70164,7 +70356,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -70175,7 +70367,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -70183,7 +70375,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -70274,6 +70466,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -70303,7 +70497,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -70314,7 +70508,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -70322,7 +70516,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -70347,7 +70541,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-0026', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -70413,6 +70607,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -70442,7 +70638,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -70453,7 +70649,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -70461,7 +70657,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -70553,6 +70749,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -70582,7 +70780,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -70593,7 +70791,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -70601,7 +70799,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -70626,7 +70824,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-003c', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -70692,6 +70890,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -70721,7 +70921,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -70732,7 +70932,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -70740,7 +70940,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -70835,6 +71035,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -70864,7 +71066,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -70875,7 +71077,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -70883,7 +71085,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -70974,6 +71176,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -71003,7 +71207,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -71014,7 +71218,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -71022,7 +71226,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -71113,6 +71317,8 @@ return 1 if $return;
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -71142,7 +71348,7 @@ return 1 if $return;
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -71153,7 +71359,7 @@ return 1 if $return;
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -71161,7 +71367,7 @@ return 1 if $return;
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -71253,6 +71459,8 @@ if ($EOF) {
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -71282,7 +71490,7 @@ if ($EOF) {
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -71293,7 +71501,7 @@ if ($EOF) {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -71301,7 +71509,7 @@ if ($EOF) {
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -71472,7 +71680,7 @@ $State = DEFAULT_ATTR_VALUE_IN_ENT_STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'character-reference-0026', level => 'm',
+            push @$Errors, {type => 'bare ero', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -72642,7 +72850,7 @@ $Temp .= $1;
             unless ($Temp eq q{DOCTYPE}) {
               push @$Errors, {type => 'keyword-wrong-case', level => 'm',
                               value => $Temp,
-                              di => $DI, index => $Offset + (pos $Input) - 1};
+                              di => $DI, index => $Offset + (pos $Input) - 1 - 6};
             }
           
 $State = DOCTYPE_STATE;
@@ -72652,7 +72860,7 @@ $Temp .= $1;
             unless ($Temp eq q{DOCTYPE}) {
               push @$Errors, {type => 'keyword-wrong-case', level => 'm',
                               value => $Temp,
-                              di => $DI, index => $Offset + (pos $Input) - 1};
+                              di => $DI, index => $Offset + (pos $Input) - 1 - 6};
             }
           
 $State = DOCTYPE_STATE;
@@ -73313,14 +73521,14 @@ $Token->{q<is_parameter_entity_flag>} = 1;
 $State = B_ENT_NAME_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'before-entity-name-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
           }
         
 
-            push @$Errors, {type => 'before-entity-name-003e', level => 'm',
+            push @$Errors, {type => 'no md name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -73507,21 +73715,21 @@ $Token->{q<name>} = $1;
 $State = ENT_NAME_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-declaration-or-reference-003e', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $Token->{q<is_parameter_entity_flag>} = 1;
 $State = B_ENT_NAME_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'before-entity-name-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
           }
         
 
-            push @$Errors, {type => 'before-entity-name-003e', level => 'm',
+            push @$Errors, {type => 'no md name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -73654,7 +73862,7 @@ $Temp .= q@�@;
 } elsif ($Input =~ /\G([\	\\ \
 \])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-dtd-ws', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -73680,7 +73888,7 @@ $State = DTD_STATE;
           
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-dtd-0025', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $Temp = q@%@;
@@ -73708,7 +73916,7 @@ $State = DTD_STATE;
           
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-dtd-003c', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DOCTYPE_TAG_OPEN_STATE;
@@ -73865,7 +74073,7 @@ push @{$Token->{q<value>}}, [q@
 $State = ENT_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-entity-value-double-quoted-0022', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -74093,7 +74301,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = ENT_VALUE__SQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-entity-value-single-quoted-0027', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -74432,7 +74640,7 @@ $Temp .= q@�@;
 } elsif ($Input =~ /\G([\	\\ \
 \])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-markup-declaration-ws', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -74486,7 +74694,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-markup-declaration-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -75460,7 +75668,7 @@ $State = TEXT_DECL_IN_ENT_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -75479,7 +75687,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\%])/gcs) {
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -75499,7 +75707,7 @@ $State = PE_NAME_IN_ENT_VALUE_IN_ENT_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -75520,7 +75728,7 @@ $State = ENT_VALUE_IN_ENT_STATE___CHARREF_STATE;
 $Temp .= $1;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -75538,7 +75746,7 @@ $State = ENT_VALUE_IN_ENT_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -75562,7 +75770,7 @@ push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 if ($EOF) {
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -75621,7 +75829,7 @@ $State = TEXT_DECL_IN_ENT_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -75640,7 +75848,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\%])/gcs) {
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -75660,7 +75868,7 @@ $State = PE_NAME_IN_ENT_VALUE_IN_ENT_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -75681,7 +75889,7 @@ $State = ENT_VALUE_IN_ENT_STATE___CHARREF_STATE;
 $Temp .= $1;
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -75699,7 +75907,7 @@ $State = ENT_VALUE_IN_ENT_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
@@ -75726,7 +75934,7 @@ $Temp .= $1;
 if ($EOF) {
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;

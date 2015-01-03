@@ -541,9 +541,11 @@ sub serialize_actions ($;%) {
             unless ($Temp eq q{%s}) {
               push @$Errors, {type => '%s', level => 'm',
                               value => $Temp,
-                              di => $DI, index => $Offset + (pos $Input) - 1};
+                              di => $DI, index => $Offset + (pos $Input) - 1%s};
             }
-          }, $_->{expected_keyword}, $_->{error_type} // $_->{name};
+          },
+              $_->{expected_keyword}, $_->{error_type} // $_->{name},
+              (defined $_->{index_offset} ? sprintf q{ - %d}, $_->{index_offset} : '');
         } elsif ($_->{if} eq 'OE is empty') {
           push @result, sprintf q{
             unless (@$OE) {
@@ -1093,6 +1095,8 @@ sub serialize_actions ($;%) {
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
@@ -1122,7 +1126,7 @@ sub serialize_actions ($;%) {
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -1133,7 +1137,7 @@ sub serialize_actions ($;%) {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -1141,7 +1145,7 @@ sub serialize_actions ($;%) {
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -1233,6 +1237,8 @@ sub serialize_actions ($;%) {
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   #push @$Errors, {type => 'no refc',
                   #                level => 'm',
@@ -1253,7 +1259,7 @@ sub serialize_actions ($;%) {
                     push @$Errors, {level => 'm',
                                     type => 'VC:Standalone Document Declaration:entity',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                 } elsif ({
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
@@ -1264,7 +1270,7 @@ sub serialize_actions ($;%) {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
                                     value => $Temp,
-                                    di => $DI, index => $TempIndex};
+                                    di => $DI, index => $temp_index};
                   }
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
@@ -1272,7 +1278,7 @@ sub serialize_actions ($;%) {
                   push @$Errors, {level => 'm',
                                   type => 'entity not declared',
                                   value => $Temp,
-                                  di => $DI, index => $TempIndex};
+                                  di => $DI, index => $temp_index};
                 }
                 ## </XML>
 
@@ -1460,7 +1466,7 @@ sub serialize_actions ($;%) {
     } elsif ($type eq 'process-xml-declaration-in-temp') {
       push @result, sprintf q{
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          my $text_decl = {data => [[$1, $DI, $TempIndex]], # IndexedString
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
                            di => $DI, index => $TempIndex};
           $TempIndex += length $1;
           $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
