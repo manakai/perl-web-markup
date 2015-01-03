@@ -1293,9 +1293,9 @@ push @$Errors, {type => 'doctype:bad context',
         ## [17] after root element;END-ELSE
         sub {
           my $token = $_;
-push @$Errors, {type => 'after-root-element-end-else',
+push @$Errors, {type => 'stray end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 return;
         },
@@ -1443,9 +1443,9 @@ return;
         ## [29] before DOCTYPE;END-ELSE
         sub {
           my $token = $_;
-push @$Errors, {type => 'before-doctype-end-else',
+push @$Errors, {type => 'stray end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 return;
         },
@@ -2219,9 +2219,9 @@ push @$Errors, {type => 'doctype:bad context',
         ## [79] before root element;END-ELSE
         sub {
           my $token = $_;
-push @$Errors, {type => 'before-root-element-end-else',
+push @$Errors, {type => 'stray end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 return;
         },
@@ -3417,7 +3417,7 @@ return;
           $token->{index} += length $1;
         }
         if (length $token->{value}) {
-          push @$Errors, {type => 'in-subset-char',
+          push @$Errors, {type => 'string in internal subset',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -4046,7 +4046,7 @@ $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'attlist-attribute-default-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -4394,7 +4394,7 @@ $State = ATTLIST_NAME_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'attlist-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -9112,7 +9112,7 @@ $OriginalState = [B_ELEMENT_CONTENT_STATE, B_ELEMENT_CONTENT_STATE___BEFORE_TEXT
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\(])/gcs) {
 
-            push @$Errors, {type => 'element-name-0028', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 my $cmgroup = {items => [], separators => [], di => $DI, index => $Offset + pos $Input};
@@ -9122,17 +9122,19 @@ $State = B_CM_ITEM_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'element-name-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
           }
         
 
-            push @$Errors, {type => 'element-name-003e', level => 'm',
+            push @$Errors, {type => 'no md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
+push @$Tokens, $Token;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } else {
 if ($EOF) {
 
@@ -9207,14 +9209,14 @@ $State = ELEMENT_NAME_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'element-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
           }
         
 
-            push @$Errors, {type => 'element-003e', level => 'm',
+            push @$Errors, {type => 'no md name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -9285,7 +9287,7 @@ $OriginalState = [A_ENT_NAME_STATE, A_ENT_NAME_STATE___BEFORE_TEXT_DECL_IN_MARKU
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-            push @$Errors, {type => 'entity-name-0022', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $InLiteral = 1;
@@ -9293,7 +9295,7 @@ $State = ENT_VALUE__DQ__STATE;
 $Token->{q<value>} = [['', $DI, $Offset + pos $Input]];
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-            push @$Errors, {type => 'entity-name-0027', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $InLiteral = 1;
@@ -9379,7 +9381,7 @@ undef $InLiteral;
           }
         
 
-            push @$Errors, {type => 'entity-public-identifier-double-quoted-003e', level => 'm',
+            push @$Errors, {type => 'parser:literal not closed', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -9451,7 +9453,7 @@ undef $InLiteral;
           }
         
 
-            push @$Errors, {type => 'entity-public-identifier-double-quoted-003e', level => 'm',
+            push @$Errors, {type => 'parser:literal not closed', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -9525,7 +9527,7 @@ undef $InLiteral;
           }
         
 
-            push @$Errors, {type => 'entity-public-identifier-single-quoted-003e', level => 'm',
+            push @$Errors, {type => 'parser:literal not closed', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -9597,7 +9599,7 @@ undef $InLiteral;
           }
         
 
-            push @$Errors, {type => 'entity-public-identifier-single-quoted-003e', level => 'm',
+            push @$Errors, {type => 'parser:literal not closed', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -9663,7 +9665,7 @@ $State = B_ENT_TYPE_STATE;
 $State = PE_DECL_OR_REF_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-            push @$Errors, {type => 'entity-else', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -9675,7 +9677,7 @@ $State = ENT_NAME_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'entity-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -9688,7 +9690,7 @@ $State = ENT_NAME_STATE;
 $State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'entity-else', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -10868,7 +10870,7 @@ $Temp .= $1;
 } elsif ($Input =~ /\G([\	\\ \
 ])/gcs) {
 
-            push @$Errors, {type => 'entity-value-double-quoted-state-character-reference-name-ws', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -10876,7 +10878,7 @@ $State = ENT_VALUE__DQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
-            push @$Errors, {type => 'entity-value-double-quoted-state-character-reference-name-ws', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -10893,7 +10895,7 @@ undef $InLiteral;
 $State = A_ENT_PARAMETER_STATE;
 } elsif ($Input =~ /\G([\#])/gcs) {
 
-            push @$Errors, {type => 'entity-value-double-quoted-state-character-reference-name-0023', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -10901,7 +10903,7 @@ $State = ENT_VALUE__DQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'entity-value-double-quoted-state-character-reference-name-0025', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -10910,7 +10912,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = PE_NAME_IN_ENT_VALUE__DQ__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'entity-value-double-quoted-state-character-reference-name-0026', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -10919,7 +10921,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = ENT_VALUE__DQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-            push @$Errors, {type => 'entity-value-double-quoted-state-character-reference-name-0027', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -10927,7 +10929,7 @@ $State = ENT_VALUE__DQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'entity-value-double-quoted-state-character-reference-name-003c', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -10935,7 +10937,7 @@ $State = ENT_VALUE__DQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\=])/gcs) {
 
-            push @$Errors, {type => 'entity-value-double-quoted-state-character-reference-name-003d', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -10943,7 +10945,7 @@ $State = ENT_VALUE__DQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-            push @$Errors, {type => 'entity-value-double-quoted-state-character-reference-name-003e', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -10951,7 +10953,7 @@ $State = ENT_VALUE__DQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\`])/gcs) {
 
-            push @$Errors, {type => 'entity-value-double-quoted-state-character-reference-name-0060', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -10959,6 +10961,43 @@ $State = ENT_VALUE__DQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE__DQ__STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+        
+return 1;
 } else {
 return 1;
 }
@@ -11118,7 +11157,7 @@ undef $InLiteral;
 $State = A_ENT_PARAMETER_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'character-reference-0025', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -11160,7 +11199,7 @@ $State = ENT_VALUE__DQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-            push @$Errors, {type => 'character-reference-003e', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -12205,7 +12244,7 @@ $Temp .= $1;
 } elsif ($Input =~ /\G([\	\\ \
 ])/gcs) {
 
-            push @$Errors, {type => 'entity-value-single-quoted-state-character-reference-name-ws', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -12213,7 +12252,7 @@ $State = ENT_VALUE__SQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
-            push @$Errors, {type => 'entity-value-single-quoted-state-character-reference-name-ws', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -12222,7 +12261,7 @@ push @{$Token->{q<value>}}, [q@
 $State = ENT_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-            push @$Errors, {type => 'entity-value-single-quoted-state-character-reference-name-0022', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -12230,7 +12269,7 @@ $State = ENT_VALUE__SQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\#])/gcs) {
 
-            push @$Errors, {type => 'entity-value-single-quoted-state-character-reference-name-0023', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -12238,7 +12277,7 @@ $State = ENT_VALUE__SQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'entity-value-single-quoted-state-character-reference-name-0025', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -12247,7 +12286,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = PE_NAME_IN_ENT_VALUE__SQ__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'entity-value-single-quoted-state-character-reference-name-0026', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -12256,7 +12295,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = ENT_VALUE__SQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-            push @$Errors, {type => 'entity-value-single-quoted-state-character-reference-name-0027', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -12264,7 +12303,7 @@ undef $InLiteral;
 $State = A_ENT_PARAMETER_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'entity-value-single-quoted-state-character-reference-name-003c', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -12272,7 +12311,7 @@ $State = ENT_VALUE__SQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\=])/gcs) {
 
-            push @$Errors, {type => 'entity-value-single-quoted-state-character-reference-name-003d', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -12280,7 +12319,7 @@ $State = ENT_VALUE__SQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-            push @$Errors, {type => 'entity-value-single-quoted-state-character-reference-name-003e', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -12288,7 +12327,7 @@ $State = ENT_VALUE__SQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\`])/gcs) {
 
-            push @$Errors, {type => 'entity-value-single-quoted-state-character-reference-name-0060', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -12296,6 +12335,43 @@ $State = ENT_VALUE__SQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE__SQ__STATE;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+        
+return 1;
 } else {
 return 1;
 }
@@ -12455,7 +12531,7 @@ $State = ENT_VALUE__SQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'character-reference-0025', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -12497,7 +12573,7 @@ $State = ENT_VALUE__SQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-            push @$Errors, {type => 'character-reference-003e', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -13435,7 +13511,7 @@ $Temp .= $1;
 } elsif ($Input =~ /\G([\	\\ \
 ])/gcs) {
 
-            push @$Errors, {type => 'entity-value-in-entity-state-character-reference-name-ws', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -13443,7 +13519,7 @@ $State = ENT_VALUE_IN_ENT_STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
-            push @$Errors, {type => 'entity-value-in-entity-state-character-reference-name-ws', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -13452,7 +13528,7 @@ push @{$Token->{q<value>}}, [q@
 $State = ENT_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-            push @$Errors, {type => 'entity-value-in-entity-state-character-reference-name-0022', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -13460,7 +13536,7 @@ $State = ENT_VALUE_IN_ENT_STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\#])/gcs) {
 
-            push @$Errors, {type => 'entity-value-in-entity-state-character-reference-name-0023', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -13468,7 +13544,7 @@ $State = ENT_VALUE_IN_ENT_STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'entity-value-in-entity-state-character-reference-name-0025', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -13477,7 +13553,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = PE_NAME_IN_ENT_VALUE_IN_ENT_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'entity-value-in-entity-state-character-reference-name-0026', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -13486,7 +13562,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = ENT_VALUE_IN_ENT_STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-            push @$Errors, {type => 'entity-value-in-entity-state-character-reference-name-0027', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -13494,7 +13570,7 @@ $State = ENT_VALUE_IN_ENT_STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'entity-value-in-entity-state-character-reference-name-003c', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -13502,7 +13578,7 @@ $State = ENT_VALUE_IN_ENT_STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\=])/gcs) {
 
-            push @$Errors, {type => 'entity-value-in-entity-state-character-reference-name-003d', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -13510,7 +13586,7 @@ $State = ENT_VALUE_IN_ENT_STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-            push @$Errors, {type => 'entity-value-in-entity-state-character-reference-name-003e', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -13518,7 +13594,7 @@ $State = ENT_VALUE_IN_ENT_STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\`])/gcs) {
 
-            push @$Errors, {type => 'entity-value-in-entity-state-character-reference-name-0060', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -13526,6 +13602,39 @@ $State = ENT_VALUE_IN_ENT_STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE_IN_ENT_STATE;
+if ($InMDEntity) { return 1 }
+$State = DTD_STATE;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+        
+return 1;
 } else {
 return 1;
 }
@@ -13673,7 +13782,7 @@ $State = ENT_VALUE_IN_ENT_STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'character-reference-0025', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -13715,7 +13824,7 @@ $State = ENT_VALUE_IN_ENT_STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-            push @$Errors, {type => 'character-reference-003e', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -13851,7 +13960,7 @@ $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'ndata-identifier-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -13924,7 +14033,7 @@ $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'notation-name-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -13993,14 +14102,14 @@ $State = A_NOTATION_PUBLIC_ID_STATE;
 undef $InLiteral;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'notation-public-identifier-double-quoted-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
           }
         
 
-            push @$Errors, {type => 'notation-public-identifier-double-quoted-003e', level => 'm',
+            push @$Errors, {type => 'parser:literal not closed', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -14064,14 +14173,14 @@ $State = NOTATION_PUBLIC_ID__DQ__STATE;
 undef $InLiteral;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'notation-public-identifier-double-quoted-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
           }
         
 
-            push @$Errors, {type => 'notation-public-identifier-double-quoted-003e', level => 'm',
+            push @$Errors, {type => 'parser:literal not closed', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -14137,14 +14246,14 @@ $State = A_NOTATION_PUBLIC_ID_STATE;
 undef $InLiteral;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'notation-public-identifier-single-quoted-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
           }
         
 
-            push @$Errors, {type => 'notation-public-identifier-single-quoted-003e', level => 'm',
+            push @$Errors, {type => 'parser:literal not closed', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -14208,14 +14317,14 @@ $State = NOTATION_PUBLIC_ID__SQ__STATE;
 undef $InLiteral;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'notation-public-identifier-single-quoted-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
           }
         
 
-            push @$Errors, {type => 'notation-public-identifier-single-quoted-003e', level => 'm',
+            push @$Errors, {type => 'parser:literal not closed', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -14299,7 +14408,7 @@ $State = NOTATION_NAME_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'notation-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -14861,7 +14970,7 @@ $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-attlist-attribute-default-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -15046,7 +15155,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = A_ATTLIST_ATTR_DEFAULT_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-attlist-attribute-default-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -15197,7 +15306,7 @@ $State = A_ATTLIST_ATTR_DEFAULT_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-attlist-attribute-default-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -15222,7 +15331,7 @@ $State = A_ATTLIST_ATTR_DEFAULT_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-attlist-attribute-default-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -15232,7 +15341,7 @@ $State = A_ATTLIST_ATTR_DEFAULT_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'after-attlist-attribute-default-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -15248,7 +15357,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-attlist-attribute-default-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -15258,7 +15367,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'after-attlist-attribute-default-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -15274,7 +15383,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-attlist-attribute-default-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -15284,7 +15393,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'after-attlist-attribute-default-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -15300,7 +15409,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-attlist-attribute-default-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -15310,7 +15419,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'after-attlist-attribute-default-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -15326,7 +15435,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-attlist-attribute-default-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -15353,7 +15462,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-attlist-attribute-default-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -15422,7 +15531,7 @@ $State = A_ATTLIST_ATTR_DEFAULT_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-attlist-attribute-default-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -15447,7 +15556,7 @@ $State = A_ATTLIST_ATTR_DEFAULT_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-attlist-attribute-default-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -15457,7 +15566,7 @@ $State = A_ATTLIST_ATTR_DEFAULT_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'after-attlist-attribute-default-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -15473,7 +15582,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-attlist-attribute-default-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -15483,7 +15592,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'after-attlist-attribute-default-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -15499,7 +15608,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-attlist-attribute-default-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -15509,7 +15618,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'after-attlist-attribute-default-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -15525,7 +15634,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-attlist-attribute-default-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -15535,7 +15644,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'after-attlist-attribute-default-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -15551,7 +15660,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-attlist-attribute-default-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -15581,7 +15690,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-attlist-attribute-default-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -15639,7 +15748,7 @@ $State = B_ALLOWED_TOKEN_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-attlist-attribute-name-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -15781,7 +15890,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = A_ATTLIST_ATTR_NAME_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-attlist-attribute-name-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -15895,7 +16004,7 @@ $State = A_ATTLIST_ATTR_NAME_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-attlist-attribute-name-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -15920,7 +16029,7 @@ $State = A_ATTLIST_ATTR_NAME_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-attlist-attribute-name-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -15930,7 +16039,7 @@ $State = A_ATTLIST_ATTR_NAME_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'after-attlist-attribute-name-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -15946,7 +16055,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-attlist-attribute-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -15956,7 +16065,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'after-attlist-attribute-name-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -15972,7 +16081,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-attlist-attribute-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -15982,7 +16091,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'after-attlist-attribute-name-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -15998,7 +16107,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-attlist-attribute-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -16008,7 +16117,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'after-attlist-attribute-name-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -16024,7 +16133,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-attlist-attribute-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -16051,7 +16160,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-attlist-attribute-name-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -16120,7 +16229,7 @@ $State = A_ATTLIST_ATTR_NAME_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-attlist-attribute-name-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -16145,7 +16254,7 @@ $State = A_ATTLIST_ATTR_NAME_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-attlist-attribute-name-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -16155,7 +16264,7 @@ $State = A_ATTLIST_ATTR_NAME_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'after-attlist-attribute-name-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -16171,7 +16280,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-attlist-attribute-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -16181,7 +16290,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'after-attlist-attribute-name-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -16197,7 +16306,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-attlist-attribute-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -16207,7 +16316,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'after-attlist-attribute-name-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -16223,7 +16332,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-attlist-attribute-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -16233,7 +16342,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'after-attlist-attribute-name-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -16249,7 +16358,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-attlist-attribute-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -16279,7 +16388,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-attlist-attribute-name-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -16670,7 +16779,7 @@ $State = A_ATTLIST_ATTR_TYPE_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-attlist-attribute-type-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -16695,7 +16804,7 @@ $State = A_ATTLIST_ATTR_TYPE_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-attlist-attribute-type-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -16705,7 +16814,7 @@ $State = A_ATTLIST_ATTR_TYPE_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'after-attlist-attribute-type-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -16721,7 +16830,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-attlist-attribute-type-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -16731,7 +16840,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'after-attlist-attribute-type-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -16747,7 +16856,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-attlist-attribute-type-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -16757,7 +16866,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'after-attlist-attribute-type-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -16773,7 +16882,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-attlist-attribute-type-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -16783,7 +16892,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'after-attlist-attribute-type-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -16799,7 +16908,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-attlist-attribute-type-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -16826,7 +16935,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-attlist-attribute-type-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -16895,7 +17004,7 @@ $State = A_ATTLIST_ATTR_TYPE_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-attlist-attribute-type-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -16920,7 +17029,7 @@ $State = A_ATTLIST_ATTR_TYPE_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-attlist-attribute-type-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -16930,7 +17039,7 @@ $State = A_ATTLIST_ATTR_TYPE_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'after-attlist-attribute-type-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -16946,7 +17055,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-attlist-attribute-type-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -16956,7 +17065,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'after-attlist-attribute-type-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -16972,7 +17081,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-attlist-attribute-type-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -16982,7 +17091,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'after-attlist-attribute-type-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -16998,7 +17107,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-attlist-attribute-type-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -17008,7 +17117,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'after-attlist-attribute-type-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -17024,7 +17133,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-attlist-attribute-type-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -17054,7 +17163,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-attlist-attribute-type-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -17117,7 +17226,7 @@ $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-attlist-default-value-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -17963,7 +18072,7 @@ if ($Input =~ /\G([\>])/gcs) {
       
 } elsif ($Input =~ /\G([\]])/gcs) {
 
-            push @$Errors, {type => 'after-dtd-msc-005d', level => 'm',
+            push @$Errors, {type => 'string in internal subset', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1 - 2};
           
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -18021,7 +18130,7 @@ $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-element-content-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -18143,7 +18252,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = A_ELEMENT_CONTENT_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-element-content-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -18256,7 +18365,7 @@ $State = A_ELEMENT_CONTENT_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-element-content-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -18281,7 +18390,7 @@ $State = A_ELEMENT_CONTENT_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-element-content-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -18291,7 +18400,7 @@ $State = A_ELEMENT_CONTENT_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'after-element-content-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -18307,7 +18416,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-element-content-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -18317,7 +18426,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'after-element-content-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -18333,7 +18442,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-element-content-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -18343,7 +18452,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'after-element-content-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -18359,7 +18468,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-element-content-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -18369,7 +18478,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'after-element-content-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -18385,7 +18494,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-element-content-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -18412,7 +18521,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-element-content-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -18481,7 +18590,7 @@ $State = A_ELEMENT_CONTENT_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-element-content-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -18506,7 +18615,7 @@ $State = A_ELEMENT_CONTENT_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-element-content-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -18516,7 +18625,7 @@ $State = A_ELEMENT_CONTENT_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'after-element-content-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -18532,7 +18641,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-element-content-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -18542,7 +18651,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'after-element-content-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -18558,7 +18667,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-element-content-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -18568,7 +18677,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'after-element-content-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -18584,7 +18693,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-element-content-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -18594,7 +18703,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'after-element-content-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -18610,7 +18719,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-element-content-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -18640,7 +18749,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-element-content-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -19091,7 +19200,7 @@ $State = A_ENT_NAME_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-entity-name-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -19116,7 +19225,7 @@ $State = A_ENT_NAME_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-entity-name-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -19126,7 +19235,7 @@ $State = A_ENT_NAME_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'after-entity-name-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -19142,7 +19251,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-entity-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -19152,7 +19261,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'after-entity-name-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -19168,7 +19277,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-entity-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -19178,7 +19287,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'after-entity-name-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -19194,7 +19303,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-entity-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -19204,7 +19313,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'after-entity-name-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -19220,7 +19329,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-entity-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -19247,7 +19356,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-entity-name-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -19316,7 +19425,7 @@ $State = A_ENT_NAME_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-entity-name-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -19341,7 +19450,7 @@ $State = A_ENT_NAME_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-entity-name-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -19351,7 +19460,7 @@ $State = A_ENT_NAME_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'after-entity-name-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -19367,7 +19476,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-entity-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -19377,7 +19486,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'after-entity-name-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -19393,7 +19502,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-entity-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -19403,7 +19512,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'after-entity-name-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -19419,7 +19528,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-entity-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -19429,7 +19538,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'after-entity-name-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -19445,7 +19554,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-entity-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -19475,7 +19584,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-entity-name-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -20089,7 +20198,7 @@ $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-entity-parameter-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -20212,7 +20321,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = A_ENT_PARAMETER_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-entity-parameter-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -20326,7 +20435,7 @@ $State = A_ENT_PARAMETER_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-entity-parameter-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -20351,7 +20460,7 @@ $State = A_ENT_PARAMETER_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-entity-parameter-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -20361,7 +20470,7 @@ $State = A_ENT_PARAMETER_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'after-entity-parameter-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -20377,7 +20486,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-entity-parameter-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -20387,7 +20496,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'after-entity-parameter-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -20403,7 +20512,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-entity-parameter-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -20413,7 +20522,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'after-entity-parameter-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -20429,7 +20538,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-entity-parameter-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -20439,7 +20548,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'after-entity-parameter-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -20455,7 +20564,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-entity-parameter-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -20482,7 +20591,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-entity-parameter-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -20551,7 +20660,7 @@ $State = A_ENT_PARAMETER_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-entity-parameter-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -20576,7 +20685,7 @@ $State = A_ENT_PARAMETER_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-entity-parameter-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -20586,7 +20695,7 @@ $State = A_ENT_PARAMETER_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'after-entity-parameter-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -20602,7 +20711,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-entity-parameter-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -20612,7 +20721,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'after-entity-parameter-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -20628,7 +20737,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-entity-parameter-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -20638,7 +20747,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'after-entity-parameter-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -20654,7 +20763,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-entity-parameter-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -20664,7 +20773,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'after-entity-parameter-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -20680,7 +20789,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-entity-parameter-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -20710,7 +20819,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-entity-parameter-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -20781,14 +20890,14 @@ $State = ENT_SYSTEM_ID__SQ__STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-entity-public-identifier-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
           }
         
 
-            push @$Errors, {type => 'after-entity-public-identifier-003e', level => 'm',
+            push @$Errors, {type => 'no DOCTYPE literal', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -20851,20 +20960,22 @@ $OriginalState = [B_ENT_PUBLIC_ID_STATE, B_ENT_PUBLIC_ID_STATE___BEFORE_TEXT_DEC
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-            push @$Errors, {type => 'after-entity-public-keyword-0022', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = B_ENT_PUBLIC_ID_STATE;
+$InLiteral = 1;
+$State = ENT_PUBLIC_ID__DQ__STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-            push @$Errors, {type => 'after-entity-public-keyword-0027', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = B_ENT_PUBLIC_ID_STATE;
+$InLiteral = 1;
+$State = ENT_PUBLIC_ID__SQ__STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-entity-public-keyword-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -20880,7 +20991,7 @@ $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 return 1 if $Token->{type} == ENTITY_TOKEN;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-entity-public-keyword-else', level => 'm',
+            push @$Errors, {type => 'no DOCTYPE literal', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -20935,7 +21046,7 @@ $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-entity-system-identifier-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -21021,14 +21132,14 @@ $OriginalState = [B_ENT_SYSTEM_ID_STATE, B_ENT_SYSTEM_ID_STATE___BEFORE_TEXT_DEC
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-            push @$Errors, {type => 'after-entity-system-keyword-0022', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $InLiteral = 1;
 $State = ENT_SYSTEM_ID__DQ__STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-            push @$Errors, {type => 'after-entity-system-keyword-0027', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $InLiteral = 1;
@@ -21036,7 +21147,7 @@ $State = ENT_SYSTEM_ID__SQ__STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-entity-system-keyword-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -21052,7 +21163,7 @@ $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 return 1 if $Token->{type} == ENTITY_TOKEN;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-entity-system-keyword-else', level => 'm',
+            push @$Errors, {type => 'no DOCTYPE literal', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -21496,7 +21607,7 @@ $State = A_IGNORE_KWD_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-ignore-keyword-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -21521,7 +21632,7 @@ $State = A_IGNORE_KWD_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-ignore-keyword-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -21531,7 +21642,7 @@ $State = A_IGNORE_KWD_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'after-ignore-keyword-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -21547,7 +21658,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-ignore-keyword-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -21557,7 +21668,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'after-ignore-keyword-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -21573,7 +21684,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-ignore-keyword-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -21583,7 +21694,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'after-ignore-keyword-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -21599,7 +21710,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-ignore-keyword-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -21609,7 +21720,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'after-ignore-keyword-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -21625,7 +21736,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-ignore-keyword-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -21652,7 +21763,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-ignore-keyword-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -21721,7 +21832,7 @@ $State = A_IGNORE_KWD_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-ignore-keyword-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -21746,7 +21857,7 @@ $State = A_IGNORE_KWD_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-ignore-keyword-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -21756,7 +21867,7 @@ $State = A_IGNORE_KWD_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'after-ignore-keyword-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -21772,7 +21883,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-ignore-keyword-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -21782,7 +21893,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'after-ignore-keyword-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -21798,7 +21909,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-ignore-keyword-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -21808,7 +21919,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'after-ignore-keyword-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -21824,7 +21935,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-ignore-keyword-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -21834,7 +21945,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'after-ignore-keyword-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -21850,7 +21961,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-ignore-keyword-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -21880,7 +21991,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-ignore-keyword-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -22326,7 +22437,7 @@ $State = A_INCLUDE_KWD_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-include-keyword-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -22351,7 +22462,7 @@ $State = A_INCLUDE_KWD_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-include-keyword-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -22361,7 +22472,7 @@ $State = A_INCLUDE_KWD_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'after-include-keyword-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -22377,7 +22488,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-include-keyword-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -22387,7 +22498,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'after-include-keyword-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -22403,7 +22514,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-include-keyword-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -22413,7 +22524,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'after-include-keyword-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -22429,7 +22540,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-include-keyword-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -22439,7 +22550,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'after-include-keyword-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -22455,7 +22566,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-include-keyword-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -22482,7 +22593,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-include-keyword-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -22551,7 +22662,7 @@ $State = A_INCLUDE_KWD_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-include-keyword-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -22576,7 +22687,7 @@ $State = A_INCLUDE_KWD_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-include-keyword-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -22586,7 +22697,7 @@ $State = A_INCLUDE_KWD_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'after-include-keyword-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -22602,7 +22713,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-include-keyword-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -22612,7 +22723,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'after-include-keyword-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -22628,7 +22739,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-include-keyword-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -22638,7 +22749,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'after-include-keyword-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -22654,7 +22765,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-include-keyword-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -22664,7 +22775,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'after-include-keyword-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -22680,7 +22791,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-include-keyword-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -22710,7 +22821,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-include-keyword-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -22865,7 +22976,7 @@ $State = A_NOTATION_NAME_STATE_S;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-notation-name-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -23075,7 +23186,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = A_NOTATION_NAME_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-notation-name-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -23192,7 +23303,7 @@ $State = A_NOTATION_NAME_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-notation-name-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -23217,7 +23328,7 @@ $State = A_NOTATION_NAME_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-notation-name-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -23227,7 +23338,7 @@ $State = A_NOTATION_NAME_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'after-notation-name-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -23243,7 +23354,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-notation-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -23253,7 +23364,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'after-notation-name-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -23269,7 +23380,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-notation-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -23279,7 +23390,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'after-notation-name-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -23295,7 +23406,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-notation-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -23305,7 +23416,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'after-notation-name-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -23321,7 +23432,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-notation-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -23348,7 +23459,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-notation-name-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -23417,7 +23528,7 @@ $State = A_NOTATION_NAME_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-notation-name-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -23442,7 +23553,7 @@ $State = A_NOTATION_NAME_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-notation-name-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -23452,7 +23563,7 @@ $State = A_NOTATION_NAME_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'after-notation-name-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -23468,7 +23579,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-notation-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -23478,7 +23589,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'after-notation-name-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -23494,7 +23605,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-notation-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -23504,7 +23615,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'after-notation-name-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -23520,7 +23631,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-notation-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -23530,7 +23641,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'after-notation-name-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -23546,7 +23657,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-notation-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -23576,7 +23687,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-notation-name-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -24191,7 +24302,7 @@ $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-notation-public-identifier-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -24270,20 +24381,22 @@ $OriginalState = [B_NOTATION_PUBLIC_ID_STATE, B_NOTATION_PUBLIC_ID_STATE___BEFOR
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-            push @$Errors, {type => 'after-notation-public-keyword-0022', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = B_NOTATION_PUBLIC_ID_STATE;
+$InLiteral = 1;
+$State = NOTATION_PUBLIC_ID__DQ__STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-            push @$Errors, {type => 'after-notation-public-keyword-0027', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = B_NOTATION_PUBLIC_ID_STATE;
+$InLiteral = 1;
+$State = NOTATION_PUBLIC_ID__SQ__STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-notation-public-keyword-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -24298,7 +24411,7 @@ push @$Tokens, $Token;
 $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-notation-public-keyword-else', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -24352,7 +24465,7 @@ $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-notation-system-identifier-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -24474,7 +24587,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = A_NOTATION_SYSTEM_ID_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-notation-system-identifier-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -24587,7 +24700,7 @@ $State = A_NOTATION_SYSTEM_ID_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-notation-system-identifier-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -24612,7 +24725,7 @@ $State = A_NOTATION_SYSTEM_ID_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-notation-system-identifier-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -24622,7 +24735,7 @@ $State = A_NOTATION_SYSTEM_ID_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'after-notation-system-identifier-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -24638,7 +24751,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-notation-system-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -24648,7 +24761,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'after-notation-system-identifier-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -24664,7 +24777,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-notation-system-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -24674,7 +24787,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'after-notation-system-identifier-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -24690,7 +24803,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-notation-system-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -24700,7 +24813,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'after-notation-system-identifier-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -24716,7 +24829,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-notation-system-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -24743,7 +24856,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-notation-system-identifier-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -24812,7 +24925,7 @@ $State = A_NOTATION_SYSTEM_ID_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-notation-system-identifier-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -24837,7 +24950,7 @@ $State = A_NOTATION_SYSTEM_ID_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-notation-system-identifier-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -24847,7 +24960,7 @@ $State = A_NOTATION_SYSTEM_ID_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'after-notation-system-identifier-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -24863,7 +24976,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-notation-system-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -24873,7 +24986,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'after-notation-system-identifier-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -24889,7 +25002,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-notation-system-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -24899,7 +25012,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'after-notation-system-identifier-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -24915,7 +25028,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-notation-system-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -24925,7 +25038,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'after-notation-system-identifier-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -24941,7 +25054,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-notation-system-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -24971,7 +25084,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-notation-system-identifier-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -25027,20 +25140,22 @@ $OriginalState = [B_NOTATION_SYSTEM_ID_STATE, B_NOTATION_SYSTEM_ID_STATE___BEFOR
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-            push @$Errors, {type => 'after-notation-system-keyword-0022', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = B_NOTATION_SYSTEM_ID_STATE;
+$InLiteral = 1;
+$State = NOTATION_SYSTEM_ID__DQ__STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-            push @$Errors, {type => 'after-notation-system-keyword-0027', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = B_NOTATION_SYSTEM_ID_STATE;
+$InLiteral = 1;
+$State = NOTATION_SYSTEM_ID__SQ__STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-notation-system-keyword-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -25055,7 +25170,7 @@ push @$Tokens, $Token;
 $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-notation-system-keyword-else', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -25200,14 +25315,14 @@ $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-after-allowed-token-list-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
           }
         
 
-            push @$Errors, {type => 'after-after-allowed-token-list-003e', level => 'm',
+            push @$Errors, {type => 'no attr default', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -25215,7 +25330,7 @@ push @$Tokens, $Token;
 $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'after-after-allowed-token-list-else', level => 'm',
+            push @$Errors, {type => 'unquoted attr value', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -25387,14 +25502,14 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = A_AFTER_ALLOWED_TOKEN_LIST_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-after-allowed-token-list-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
           }
         
 
-            push @$Errors, {type => 'after-after-allowed-token-list-003e', level => 'm',
+            push @$Errors, {type => 'no attr default', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -25419,7 +25534,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
         }
       
 
-            push @$Errors, {type => 'after-after-allowed-token-list-else', level => 'm',
+            push @$Errors, {type => 'unquoted attr value', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -25504,7 +25619,7 @@ $State = A_AFTER_ALLOWED_TOKEN_LIST_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-after-allowed-token-list-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -25529,7 +25644,7 @@ $State = A_AFTER_ALLOWED_TOKEN_LIST_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-after-allowed-token-list-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -25539,7 +25654,7 @@ $State = A_AFTER_ALLOWED_TOKEN_LIST_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'after-after-allowed-token-list-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -25555,7 +25670,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-after-allowed-token-list-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -25565,7 +25680,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'after-after-allowed-token-list-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -25581,7 +25696,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-after-allowed-token-list-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -25591,7 +25706,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'after-after-allowed-token-list-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -25607,7 +25722,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-after-allowed-token-list-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -25617,7 +25732,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'after-after-allowed-token-list-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -25633,7 +25748,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-after-allowed-token-list-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -25660,7 +25775,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-after-allowed-token-list-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -25729,7 +25844,7 @@ $State = A_AFTER_ALLOWED_TOKEN_LIST_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-after-allowed-token-list-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -25754,7 +25869,7 @@ $State = A_AFTER_ALLOWED_TOKEN_LIST_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-after-allowed-token-list-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -25764,7 +25879,7 @@ $State = A_AFTER_ALLOWED_TOKEN_LIST_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'after-after-allowed-token-list-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -25780,7 +25895,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-after-allowed-token-list-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -25790,7 +25905,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'after-after-allowed-token-list-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -25806,7 +25921,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-after-allowed-token-list-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -25816,7 +25931,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'after-after-allowed-token-list-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -25832,7 +25947,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-after-allowed-token-list-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -25842,7 +25957,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'after-after-allowed-token-list-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -25858,7 +25973,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-after-allowed-token-list-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -25888,7 +26003,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-after-allowed-token-list-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -25967,14 +26082,14 @@ $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-allowed-token-list-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
           }
         
 
-            push @$Errors, {type => 'after-allowed-token-list-003e', level => 'm',
+            push @$Errors, {type => 'no attr default', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -25986,7 +26101,7 @@ $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-            push @$Errors, {type => 'after-after-allowed-token-list-else', level => 'm',
+            push @$Errors, {type => 'unquoted attr value', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -26044,7 +26159,7 @@ $State = B_ALLOWED_TOKEN_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-allowed-token-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -26208,7 +26323,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = A_ALLOWED_TOKEN_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-allowed-token-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -26325,7 +26440,7 @@ $State = A_ALLOWED_TOKEN_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-allowed-token-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -26350,7 +26465,7 @@ $State = A_ALLOWED_TOKEN_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-allowed-token-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -26360,7 +26475,7 @@ $State = A_ALLOWED_TOKEN_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'after-allowed-token-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -26376,7 +26491,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-allowed-token-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -26386,7 +26501,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'after-allowed-token-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -26402,7 +26517,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-allowed-token-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -26412,7 +26527,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'after-allowed-token-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -26428,7 +26543,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-allowed-token-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -26438,7 +26553,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'after-allowed-token-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -26454,7 +26569,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-allowed-token-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -26481,7 +26596,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-allowed-token-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -26550,7 +26665,7 @@ $State = A_ALLOWED_TOKEN_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-allowed-token-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -26575,7 +26690,7 @@ $State = A_ALLOWED_TOKEN_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-allowed-token-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -26585,7 +26700,7 @@ $State = A_ALLOWED_TOKEN_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'after-allowed-token-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -26601,7 +26716,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-allowed-token-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -26611,7 +26726,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'after-allowed-token-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -26627,7 +26742,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-allowed-token-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -26637,7 +26752,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'after-allowed-token-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -26653,7 +26768,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-allowed-token-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -26663,7 +26778,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'after-allowed-token-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -26679,7 +26794,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-allowed-token-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -26709,7 +26824,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-allowed-token-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -26853,7 +26968,7 @@ push @$Tokens, $Token;
         
 } elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY])/gcs) {
 
-            push @$Errors, {type => 'after-attribute-name-upper', level => 'm',
+            push @$Errors, {type => 'no attr value', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $Attr = {di => $DI};
@@ -27142,7 +27257,7 @@ $State = A_CM_ITEM_STATE;
 
         if (not @$OpenCMGroups) {
           
-            push @$Errors, {type => 'after-content-model-item-007c', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -27159,7 +27274,7 @@ $State = B_CM_ITEM_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-content-model-group-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -27180,7 +27295,7 @@ $State = A_CM_ITEM_STATE;
         if (not @$OpenCMGroups) {
           
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-content-model-item-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -27192,7 +27307,7 @@ push @$Tokens, $Token;
         } else {
           
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-content-model-item-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -27234,7 +27349,7 @@ $State = A_CM_ITEM_STATE;
 
         if (not @$OpenCMGroups) {
           
-            push @$Errors, {type => 'after-content-model-item-007c', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -27250,7 +27365,7 @@ $State = B_CM_ITEM_STATE;
       
 } elsif ($Input =~ /\G([\(])/gcs) {
 
-            push @$Errors, {type => 'after-content-model-group-0028', level => 'm',
+            push @$Errors, {type => 'xml:dtd:no group delimiter', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -27325,7 +27440,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 
         if (not @$OpenCMGroups) {
           
-            push @$Errors, {type => 'after-content-model-item-007c', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -27344,7 +27459,7 @@ $State = B_CM_ITEM_STATE;
         if (not @$OpenCMGroups) {
           
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-content-model-item-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -27356,7 +27471,7 @@ push @$Tokens, $Token;
         } else {
           
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-content-model-item-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -27374,7 +27489,7 @@ $State = DTD_STATE;
 
         if (not @$OpenCMGroups) {
           
-            push @$Errors, {type => 'after-content-model-item-007c', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -27390,7 +27505,7 @@ $State = B_CM_ITEM_STATE;
       
 } elsif ($Input =~ /\G([\(])/gcs) {
 
-            push @$Errors, {type => 'after-content-model-item-0028', level => 'm',
+            push @$Errors, {type => 'xml:dtd:no group delimiter', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -27554,7 +27669,7 @@ $State = A_CM_ITEM_STATE;
 
         if (not @$OpenCMGroups) {
           
-            push @$Errors, {type => 'after-content-model-item-007c', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -27595,7 +27710,7 @@ $State = A_CM_ITEM_STATE;
         if (not @$OpenCMGroups) {
           
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-content-model-item-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -27607,7 +27722,7 @@ push @$Tokens, $Token;
         } else {
           
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-content-model-item-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -27643,7 +27758,7 @@ $State = A_CM_ITEM_STATE;
 
         if (not @$OpenCMGroups) {
           
-            push @$Errors, {type => 'after-content-model-item-007c', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -27676,7 +27791,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
         }
       
 
-            push @$Errors, {type => 'after-content-model-item-0028', level => 'm',
+            push @$Errors, {type => 'xml:dtd:no group delimiter', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -27853,7 +27968,7 @@ $State = A_CM_ITEM_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-content-model-item-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -27878,7 +27993,7 @@ $State = A_CM_ITEM_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-content-model-item-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -27888,7 +28003,7 @@ $State = A_CM_ITEM_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'after-content-model-item-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -27904,7 +28019,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-content-model-item-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -27914,7 +28029,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'after-content-model-item-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -27930,7 +28045,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-content-model-item-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -27940,7 +28055,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'after-content-model-item-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -27956,7 +28071,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-content-model-item-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -27966,7 +28081,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'after-content-model-item-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -27982,7 +28097,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-content-model-item-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -28009,7 +28124,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-content-model-item-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -28078,7 +28193,7 @@ $State = A_CM_ITEM_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-content-model-item-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -28103,7 +28218,7 @@ $State = A_CM_ITEM_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-content-model-item-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -28113,7 +28228,7 @@ $State = A_CM_ITEM_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'after-content-model-item-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -28129,7 +28244,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-content-model-item-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -28139,7 +28254,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'after-content-model-item-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -28155,7 +28270,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-content-model-item-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -28165,7 +28280,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'after-content-model-item-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -28181,7 +28296,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-content-model-item-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -28191,7 +28306,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'after-content-model-item-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -28207,7 +28322,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-content-model-item-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -28237,7 +28352,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-content-model-item-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -28885,7 +29000,7 @@ $State = A_MSS_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-mss-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -28910,7 +29025,7 @@ $State = A_MSS_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-mss-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -28920,7 +29035,7 @@ $State = A_MSS_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'after-mss-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -28936,7 +29051,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-mss-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -28946,7 +29061,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'after-mss-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -28962,7 +29077,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-mss-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -28972,7 +29087,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'after-mss-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -28988,7 +29103,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-mss-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -28998,7 +29113,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'after-mss-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -29014,7 +29129,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-mss-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -29041,7 +29156,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-mss-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -29110,7 +29225,7 @@ $State = A_MSS_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-mss-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -29135,7 +29250,7 @@ $State = A_MSS_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-mss-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -29145,7 +29260,7 @@ $State = A_MSS_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'after-mss-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -29161,7 +29276,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-mss-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -29171,7 +29286,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'after-mss-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -29187,7 +29302,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-mss-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -29197,7 +29312,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'after-mss-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -29213,7 +29328,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-mss-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -29223,7 +29338,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'after-mss-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -29239,7 +29354,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-mss-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -29269,7 +29384,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'after-mss-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -30710,7 +30825,7 @@ $Attr->{allowed_tokens}->[-1] .= q@�@;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'allowed-token-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -32150,7 +32265,7 @@ $State = ATTR_VALUE__DQ__STATE_CR;
 return 1 if $return;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-allowed-char', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -32290,7 +32405,7 @@ $State = A_ATTR_VALUE__QUOTED__STATE;
 return 1 if $return;
 } elsif ($Input =~ /\G([\#])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-0023', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -32431,7 +32546,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-0025', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -32714,7 +32829,7 @@ $State = ATTR_VALUE__DQ__STATE___CHARREF_STATE;
 return 1 if $return;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-0027', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -33141,7 +33256,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-003e', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -33282,7 +33397,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
 } elsif ($Input =~ /\G([\`])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-0060', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -33717,7 +33832,7 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = A_ATTR_VALUE__QUOTED__STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'character-reference-0025', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -33762,7 +33877,7 @@ $State = ATTR_VALUE__DQ__STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-            push @$Errors, {type => 'character-reference-003e', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -35069,7 +35184,7 @@ $State = ATTR_VALUE__SQ__STATE_CR;
 return 1 if $return;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-0022', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -35210,7 +35325,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
 } elsif ($Input =~ /\G([\#])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-0023', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -35351,7 +35466,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-0025', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -35634,7 +35749,7 @@ $State = ATTR_VALUE__SQ__STATE___CHARREF_STATE;
 return 1 if $return;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-allowed-char', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -36060,7 +36175,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-003e', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -36201,7 +36316,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
 } elsif ($Input =~ /\G([\`])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-0060', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -36637,7 +36752,7 @@ $State = ATTR_VALUE__SQ__STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'character-reference-0025', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -36681,7 +36796,7 @@ $State = ATTR_VALUE__SQ__STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-            push @$Errors, {type => 'character-reference-003e', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -38505,7 +38620,7 @@ $State = B_ATTR_NAME_STATE;
 return 1 if $return;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-0022', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -38650,7 +38765,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
 } elsif ($Input =~ /\G([\#])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-0023', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -38791,7 +38906,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-0025', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -39074,7 +39189,7 @@ $State = ATTR_VALUE__UNQUOTED__STATE___CHARREF_STATE;
 return 1 if $return;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-0027', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -39219,7 +39334,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-allowed-char', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -39509,7 +39624,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-003e', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -39689,7 +39804,7 @@ push @$Tokens, $Token;
 return 1 if $return;
 } elsif ($Input =~ /\G([\`])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-0060', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -40217,7 +40332,7 @@ $State = ATTR_VALUE__UNQUOTED__STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'character-reference-0025', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -40270,7 +40385,7 @@ $State = ATTR_VALUE__UNQUOTED__STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-            push @$Errors, {type => 'character-reference-003e', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -40495,7 +40610,7 @@ $State = ATTR_VALUE_IN_ENT_STATE___CHARREF_STATE;
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'attribute-value-in-entity-003c', level => 'm',
+            push @$Errors, {type => 'entref in attr has element', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -40564,7 +40679,7 @@ $State = ATTR_VALUE_IN_ENT_STATE___CHARREF_STATE;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE_IN_ENT_STATE;
 
-            push @$Errors, {type => 'attribute-value-in-entity-003c', level => 'm',
+            push @$Errors, {type => 'entref in attr has element', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -40798,7 +40913,7 @@ $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE_IN_ENT_STATE;
 
-            push @$Errors, {type => 'attribute-value-in-entity-003c', level => 'm',
+            push @$Errors, {type => 'entref in attr has element', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -41082,7 +41197,7 @@ $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE_IN_ENT_STATE;
 
-            push @$Errors, {type => 'attribute-value-in-entity-003c', level => 'm',
+            push @$Errors, {type => 'entref in attr has element', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -41597,7 +41712,7 @@ $State = ATTR_VALUE_IN_ENT_STATE_CR;
 return 1 if $return;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-0022', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -41738,7 +41853,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
 } elsif ($Input =~ /\G([\#])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-0023', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -41879,7 +41994,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-0025', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -42162,7 +42277,7 @@ $State = ATTR_VALUE_IN_ENT_STATE___CHARREF_STATE;
 return 1 if $return;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-0027', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -42441,7 +42556,7 @@ return 1 if $return;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE_IN_ENT_STATE;
 
-            push @$Errors, {type => 'attribute-value-in-entity-003c', level => 'm',
+            push @$Errors, {type => 'entref in attr has element', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -42589,7 +42704,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-003e', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -42730,7 +42845,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
 } elsif ($Input =~ /\G([\`])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-0060', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -43074,7 +43189,7 @@ $State = ATTR_VALUE_IN_ENT_STATE___CHARREF_STATE;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE_IN_ENT_STATE;
 
-            push @$Errors, {type => 'attribute-value-in-entity-003c', level => 'm',
+            push @$Errors, {type => 'entref in attr has element', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -43151,7 +43266,7 @@ $State = ATTR_VALUE_IN_ENT_STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'character-reference-0025', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -43182,7 +43297,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE_IN_ENT_STATE;
 
-            push @$Errors, {type => 'attribute-value-in-entity-003c', level => 'm',
+            push @$Errors, {type => 'entref in attr has element', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -43196,7 +43311,7 @@ $State = ATTR_VALUE_IN_ENT_STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-            push @$Errors, {type => 'character-reference-003e', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -43257,7 +43372,7 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\<])/gcs) {
 $State = ATTR_VALUE_IN_ENT_STATE;
 
-            push @$Errors, {type => 'attribute-value-in-entity-003c', level => 'm',
+            push @$Errors, {type => 'entref in attr has element', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -43289,7 +43404,7 @@ if ($Input =~ /\G([\	\\ \
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-            push @$Errors, {type => 'before-attlist-attribute-default-0022', level => 'm',
+            push @$Errors, {type => 'no attr default', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -43301,21 +43416,21 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-            push @$Errors, {type => 'before-attlist-attribute-default-0027', level => 'm',
+            push @$Errors, {type => 'no attr default', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'before-attlist-attribute-default-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
           }
         
 
-            push @$Errors, {type => 'before-attlist-attribute-default-003e', level => 'm',
+            push @$Errors, {type => 'no attr default', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -43650,7 +43765,7 @@ $State = B_ATTLIST_ATTR_NAME_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-attlist-attribute-name-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -43675,7 +43790,7 @@ $State = B_ATTLIST_ATTR_NAME_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-attlist-attribute-name-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -43685,7 +43800,7 @@ $State = B_ATTLIST_ATTR_NAME_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'before-attlist-attribute-name-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -43701,7 +43816,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-attlist-attribute-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -43711,7 +43826,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'before-attlist-attribute-name-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -43727,7 +43842,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-attlist-attribute-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -43737,7 +43852,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'before-attlist-attribute-name-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -43753,7 +43868,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-attlist-attribute-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -43763,7 +43878,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'before-attlist-attribute-name-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -43779,7 +43894,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-attlist-attribute-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -43806,7 +43921,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-attlist-attribute-name-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -43875,7 +43990,7 @@ $State = B_ATTLIST_ATTR_NAME_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-attlist-attribute-name-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -43900,7 +44015,7 @@ $State = B_ATTLIST_ATTR_NAME_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-attlist-attribute-name-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -43910,7 +44025,7 @@ $State = B_ATTLIST_ATTR_NAME_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'before-attlist-attribute-name-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -43926,7 +44041,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-attlist-attribute-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -43936,7 +44051,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'before-attlist-attribute-name-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -43952,7 +44067,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-attlist-attribute-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -43962,7 +44077,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'before-attlist-attribute-name-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -43978,7 +44093,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-attlist-attribute-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -43988,7 +44103,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'before-attlist-attribute-name-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -44004,7 +44119,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-attlist-attribute-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -44034,7 +44149,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-attlist-attribute-name-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -44354,7 +44469,7 @@ $State = B_ATTLIST_NAME_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-attlist-name-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -44379,7 +44494,7 @@ $State = B_ATTLIST_NAME_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-attlist-name-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -44389,7 +44504,7 @@ $State = B_ATTLIST_NAME_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'before-attlist-name-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -44405,7 +44520,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-attlist-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -44415,7 +44530,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'before-attlist-name-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -44431,7 +44546,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-attlist-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -44441,7 +44556,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'before-attlist-name-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -44457,7 +44572,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-attlist-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -44467,7 +44582,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'before-attlist-name-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -44483,7 +44598,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-attlist-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -44510,7 +44625,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-attlist-name-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -44579,7 +44694,7 @@ $State = B_ATTLIST_NAME_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-attlist-name-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -44604,7 +44719,7 @@ $State = B_ATTLIST_NAME_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-attlist-name-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -44614,7 +44729,7 @@ $State = B_ATTLIST_NAME_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'before-attlist-name-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -44630,7 +44745,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-attlist-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -44640,7 +44755,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'before-attlist-name-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -44656,7 +44771,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-attlist-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -44666,7 +44781,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'before-attlist-name-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -44682,7 +44797,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-attlist-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -44692,7 +44807,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'before-attlist-name-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -44708,7 +44823,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-attlist-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -44738,7 +44853,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-attlist-name-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -44991,51 +45106,53 @@ $Token->{cmgroup} = $cmgroup;
 $State = B_CM_ITEM_STATE;
 } elsif ($Input =~ /\G([\)])/gcs) {
 
-            push @$Errors, {type => 'before-element-content-0029', level => 'm',
+            push @$Errors, {type => 'no md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\*])/gcs) {
 
-            push @$Errors, {type => 'before-element-content-002a', level => 'm',
+            push @$Errors, {type => 'no md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\+])/gcs) {
 
-            push @$Errors, {type => 'before-element-content-002b', level => 'm',
+            push @$Errors, {type => 'no md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\,])/gcs) {
 
-            push @$Errors, {type => 'before-element-content-002c', level => 'm',
+            push @$Errors, {type => 'no md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'before-element-content-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
           }
         
 
-            push @$Errors, {type => 'before-element-content-003e', level => 'm',
+            push @$Errors, {type => 'no md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
+push @$Tokens, $Token;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G([\?])/gcs) {
 
-            push @$Errors, {type => 'before-element-content-003f', level => 'm',
+            push @$Errors, {type => 'no md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\|])/gcs) {
 
-            push @$Errors, {type => 'before-element-content-007c', level => 'm',
+            push @$Errors, {type => 'no md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -45169,7 +45286,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
         }
       
 
-            push @$Errors, {type => 'before-element-content-0029', level => 'm',
+            push @$Errors, {type => 'no md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -45192,7 +45309,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
         }
       
 
-            push @$Errors, {type => 'before-element-content-002a', level => 'm',
+            push @$Errors, {type => 'no md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -45215,7 +45332,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
         }
       
 
-            push @$Errors, {type => 'before-element-content-002b', level => 'm',
+            push @$Errors, {type => 'no md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -45238,7 +45355,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
         }
       
 
-            push @$Errors, {type => 'before-element-content-002c', level => 'm',
+            push @$Errors, {type => 'no md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -45263,17 +45380,19 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = B_ELEMENT_CONTENT_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'before-element-content-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
           }
         
 
-            push @$Errors, {type => 'before-element-content-003e', level => 'm',
+            push @$Errors, {type => 'no md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
+push @$Tokens, $Token;
+$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G([\?])/gcs) {
 $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
@@ -45293,7 +45412,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
         }
       
 
-            push @$Errors, {type => 'before-element-content-003f', level => 'm',
+            push @$Errors, {type => 'no md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -45316,7 +45435,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
         }
       
 
-            push @$Errors, {type => 'before-element-content-007c', level => 'm',
+            push @$Errors, {type => 'no md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -45421,7 +45540,7 @@ $State = B_ELEMENT_CONTENT_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-element-content-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -45446,7 +45565,7 @@ $State = B_ELEMENT_CONTENT_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-element-content-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -45456,7 +45575,7 @@ $State = B_ELEMENT_CONTENT_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'before-element-content-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -45472,7 +45591,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-element-content-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -45482,7 +45601,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'before-element-content-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -45498,7 +45617,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-element-content-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -45508,7 +45627,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'before-element-content-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -45524,7 +45643,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-element-content-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -45534,7 +45653,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'before-element-content-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -45550,7 +45669,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-element-content-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -45577,7 +45696,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-element-content-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -45646,7 +45765,7 @@ $State = B_ELEMENT_CONTENT_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-element-content-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -45671,7 +45790,7 @@ $State = B_ELEMENT_CONTENT_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-element-content-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -45681,7 +45800,7 @@ $State = B_ELEMENT_CONTENT_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'before-element-content-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -45697,7 +45816,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-element-content-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -45707,7 +45826,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'before-element-content-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -45723,7 +45842,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-element-content-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -45733,7 +45852,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'before-element-content-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -45749,7 +45868,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-element-content-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -45759,7 +45878,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'before-element-content-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -45775,7 +45894,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-element-content-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -45805,7 +45924,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-element-content-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -45868,14 +45987,14 @@ $State = ELEMENT_NAME_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'before-element-name-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
           }
         
 
-            push @$Errors, {type => 'before-element-name-003e', level => 'm',
+            push @$Errors, {type => 'no md name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -46013,14 +46132,14 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = B_ELEMENT_NAME_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'before-element-name-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
           }
         
 
-            push @$Errors, {type => 'before-element-name-003e', level => 'm',
+            push @$Errors, {type => 'no md name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -46125,7 +46244,7 @@ $State = B_ELEMENT_NAME_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-element-name-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -46150,7 +46269,7 @@ $State = B_ELEMENT_NAME_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-element-name-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -46160,7 +46279,7 @@ $State = B_ELEMENT_NAME_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'before-element-name-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -46176,7 +46295,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-element-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -46186,7 +46305,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'before-element-name-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -46202,7 +46321,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-element-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -46212,7 +46331,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'before-element-name-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -46228,7 +46347,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-element-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -46238,7 +46357,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'before-element-name-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -46254,7 +46373,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-element-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -46281,7 +46400,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-element-name-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -46350,7 +46469,7 @@ $State = B_ELEMENT_NAME_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-element-name-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -46375,7 +46494,7 @@ $State = B_ELEMENT_NAME_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-element-name-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -46385,7 +46504,7 @@ $State = B_ELEMENT_NAME_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'before-element-name-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -46401,7 +46520,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-element-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -46411,7 +46530,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'before-element-name-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -46427,7 +46546,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-element-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -46437,7 +46556,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'before-element-name-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -46453,7 +46572,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-element-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -46463,7 +46582,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'before-element-name-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -46479,7 +46598,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-element-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -46509,7 +46628,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-element-name-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -46821,7 +46940,7 @@ $State = B_ENT_NAME_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-name-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -46846,7 +46965,7 @@ $State = B_ENT_NAME_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-name-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -46856,7 +46975,7 @@ $State = B_ENT_NAME_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'before-entity-name-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -46872,7 +46991,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -46882,7 +47001,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'before-entity-name-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -46898,7 +47017,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -46908,7 +47027,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'before-entity-name-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -46924,7 +47043,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -46934,7 +47053,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'before-entity-name-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -46950,7 +47069,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -46977,7 +47096,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-name-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -47046,7 +47165,7 @@ $State = B_ENT_NAME_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-name-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -47071,7 +47190,7 @@ $State = B_ENT_NAME_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-name-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -47081,7 +47200,7 @@ $State = B_ENT_NAME_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'before-entity-name-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -47097,7 +47216,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -47107,7 +47226,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'before-entity-name-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -47123,7 +47242,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -47133,7 +47252,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'before-entity-name-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -47149,7 +47268,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -47159,7 +47278,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'before-entity-name-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -47175,7 +47294,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -47205,7 +47324,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-name-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -47552,7 +47671,7 @@ $State = B_ENT_PUBLIC_ID_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-public-identifier-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -47577,7 +47696,7 @@ $State = B_ENT_PUBLIC_ID_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-public-identifier-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -47587,7 +47706,7 @@ $State = B_ENT_PUBLIC_ID_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'before-entity-public-identifier-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -47603,7 +47722,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-public-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -47613,7 +47732,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'before-entity-public-identifier-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -47629,7 +47748,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-public-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -47639,7 +47758,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'before-entity-public-identifier-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -47655,7 +47774,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-public-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -47665,7 +47784,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'before-entity-public-identifier-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -47681,7 +47800,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-public-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -47708,7 +47827,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-public-identifier-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -47777,7 +47896,7 @@ $State = B_ENT_PUBLIC_ID_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-public-identifier-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -47802,7 +47921,7 @@ $State = B_ENT_PUBLIC_ID_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-public-identifier-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -47812,7 +47931,7 @@ $State = B_ENT_PUBLIC_ID_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'before-entity-public-identifier-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -47828,7 +47947,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-public-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -47838,7 +47957,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'before-entity-public-identifier-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -47854,7 +47973,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-public-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -47864,7 +47983,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'before-entity-public-identifier-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -47880,7 +47999,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-public-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -47890,7 +48009,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'before-entity-public-identifier-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -47906,7 +48025,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-public-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -47936,7 +48055,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-public-identifier-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -48283,7 +48402,7 @@ $State = B_ENT_SYSTEM_ID_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-system-identifier-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -48308,7 +48427,7 @@ $State = B_ENT_SYSTEM_ID_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-system-identifier-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -48318,7 +48437,7 @@ $State = B_ENT_SYSTEM_ID_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'before-entity-system-identifier-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -48334,7 +48453,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-system-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -48344,7 +48463,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'before-entity-system-identifier-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -48360,7 +48479,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-system-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -48370,7 +48489,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'before-entity-system-identifier-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -48386,7 +48505,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-system-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -48396,7 +48515,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'before-entity-system-identifier-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -48412,7 +48531,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-system-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -48439,7 +48558,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-system-identifier-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -48508,7 +48627,7 @@ $State = B_ENT_SYSTEM_ID_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-system-identifier-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -48533,7 +48652,7 @@ $State = B_ENT_SYSTEM_ID_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-system-identifier-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -48543,7 +48662,7 @@ $State = B_ENT_SYSTEM_ID_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'before-entity-system-identifier-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -48559,7 +48678,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-system-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -48569,7 +48688,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'before-entity-system-identifier-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -48585,7 +48704,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-system-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -48595,7 +48714,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'before-entity-system-identifier-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -48611,7 +48730,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-system-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -48621,7 +48740,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'before-entity-system-identifier-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -48637,7 +48756,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-system-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -48667,7 +48786,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-system-identifier-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -48974,7 +49093,7 @@ $State = B_ENT_TYPE_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'no md name', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -48999,7 +49118,7 @@ $State = B_ENT_TYPE_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-type-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -49009,7 +49128,7 @@ $State = B_ENT_TYPE_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'before-entity-type-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -49025,7 +49144,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-type-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -49035,7 +49154,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'before-entity-type-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -49051,7 +49170,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-type-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -49061,7 +49180,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'before-entity-type-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -49077,7 +49196,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-type-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -49087,7 +49206,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'before-entity-type-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -49103,7 +49222,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-type-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -49130,7 +49249,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'no md name', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -49199,7 +49318,7 @@ $State = B_ENT_TYPE_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'no md name', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -49224,7 +49343,7 @@ $State = B_ENT_TYPE_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-type-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -49234,7 +49353,7 @@ $State = B_ENT_TYPE_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'before-entity-type-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -49250,7 +49369,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-type-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -49260,7 +49379,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'before-entity-type-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -49276,7 +49395,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-type-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -49286,7 +49405,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'before-entity-type-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -49302,7 +49421,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-type-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -49312,7 +49431,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'before-entity-type-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -49328,7 +49447,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-entity-type-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -49358,7 +49477,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'no md name', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -49598,7 +49717,7 @@ $State = NDATA_ID_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'before-ndata-identifier-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -49746,7 +49865,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = B_NDATA_ID_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'before-ndata-identifier-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -49861,7 +49980,7 @@ $State = B_NDATA_ID_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-ndata-identifier-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -49886,7 +50005,7 @@ $State = B_NDATA_ID_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-ndata-identifier-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -49896,7 +50015,7 @@ $State = B_NDATA_ID_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'before-ndata-identifier-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -49912,7 +50031,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-ndata-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -49922,7 +50041,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'before-ndata-identifier-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -49938,7 +50057,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-ndata-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -49948,7 +50067,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'before-ndata-identifier-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -49964,7 +50083,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-ndata-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -49974,7 +50093,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'before-ndata-identifier-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -49990,7 +50109,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-ndata-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -50017,7 +50136,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-ndata-identifier-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -50086,7 +50205,7 @@ $State = B_NDATA_ID_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-ndata-identifier-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -50111,7 +50230,7 @@ $State = B_NDATA_ID_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-ndata-identifier-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -50121,7 +50240,7 @@ $State = B_NDATA_ID_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'before-ndata-identifier-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -50137,7 +50256,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-ndata-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -50147,7 +50266,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'before-ndata-identifier-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -50163,7 +50282,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-ndata-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -50173,7 +50292,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'before-ndata-identifier-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -50189,7 +50308,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-ndata-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -50199,7 +50318,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'before-ndata-identifier-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -50215,7 +50334,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-ndata-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -50245,7 +50364,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-ndata-identifier-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -50301,7 +50420,7 @@ $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'before-ndata-keyword-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -50432,7 +50551,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = B_NDATA_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'before-ndata-keyword-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -50588,7 +50707,7 @@ $State = B_NDATA_KWD_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-ndata-keyword-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -50613,7 +50732,7 @@ $State = B_NDATA_KWD_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-ndata-keyword-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -50623,7 +50742,7 @@ $State = B_NDATA_KWD_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'before-ndata-keyword-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -50639,7 +50758,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-ndata-keyword-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -50649,7 +50768,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'before-ndata-keyword-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -50665,7 +50784,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-ndata-keyword-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -50675,7 +50794,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'before-ndata-keyword-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -50691,7 +50810,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-ndata-keyword-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -50701,7 +50820,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'before-ndata-keyword-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -50717,7 +50836,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-ndata-keyword-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -50744,7 +50863,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-ndata-keyword-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -50813,7 +50932,7 @@ $State = B_NDATA_KWD_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-ndata-keyword-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -50838,7 +50957,7 @@ $State = B_NDATA_KWD_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-ndata-keyword-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -50848,7 +50967,7 @@ $State = B_NDATA_KWD_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'before-ndata-keyword-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -50864,7 +50983,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-ndata-keyword-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -50874,7 +50993,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'before-ndata-keyword-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -50890,7 +51009,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-ndata-keyword-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -50900,7 +51019,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'before-ndata-keyword-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -50916,7 +51035,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-ndata-keyword-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -50926,7 +51045,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'before-ndata-keyword-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -50942,7 +51061,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-ndata-keyword-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -50972,7 +51091,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-ndata-keyword-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -51268,14 +51387,10 @@ $State = NOTATION_NAME_STATE;
           }
         
 
-            push @$Errors, {type => 'before-notation-name-003e', level => 'm',
+            push @$Errors, {type => 'no md name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
-
-            push @$Errors, {type => 'string in internal subset', level => 'm',
-                            di => $DI, index => $Offset + (pos $Input) - 1};
-          
 } elsif ($Input =~ /\G(.)/gcs) {
 $Token->{q<name>} = $1;
 $State = NOTATION_NAME_STATE;
@@ -51417,14 +51532,10 @@ $State = B_NOTATION_NAME_STATE;
           }
         
 
-            push @$Errors, {type => 'before-notation-name-003e', level => 'm',
+            push @$Errors, {type => 'no md name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
-
-            push @$Errors, {type => 'string in internal subset', level => 'm',
-                            di => $DI, index => $Offset + (pos $Input) - 1};
-          
 } elsif ($Input =~ /\G(.)/gcs) {
 $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
@@ -51526,7 +51637,7 @@ $State = B_NOTATION_NAME_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-notation-name-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -51551,7 +51662,7 @@ $State = B_NOTATION_NAME_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-notation-name-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -51561,7 +51672,7 @@ $State = B_NOTATION_NAME_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'before-notation-name-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -51577,7 +51688,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-notation-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -51587,7 +51698,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'before-notation-name-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -51603,7 +51714,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-notation-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -51613,7 +51724,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'before-notation-name-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -51629,7 +51740,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-notation-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -51639,7 +51750,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'before-notation-name-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -51655,7 +51766,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-notation-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -51682,7 +51793,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-notation-name-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -51751,7 +51862,7 @@ $State = B_NOTATION_NAME_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-notation-name-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -51776,7 +51887,7 @@ $State = B_NOTATION_NAME_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-notation-name-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -51786,7 +51897,7 @@ $State = B_NOTATION_NAME_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'before-notation-name-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -51802,7 +51913,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-notation-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -51812,7 +51923,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'before-notation-name-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -51828,7 +51939,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-notation-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -51838,7 +51949,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'before-notation-name-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -51854,7 +51965,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-notation-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -51864,7 +51975,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'before-notation-name-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -51880,7 +51991,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-notation-name-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -51910,7 +52021,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-notation-name-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -51972,7 +52083,7 @@ $State = NOTATION_PUBLIC_ID__SQ__STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'before-notation-public-identifier-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -52138,7 +52249,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = B_NOTATION_PUBLIC_ID_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'before-notation-public-identifier-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -52255,7 +52366,7 @@ $State = B_NOTATION_PUBLIC_ID_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-notation-public-identifier-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -52280,7 +52391,7 @@ $State = B_NOTATION_PUBLIC_ID_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-notation-public-identifier-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -52290,7 +52401,7 @@ $State = B_NOTATION_PUBLIC_ID_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'before-notation-public-identifier-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -52306,7 +52417,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-notation-public-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -52316,7 +52427,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'before-notation-public-identifier-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -52332,7 +52443,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-notation-public-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -52342,7 +52453,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'before-notation-public-identifier-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -52358,7 +52469,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-notation-public-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -52368,7 +52479,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'before-notation-public-identifier-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -52384,7 +52495,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-notation-public-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -52411,7 +52522,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-notation-public-identifier-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -52480,7 +52591,7 @@ $State = B_NOTATION_PUBLIC_ID_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-notation-public-identifier-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -52505,7 +52616,7 @@ $State = B_NOTATION_PUBLIC_ID_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-notation-public-identifier-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -52515,7 +52626,7 @@ $State = B_NOTATION_PUBLIC_ID_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'before-notation-public-identifier-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -52531,7 +52642,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-notation-public-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -52541,7 +52652,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'before-notation-public-identifier-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -52557,7 +52668,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-notation-public-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -52567,7 +52678,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'before-notation-public-identifier-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -52583,7 +52694,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-notation-public-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -52593,7 +52704,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'before-notation-public-identifier-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -52609,7 +52720,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-notation-public-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -52639,7 +52750,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-notation-public-identifier-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -52701,7 +52812,7 @@ $State = NOTATION_SYSTEM_ID__SQ__STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'before-notation-system-identifier-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -52716,7 +52827,7 @@ push @$Tokens, $Token;
 $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 } elsif ($Input =~ /\G(.)/gcs) {
 
-            push @$Errors, {type => 'before-notation-system-identifier-else', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -52867,7 +52978,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = B_NOTATION_SYSTEM_ID_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'before-notation-system-identifier-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -52899,7 +53010,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
         }
       
 
-            push @$Errors, {type => 'before-notation-system-identifier-else', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -52984,7 +53095,7 @@ $State = B_NOTATION_SYSTEM_ID_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-notation-system-identifier-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -53009,7 +53120,7 @@ $State = B_NOTATION_SYSTEM_ID_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-notation-system-identifier-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -53019,7 +53130,7 @@ $State = B_NOTATION_SYSTEM_ID_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'before-notation-system-identifier-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -53035,7 +53146,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-notation-system-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -53045,7 +53156,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'before-notation-system-identifier-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -53061,7 +53172,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-notation-system-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -53071,7 +53182,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'before-notation-system-identifier-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -53087,7 +53198,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-notation-system-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -53097,7 +53208,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'before-notation-system-identifier-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -53113,7 +53224,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-notation-system-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -53140,7 +53251,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-notation-system-identifier-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -53209,7 +53320,7 @@ $State = B_NOTATION_SYSTEM_ID_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-notation-system-identifier-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -53234,7 +53345,7 @@ $State = B_NOTATION_SYSTEM_ID_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-notation-system-identifier-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -53244,7 +53355,7 @@ $State = B_NOTATION_SYSTEM_ID_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'before-notation-system-identifier-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -53260,7 +53371,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-notation-system-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -53270,7 +53381,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'before-notation-system-identifier-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -53286,7 +53397,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-notation-system-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -53296,7 +53407,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'before-notation-system-identifier-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -53312,7 +53423,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-notation-system-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -53322,7 +53433,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'before-notation-system-identifier-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -53338,7 +53449,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-notation-system-identifier-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -53368,7 +53479,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-notation-system-identifier-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -53753,7 +53864,7 @@ $State = B_ALLOWED_TOKEN_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-allowed-token-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -53778,7 +53889,7 @@ $State = B_ALLOWED_TOKEN_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-allowed-token-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -53788,7 +53899,7 @@ $State = B_ALLOWED_TOKEN_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'before-allowed-token-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -53804,7 +53915,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-allowed-token-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -53814,7 +53925,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'before-allowed-token-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -53830,7 +53941,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-allowed-token-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -53840,7 +53951,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'before-allowed-token-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -53856,7 +53967,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-allowed-token-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -53866,7 +53977,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'before-allowed-token-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -53882,7 +53993,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-allowed-token-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -53909,7 +54020,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-allowed-token-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -53978,7 +54089,7 @@ $State = B_ALLOWED_TOKEN_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-allowed-token-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -54003,7 +54114,7 @@ $State = B_ALLOWED_TOKEN_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-allowed-token-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -54013,7 +54124,7 @@ $State = B_ALLOWED_TOKEN_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'before-allowed-token-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -54029,7 +54140,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-allowed-token-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -54039,7 +54150,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'before-allowed-token-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -54055,7 +54166,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-allowed-token-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -54065,7 +54176,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'before-allowed-token-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -54081,7 +54192,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-allowed-token-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -54091,7 +54202,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'before-allowed-token-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -54107,7 +54218,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-allowed-token-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -54137,7 +54248,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-allowed-token-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -55958,26 +56069,26 @@ $State = CM_ELEMENT_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\*])/gcs) {
 
-            push @$Errors, {type => 'before-content-model-item-002a', level => 'm',
+            push @$Errors, {type => 'xml:dtd:no group item', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\+])/gcs) {
 
-            push @$Errors, {type => 'before-content-model-item-002b', level => 'm',
+            push @$Errors, {type => 'xml:dtd:no group item', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\,])/gcs) {
 
-            push @$Errors, {type => 'before-content-model-item-002c', level => 'm',
+            push @$Errors, {type => 'xml:dtd:no group item', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'before-content-model-item-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -55990,13 +56101,13 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = DTD_STATE;
 } elsif ($Input =~ /\G([\?])/gcs) {
 
-            push @$Errors, {type => 'before-content-model-item-003f', level => 'm',
+            push @$Errors, {type => 'xml:dtd:no group item', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\|])/gcs) {
 
-            push @$Errors, {type => 'before-content-model-item-007c', level => 'm',
+            push @$Errors, {type => 'xml:dtd:no group item', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -56185,7 +56296,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
         }
       
 
-            push @$Errors, {type => 'before-content-model-item-002a', level => 'm',
+            push @$Errors, {type => 'xml:dtd:no group item', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -56208,7 +56319,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
         }
       
 
-            push @$Errors, {type => 'before-content-model-item-002b', level => 'm',
+            push @$Errors, {type => 'xml:dtd:no group item', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -56231,7 +56342,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
         }
       
 
-            push @$Errors, {type => 'before-content-model-item-002c', level => 'm',
+            push @$Errors, {type => 'xml:dtd:no group item', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -56256,7 +56367,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = B_CM_ITEM_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'before-content-model-item-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -56286,7 +56397,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
         }
       
 
-            push @$Errors, {type => 'before-content-model-item-003f', level => 'm',
+            push @$Errors, {type => 'xml:dtd:no group item', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -56309,7 +56420,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
         }
       
 
-            push @$Errors, {type => 'before-content-model-item-007c', level => 'm',
+            push @$Errors, {type => 'xml:dtd:no group item', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -56418,7 +56529,7 @@ $State = B_CM_ITEM_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-content-model-item-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -56443,7 +56554,7 @@ $State = B_CM_ITEM_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-content-model-item-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -56453,7 +56564,7 @@ $State = B_CM_ITEM_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'before-content-model-item-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -56469,7 +56580,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-content-model-item-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -56479,7 +56590,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'before-content-model-item-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -56495,7 +56606,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-content-model-item-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -56505,7 +56616,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'before-content-model-item-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -56521,7 +56632,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-content-model-item-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -56531,7 +56642,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'before-content-model-item-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -56547,7 +56658,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-content-model-item-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -56574,7 +56685,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-content-model-item-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -56643,7 +56754,7 @@ $State = B_CM_ITEM_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-content-model-item-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -56668,7 +56779,7 @@ $State = B_CM_ITEM_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-content-model-item-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -56678,7 +56789,7 @@ $State = B_CM_ITEM_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'before-content-model-item-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -56694,7 +56805,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-content-model-item-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -56704,7 +56815,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'before-content-model-item-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -56720,7 +56831,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-content-model-item-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -56730,7 +56841,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'before-content-model-item-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -56746,7 +56857,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-content-model-item-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -56756,7 +56867,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'before-content-model-item-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -56772,7 +56883,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-content-model-item-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -56802,7 +56913,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'before-content-model-item-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -56926,7 +57037,7 @@ $State = ENT_SYSTEM_ID__SQ__STATE;
           }
         
 
-            push @$Errors, {type => 'between-entity-public-and-system-identifiers-003e', level => 'm',
+            push @$Errors, {type => 'no DOCTYPE literal', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -57093,7 +57204,7 @@ $State = BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE;
           }
         
 
-            push @$Errors, {type => 'between-entity-public-and-system-identifiers-003e', level => 'm',
+            push @$Errors, {type => 'no DOCTYPE literal', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -57204,7 +57315,7 @@ $State = BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'between-entity-public-and-system-identifiers-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -57229,7 +57340,7 @@ $State = BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'between-entity-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -57239,7 +57350,7 @@ $State = BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'between-entity-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -57255,7 +57366,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'between-entity-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -57265,7 +57376,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'between-entity-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -57281,7 +57392,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'between-entity-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -57291,7 +57402,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'between-entity-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -57307,7 +57418,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'between-entity-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -57317,7 +57428,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'between-entity-public-and-system-identifiers-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -57333,7 +57444,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'between-entity-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -57360,7 +57471,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'between-entity-public-and-system-identifiers-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -57429,7 +57540,7 @@ $State = BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'between-entity-public-and-system-identifiers-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -57454,7 +57565,7 @@ $State = BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'between-entity-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -57464,7 +57575,7 @@ $State = BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'between-entity-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -57480,7 +57591,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'between-entity-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -57490,7 +57601,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'between-entity-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -57506,7 +57617,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'between-entity-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -57516,7 +57627,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'between-entity-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -57532,7 +57643,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'between-entity-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -57542,7 +57653,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'between-entity-public-and-system-identifiers-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -57558,7 +57669,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'between-entity-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -57588,7 +57699,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'between-entity-public-and-system-identifiers-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -57650,7 +57761,7 @@ $State = NOTATION_SYSTEM_ID__SQ__STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'between-notation-public-and-system-identifiers-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -57812,7 +57923,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'between-notation-public-and-system-identifiers-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -57925,7 +58036,7 @@ $State = BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'between-notation-public-and-system-identifiers-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -57950,7 +58061,7 @@ $State = BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'between-notation-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -57960,7 +58071,7 @@ $State = BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'between-notation-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -57976,7 +58087,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'between-notation-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -57986,7 +58097,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'between-notation-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -58002,7 +58113,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'between-notation-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -58012,7 +58123,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'between-notation-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -58028,7 +58139,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'between-notation-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -58038,7 +58149,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'between-notation-public-and-system-identifiers-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -58054,7 +58165,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'between-notation-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -58081,7 +58192,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'between-notation-public-and-system-identifiers-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -58150,7 +58261,7 @@ $State = BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'between-notation-public-and-system-identifiers-state-text-declaration-in-markup-declaration-003e-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -58175,7 +58286,7 @@ $State = BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'between-notation-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0000-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -58185,7 +58296,7 @@ $State = BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-            push @$Errors, {type => 'between-notation-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0021', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -58201,7 +58312,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'between-notation-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -58211,7 +58322,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'between-notation-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -58227,7 +58338,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'between-notation-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -58237,7 +58348,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'between-notation-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -58253,7 +58364,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'between-notation-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -58263,7 +58374,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'between-notation-public-and-system-identifiers-state-text-declaration-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -58279,7 +58390,7 @@ $State = BOGUS_MARKUP_DECL_STATE;
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'between-notation-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0026-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -58309,7 +58420,7 @@ if ($EOF) {
                           type => 'no XML decl',
                           di => $DI, index => $TempIndex};
           
-          push @$Errors, {type => 'between-notation-public-and-system-identifiers-state-text-declaration-in-markup-declaration-eof-', level => 'm',
+          push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
@@ -58707,7 +58818,7 @@ $State = DATA_STATE;
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 
-            push @$Errors, {type => 'character-reference-0025', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 
@@ -58793,7 +58904,7 @@ $State = DATA_STATE;
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 
-            push @$Errors, {type => 'character-reference-003e', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 
@@ -59202,7 +59313,7 @@ $State = A_CM_ITEM_STATE;
 
         if (not @$OpenCMGroups) {
           
-            push @$Errors, {type => 'after-content-model-item-007c', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -59230,7 +59341,7 @@ $State = A_CM_ITEM_STATE;
         if (not @$OpenCMGroups) {
           
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-content-model-item-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -59242,7 +59353,7 @@ push @$Tokens, $Token;
         } else {
           
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-content-model-item-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_MARKUP_DECL_STATE;
             return 1;
@@ -59264,7 +59375,7 @@ $State = A_CM_ITEM_STATE;
 
         if (not @$OpenCMGroups) {
           
-            push @$Errors, {type => 'after-content-model-item-007c', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -59286,7 +59397,7 @@ $State = B_CM_ITEM_STATE;
 $OpenCMGroups->[-1]->{items}->[-1]->{q<name>} .= q@�@;
 } elsif ($Input =~ /\G([\(])/gcs) {
 
-            push @$Errors, {type => 'content-model-element-0028', level => 'm',
+            push @$Errors, {type => 'xml:dtd:no group delimiter', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -60738,7 +60849,7 @@ $State = DATA_STATE_CR;
 return 1 if $return;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-0022', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -60885,7 +60996,7 @@ $State = DATA_STATE;
 return 1 if $return;
 } elsif ($Input =~ /\G([\#])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-0023', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -61032,7 +61143,7 @@ $State = DATA_STATE;
 return 1 if $return;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-0025', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -61321,7 +61432,7 @@ $State = CHARREF_IN_DATA_STATE;
 return 1 if $return;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-0027', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -61758,7 +61869,7 @@ $State = DATA_STATE;
 return 1 if $return;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-003e', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -61905,7 +62016,7 @@ $State = DATA_STATE;
 return 1 if $return;
 } elsif ($Input =~ /\G([\`])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-0060', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -62407,7 +62518,7 @@ $State = DATA_STATE;
         
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'character-reference-0025', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 
@@ -62483,7 +62594,7 @@ $State = DATA_STATE;
         
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-            push @$Errors, {type => 'character-reference-003e', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 
@@ -62612,7 +62723,7 @@ $State = DATA_STATE;
         
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'character-reference-0025', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 
@@ -62688,7 +62799,7 @@ $State = DATA_STATE;
         
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-            push @$Errors, {type => 'character-reference-003e', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 
@@ -64106,7 +64217,7 @@ $State = DEFAULT_ATTR_VALUE__DQ__STATE_CR;
 return 1 if $return;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-allowed-char', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -64247,7 +64358,7 @@ $State = A_ATTLIST_DEFAULT_VALUE_STATE;
 return 1 if $return;
 } elsif ($Input =~ /\G([\#])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-0023', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -64388,7 +64499,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-0025', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -64671,7 +64782,7 @@ $State = DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_STATE;
 return 1 if $return;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-0027', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -65098,7 +65209,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-003e', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -65239,7 +65350,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
 } elsif ($Input =~ /\G([\`])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-0060', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -65718,7 +65829,7 @@ undef $InLiteral;
 $State = A_ATTLIST_DEFAULT_VALUE_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'character-reference-0025', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -65763,7 +65874,7 @@ $State = DEFAULT_ATTR_VALUE__DQ__STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-            push @$Errors, {type => 'character-reference-003e', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -67200,7 +67311,7 @@ $State = DEFAULT_ATTR_VALUE__SQ__STATE_CR;
 return 1 if $return;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-0022', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -67341,7 +67452,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
 } elsif ($Input =~ /\G([\#])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-0023', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -67482,7 +67593,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-0025', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -67765,7 +67876,7 @@ $State = DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_STATE;
 return 1 if $return;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-allowed-char', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -68192,7 +68303,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-003e', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -68333,7 +68444,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
 } elsif ($Input =~ /\G([\`])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-0060', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -68812,7 +68923,7 @@ $State = DEFAULT_ATTR_VALUE__SQ__STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'character-reference-0025', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -68857,7 +68968,7 @@ $State = DEFAULT_ATTR_VALUE__SQ__STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-            push @$Errors, {type => 'character-reference-003e', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -69016,7 +69127,7 @@ $State = DEFAULT_ATTR_VALUE_IN_ENT_STATE___CHARREF_STATE;
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'default-attribute-value-in-entity-003c', level => 'm',
+            push @$Errors, {type => 'entref in attr has element', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -69085,7 +69196,7 @@ $State = DEFAULT_ATTR_VALUE_IN_ENT_STATE___CHARREF_STATE;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DEFAULT_ATTR_VALUE_IN_ENT_STATE;
 
-            push @$Errors, {type => 'default-attribute-value-in-entity-003c', level => 'm',
+            push @$Errors, {type => 'entref in attr has element', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -69319,7 +69430,7 @@ $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DEFAULT_ATTR_VALUE_IN_ENT_STATE;
 
-            push @$Errors, {type => 'default-attribute-value-in-entity-003c', level => 'm',
+            push @$Errors, {type => 'entref in attr has element', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -69603,7 +69714,7 @@ $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DEFAULT_ATTR_VALUE_IN_ENT_STATE;
 
-            push @$Errors, {type => 'default-attribute-value-in-entity-003c', level => 'm',
+            push @$Errors, {type => 'entref in attr has element', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -70118,7 +70229,7 @@ $State = DEFAULT_ATTR_VALUE_IN_ENT_STATE_CR;
 return 1 if $return;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-0022', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -70259,7 +70370,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
 } elsif ($Input =~ /\G([\#])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-0023', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -70400,7 +70511,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-0025', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -70683,7 +70794,7 @@ $State = DEFAULT_ATTR_VALUE_IN_ENT_STATE___CHARREF_STATE;
 return 1 if $return;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-0027', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -70962,7 +71073,7 @@ return 1 if $return;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DEFAULT_ATTR_VALUE_IN_ENT_STATE;
 
-            push @$Errors, {type => 'default-attribute-value-in-entity-003c', level => 'm',
+            push @$Errors, {type => 'entref in attr has element', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -71110,7 +71221,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-003e', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -71251,7 +71362,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
 } elsif ($Input =~ /\G([\`])/gcs) {
 
-            push @$Errors, {type => 'character-reference-name-0060', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
@@ -71595,7 +71706,7 @@ $State = DEFAULT_ATTR_VALUE_IN_ENT_STATE___CHARREF_STATE;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DEFAULT_ATTR_VALUE_IN_ENT_STATE;
 
-            push @$Errors, {type => 'default-attribute-value-in-entity-003c', level => 'm',
+            push @$Errors, {type => 'entref in attr has element', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -71672,7 +71783,7 @@ $State = DEFAULT_ATTR_VALUE_IN_ENT_STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'character-reference-0025', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -71703,7 +71814,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DEFAULT_ATTR_VALUE_IN_ENT_STATE;
 
-            push @$Errors, {type => 'default-attribute-value-in-entity-003c', level => 'm',
+            push @$Errors, {type => 'entref in attr has element', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -71717,7 +71828,7 @@ $State = DEFAULT_ATTR_VALUE_IN_ENT_STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-            push @$Errors, {type => 'character-reference-003e', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -71778,7 +71889,7 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\<])/gcs) {
 $State = DEFAULT_ATTR_VALUE_IN_ENT_STATE;
 
-            push @$Errors, {type => 'default-attribute-value-in-entity-003c', level => 'm',
+            push @$Errors, {type => 'entref in attr has element', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -73512,7 +73623,7 @@ $Temp = q@%@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 $OriginalState = [B_ENT_TYPE_STATE, B_ENT_TYPE_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
 
-            push @$Errors, {type => 'parameter-entity-name-in-markup-declaration-0023', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -73649,14 +73760,14 @@ $Temp .= q@�@;
 } elsif ($Input =~ /\G([\	\\ \
 \])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-declaration-or-reference-ws', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $Token->{q<is_parameter_entity_flag>} = 1;
 $State = B_ENT_NAME_STATE;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-declaration-or-reference-0022', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $Token->{q<is_parameter_entity_flag>} = 1;
@@ -73667,13 +73778,13 @@ $Temp = q@%@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 $OriginalState = [B_ENT_TYPE_STATE, B_ENT_TYPE_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
 
-            push @$Errors, {type => 'parameter-entity-name-in-markup-declaration-0023', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-declaration-or-reference-0025', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $Token->{q<is_parameter_entity_flag>} = 1;
@@ -73683,7 +73794,7 @@ $OriginalState = [B_ENT_NAME_STATE, B_ENT_NAME_STATE___BEFORE_TEXT_DECL_IN_MARKU
 $State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-declaration-or-reference-0026', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $Token->{q<is_parameter_entity_flag>} = 1;
@@ -73691,7 +73802,7 @@ $Token->{q<name>} = $1;
 $State = ENT_NAME_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-declaration-or-reference-0027', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $Token->{q<is_parameter_entity_flag>} = 1;
@@ -73699,7 +73810,7 @@ $Token->{q<name>} = $1;
 $State = ENT_NAME_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-declaration-or-reference-003c', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $Token->{q<is_parameter_entity_flag>} = 1;
@@ -73707,7 +73818,7 @@ $Token->{q<name>} = $1;
 $State = ENT_NAME_STATE;
 } elsif ($Input =~ /\G([\=])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-declaration-or-reference-003d', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $Token->{q<is_parameter_entity_flag>} = 1;
@@ -73735,7 +73846,7 @@ $State = B_ENT_NAME_STATE;
 $State = DTD_STATE;
 } elsif ($Input =~ /\G([\`])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-declaration-or-reference-0060', level => 'm',
+            push @$Errors, {type => 'no space between params', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $Token->{q<is_parameter_entity_flag>} = 1;
@@ -73868,7 +73979,7 @@ $Temp .= q@�@;
 $State = DTD_STATE;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-dtd-0022', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -73878,7 +73989,7 @@ $State = DTD_STATE;
           
 } elsif ($Input =~ /\G([\#])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-dtd-0023', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -73896,7 +74007,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = PE_NAME_IN_DTD_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-dtd-0026', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -73906,7 +74017,7 @@ $State = DTD_STATE;
           
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-dtd-0027', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -73923,7 +74034,7 @@ $State = DOCTYPE_TAG_OPEN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\=])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-dtd-003d', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -73933,7 +74044,7 @@ $State = DTD_STATE;
           
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-dtd-003e', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -73943,7 +74054,7 @@ $State = DTD_STATE;
           
 } elsif ($Input =~ /\G([\`])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-dtd-0060', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -74056,7 +74167,7 @@ $Temp .= q@�@;
 } elsif ($Input =~ /\G([\	\\ \
 ])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-entity-value-double-quoted-ws', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -74064,7 +74175,7 @@ $State = ENT_VALUE__DQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-entity-value-double-quoted-ws', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -74081,7 +74192,7 @@ undef $InLiteral;
 $State = A_ENT_PARAMETER_STATE;
 } elsif ($Input =~ /\G([\#])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-entity-value-double-quoted-0023', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -74089,7 +74200,7 @@ $State = ENT_VALUE__DQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-entity-value-double-quoted-0025', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -74098,7 +74209,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = PE_NAME_IN_ENT_VALUE__DQ__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-entity-value-double-quoted-0026', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -74107,7 +74218,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = ENT_VALUE__DQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-entity-value-double-quoted-0027', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -74115,7 +74226,7 @@ $State = ENT_VALUE__DQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-entity-value-double-quoted-003c', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -74123,7 +74234,7 @@ $State = ENT_VALUE__DQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\=])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-entity-value-double-quoted-003d', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -74131,7 +74242,7 @@ $State = ENT_VALUE__DQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-entity-value-double-quoted-003e', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -74139,7 +74250,7 @@ $State = ENT_VALUE__DQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\`])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-entity-value-double-quoted-0060', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -74250,7 +74361,7 @@ $Temp .= q@�@;
 } elsif ($Input =~ /\G([\	\\ \
 ])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-entity-value-single-quoted-ws', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -74258,7 +74369,7 @@ $State = ENT_VALUE__SQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-entity-value-single-quoted-ws', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -74267,7 +74378,7 @@ push @{$Token->{q<value>}}, [q@
 $State = ENT_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-entity-value-single-quoted-0022', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -74275,7 +74386,7 @@ $State = ENT_VALUE__SQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\#])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-entity-value-single-quoted-0023', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -74283,7 +74394,7 @@ $State = ENT_VALUE__SQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-entity-value-single-quoted-0025', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -74292,7 +74403,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = PE_NAME_IN_ENT_VALUE__SQ__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-entity-value-single-quoted-0026', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -74309,7 +74420,7 @@ undef $InLiteral;
 $State = A_ENT_PARAMETER_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-entity-value-single-quoted-003c', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -74317,7 +74428,7 @@ $State = ENT_VALUE__SQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\=])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-entity-value-single-quoted-003d', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -74325,7 +74436,7 @@ $State = ENT_VALUE__SQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-entity-value-single-quoted-003e', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -74333,7 +74444,7 @@ $State = ENT_VALUE__SQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\`])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-entity-value-single-quoted-0060', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -74444,7 +74555,7 @@ $Temp .= q@�@;
 } elsif ($Input =~ /\G([\	\\ \
 ])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-entity-value-in-entity-ws', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -74452,7 +74563,7 @@ $State = ENT_VALUE_IN_ENT_STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-entity-value-in-entity-ws', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -74461,7 +74572,7 @@ push @{$Token->{q<value>}}, [q@
 $State = ENT_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-entity-value-in-entity-0022', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -74469,7 +74580,7 @@ $State = ENT_VALUE_IN_ENT_STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\#])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-entity-value-in-entity-0023', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -74477,7 +74588,7 @@ $State = ENT_VALUE_IN_ENT_STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-entity-value-in-entity-0025', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -74486,7 +74597,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = PE_NAME_IN_ENT_VALUE_IN_ENT_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-entity-value-in-entity-0026', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -74495,7 +74606,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = ENT_VALUE_IN_ENT_STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-entity-value-in-entity-0027', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -74503,7 +74614,7 @@ $State = ENT_VALUE_IN_ENT_STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-entity-value-in-entity-003c', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -74511,7 +74622,7 @@ $State = ENT_VALUE_IN_ENT_STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\=])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-entity-value-in-entity-003d', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -74519,7 +74630,7 @@ $State = ENT_VALUE_IN_ENT_STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-entity-value-in-entity-003e', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -74527,7 +74638,7 @@ $State = ENT_VALUE_IN_ENT_STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\`])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-entity-value-in-entity-0060', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -74646,49 +74757,49 @@ $Temp .= q@�@;
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-markup-declaration-0022', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\#])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-markup-declaration-0023', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-markup-declaration-0025', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-markup-declaration-0026', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-markup-declaration-0027', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-markup-declaration-003c', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\=])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-markup-declaration-003d', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-markup-declaration-003e', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -74706,7 +74817,7 @@ $Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};
 return 1 if $Token->{type} == ENTITY_TOKEN;
 } elsif ($Input =~ /\G([\`])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-markup-declaration-0060', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_MARKUP_DECL_STATE;
@@ -74820,25 +74931,25 @@ $Temp .= q@�@;
 } elsif ($Input =~ /\G([\	\\ \
 \])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-status-keyword-ws', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-status-keyword-0022', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
 } elsif ($Input =~ /\G([\#])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-status-keyword-0023', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-status-keyword-0025', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -74854,19 +74965,19 @@ push @$OpenMarkedSections, 'IGNORE';
 $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-status-keyword-0026', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-status-keyword-0027', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-status-keyword-003c', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -74883,13 +74994,13 @@ $State = IGNORED_SECTION_TAG_OPEN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\=])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-status-keyword-003d', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-status-keyword-003e', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -74905,7 +75016,7 @@ push @$OpenMarkedSections, 'IGNORE';
 $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\`])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-status-keyword-0060', level => 'm',
+            push @$Errors, {type => 'no refc', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
@@ -75579,8 +75690,8 @@ $State = TAG_NAME_STATE;
 } elsif ($Input =~ /\G([\	\\ \
 ])/gcs) {
 
-            push @$Errors, {type => 'tag-open-ws', level => 'm',
-                            di => $DI, index => $Offset + (pos $Input) - 1};
+            push @$Errors, {type => 'bare stago', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -75595,8 +75706,8 @@ $State = DATA_STATE;
         
 } elsif ($Input =~ /\G([\])/gcs) {
 
-            push @$Errors, {type => 'tag-open-ws', level => 'm',
-                            di => $DI, index => $Offset + (pos $Input) - 1};
+            push @$Errors, {type => 'bare stago', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -75637,7 +75748,7 @@ $State = TAG_NAME_STATE;
 if ($EOF) {
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
-                            di => $DI, index => $Offset + (pos $Input)};
+                            di => $DI, index => $Offset + (pos $Input) - 1};
           
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
