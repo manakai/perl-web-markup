@@ -789,9 +789,11 @@ sub serialize_actions ($;%) {
       };
     } elsif ($type eq 'create') {
       push @result, sprintf q{
-        $Token = {type => %s_TOKEN, tn => 0, DTDMode => $DTDMode,
+        $Token = {type => %s_TOKEN, tn => 0, %s
                   di => $DI, index => $AnchoredIndex};
-      }, map { s/ token$//; s/[- ]/_/g; uc $_ } $_->{token};
+      },
+          (map { s/ token$//; s/[- ]/_/g; uc $_ } $_->{token}),
+          ($LANG eq 'XML' ? q{DTDMode => $DTDMode,} : '');
     } elsif ($type eq 'create-attr') {
       push @result, q[$Attr = {di => $DI};];
     } elsif ($type eq 'set-attr') {
@@ -1115,16 +1117,20 @@ sub serialize_actions ($;%) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (%d) { # before_equals
-                    #push @$Errors, {type => 'no refc',
-                    #                level => 'm',
-                    #                di => $DI,
-                    #                index => $TempIndex + $_};
+                    ## <HTML>
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                    ## </HTML>
                     last REF;
                   } else {
-                    #push @$Errors, {type => 'no refc',
-                    #                level => 'm',
-                    #                di => $DI,
-                    #                index => $TempIndex + $_};
+                    ## <HTML>
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                    ## </HTML>
                   }
 
                   ## A variant of |append-to-attr|
@@ -1173,8 +1179,10 @@ sub serialize_actions ($;%) {
                               value => $Temp,
                               level => 'm',
                               di => $DI, index => $TempIndex};
+              ## <XML>
               $DTDDefs->{entity_names}->{$Temp}
                   ||= {di => $DI, index => $TempIndex};
+              ## </XML>
             }
           } # REF
         }, !!$_->{in_default_attr}, !!$_->{before_equals};
@@ -1254,10 +1262,12 @@ sub serialize_actions ($;%) {
                 my $temp_index = $TempIndex;
 
                 unless (';' eq substr $Temp, $_-1, 1) {
-                  #push @$Errors, {type => 'no refc',
-                  #                level => 'm',
-                  #                di => $DI,
-                  #                index => $TempIndex + $_};
+                  ## <HTML>
+                  push @$Errors, {type => 'no refc',
+                                  level => 'm',
+                                  di => $DI,
+                                  index => $TempIndex + $_};
+                  ## </HTML>
 
                   ## A variant of |emit-temp|
                   push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -1305,14 +1315,17 @@ sub serialize_actions ($;%) {
                               type => 'entity not declared',
                               value => $Temp,
                               di => $DI, index => $TempIndex};
+              ## <XML>
               $DTDDefs->{entity_names}->{$Temp}
                   ||= {di => $DI, index => $TempIndex};
+              ## </XML>
             }
           } # REF
         };
       }
       $return = '1 if $return';
       $result[-1] =~ s{<XML>.*?</XML>}{}gs unless $LANG eq 'XML';
+      $result[-1] =~ s{<HTML>.*?</HTML>}{}gs unless $LANG eq 'HTML';
     } elsif ($type eq 'validate-temp-as-entref') {
       push @result, q{
         $DTDDefs->{entity_names_in_entity_values}->{$Temp}
@@ -1728,6 +1741,249 @@ $case .= q[
     $code .= q[};];
     push @sub_code, $code;
   } # $state
+
+  if ($LANG eq 'XML') {
+    push @def_code, q{
+my $OnAttrEntityReference = sub {
+  my ($main, $data) = @_;
+  if (($main->{entity_depth} || 0) > $main->max_entity_depth) {
+    $main->onerrors->($main, [{level => 'm',
+                               type => 'entity:too deep',
+                               text => $main->max_entity_depth,
+                               value => '&'.$data->{entity}->{name}.';',
+                               di => $data->{ref}->{di},
+                               index => $data->{ref}->{index}}]);
+  } elsif ((${$main->{entity_expansion_count} || \0}) > $main->max_entity_expansions + 1) {
+    $main->onerrors->($main, [{level => 'm',
+                               type => 'entity:too many refs',
+                               text => $main->max_entity_expansions,
+                               value => '&'.$data->{entity}->{name}.';',
+                               di => $data->{ref}->{di},
+                               index => $data->{ref}->{index}}]);
+  } else {
+    my $sub = Web::XML::Parser::AttrEntityParser->new;
+    local $data->{entity}->{open} = 1;
+    $sub->parse ($main, $data);
+  }
+}; # $OnAttrEntityReference
+
+my $OnContentEntityReference = sub {
+  my ($main, $data) = @_;
+  if (($main->{entity_depth} || 0) > $main->max_entity_depth) {
+    $main->onerrors->($main, [{level => 'm',
+                               type => 'entity:too deep',
+                               text => $main->max_entity_depth,
+                               value => '&'.$data->{entity}->{name}.';',
+                               di => $data->{ref}->{di},
+                               index => $data->{ref}->{index}}]);
+  } elsif ((${$main->{entity_expansion_count} || \0}) > $main->max_entity_expansions + 1) {
+    $main->onerrors->($main, [{level => 'm',
+                               type => 'entity:too many refs',
+                               text => $main->max_entity_expansions,
+                               value => '&'.$data->{entity}->{name}.';',
+                               di => $data->{ref}->{di},
+                               index => $data->{ref}->{index}}]);
+  } else {
+    my $sub = Web::XML::Parser::ContentEntityParser->new;
+    my $ops = $data->{ops};
+    my $parent_id = $main->{saved_lists}->{OE}->[-1]->{id};
+    my $main2 = $main;
+    $sub->onparsed (sub {
+      my $sub = $_[0];
+      my $nodes = $sub->{nodes}->[$sub->{saved_lists}->{OE}->[0]->{id}]->child_nodes;
+      push @$ops, ['append-by-list', $nodes => $parent_id];
+      $data->{entity}->{open}--;
+      $main2->{pause}--;
+      $main2->_parse_sub_done;
+      undef $main2;
+    });
+    $data->{entity}->{open}++;
+    $main->{pause}++;
+    $main->{pause}++;
+    if (defined $data->{entity}->{value}) { # internal
+      $sub->parse ($main, $data);
+    } else { # external
+      $main->onextentref->($main, $data, $sub);
+    }
+    $main->{pause}--;
+  }
+}; # $OnContentEntityReference
+
+my $OnDTDEntityReference = sub {
+  my ($main, $data) = @_;
+  if (defined $data->{entity}->{name} and
+      ($main->{entity_depth} || 0) > $main->max_entity_depth) {
+    $main->onerrors->($main, [{level => 'm',
+                               type => 'entity:too deep',
+                               text => $main->max_entity_depth,
+                               value => '%'.$data->{entity}->{name}.';',
+                               di => $data->{ref}->{di},
+                               index => $data->{ref}->{index}}]);
+  } elsif (defined $data->{entity}->{name} and
+           (${$main->{entity_expansion_count} || \0}) > $main->max_entity_expansions + 1) {
+    $main->onerrors->($main, [{level => 'm',
+                               type => 'entity:too many refs',
+                               text => $main->max_entity_expansions,
+                               value => '%'.$data->{entity}->{name}.';',
+                               di => $data->{ref}->{di},
+                               index => $data->{ref}->{index}}]);
+  } else {
+    my $sub = Web::XML::Parser::DTDEntityParser->new;
+    my $main2 = $main;
+    $sub->onparsed (sub {
+      my $sub = $_[0];
+      $data->{entity}->{open}--;
+      $main2->{pause}--;
+      $main2->_parse_sub_done;
+      undef $main2;
+    });
+    $data->{entity}->{open}++;
+    $main->{pause}++;
+    $main->{pause}++;
+    if (defined $data->{entity}->{value}) { # internal
+      $sub->parse ($main, $data);
+    } else { # external
+      $main->onextentref->($main, $data, $sub);
+    }
+    $main->{pause}--;
+  }
+}; # $OnDTDEntityReference
+
+my $OnEntityValueEntityReference = sub {
+  my ($main, $data) = @_;
+  if (($main->{entity_depth} || 0) > $main->max_entity_depth) {
+    $main->onerrors->($main, [{level => 'm',
+                               type => 'entity:too deep',
+                               text => $main->max_entity_depth,
+                               value => '%'.$data->{entity}->{name}.';',
+                               di => $data->{ref}->{di},
+                               index => $data->{ref}->{index}}]);
+  } elsif ((${$main->{entity_expansion_count} || \0}) > $main->max_entity_expansions + 1) {
+    $main->onerrors->($main, [{level => 'm',
+                               type => 'entity:too many refs',
+                               text => $main->max_entity_expansions,
+                               value => '%'.$data->{entity}->{name}.';',
+                               di => $data->{ref}->{di},
+                               index => $data->{ref}->{index}}]);
+  } else {
+    my $sub = Web::XML::Parser::EntityValueEntityParser->new;
+    my $main2 = $main;
+    $sub->onparsed (sub {
+      my $sub = $_[0];
+      $data->{entity}->{open}--;
+      $main2->{pause}--;
+      $main2->_parse_sub_done;
+      undef $main2;
+    });
+    $data->{entity}->{open}++;
+    $main->{pause}++;
+    $main->{pause}++;
+    if (defined $data->{entity}->{value}) { # internal
+      $sub->parse ($main, $data);
+    } else { # external
+      $main->onextentref->($main, $data, $sub);
+    }
+    $main->{pause}--;
+  }
+}; # $OnEntityValueEntityReference
+
+my $OnMDEntityReference = sub {
+  my ($main, $data) = @_;
+  if (($main->{entity_depth} || 0) > $main->max_entity_depth) {
+    $main->onerrors->($main, [{level => 'm',
+                               type => 'entity:too deep',
+                               text => $main->max_entity_depth,
+                               value => '%'.$data->{entity}->{name}.';',
+                               di => $data->{ref}->{di},
+                               index => $data->{ref}->{index}}]);
+  } elsif ((${$main->{entity_expansion_count} || \0}) > $main->max_entity_expansions + 1) {
+    $main->onerrors->($main, [{level => 'm',
+                               type => 'entity:too many refs',
+                               text => $main->max_entity_expansions,
+                               value => '%'.$data->{entity}->{name}.';',
+                               di => $data->{ref}->{di},
+                               index => $data->{ref}->{index}}]);
+  } else {
+    my $sub = Web::XML::Parser::MDEntityParser->new;
+    my $main2 = $main;
+    $sub->onparsed (sub {
+      my $sub = $_[0];
+      package Web::XML::Parser;
+      if ($sub->{saved_states}->{InLiteral}) {
+        $main2->{saved_states}->{State} = STATE ("bogus markup declaration state") ();
+        $main2->onerrors->($main2, [{level => 'm',
+                                     type => 'unclosed literal',
+                                     di => $sub->{saved_states}->{Token}->{di},
+                                     index => $sub->{saved_states}->{Token}->{index}}]);
+      } else {
+        $main2->{saved_states}->{State} = $sub->{saved_states}->{State};
+      }
+      if ($sub->{saved_states}->{InitialCMGroupDepth} < @{$sub->{saved_lists}->{OpenCMGroups}}) {
+        $main2->onerrors->($main2, [{level => 'm',
+                                     type => 'unclosed cmgroup',
+                                     di => $sub->{saved_states}->{Token}->{di},
+                                     index => $sub->{saved_states}->{Token}->{index}}]);
+        $#{$sub->{saved_lists}->{OpenCMGroups}} = $sub->{saved_states}->{InitialCMGroupDepth}-1;
+      }
+      $main2->{saved_states}->{Attr} = $sub->{saved_states}->{Attr};
+
+      my $sub2 = Web::XML::Parser::MDEntityParser->new;
+      $sub2->onparsed (sub {
+        $main2->{saved_states}->{State} = $_[0]->{saved_states}->{State};
+        $main2->{saved_states}->{Attr} = $_[0]->{saved_states}->{Attr};
+      });
+      {
+        local $main2->{saved_states}->{OriginalState} = [$main2->{saved_states}->{State}];
+        $sub2->parse ($main2, {entity => {value => [[' ', -1, 0]], name => ''}});
+      }
+
+      $data->{entity}->{open}--;
+      $main2->{pause}--;
+      $main2->_parse_sub_done;
+      undef $main2;
+    });
+    $data->{entity}->{open}++;
+    $main->{pause}++;
+    $main->{pause}++;
+    $sub->{saved_states}->{InitialCMGroupDepth} = $main->{saved_lists}->{OpenCMGroups};
+    if (defined $data->{entity}->{value}) { # internal
+      $sub->parse ($main, $data);
+    } else { # external
+      $main->onextentref->($main, $data, $sub);
+    }
+    $main->{pause}--;
+  }
+}; # $OnMDEntityReference
+    };
+    $def_code[-1] =~ s/\bSTATE\s*\("([^"]+)"\)/state_const $1/ge;
+
+    push @def_code, q{
+      sub cant_expand_extentref ($$$) {
+        my ($self, $data, $sub) = @_;
+        $self->onerrors->($self, [{level => 'i',
+                                   type => 'external entref',
+                                   value => (defined $data->{entity}->{name} ? ($data->{entity}->{is_parameter_entity_flag} ? '%' : '&').$data->{entity}->{name}.';' : undef),
+                                   di => $data->{ref}->{di},
+                                   index => $data->{ref}->{index}}]);
+        if (not $self->{saved_states}->{DTDDefs}->{StopProcessing} and
+            not $self->{saved_states}->{DTDDefs}->{XMLStandalone}) {
+          $self->onerrors->($self, [{level => 'i',
+                                     type => 'stop processing',
+                                     di => $data->{ref}->{di},
+                                   index => $data->{ref}->{index}}])
+              if defined $data->{entity}->{name} and
+                 $data->{entity}->{is_parameter_entity_flag};
+          $self->{saved_maps}->{DTDDefs}->{StopProcessing} = 1;
+        }
+
+        $sub->parse_bytes_start (undef, $self);
+        $sub->parse_bytes_feed ('<?xml encoding="utf-8"?>');
+        $sub->parse_bytes_end;
+      } # cant_expand_extentref
+    };
+  } else { # HTML
+    push @def_code, q{ sub cant_expand_extentref ($$$) { } };
+  }
 
   push @def_code, q{
 my $TokenizerAbortingTagNames = {
@@ -4523,6 +4779,7 @@ sub dom_tree ($$) {
 
     } elsif ($op->[0] eq 'set-compat-mode') {
       $doc->manakai_compat_mode ($op->[1]);
+## <XML>
     } elsif ($op->[0] eq 'xml-version') {
       $doc->xml_version ($op->[1]);
     } elsif ($op->[0] eq 'xml-encoding') {
@@ -4585,6 +4842,7 @@ sub dom_tree ($$) {
         $node->manakai_set_source_location (['', $data->{di}, $data->{index}]);
         $doctype->set_general_entity_node ($node);
       }
+## </XML>
 
     } else {
       die "Unknown operation |$op->[0]|";
@@ -4598,6 +4856,8 @@ sub dom_tree ($$) {
       ($LANG eq 'HTML' ? q{$NSToURL->[$data->{ns}]} : q{$data->{ns}}),
       (pattern_to_code 'HTML:template', '$data'),
       $grep_popped_code, $grep_popped_code, $grep_popped_code;
+  $code =~ s{<XML>.*?</XML>}{}gs unless $LANG eq 'XML';
+
   return $code;
 } # generate_dom_glue
 
@@ -4752,6 +5012,7 @@ sub generate_api ($) {
         redo unless $EOF;
       }
       if ($EOF) {
+## <XML>
         unless ($self->{is_sub_parser}) {
           for my $en (keys %{$DTDDefs->{entity_names_in_entity_values} || {}}) {
             my $vt = $DTDDefs->{entity_names_in_entity_values}->{$en};
@@ -4776,12 +5037,14 @@ sub generate_api ($) {
         }
         $self->onerrors->($self, $Errors) if @$Errors;
         @$Errors = ();
+## </XML>
         $self->onparsed->($self);
         $self->_cleanup_states;
       }
       return 1;
     } # _run
   };
+  $sub_code[-1] =~ s{<XML>.*?</XML>}{}gs unless $LANG eq 'XML';
 
   push @sub_code, sprintf q{
     sub _feed_chars ($$) {
@@ -5026,7 +5289,7 @@ sub generate_api ($) {
                  ns => HTMLNS,
                  local_name => 'html',
                  attr_list => {},
-                 et => %s,
+                 et => %s->{html},
                  aet => $CONTEXT->{aet}});
         ## </HTML>
         ## <XML>
@@ -6088,26 +6351,7 @@ sub onextentref ($;$) {
   }
   return $_[0]->{onextentref} || sub {
     my ($self, $data, $sub) = @_;
-#XXX
-    $self->onerrors->($self, [{level => 'i',
-                               type => 'external entref',
-                               value => (defined $data->{entity}->{name} ? ($data->{entity}->{is_parameter_entity_flag} ? '%' : '&').$data->{entity}->{name}.';' : undef),
-                               di => $data->{ref}->{di},
-                               index => $data->{ref}->{index}}]);
-    if (not $self->{saved_states}->{DTDDefs}->{StopProcessing} and
-        not $self->{saved_states}->{DTDDefs}->{XMLStandalone}) {
-      $self->onerrors->($self, [{level => 'i',
-                                 type => 'stop processing',
-                                 di => $data->{ref}->{di},
-                               index => $data->{ref}->{index}}])
-          if defined $data->{entity}->{name} and
-             $data->{entity}->{is_parameter_entity_flag};
-      $self->{saved_maps}->{DTDDefs}->{StopProcessing} = 1;
-    }
-
-    $sub->parse_bytes_start (undef, $self);
-    $sub->parse_bytes_feed ('<?xml encoding="utf-8"?>');
-    $sub->parse_bytes_end;
+    $self->cant_expand_extentref ($data, $sub);
   };
 } # onextentref
 
@@ -6124,217 +6368,6 @@ sub max_entity_expansions ($;$) {
   }
   return $_[0]->{max_entity_expansions} || 1000;
 } # max_entity_expansions
-
-my $OnAttrEntityReference = sub {
-  my ($main, $data) = @_;
-  if (($main->{entity_depth} || 0) > $main->max_entity_depth) {
-    $main->onerrors->($main, [{level => 'm',
-                               type => 'entity:too deep',
-                               text => $main->max_entity_depth,
-                               value => '&'.$data->{entity}->{name}.';',
-                               di => $data->{ref}->{di},
-                               index => $data->{ref}->{index}}]);
-  } elsif ((${$main->{entity_expansion_count} || \0}) > $main->max_entity_expansions + 1) {
-    $main->onerrors->($main, [{level => 'm',
-                               type => 'entity:too many refs',
-                               text => $main->max_entity_expansions,
-                               value => '&'.$data->{entity}->{name}.';',
-                               di => $data->{ref}->{di},
-                               index => $data->{ref}->{index}}]);
-  } else {
-    my $sub = Web::XML::Parser::AttrEntityParser->new;
-    local $data->{entity}->{open} = 1;
-    $sub->parse ($main, $data);
-  }
-}; # $OnAttrEntityReference
-
-my $OnContentEntityReference = sub {
-  my ($main, $data) = @_;
-  if (($main->{entity_depth} || 0) > $main->max_entity_depth) {
-    $main->onerrors->($main, [{level => 'm',
-                               type => 'entity:too deep',
-                               text => $main->max_entity_depth,
-                               value => '&'.$data->{entity}->{name}.';',
-                               di => $data->{ref}->{di},
-                               index => $data->{ref}->{index}}]);
-  } elsif ((${$main->{entity_expansion_count} || \0}) > $main->max_entity_expansions + 1) {
-    $main->onerrors->($main, [{level => 'm',
-                               type => 'entity:too many refs',
-                               text => $main->max_entity_expansions,
-                               value => '&'.$data->{entity}->{name}.';',
-                               di => $data->{ref}->{di},
-                               index => $data->{ref}->{index}}]);
-  } else {
-    my $sub = Web::XML::Parser::ContentEntityParser->new;
-    my $ops = $data->{ops};
-    my $parent_id = $main->{saved_lists}->{OE}->[-1]->{id};
-    my $main2 = $main;
-    $sub->onparsed (sub {
-      my $sub = $_[0];
-      my $nodes = $sub->{nodes}->[$sub->{saved_lists}->{OE}->[0]->{id}]->child_nodes;
-      push @$ops, ['append-by-list', $nodes => $parent_id];
-      $data->{entity}->{open}--;
-      $main2->{pause}--;
-      $main2->_parse_sub_done;
-      undef $main2;
-    });
-    $data->{entity}->{open}++;
-    $main->{pause}++;
-    $main->{pause}++;
-    if (defined $data->{entity}->{value}) { # internal
-      $sub->parse ($main, $data);
-    } else { # external
-      $main->onextentref->($main, $data, $sub);
-    }
-    $main->{pause}--;
-  }
-}; # $OnContentEntityReference
-
-my $OnDTDEntityReference = sub {
-  my ($main, $data) = @_;
-  if (defined $data->{entity}->{name} and
-      ($main->{entity_depth} || 0) > $main->max_entity_depth) {
-    $main->onerrors->($main, [{level => 'm',
-                               type => 'entity:too deep',
-                               text => $main->max_entity_depth,
-                               value => '%%'.$data->{entity}->{name}.';',
-                               di => $data->{ref}->{di},
-                               index => $data->{ref}->{index}}]);
-  } elsif (defined $data->{entity}->{name} and
-           (${$main->{entity_expansion_count} || \0}) > $main->max_entity_expansions + 1) {
-    $main->onerrors->($main, [{level => 'm',
-                               type => 'entity:too many refs',
-                               text => $main->max_entity_expansions,
-                               value => '%%'.$data->{entity}->{name}.';',
-                               di => $data->{ref}->{di},
-                               index => $data->{ref}->{index}}]);
-  } else {
-    my $sub = Web::XML::Parser::DTDEntityParser->new;
-    my $main2 = $main;
-    $sub->onparsed (sub {
-      my $sub = $_[0];
-      $data->{entity}->{open}--;
-      $main2->{pause}--;
-      $main2->_parse_sub_done;
-      undef $main2;
-    });
-    $data->{entity}->{open}++;
-    $main->{pause}++;
-    $main->{pause}++;
-    if (defined $data->{entity}->{value}) { # internal
-      $sub->parse ($main, $data);
-    } else { # external
-      $main->onextentref->($main, $data, $sub);
-    }
-    $main->{pause}--;
-  }
-}; # $OnDTDEntityReference
-
-my $OnEntityValueEntityReference = sub {
-  my ($main, $data) = @_;
-  if (($main->{entity_depth} || 0) > $main->max_entity_depth) {
-    $main->onerrors->($main, [{level => 'm',
-                               type => 'entity:too deep',
-                               text => $main->max_entity_depth,
-                               value => '%%'.$data->{entity}->{name}.';',
-                               di => $data->{ref}->{di},
-                               index => $data->{ref}->{index}}]);
-  } elsif ((${$main->{entity_expansion_count} || \0}) > $main->max_entity_expansions + 1) {
-    $main->onerrors->($main, [{level => 'm',
-                               type => 'entity:too many refs',
-                               text => $main->max_entity_expansions,
-                               value => '%%'.$data->{entity}->{name}.';',
-                               di => $data->{ref}->{di},
-                               index => $data->{ref}->{index}}]);
-  } else {
-    my $sub = Web::XML::Parser::EntityValueEntityParser->new;
-    my $main2 = $main;
-    $sub->onparsed (sub {
-      my $sub = $_[0];
-      $data->{entity}->{open}--;
-      $main2->{pause}--;
-      $main2->_parse_sub_done;
-      undef $main2;
-    });
-    $data->{entity}->{open}++;
-    $main->{pause}++;
-    $main->{pause}++;
-    if (defined $data->{entity}->{value}) { # internal
-      $sub->parse ($main, $data);
-    } else { # external
-      $main->onextentref->($main, $data, $sub);
-    }
-    $main->{pause}--;
-  }
-}; # $OnEntityValueEntityReference
-
-my $OnMDEntityReference = sub {
-  my ($main, $data) = @_;
-  if (($main->{entity_depth} || 0) > $main->max_entity_depth) {
-    $main->onerrors->($main, [{level => 'm',
-                               type => 'entity:too deep',
-                               text => $main->max_entity_depth,
-                               value => '%%'.$data->{entity}->{name}.';',
-                               di => $data->{ref}->{di},
-                               index => $data->{ref}->{index}}]);
-  } elsif ((${$main->{entity_expansion_count} || \0}) > $main->max_entity_expansions + 1) {
-    $main->onerrors->($main, [{level => 'm',
-                               type => 'entity:too many refs',
-                               text => $main->max_entity_expansions,
-                               value => '%%'.$data->{entity}->{name}.';',
-                               di => $data->{ref}->{di},
-                               index => $data->{ref}->{index}}]);
-  } else {
-    my $sub = Web::XML::Parser::MDEntityParser->new;
-    my $main2 = $main;
-    $sub->onparsed (sub {
-      my $sub = $_[0];
-      package Web::XML::Parser;
-      if ($sub->{saved_states}->{InLiteral}) {
-        $main2->{saved_states}->{State} = %s ();
-        $main2->onerrors->($main2, [{level => 'm',
-                                     type => 'unclosed literal',
-                                     di => $sub->{saved_states}->{Token}->{di},
-                                     index => $sub->{saved_states}->{Token}->{index}}]);
-      } else {
-        $main2->{saved_states}->{State} = $sub->{saved_states}->{State};
-      }
-      if ($sub->{saved_states}->{InitialCMGroupDepth} < @{$sub->{saved_lists}->{OpenCMGroups}}) {
-        $main2->onerrors->($main2, [{level => 'm',
-                                     type => 'unclosed cmgroup',
-                                     di => $sub->{saved_states}->{Token}->{di},
-                                     index => $sub->{saved_states}->{Token}->{index}}]);
-        $#{$sub->{saved_lists}->{OpenCMGroups}} = $sub->{saved_states}->{InitialCMGroupDepth}-1;
-      }
-      $main2->{saved_states}->{Attr} = $sub->{saved_states}->{Attr};
-
-      my $sub2 = Web::XML::Parser::MDEntityParser->new;
-      $sub2->onparsed (sub {
-        $main2->{saved_states}->{State} = $_[0]->{saved_states}->{State};
-        $main2->{saved_states}->{Attr} = $_[0]->{saved_states}->{Attr};
-      });
-      {
-        local $main2->{saved_states}->{OriginalState} = [$main2->{saved_states}->{State}];
-        $sub2->parse ($main2, {entity => {value => [[' ', -1, 0]], name => ''}});
-      }
-
-      $data->{entity}->{open}--;
-      $main2->{pause}--;
-      $main2->_parse_sub_done;
-      undef $main2;
-    });
-    $data->{entity}->{open}++;
-    $main->{pause}++;
-    $main->{pause}++;
-    $sub->{saved_states}->{InitialCMGroupDepth} = $main->{saved_lists}->{OpenCMGroups};
-    if (defined $data->{entity}->{value}) { # internal
-      $sub->parse ($main, $data);
-    } else { # external
-      $main->onextentref->($main, $data, $sub);
-    }
-    $main->{pause}--;
-  }
-}; # $OnMDEntityReference
 
 sub onelementspopped ($;$) {
   if (@_ > 1) {
@@ -6442,7 +6475,6 @@ it under the same terms as Perl itself.
       } : q{
         sub HTMLNS () { q<http://www.w3.org/1999/xhtml> }
       }),
-      state_const 'bogus markup declaration state',
       $var_decls,
       $tokenizer_defs_code,
       $tree_defs_code, $api_defs_code,
