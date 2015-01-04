@@ -69,6 +69,9 @@ $parser->onparsed (sub {
 });
 print "Parsing...\n";
 if (1) {
+  my $context;
+  $parser->parse_char_string_with_context ((decode 'utf-8', $input[0]) => $context, $doc);
+} elsif (1) {
   $parser->parse_chars_start ($doc);
   $parser->parse_chars_feed (decode 'utf-8', $input[0]);
   $parser->parse_chars_end;

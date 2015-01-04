@@ -371,6 +371,8 @@ sub onrestartwithencoding ($;$) {
   };
 } # onrestartwithencoding
 
+    sub throw ($$) { $_[1]->() }
+
     sub restart ($) {
       unless ($_[0]->{can_restart}) {
         croak "The current parsing method can't restart the parser";
@@ -78407,7 +78409,6 @@ $InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
       $State = DATA_STATE;;
-      $IM = IN_ELEMENT_IM;
 
       ## 3.
       my $input = [$_[1]]; # string copy
@@ -78419,6 +78420,8 @@ $Scripting = $self->{Scripting};
       ## HTML 4. / XML 3. (cnt.)
       my $root;
       if (defined $context) {
+        $IM = IN_ELEMENT_IM;
+
         ## HTML 4.1. / XML 2., 4., 6.
         my $node_ns = $context->namespace_uri || '';
         my $node_ln = $context->local_name;
@@ -78499,6 +78502,8 @@ $Scripting = $self->{Scripting};
         $nodes->[$OE->[-1]->{id}] = $root;
 
         ## 
+      } else { # $context
+        $IM = BEFORE_XML_DECLARATION_IM;
       } # $context
 
       ## HTML 5.

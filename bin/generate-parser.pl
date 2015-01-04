@@ -4906,7 +4906,6 @@ sub generate_api ($) {
       VARS::INIT;
       VARS::RESET;
       SWITCH_STATE ("data state");
-      $IM = IM (HTML => "initial", XML => "in element");
 
       ## 3.
       my $input = [$_[1]]; # string copy
@@ -4918,6 +4917,8 @@ sub generate_api ($) {
       ## HTML 4. / XML 3. (cnt.)
       my $root;
       if (defined $context) {
+        $IM = IM (HTML => "initial", XML => "in element");
+
         ## HTML 4.1. / XML 2., 4., 6.
         my $node_ns = $context->namespace_uri || '';
         my $node_ln = $context->local_name;
@@ -5075,6 +5076,8 @@ sub generate_api ($) {
           $anode = $anode->parent_node;
         }
         ## </HTML>
+      } else { # $context
+        $IM = IM (HTML => "initial", XML => "before XML declaration");
       } # $context
 
       ## HTML 5.
@@ -6348,6 +6351,8 @@ sub onrestartwithencoding ($;$) {
     $self->restart;
   };
 } # onrestartwithencoding
+
+    sub throw ($$) { $_[1]->() }
 
     sub restart ($) {
       unless ($_[0]->{can_restart}) {
