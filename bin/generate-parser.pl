@@ -2621,8 +2621,8 @@ sub actions_to_code ($;%) {
           nsmap => $nsmap,
           ns => $ns, prefix => $prefix, local_name => $ln,
           attr_list => $token->{attr_list},
-          et => %s->{$token->{tag_name}} || %s->{'*'} || 0,
-          aet => %s->{$token->{tag_name}} || %s->{'*'} || 0,
+          et => %s->{$ln} || %s->{'*'} || 0,
+          aet => %s->{$ln} || %s->{'*'} || 0,
         };
         $DTDDefs->{el_ncnames}->{$prefix} ||= $token if defined $prefix;
         $DTDDefs->{el_ncnames}->{$ln} ||= $token if defined $ln;
@@ -6134,15 +6134,15 @@ my $OnAttrEntityReference = sub {
                                type => 'entity:too deep',
                                text => $main->max_entity_depth,
                                value => '&'.$data->{entity}->{name}.';',
-                               di => $data->{entity}->{di},
-                               index => $data->{entity}->{index}}]);
+                               di => $data->{ref}->{di},
+                               index => $data->{ref}->{index}}]);
   } elsif ((${$main->{entity_expansion_count} || \0}) > $main->max_entity_expansions + 1) {
     $main->onerrors->($main, [{level => 'm',
                                type => 'entity:too many refs',
                                text => $main->max_entity_expansions,
                                value => '&'.$data->{entity}->{name}.';',
-                               di => $data->{entity}->{di},
-                               index => $data->{entity}->{index}}]);
+                               di => $data->{ref}->{di},
+                               index => $data->{ref}->{index}}]);
   } else {
     my $sub = XXX::AttrEntityParser->new;
     local $data->{entity}->{open} = 1;
@@ -6157,15 +6157,15 @@ my $OnContentEntityReference = sub {
                                type => 'entity:too deep',
                                text => $main->max_entity_depth,
                                value => '&'.$data->{entity}->{name}.';',
-                               di => $data->{entity}->{di},
-                               index => $data->{entity}->{index}}]);
+                               di => $data->{ref}->{di},
+                               index => $data->{ref}->{index}}]);
   } elsif ((${$main->{entity_expansion_count} || \0}) > $main->max_entity_expansions + 1) {
     $main->onerrors->($main, [{level => 'm',
                                type => 'entity:too many refs',
                                text => $main->max_entity_expansions,
                                value => '&'.$data->{entity}->{name}.';',
-                               di => $data->{entity}->{di},
-                               index => $data->{entity}->{index}}]);
+                               di => $data->{ref}->{di},
+                               index => $data->{ref}->{index}}]);
   } else {
     my $sub = XXX::ContentEntityParser->new;
     my $ops = $data->{ops};
@@ -6200,16 +6200,16 @@ my $OnDTDEntityReference = sub {
                                type => 'entity:too deep',
                                text => $main->max_entity_depth,
                                value => '%%'.$data->{entity}->{name}.';',
-                               di => $data->{entity}->{di},
-                               index => $data->{entity}->{index}}]);
+                               di => $data->{ref}->{di},
+                               index => $data->{ref}->{index}}]);
   } elsif (defined $data->{entity}->{name} and
            (${$main->{entity_expansion_count} || \0}) > $main->max_entity_expansions + 1) {
     $main->onerrors->($main, [{level => 'm',
                                type => 'entity:too many refs',
                                text => $main->max_entity_expansions,
                                value => '%%'.$data->{entity}->{name}.';',
-                               di => $data->{entity}->{di},
-                               index => $data->{entity}->{index}}]);
+                               di => $data->{ref}->{di},
+                               index => $data->{ref}->{index}}]);
   } else {
     my $sub = XXX::DTDEntityParser->new;
     my $main2 = $main;
@@ -6239,15 +6239,15 @@ my $OnEntityValueEntityReference = sub {
                                type => 'entity:too deep',
                                text => $main->max_entity_depth,
                                value => '%%'.$data->{entity}->{name}.';',
-                               di => $data->{entity}->{di},
-                               index => $data->{entity}->{index}}]);
+                               di => $data->{ref}->{di},
+                               index => $data->{ref}->{index}}]);
   } elsif ((${$main->{entity_expansion_count} || \0}) > $main->max_entity_expansions + 1) {
     $main->onerrors->($main, [{level => 'm',
                                type => 'entity:too many refs',
                                text => $main->max_entity_expansions,
                                value => '%%'.$data->{entity}->{name}.';',
-                               di => $data->{entity}->{di},
-                               index => $data->{entity}->{index}}]);
+                               di => $data->{ref}->{di},
+                               index => $data->{ref}->{index}}]);
   } else {
     my $sub = XXX::EntityValueEntityParser->new;
     my $main2 = $main;
@@ -6277,15 +6277,15 @@ my $OnMDEntityReference = sub {
                                type => 'entity:too deep',
                                text => $main->max_entity_depth,
                                value => '%%'.$data->{entity}->{name}.';',
-                               di => $data->{entity}->{di},
-                               index => $data->{entity}->{index}}]);
+                               di => $data->{ref}->{di},
+                               index => $data->{ref}->{index}}]);
   } elsif ((${$main->{entity_expansion_count} || \0}) > $main->max_entity_expansions + 1) {
     $main->onerrors->($main, [{level => 'm',
                                type => 'entity:too many refs',
                                text => $main->max_entity_expansions,
                                value => '%%'.$data->{entity}->{name}.';',
-                               di => $data->{entity}->{di},
-                               index => $data->{entity}->{index}}]);
+                               di => $data->{ref}->{di},
+                               index => $data->{ref}->{index}}]);
   } else {
     my $sub = XXX::MDEntityParser->new;
     my $main2 = $main;

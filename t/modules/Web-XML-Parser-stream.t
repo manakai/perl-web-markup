@@ -35,7 +35,7 @@ test {
   my $parser = Web::XML::Parser->new;
   $parser->onextentref (sub {
     my ($parser, $ent, $subparser) = @_;
-    $subparser->parse_bytes_start (undef);
+    $subparser->parse_bytes_start (undef, $parser);
     $subparser->parse_bytes_feed ('XYZ');
     $subparser->parse_bytes_end;
   });
@@ -53,7 +53,7 @@ test {
   $parser->onextentref (sub {
     my ($parser, $ent, $subparser) = @_;
     AE::postpone {
-      $subparser->parse_bytes_start (undef);
+      $subparser->parse_bytes_start (undef, $parser);
       $subparser->parse_bytes_feed ('XYZ');
       $subparser->parse_bytes_end;
     };
@@ -77,7 +77,7 @@ test {
   my $count = 0;
   $parser->onextentref (sub {
     my ($parser, $ent, $subparser) = @_;
-    $subparser->parse_bytes_start (undef);
+    $subparser->parse_bytes_start (undef, $parser);
     $subparser->parse_bytes_feed ('XYZ');
     $subparser->parse_bytes_end;
     $count++;
@@ -97,7 +97,7 @@ test {
   my $count = 0;
   $parser->onextentref (sub {
     my ($parser, $ent, $subparser) = @_;
-    $subparser->parse_bytes_start (undef);
+    $subparser->parse_bytes_start (undef, $parser);
     $subparser->parse_bytes_feed ('X<p>Y</p>Z');
     $subparser->parse_bytes_end;
     $count++;
@@ -128,7 +128,7 @@ test {
   my $count = 0;
   $parser->onextentref (sub {
     my ($parser, $ent, $subparser) = @_;
-    $subparser->parse_bytes_start (undef);
+    $subparser->parse_bytes_start (undef, $parser);
     $subparser->parse_bytes_feed ('X<p>Y');
     $parser->parse_bytes_feed ('<!--zz-->');
     $subparser->parse_bytes_feed ('</p>Z');
@@ -152,7 +152,7 @@ test {
   $parser->onextentref (sub {
     my ($parser, $ent, $subparser) = @_;
     AE::postpone {
-      $subparser->parse_bytes_start (undef);
+      $subparser->parse_bytes_start (undef, $parser);
       $subparser->parse_bytes_feed ('X<p>Y');
       $parser->parse_bytes_feed ('<!--zz-->');
       $subparser->parse_bytes_feed ('</p>Z');
@@ -166,7 +166,7 @@ test {
   $parser->parse_bytes_end;
   $parser->onparsed (sub {
     test {
-      is $doc->inner_html, q{<!DOCTYPE a><a xmlns="">cX<p>Y</p>ZvX<p>Y</p>Zb</a><!--abc--><!--zz--><!--zz-->};
+      is $doc->inner_html, q{<!DOCTYPE a><a xmlns="">cX<p>Y</p>ZvX<p>Y</p>Zb</a><!--abc-->};
       is $count, 2;
       done $c;
       undef $c;
@@ -185,8 +185,8 @@ test {
   $parser->onextentref (sub {
     my ($parser, $ent, $subparser) = @_;
     AE::postpone {
-      $subparser->parse_bytes_start (undef);
-      $subparser->parse_bytes_feed ($ents->{$ent->{entdef}->{sysid}});
+      $subparser->parse_bytes_start (undef, $parser);
+      $subparser->parse_bytes_feed ($ents->{$ent->{entity}->{system_identifier}});
       $subparser->parse_bytes_end;
     };
   });
@@ -212,8 +212,8 @@ test {
   $parser->onextentref (sub {
     my ($parser, $ent, $subparser) = @_;
     AE::postpone {
-      $subparser->parse_bytes_start (undef);
-      $subparser->parse_bytes_feed ($ents->{$ent->{entdef}->{sysid}});
+      $subparser->parse_bytes_start (undef, $parser);
+      $subparser->parse_bytes_feed ($ents->{$ent->{entity}->{system_identifier}});
       $subparser->parse_bytes_end;
     };
   });
@@ -243,8 +243,8 @@ test {
   $parser->onextentref (sub {
     my ($parser, $ent, $subparser) = @_;
     AE::postpone {
-      $subparser->parse_bytes_start (undef);
-      $subparser->parse_bytes_feed ($ents->{$ent->{entdef}->{sysid}});
+      $subparser->parse_bytes_start (undef, $parser);
+      $subparser->parse_bytes_feed ($ents->{$ent->{entity}->{system_identifier}});
       $subparser->parse_bytes_end;
     };
   });
@@ -252,14 +252,11 @@ test {
     test {
       is $doc->inner_html, q{<!DOCTYPE a>};
       eq_or_diff \@error, [{type => 'no XML decl',
-                            level => 's',
-                            line => 1, column => 1},
+                            level => 's', di => 1, index => 0},
                            {type => 'ref outside of root element',
-                            line => 1, column => 40,
-                            value => 'x;',
+                            di => 1, index => 39, value => '&x;',
                             level => 'm'},
-                           {type => 'no root element',
-                            token => {type => 5, line => 1, column => 43},
+                           {type => 'no root element', di => 1, index => 42,
                             level => 'm'}];
       done $c;
       undef $c;
@@ -280,8 +277,8 @@ test {
   $parser->onextentref (sub {
     my ($parser, $ent, $subparser) = @_;
     AE::postpone {
-      $subparser->parse_bytes_start (undef);
-      $subparser->parse_bytes_feed ($ents->{$ent->{entdef}->{sysid}});
+      $subparser->parse_bytes_start (undef, $parser);
+      $subparser->parse_bytes_feed ($ents->{$ent->{entity}->{system_identifier}});
       $subparser->parse_bytes_end;
     };
   });
@@ -309,8 +306,8 @@ test {
     my ($parser, $ent, $subparser) = @_;
     AE::postpone {
       $subparser->di (1);
-      $subparser->parse_bytes_start (undef);
-      $subparser->parse_bytes_feed ($ents->{$ent->{entdef}->{sysid}});
+      $subparser->parse_bytes_start (undef, $parser);
+      $subparser->parse_bytes_feed ($ents->{$ent->{entity}->{system_identifier}});
       $subparser->parse_bytes_end;
     };
   });
@@ -326,15 +323,14 @@ test {
       is $doc->inner_html,
           q{<!DOCTYPE a><a xmlns="http://hoge/." xmlns:a="http://a/">cf&amp;x;jv</a>};
       eq_or_diff \@error, [{type => 'no XML decl',
-                            level => 's',
-                            line => 1, column => 1},
+                            level => 's', di => 1, index => 0},
+                           {type => 'WFC:No Recursion',
+                            di => 1, index => 1,
+                            value => '&x;',
+                            level => 'm'},
                            {type => 'no XML decl',
                             level => 's',
-                            di => 1, line => 1, column => 1},
-                           {type => 'WFC:No Recursion',
-                            di => 1, line => 1, column => 2,
-                            value => '&x;',
-                            level => 'm'}];
+                            di => 1, index => 0}];
       done $c;
       undef $c;
     } $c;
@@ -352,9 +348,9 @@ test {
   $parser->onextentref (sub {
     my ($parser, $ent, $subparser) = @_;
     AE::postpone {
-      $subparser->di ($ent->{entdef}->{sysid} eq 'a' ? 10 : 2);
-      $subparser->parse_bytes_start (undef);
-      $subparser->parse_bytes_feed ($ents->{$ent->{entdef}->{sysid}});
+      $subparser->di ($ent->{entity}->{system_identifier} eq 'a' ? 10 : 2);
+      $subparser->parse_bytes_start (undef, $parser);
+      $subparser->parse_bytes_feed ($ents->{$ent->{entity}->{system_identifier}});
       $subparser->parse_bytes_end;
     };
   });
@@ -369,18 +365,17 @@ test {
     test {
       is $doc->inner_html, q{<!DOCTYPE a><a xmlns="http://hoge/." xmlns:a="http://a/">cdf&amp;x;jxv</a>};
       eq_or_diff \@error, [{type => 'no XML decl',
-                            level => 's',
-                            line => 1, column => 1},
+                            level => 's', di => 1, index => 0},
                            {type => 'no XML decl',
                             level => 's',
-                            di => 2, line => 1, column => 1},
-                           {type => 'no XML decl',
-                            level => 's',
-                            di => 10, line => 1, column => 1},
+                            di => 2, index => 0},
                            {type => 'WFC:No Recursion',
-                            di => 10, line => 1, column => 2,
+                            di => 10, index => 1,
                             value => '&x;',
-                            level => 'm'}];
+                            level => 'm'},
+                           {type => 'no XML decl',
+                            level => 's',
+                            di => 10, index => 0}];
       done $c;
       undef $c;
     } $c;
@@ -409,9 +404,9 @@ test {
   $parser->onextentref (sub {
     my ($parser, $ent, $subparser) = @_;
     AE::postpone {
-      $subparser->di (ord substr $ent->{entdef}->{sysid}, 7, 1);
-      $subparser->parse_bytes_start (undef);
-      $subparser->parse_bytes_feed ($ents->{$ent->{entdef}->{sysid}});
+      $subparser->di (ord substr $ent->{entity}->{system_identifier}, 7, 1);
+      $subparser->parse_bytes_start (undef, $parser);
+      $subparser->parse_bytes_feed ($ents->{$ent->{entity}->{system_identifier}});
       $subparser->parse_bytes_end;
     };
   });
@@ -428,24 +423,23 @@ test {
       is $doc->inner_html, q{<!DOCTYPE a><a xmlns=""></a>};
       @error = grep { not $_->{type} eq 'xml:dtd:ext decl' } @error;
       eq_or_diff \@error, [{type => 'no XML decl',
-                            level => 's',
-                            line => 1, column => 1},
+                            level => 's', di => 1, index => 0},
                            {type => 'no XML decl',
                             level => 's',
-                            di => 97, line => 1, column => 1},
+                            di => 97, index => 0},
                            {type => 'entity:too deep',
-                            di => 100, line => 1, column => 2,
+                            di => 100, index => 1, value => '%e;',
                             text => 3,
                             level => 'm'},
                            {type => 'no XML decl',
                             level => 's',
-                            di => 100, line => 1, column => 1},
+                            di => 100, index => 0},
                            {type => 'no XML decl',
                             level => 's',
-                            di => 99, line => 1, column => 1},
+                            di => 99, index => 0},
                            {type => 'no XML decl',
                             level => 's',
-                            di => 98, line => 1, column => 1}];
+                            di => 98, index => 0}];
       done $c;
       undef $c;
     } $c;
@@ -474,9 +468,9 @@ test {
   $parser->onextentref (sub {
     my ($parser, $ent, $subparser) = @_;
     AE::postpone {
-      $subparser->di (ord substr $ent->{entdef}->{sysid}, 7, 1);
-      $subparser->parse_bytes_start (undef);
-      $subparser->parse_bytes_feed ($ents->{$ent->{entdef}->{sysid}});
+      $subparser->di (ord substr $ent->{entity}->{system_identifier}, 7, 1);
+      $subparser->parse_bytes_start (undef, $parser);
+      $subparser->parse_bytes_feed ($ents->{$ent->{entity}->{system_identifier}});
       $subparser->parse_bytes_end;
     };
   });
@@ -493,24 +487,23 @@ test {
       is $doc->inner_html, q{<!DOCTYPE a><a xmlns=""> yx</a>};
       @error = grep { not $_->{type} eq 'xml:dtd:ext decl' } @error;
       eq_or_diff \@error, [{type => 'no XML decl',
-                            level => 's',
-                            line => 1, column => 1},
+                            level => 's', di => 1, index => 0},
                            {type => 'no XML decl',
                             level => 's',
-                            di => 97, line => 1, column => 1},
+                            di => 97, index => 0},
                            {type => 'no XML decl',
                             level => 's',
-                            di => 100, line => 1, column => 1},
+                            di => 100, index => 0},
                            {type => 'entity:too deep',
-                            di => 100, line => 1, column => 2,
-                            text => 3,
+                            di => 100, index => 1,
+                            text => 3, value => '&e;',
                             level => 'm'},
                            {type => 'no XML decl',
                             level => 's',
-                            di => 99, line => 1, column => 1},
+                            di => 99, index => 0},
                            {type => 'no XML decl',
                             level => 's',
-                            di => 98, line => 1, column => 1}];
+                            di => 98, index => 0}];
       done $c;
       undef $c;
     } $c;
@@ -539,9 +532,9 @@ test {
   $parser->onextentref (sub {
     my ($parser, $ent, $subparser) = @_;
     AE::postpone {
-      $subparser->di (ord substr $ent->{entdef}->{sysid}, 7, 1);
-      $subparser->parse_bytes_start (undef);
-      $subparser->parse_bytes_feed ($ents->{$ent->{entdef}->{sysid}});
+      $subparser->di (ord substr $ent->{entity}->{system_identifier}, 7, 1);
+      $subparser->parse_bytes_start (undef, $parser);
+      $subparser->parse_bytes_feed ($ents->{$ent->{entity}->{system_identifier}});
       $subparser->parse_bytes_end;
     };
   });
@@ -549,7 +542,7 @@ test {
   $parser->onerror (sub {
     push @error, {@_};
   });
-  $parser->max_entity_expansions (3);
+  $parser->max_entity_expansions (2);
   $parser->parse_bytes_start (undef, $doc);
   $parser->parse_bytes_feed (q{<!DOCTYPE a SYSTEM "http://a/"><a/>});
   $parser->parse_bytes_end;
@@ -558,36 +551,34 @@ test {
       is $doc->inner_html, q{<!DOCTYPE a><a xmlns=""></a>};
       @error = grep { not $_->{type} eq 'xml:dtd:ext decl' } @error;
       eq_or_diff \@error, [{type => 'no XML decl',
-                            level => 's',
-                            line => 1, column => 1},
+                            level => 's', di => 1, index => 0},
                            {type => 'no XML decl',
-                            level => 's',
-                            di => 97, line => 1, column => 1},
+                            level => 's', di => 97, index => 0},
                            {type => 'entity:too many refs',
-                            di => 100, line => 1, column => 2,
-                            text => 3,
+                            di => 100, index => 1, value => '%e;',
+                            text => 2,
                             level => 'm'},
                            {type => 'entity:too many refs',
-                            di => 100, line => 1, column => 5,
-                            text => 3,
+                            di => 100, index => 4, value => '%e;',
+                            text => 2,
                             level => 'm'},
                            {type => 'no XML decl',
                             level => 's',
-                            di => 100, line => 1, column => 1},
+                            di => 100, index => 0},
                            {type => 'entity:too many refs',
-                            di => 99, line => 1, column => 4,
-                            text => 3,
+                            di => 99, index => 0, value => '%d;',
+                            text => 2,
                             level => 'm'},
                            {type => 'no XML decl',
                             level => 's',
-                            di => 99, line => 1, column => 1},
+                            di => 99, index => 0},
                            {type => 'entity:too many refs',
-                            di => 98, line => 1, column => 4,
-                            text => 3,
+                            di => 98, index => 0, value => '%c;',
+                            text => 2,
                             level => 'm'},
                            {type => 'no XML decl',
                             level => 's',
-                            di => 98, line => 1, column => 1}];
+                            di => 98, index => 0}];
       done $c;
       undef $c;
     } $c;
@@ -616,9 +607,9 @@ test {
   $parser->onextentref (sub {
     my ($parser, $ent, $subparser) = @_;
     AE::postpone {
-      $subparser->di (ord substr $ent->{entdef}->{sysid}, 7, 1);
-      $subparser->parse_bytes_start (undef);
-      $subparser->parse_bytes_feed ($ents->{$ent->{entdef}->{sysid}});
+      $subparser->di (ord substr $ent->{entity}->{system_identifier}, 7, 1);
+      $subparser->parse_bytes_start (undef, $parser);
+      $subparser->parse_bytes_feed ($ents->{$ent->{entity}->{system_identifier}});
       $subparser->parse_bytes_end;
     };
   });
@@ -626,7 +617,7 @@ test {
   $parser->onerror (sub {
     push @error, {@_};
   });
-  $parser->max_entity_expansions (4);
+  $parser->max_entity_expansions (3);
   $parser->parse_bytes_start (undef, $doc);
   $parser->parse_bytes_feed (q{<!DOCTYPE a SYSTEM "http://a/"><a>&a;x</a>});
   $parser->parse_bytes_end;
@@ -635,36 +626,35 @@ test {
       is $doc->inner_html, q{<!DOCTYPE a><a xmlns=""> yx</a>};
       @error = grep { not $_->{type} eq 'xml:dtd:ext decl' } @error;
       eq_or_diff \@error, [{type => 'no XML decl',
-                            level => 's',
-                            line => 1, column => 1},
+                            level => 's', di => 1, index => 0},
                            {type => 'no XML decl',
                             level => 's',
-                            di => 97, line => 1, column => 1},
+                            di => 97, index => 0},
                            {type => 'no XML decl',
                             level => 's',
-                            di => 100, line => 1, column => 1},
+                            di => 100, index => 0},
                            {type => 'entity:too many refs',
-                            di => 100, line => 1, column => 2,
-                            text => 4,
+                            di => 100, index => 1, value => '&e;',
+                            text => 3,
                             level => 'm'},
                            {type => 'entity:too many refs',
-                            di => 100, line => 1, column => 5,
-                            text => 4,
+                            di => 100, index => 4, value => '&e;',
+                            text => 3,
                             level => 'm'},
                            {type => 'entity:too many refs',
-                            di => 99, line => 1, column => 4,
-                            text => 4,
-                            level => 'm'},
-                           {type => 'no XML decl',
-                            level => 's',
-                            di => 99, line => 1, column => 1},
-                           {type => 'entity:too many refs',
-                            di => 98, line => 1, column => 4,
-                            text => 4,
+                            di => 99, index => 0, value => '&d;',
+                            text => 3,
                             level => 'm'},
                            {type => 'no XML decl',
                             level => 's',
-                            di => 98, line => 1, column => 1}];
+                            di => 99, index => 0},
+                           {type => 'entity:too many refs',
+                            di => 98, index => 0, value => '&c;',
+                            text => 3,
+                            level => 'm'},
+                           {type => 'no XML decl',
+                            level => 's',
+                            di => 98, index => 0}];
       done $c;
       undef $c;
     } $c;
@@ -675,7 +665,7 @@ run_tests;
 
 =head1 LICENSE
 
-Copyright 2014 Wakaba <wakaba@suikawiki.org>.
+Copyright 2014-2015 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
