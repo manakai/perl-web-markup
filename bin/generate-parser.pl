@@ -553,6 +553,15 @@ sub serialize_actions ($;%) {
                               di => $DI, index => $Offset + (pos $Input) - 1};
             }
           }, $_->{error_type} // $_->{name};
+        } elsif ($_->{if} eq 'sections is not empty') {
+          push @result, sprintf q{
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => '%s', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)%s};
+            }
+          },
+              $_->{error_type} // $_->{name},
+              $args{in_eof} ? '' : ' - 1';
         } else {
           die "Unknown condition |$_->{if}|";
         }
@@ -653,10 +662,11 @@ sub serialize_actions ($;%) {
       } else {
         push @result, sprintf q{
           push @$Errors, {type => '%s', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1%s};
+                          di => $DI, index => $Offset + (pos $Input)%s%s};
           %s
         },
             $_->{error_type} // $_->{name},
+            ($args{in_eof} ? '' : ' - 1'),
             (defined $_->{index_offset} ? sprintf q{ - %d}, $_->{index_offset} : ''),
             switch_state_code $_->{state};
       }
@@ -1478,7 +1488,7 @@ sub serialize_actions ($;%) {
                           di => $DI, index => $TempIndex};
           %s
         }
-      }, (serialize_actions {actions => $_->{false_actions} || []});
+      }, (serialize_actions {actions => $_->{false_actions} || []}, %args);
 
     } elsif ($type eq 'set-in-literal') {
       push @result, q{$InLiteral = 1;};
@@ -1577,8 +1587,8 @@ sub serialize_actions ($;%) {
           %s
         }
       }, $list,
-          (serialize_actions {actions => $_->{false_actions} || []}),
-          (serialize_actions $_);
+          (serialize_actions {actions => $_->{false_actions} || []}, %args),
+          (serialize_actions $_, %args);
 
     } else {
       die "Bad action type |$type|";
@@ -6198,13 +6208,6 @@ my $OnDTDEntityReference = sub {
     my $main2 = $main;
     $sub->onparsed (sub {
       my $sub = $_[0];
-      if (@{$sub->{saved_lists}->{OpenMarkedSections} or []} and
-          not $sub->{saved_lists}->{OpenMarkedSections}->[-1] eq 'IGNORE') {
-        $main2->onerrors->($main2, [{level => 'm',
-                                     type => 'ms:unclosed',
-                                     di => $sub->{saved_states}->{Token}->{di},
-                                     index => $sub->{saved_states}->{Token}->{index}}]);
-      }
       $data->{entity}->{open}--;
       $main2->{pause}--;
       $main2->_parse_sub_done;

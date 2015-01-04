@@ -230,13 +230,6 @@ my $OnDTDEntityReference = sub {
     my $main2 = $main;
     $sub->onparsed (sub {
       my $sub = $_[0];
-      if (@{$sub->{saved_lists}->{OpenMarkedSections} or []} and
-          not $sub->{saved_lists}->{OpenMarkedSections}->[-1] eq 'IGNORE') {
-        $main2->onerrors->($main2, [{level => 'm',
-                                     type => 'ms:unclosed',
-                                     di => $sub->{saved_states}->{Token}->{di},
-                                     index => $sub->{saved_states}->{Token}->{index}}]);
-      }
       $data->{entity}->{open}--;
       $main2->{pause}--;
       $main2->_parse_sub_done;
@@ -4083,6 +4076,12 @@ if ($EOF) {
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -4162,6 +4161,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -4259,6 +4264,12 @@ if ($EOF) {
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -4328,6 +4339,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -4424,6 +4441,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -4657,6 +4680,12 @@ push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 if ($EOF) {
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -4710,6 +4739,12 @@ push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -4810,6 +4845,12 @@ $Token->{q<data>} = [[q@?@, $DI, $Offset + (pos $Input)]];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -4889,6 +4930,12 @@ if ($EOF) {
 $Token->{q<data>} = [[q@?@, $DI, $Offset + (pos $Input)]];
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -4946,6 +4993,12 @@ $Token->{q<target>} .= q@�@;
 if ($EOF) {
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -4999,6 +5052,12 @@ push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -5057,6 +5116,12 @@ push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 if ($EOF) {
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -5104,6 +5169,12 @@ $State = DTD_STATE;
 if ($EOF) {
 push @$Tokens, $Token;
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -5156,6 +5227,12 @@ push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 if ($EOF) {
 push @$Tokens, $Token;
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -5215,6 +5292,12 @@ if ($EOF) {
 $State = DTD_STATE;
 push @$Tokens, $Token;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -5268,6 +5351,12 @@ $State = DOCTYPE_COMMENT_STATE;
 if ($EOF) {
 $State = DTD_STATE;
 push @$Tokens, $Token;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -5344,6 +5433,12 @@ if ($EOF) {
 $State = DTD_STATE;
 push @$Tokens, $Token;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -5405,6 +5500,12 @@ if ($EOF) {
 $State = DTD_STATE;
 push @$Tokens, $Token;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -5464,6 +5565,12 @@ if ($EOF) {
 $State = DTD_STATE;
 push @$Tokens, $Token;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -5514,6 +5621,12 @@ push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 if ($EOF) {
 $State = DTD_STATE;
 push @$Tokens, $Token;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -5569,6 +5682,12 @@ push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 if ($EOF) {
 $State = DTD_STATE;
 push @$Tokens, $Token;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -5627,6 +5746,12 @@ push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 if ($EOF) {
 push @{$Token->{q<data>}}, [q@?@, $DI, $Offset + (pos $Input)];
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -5769,6 +5894,12 @@ push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -5875,6 +6006,12 @@ push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -5979,6 +6116,12 @@ $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -6085,6 +6228,12 @@ push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -6189,6 +6338,12 @@ $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -6295,6 +6450,12 @@ push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -6399,6 +6560,12 @@ $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -6519,6 +6686,12 @@ push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -6630,6 +6803,12 @@ push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -6734,6 +6913,12 @@ $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -6840,6 +7025,12 @@ push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -6945,6 +7136,12 @@ push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -7049,6 +7246,12 @@ $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -7169,6 +7372,12 @@ push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -7273,6 +7482,12 @@ $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -7379,6 +7594,12 @@ push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -7483,6 +7704,12 @@ $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -7603,6 +7830,12 @@ push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -7707,6 +7940,12 @@ $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -7813,6 +8052,12 @@ push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -7917,6 +8162,12 @@ $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -8023,6 +8274,12 @@ push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -8128,6 +8385,12 @@ push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -8232,6 +8495,12 @@ $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -8351,6 +8620,12 @@ $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -8951,6 +9226,12 @@ push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 if ($EOF) {
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -9000,6 +9281,12 @@ $State = A_DOCTYPE_INTERNAL_SUBSET_STATE;
           
 } else {
 if ($EOF) {
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -9064,6 +9351,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -9143,6 +9436,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -9240,6 +9539,12 @@ if ($EOF) {
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -9327,6 +9632,12 @@ if ($EOF) {
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -9396,6 +9707,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -9473,6 +9790,12 @@ $State = ENT_PUBLIC_ID__DQ__STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -9542,6 +9865,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -9618,6 +9947,12 @@ $State = ENT_PUBLIC_ID__SQ__STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -9708,6 +10043,12 @@ if ($EOF) {
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -9759,6 +10100,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -9817,6 +10164,12 @@ $State = ENT_SYSTEM_ID__DQ__STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -9868,6 +10221,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -9925,6 +10284,12 @@ $State = ENT_SYSTEM_ID__SQ__STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -9989,6 +10354,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -10093,6 +10464,12 @@ $State = ENT_VALUE__DQ__STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -10456,6 +10833,12 @@ $State = ENT_VALUE__DQ__STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -10818,6 +11201,12 @@ $State = ENT_VALUE__DQ__STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -10974,6 +11363,12 @@ $State = ENT_VALUE__DQ__STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -11087,6 +11482,12 @@ $State = ENT_VALUE__DQ__STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -11231,6 +11632,12 @@ $State = ENT_VALUE__DQ__STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -11300,6 +11707,12 @@ $State = ENT_VALUE__DQ__STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -11363,6 +11776,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -11467,6 +11886,12 @@ $State = ENT_VALUE__SQ__STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -11830,6 +12255,12 @@ $State = ENT_VALUE__SQ__STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -12192,6 +12623,12 @@ $State = ENT_VALUE__SQ__STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -12348,6 +12785,12 @@ $State = ENT_VALUE__SQ__STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -12461,6 +12904,12 @@ $State = ENT_VALUE__SQ__STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -12605,6 +13054,12 @@ $State = ENT_VALUE__SQ__STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -12674,6 +13129,12 @@ $State = ENT_VALUE__SQ__STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -12730,6 +13191,12 @@ push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 if ($EOF) {
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -12822,6 +13289,12 @@ push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE_IN_ENT_STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -13141,6 +13614,12 @@ $State = ENT_VALUE_IN_ENT_STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -13459,6 +13938,12 @@ $State = ENT_VALUE_IN_ENT_STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -13611,6 +14096,12 @@ $State = ENT_VALUE_IN_ENT_STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -13712,6 +14203,12 @@ push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE_IN_ENT_STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -13852,6 +14349,12 @@ $State = ENT_VALUE_IN_ENT_STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -13913,6 +14416,12 @@ if ($EOF) {
 $State = ENT_VALUE_IN_ENT_STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -13985,6 +14494,12 @@ if ($EOF) {
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -14055,6 +14570,12 @@ if ($EOF) {
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -14123,6 +14644,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -14199,6 +14726,12 @@ $State = NOTATION_PUBLIC_ID__DQ__STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -14267,6 +14800,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -14342,6 +14881,12 @@ $State = NOTATION_PUBLIC_ID__SQ__STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -14439,6 +14984,12 @@ if ($EOF) {
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -14490,6 +15041,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -14548,6 +15105,12 @@ $State = NOTATION_SYSTEM_ID__DQ__STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -14599,6 +15162,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -14656,6 +15225,12 @@ $State = NOTATION_SYSTEM_ID__SQ__STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -15015,6 +15590,12 @@ if ($EOF) {
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -15252,6 +15833,12 @@ $State = A_ATTLIST_ATTR_DEFAULT_STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -15463,7 +16050,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -15476,6 +16063,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -15691,7 +16284,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -15704,6 +16297,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -15772,6 +16371,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -15949,6 +16554,12 @@ $State = A_ATTLIST_ATTR_NAME_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -16161,7 +16772,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -16174,6 +16785,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -16389,7 +17006,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -16402,6 +17019,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -16483,6 +17106,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -16725,6 +17354,12 @@ $State = A_ATTLIST_ATTR_TYPE_STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -16936,7 +17571,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -16949,6 +17584,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -17164,7 +17805,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -17177,6 +17818,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -17279,6 +17926,12 @@ if ($EOF) {
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -17349,6 +18002,12 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -18089,6 +18748,12 @@ if ($EOF) {
           
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -18153,6 +18818,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -18310,6 +18981,12 @@ $State = A_ELEMENT_CONTENT_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -18522,7 +19199,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -18535,6 +19212,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -18750,7 +19433,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -18763,6 +19446,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -18857,6 +19546,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -19146,6 +19841,12 @@ $State = A_ENT_NAME_STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -19357,7 +20058,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -19370,6 +20071,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -19585,7 +20292,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -19598,6 +20305,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -19652,6 +20365,12 @@ $State = A_ENT_NAME_STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -19704,6 +20423,12 @@ $State = A_ENT_NAME_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -19758,6 +20483,12 @@ $State = A_ENT_NAME_STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -19810,6 +20541,12 @@ $State = A_ENT_NAME_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -19878,6 +20615,12 @@ $State = A_ENT_NAME_STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -19930,6 +20673,12 @@ $State = A_ENT_NAME_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -19984,6 +20733,12 @@ $State = A_ENT_NAME_STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -20037,6 +20792,12 @@ $State = A_ENT_NAME_STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -20089,6 +20850,12 @@ $State = A_ENT_NAME_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -20157,6 +20924,12 @@ $State = A_ENT_NAME_STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -20222,6 +20995,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -20380,6 +21159,12 @@ $State = A_ENT_PARAMETER_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -20592,7 +21377,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -20605,6 +21390,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -20820,7 +21611,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -20833,6 +21624,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -20919,6 +21716,12 @@ if ($EOF) {
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -21003,6 +21806,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -21091,6 +21900,12 @@ if ($EOF) {
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -21175,6 +21990,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -21312,6 +22133,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -21553,6 +22380,12 @@ $State = A_IGNORE_KWD_STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -21764,7 +22597,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -21777,6 +22610,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -21992,7 +22831,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -22005,6 +22844,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -22142,6 +22987,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -22383,6 +23234,12 @@ $State = A_INCLUDE_KWD_STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -22594,7 +23451,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -22607,6 +23464,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -22822,7 +23685,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -22835,6 +23698,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -22918,6 +23787,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -23003,6 +23878,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -23249,6 +24130,12 @@ $State = A_NOTATION_NAME_STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -23460,7 +24347,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -23473,6 +24360,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -23688,7 +24581,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -23701,6 +24594,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -23755,6 +24654,12 @@ $State = A_NOTATION_NAME_STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -23807,6 +24712,12 @@ $State = A_NOTATION_NAME_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -23861,6 +24772,12 @@ $State = A_NOTATION_NAME_STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -23913,6 +24830,12 @@ $State = A_NOTATION_NAME_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -23981,6 +24904,12 @@ $State = A_NOTATION_NAME_STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -24033,6 +24962,12 @@ $State = A_NOTATION_NAME_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -24087,6 +25022,12 @@ $State = A_NOTATION_NAME_STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -24140,6 +25081,12 @@ $State = A_NOTATION_NAME_STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -24192,6 +25139,12 @@ $State = A_NOTATION_NAME_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -24259,6 +25212,12 @@ $State = A_NOTATION_NAME_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -24339,6 +25298,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -24424,6 +25389,12 @@ if ($EOF) {
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -24488,6 +25459,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -24645,6 +25622,12 @@ $State = A_NOTATION_SYSTEM_ID_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -24857,7 +25840,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -24870,6 +25853,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -25085,7 +26074,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -25098,6 +26087,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -25182,6 +26177,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -25342,6 +26343,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -25565,6 +26572,12 @@ $State = A_AFTER_ALLOWED_TOKEN_LIST_STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -25776,7 +26789,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -25789,6 +26802,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -26004,7 +27023,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -26017,6 +27036,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -26114,6 +27139,12 @@ if ($EOF) {
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -26186,6 +27217,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -26385,6 +27422,12 @@ $State = A_ALLOWED_TOKEN_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -26597,7 +27640,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -26610,6 +27653,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -26825,7 +27874,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -26838,6 +27887,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -27384,6 +28439,12 @@ if ($EOF) {
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -27541,6 +28602,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -27914,6 +28981,12 @@ $State = A_CM_ITEM_STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -28125,7 +29198,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -28138,6 +29211,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -28353,7 +29432,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -28366,6 +29445,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -28428,6 +29513,12 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -28650,6 +29741,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -28946,6 +30043,12 @@ $State = A_MSS_STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -29157,7 +30260,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -29170,6 +30273,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -29385,7 +30494,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -29398,6 +30507,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -29539,6 +30654,12 @@ $State = A_MSS_STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -29672,6 +30793,12 @@ $State = A_MSS_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -29807,6 +30934,12 @@ $State = A_MSS_STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -29940,6 +31073,12 @@ $State = A_MSS_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -30089,6 +31228,12 @@ $State = A_MSS_STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -30222,6 +31367,12 @@ $State = A_MSS_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -30357,6 +31508,12 @@ $State = A_MSS_STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -30491,6 +31648,12 @@ $State = A_MSS_STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -30624,6 +31787,12 @@ $State = A_MSS_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -30773,6 +31942,12 @@ $State = A_MSS_STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -30848,6 +32023,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -43442,11 +44623,18 @@ $State = ATTLIST_ATTR_DEFAULT_STATE;
 } else {
 if ($EOF) {
 
-            push @$Errors, {type => 'parser:EOF', level => 'm',
+            push @$Errors, {type => 'no attr default', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+$State = BOGUS_MARKUP_DECL_STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -43524,6 +44712,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -43710,6 +44904,12 @@ $State = B_ATTLIST_ATTR_NAME_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -43922,7 +45122,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -43935,6 +45135,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -44150,7 +45356,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -44163,6 +45369,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -44234,6 +45446,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -44414,6 +45632,12 @@ $State = B_ATTLIST_NAME_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -44626,7 +45850,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -44639,6 +45863,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -44854,7 +46084,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -44867,6 +46097,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -45167,6 +46403,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -45486,6 +46728,12 @@ $State = B_ELEMENT_CONTENT_STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -45697,7 +46945,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -45710,6 +46958,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -45925,7 +47179,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -45938,6 +47192,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -46009,6 +47269,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -46189,6 +47455,12 @@ $State = B_ELEMENT_NAME_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -46401,7 +47673,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -46414,6 +47686,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -46629,7 +47907,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -46642,6 +47920,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -46709,6 +47993,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -46885,6 +48175,12 @@ $State = B_ENT_NAME_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -47097,7 +48393,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -47110,6 +48406,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -47325,7 +48627,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -47338,6 +48640,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -47414,6 +48722,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -47616,6 +48930,12 @@ $State = B_ENT_PUBLIC_ID_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -47828,7 +49148,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -47841,6 +49161,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -48056,7 +49382,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -48069,6 +49395,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -48145,6 +49477,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -48347,6 +49685,12 @@ $State = B_ENT_SYSTEM_ID_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -48559,7 +49903,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -48572,6 +49916,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -48787,7 +50137,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -48800,6 +50150,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -48865,6 +50221,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -49038,6 +50400,12 @@ $State = B_ENT_TYPE_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -49250,7 +50618,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -49263,6 +50631,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -49478,7 +50852,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -49491,6 +50865,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -49669,6 +51049,12 @@ $State = ENT_VALUE_IN_ENT_STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -49742,6 +51128,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -49925,6 +51317,12 @@ $State = B_NDATA_ID_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -50137,7 +51535,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -50150,6 +51548,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -50365,7 +51769,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -50378,6 +51782,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -50452,6 +51862,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -50652,6 +52068,12 @@ $State = B_NDATA_KWD_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -50864,7 +52286,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -50877,6 +52299,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -51092,7 +52520,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -51105,6 +52533,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -51159,6 +52593,12 @@ $State = B_NDATA_KWD_STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -51212,6 +52652,12 @@ $State = B_NDATA_KWD_STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -51264,6 +52710,12 @@ $State = B_NDATA_KWD_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -51331,6 +52783,12 @@ $State = B_NDATA_KWD_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -51402,6 +52860,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -51582,6 +53046,12 @@ $State = B_NOTATION_NAME_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -51794,7 +53264,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -51807,6 +53277,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -52022,7 +53498,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -52035,6 +53511,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -52110,6 +53592,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -52311,6 +53799,12 @@ $State = B_NOTATION_PUBLIC_ID_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -52523,7 +54017,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -52536,6 +54030,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -52751,7 +54251,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -52764,6 +54264,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -52839,6 +54345,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -53040,6 +54552,12 @@ $State = B_NOTATION_SYSTEM_ID_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -53252,7 +54770,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -53265,6 +54783,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -53480,7 +55004,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -53493,6 +55017,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -53579,6 +55109,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -53810,6 +55346,12 @@ $State = B_ALLOWED_TOKEN_STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -54021,7 +55563,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -54034,6 +55576,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -54249,7 +55797,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -54262,6 +55810,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -56127,6 +57681,12 @@ if ($EOF) {
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -56475,6 +58035,12 @@ $State = B_CM_ITEM_STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -56686,7 +58252,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -56699,6 +58265,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -56914,7 +58486,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -56927,6 +58499,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -57058,6 +58636,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -57260,6 +58844,12 @@ $State = BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -57472,7 +59062,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -57485,6 +59075,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -57700,7 +59296,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -57713,6 +59309,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -57784,6 +59386,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -57981,6 +59589,12 @@ $State = BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -58193,7 +59807,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -58206,6 +59820,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -58421,7 +60041,7 @@ if ($EOF) {
                           di => $DI, index => $TempIndex};
           
           push @$Errors, {type => 'tag in pe in markup declaration', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1 - 1};
+                          di => $DI, index => $Offset + (pos $Input) - 1};
           $State = BOGUS_MARKUP_DECL_STATE;
         
 
@@ -58434,6 +60054,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -58612,6 +60238,12 @@ if ($EOF) {
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -58709,6 +60341,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -59411,6 +61049,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -62955,6 +64599,12 @@ if ($EOF) {
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -63069,6 +64719,12 @@ $State = DEFAULT_ATTR_VALUE__DQ__STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -63412,6 +65068,12 @@ $State = DEFAULT_ATTR_VALUE__DQ__STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -63753,6 +65415,12 @@ $State = DEFAULT_ATTR_VALUE__DQ__STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -65636,6 +67304,12 @@ $State = DEFAULT_ATTR_VALUE__DQ__STATE;
 if ($InMDEntity) { return 1 if $return }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -65760,6 +67434,12 @@ $State = DEFAULT_ATTR_VALUE__DQ__STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -65906,6 +67586,12 @@ $State = DEFAULT_ATTR_VALUE__DQ__STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -65980,6 +67666,12 @@ $State = DEFAULT_ATTR_VALUE__DQ__STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -66048,6 +67740,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -66163,6 +67861,12 @@ $State = DEFAULT_ATTR_VALUE__SQ__STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -66506,6 +68210,12 @@ $State = DEFAULT_ATTR_VALUE__SQ__STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -66847,6 +68557,12 @@ $State = DEFAULT_ATTR_VALUE__SQ__STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -68730,6 +70446,12 @@ $State = DEFAULT_ATTR_VALUE__SQ__STATE;
 if ($InMDEntity) { return 1 if $return }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -68854,6 +70576,12 @@ $State = DEFAULT_ATTR_VALUE__SQ__STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -69000,6 +70728,12 @@ $State = DEFAULT_ATTR_VALUE__SQ__STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -69073,6 +70807,12 @@ $State = DEFAULT_ATTR_VALUE__SQ__STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -72037,6 +73777,12 @@ if ($EOF) {
           
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -72082,6 +73828,12 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -72131,6 +73883,12 @@ if ($EOF) {
           
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -72173,6 +73931,12 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -73660,6 +75424,12 @@ $State = B_ENT_NAME_STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -73873,6 +75643,12 @@ $State = B_ENT_NAME_STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -74071,6 +75847,12 @@ if ($EOF) {
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -74265,6 +76047,12 @@ if ($EOF) {
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -74458,6 +76246,12 @@ if ($EOF) {
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -74655,6 +76449,12 @@ $State = ENT_VALUE_IN_ENT_STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -74834,6 +76634,12 @@ $State = BOGUS_MARKUP_DECL_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -75033,6 +76839,12 @@ $State = BOGUS_STATUS_KWD_STATE;
           
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -75899,6 +77711,12 @@ $State = ENT_VALUE_IN_ENT_STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
 
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                               di => $DI,
@@ -76062,6 +77880,12 @@ push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE_IN_ENT_STATE;
 if ($InMDEntity) { return 1 }
 $State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
 
             if (defined $CONTEXT) {
               push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
