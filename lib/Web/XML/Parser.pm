@@ -4664,11 +4664,11 @@ return 0;
 };
 $StateActions->[DOCTYPE_PI_DATA_STATE] = sub {
 if ($Input =~ /\G([^\\?\ ]+)/gcs) {
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 
 } elsif ($Input =~ /\G([\])/gcs) {
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = DOCTYPE_PI_DATA_STATE_CR;
 } elsif ($Input =~ /\G([\?])/gcs) {
 $State = DOCTYPE_IN_PIC_STATE;
@@ -4677,7 +4677,7 @@ $State = DOCTYPE_IN_PIC_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } else {
 if ($EOF) {
 $State = DTD_STATE;
@@ -4724,7 +4724,7 @@ if ($Input =~ /\G([\
 $State = DOCTYPE_PI_DATA_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = DOCTYPE_PI_DATA_STATE_CR;
 } elsif ($Input =~ /\G([\?])/gcs) {
 $State = DOCTYPE_IN_PIC_STATE;
@@ -4734,10 +4734,10 @@ $State = DOCTYPE_PI_DATA_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = DOCTYPE_PI_DATA_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 $State = DTD_STATE;
@@ -4803,7 +4803,7 @@ $State = DOCTYPE_PI_TARGET_STATE;
       
 $Token->{q<data>} = [[q@?@, $DI, $Offset + (pos $Input) - length $1]];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bare pio', level => 'm',
@@ -4815,7 +4815,7 @@ push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
       
 $Token->{q<data>} = [[q@?@, $DI, $Offset + (pos $Input) - length $1]];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\?])/gcs) {
 
@@ -4828,7 +4828,7 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
       
 $Token->{q<data>} = [[q@?@, $DI, $Offset + (pos $Input) - length $1]];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G(.)/gcs) {
 
         $Token = {type => PROCESSING_INSTRUCTION_TOKEN, tn => 0, DTDMode => $DTDMode,
@@ -4898,7 +4898,7 @@ $State = DOCTYPE_PI_DATA_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'no s after target', level => 'm',
@@ -4906,7 +4906,7 @@ push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
           
 $Token->{q<data>} = [[q@?@, $DI, $Offset + (pos $Input) - length $1]];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = DOCTYPE_PI_DATA_STATE_CR;
 } elsif ($Input =~ /\G([\?])/gcs) {
 
@@ -4922,7 +4922,7 @@ $State = DOCTYPE_IN_PIC_STATE;
           
 $Token->{q<data>} = [[q@?@, $DI, $Offset + (pos $Input) - length $1]];
 $State = DOCTYPE_PI_DATA_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -5047,10 +5047,10 @@ $State = DOCTYPE_PI_DATA_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = DOCTYPE_PI_DATA_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 $State = DTD_STATE;
@@ -5110,10 +5110,10 @@ $State = DOCTYPE_PI_DATA_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = DOCTYPE_PI_DATA_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 $State = DTD_STATE;
@@ -5156,13 +5156,13 @@ return 0;
 };
 $StateActions->[DOCTYPE_BOGUS_COMMENT_STATE] = sub {
 if ($Input =~ /\G([^\ \\>]+)/gcs) {
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 
 } elsif ($Input =~ /\G([\ ])/gcs) {
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 push @$Tokens, $Token;
@@ -5211,20 +5211,20 @@ return 0;
 $StateActions->[DOCTYPE_BOGUS_COMMENT_STATE_CR] = sub {
 if ($Input =~ /\G([\ ])/gcs) {
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\
 ])/gcs) {
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 push @$Tokens, $Token;
 $State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 push @$Tokens, $Token;
@@ -5268,12 +5268,12 @@ return 0;
 };
 $StateActions->[DOCTYPE_COMMENT_END_BANG_STATE] = sub {
 if ($Input =~ /\G([\])/gcs) {
-push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - (length $1) - 3];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = DOCTYPE_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\-])/gcs) {
-push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - (length $1) - 3];
 $State = DOCTYPE_COMMENT_END_DASH_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 $State = DTD_STATE;
@@ -5283,11 +5283,11 @@ push @$Tokens, $Token;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<data>}}, [q@--!�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@--!�@, $DI, $Offset + (pos $Input) - (length $1) - 3];
 $State = DOCTYPE_COMMENT_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
-push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - length $1];
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - (length $1) - 3];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 $State = DOCTYPE_COMMENT_STATE;
 } else {
 if ($EOF) {
@@ -5332,9 +5332,9 @@ return 0;
 };
 $StateActions->[DOCTYPE_COMMENT_END_DASH_STATE] = sub {
 if ($Input =~ /\G([\])/gcs) {
-push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + (pos $Input) - (length $1) - 1];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = DOCTYPE_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\-])/gcs) {
 $State = DOCTYPE_COMMENT_END_STATE;
@@ -5343,11 +5343,11 @@ $State = DOCTYPE_COMMENT_END_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<data>}}, [q@-�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@-�@, $DI, $Offset + (pos $Input) - (length $1) - 1];
 $State = DOCTYPE_COMMENT_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
-push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + (pos $Input) - length $1];
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + (pos $Input) - (length $1) - 1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 $State = DOCTYPE_COMMENT_STATE;
 } else {
 if ($EOF) {
@@ -5399,16 +5399,16 @@ push @$Tokens, $Token;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<data>}}, [q@--�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@--�@, $DI, $Offset + (pos $Input) - (length $1) - 2];
 $State = DOCTYPE_COMMENT_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'parser:comment not closed', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + (pos $Input) - (length $1) - 2];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = DOCTYPE_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
@@ -5421,14 +5421,14 @@ $State = DOCTYPE_COMMENT_END_BANG_STATE;
             push @$Errors, {type => 'parser:comment not closed', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'parser:comment not closed', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + (pos $Input) - length $1];
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + (pos $Input) - (length $1) - 2];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 $State = DOCTYPE_COMMENT_STATE;
 } else {
 if ($EOF) {
@@ -5473,9 +5473,9 @@ return 0;
 };
 $StateActions->[DOCTYPE_COMMENT_START_DASH_STATE] = sub {
 if ($Input =~ /\G([\])/gcs) {
-push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + (pos $Input) - (length $1) - 1];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = DOCTYPE_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\-])/gcs) {
 $State = DOCTYPE_COMMENT_END_STATE;
@@ -5484,7 +5484,7 @@ $State = DOCTYPE_COMMENT_END_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<data>}}, [q@-�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@-�@, $DI, $Offset + (pos $Input) - (length $1) - 1];
 $State = DOCTYPE_COMMENT_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -5494,8 +5494,8 @@ $State = DOCTYPE_COMMENT_STATE;
 $State = DTD_STATE;
 push @$Tokens, $Token;
 } elsif ($Input =~ /\G(.)/gcs) {
-push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + (pos $Input) - length $1];
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + (pos $Input) - (length $1) - 1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 $State = DOCTYPE_COMMENT_STATE;
 } else {
 if ($EOF) {
@@ -5541,7 +5541,7 @@ return 0;
 $StateActions->[DOCTYPE_COMMENT_START_STATE] = sub {
 if ($Input =~ /\G([\])/gcs) {
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = DOCTYPE_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\-])/gcs) {
 $State = DOCTYPE_COMMENT_START_DASH_STATE;
@@ -5550,7 +5550,7 @@ $State = DOCTYPE_COMMENT_START_DASH_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = DOCTYPE_COMMENT_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -5560,7 +5560,7 @@ $State = DOCTYPE_COMMENT_STATE;
 $State = DTD_STATE;
 push @$Tokens, $Token;
 } elsif ($Input =~ /\G(.)/gcs) {
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 $State = DOCTYPE_COMMENT_STATE;
 } else {
 if ($EOF) {
@@ -5605,11 +5605,11 @@ return 0;
 };
 $StateActions->[DOCTYPE_COMMENT_STATE] = sub {
 if ($Input =~ /\G([^\\-\ ]+)/gcs) {
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 
 } elsif ($Input =~ /\G([\])/gcs) {
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = DOCTYPE_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\-])/gcs) {
 $State = DOCTYPE_COMMENT_END_DASH_STATE;
@@ -5618,7 +5618,7 @@ $State = DOCTYPE_COMMENT_END_DASH_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } else {
 if ($EOF) {
 $State = DTD_STATE;
@@ -5666,7 +5666,7 @@ if ($Input =~ /\G([\
 $State = DOCTYPE_COMMENT_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = DOCTYPE_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\-])/gcs) {
 $State = DOCTYPE_COMMENT_END_DASH_STATE;
@@ -5676,10 +5676,10 @@ $State = DOCTYPE_COMMENT_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = DOCTYPE_COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 $State = DTD_STATE;
@@ -5723,30 +5723,30 @@ return 0;
 };
 $StateActions->[DOCTYPE_IN_PIC_STATE] = sub {
 if ($Input =~ /\G([\])/gcs) {
-push @{$Token->{q<data>}}, [q@?@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@?@, $DI, $Offset + (pos $Input) - (length $1) - 2];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = DOCTYPE_PI_DATA_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 $State = DTD_STATE;
 push @$Tokens, $Token;
 } elsif ($Input =~ /\G([\?])/gcs) {
-push @{$Token->{q<data>}}, [q@?@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@?@, $DI, $Offset + (pos $Input) - (length $1) - 2];
 } elsif ($Input =~ /\G([\ ])/gcs) {
-push @{$Token->{q<data>}}, [q@?@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@?@, $DI, $Offset + (pos $Input) - (length $1) - 2];
 $State = DOCTYPE_PI_DATA_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G(.)/gcs) {
-push @{$Token->{q<data>}}, [q@?@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@?@, $DI, $Offset + (pos $Input) - (length $1) - 2];
 $State = DOCTYPE_PI_DATA_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
-push @{$Token->{q<data>}}, [q@?@, $DI, $Offset + (pos $Input)];
+push @{$Token->{q<data>}}, [q@?@, $DI, $Offset + (pos $Input) - 2];
 $State = DTD_STATE;
 
             if (@$OpenMarkedSections) {
@@ -5826,7 +5826,7 @@ $State = DOCTYPE_MDO_STATE_N;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -5839,7 +5839,7 @@ push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -5880,7 +5880,7 @@ $State = IGNORED_SECTION_STATE;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -5952,7 +5952,7 @@ $State = DOCTYPE_COMMENT_START_STATE;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -5965,7 +5965,7 @@ push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -5992,7 +5992,7 @@ $State = DTD_STATE;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -6063,7 +6063,7 @@ $State = DOCTYPE_MDO_STATE_AT;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -6076,7 +6076,7 @@ push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -6103,7 +6103,7 @@ $State = DTD_STATE;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -6174,7 +6174,7 @@ $State = DOCTYPE_MDO_STATE_ATT;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -6187,7 +6187,7 @@ push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -6214,7 +6214,7 @@ $State = DTD_STATE;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -6285,7 +6285,7 @@ $State = DOCTYPE_MDO_STATE_ATTL;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -6298,7 +6298,7 @@ push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -6325,7 +6325,7 @@ $State = DTD_STATE;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -6396,7 +6396,7 @@ $State = DOCTYPE_MDO_STATE_ATTLI;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -6409,7 +6409,7 @@ push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -6436,7 +6436,7 @@ $State = DTD_STATE;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -6507,7 +6507,7 @@ $State = DOCTYPE_MDO_STATE_ATTLIS;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -6520,7 +6520,7 @@ push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -6547,7 +6547,7 @@ $State = DTD_STATE;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -6612,7 +6612,7 @@ if ($Input =~ /\G([\ ])/gcs) {
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -6625,7 +6625,7 @@ push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -6672,7 +6672,7 @@ $State = ATTLIST_STATE;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -6749,7 +6749,7 @@ $State = DOCTYPE_MDO_STATE_EN;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -6762,7 +6762,7 @@ push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -6789,7 +6789,7 @@ $State = DTD_STATE;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -6860,7 +6860,7 @@ $State = DOCTYPE_MDO_STATE_ELE;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -6873,7 +6873,7 @@ push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -6900,7 +6900,7 @@ $State = DTD_STATE;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -6971,7 +6971,7 @@ $State = DOCTYPE_MDO_STATE_ELEM;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -6984,7 +6984,7 @@ push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -7011,7 +7011,7 @@ $State = DTD_STATE;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -7082,7 +7082,7 @@ $State = DOCTYPE_MDO_STATE_ELEME;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -7095,7 +7095,7 @@ push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -7122,7 +7122,7 @@ $State = DTD_STATE;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -7193,7 +7193,7 @@ $State = DOCTYPE_MDO_STATE_ELEMEN;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -7206,7 +7206,7 @@ push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -7233,7 +7233,7 @@ $State = DTD_STATE;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -7298,7 +7298,7 @@ if ($Input =~ /\G([\ ])/gcs) {
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -7311,7 +7311,7 @@ push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -7358,7 +7358,7 @@ $State = ELEMENT_STATE;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -7429,7 +7429,7 @@ $State = DOCTYPE_MDO_STATE_ENT;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -7442,7 +7442,7 @@ push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -7469,7 +7469,7 @@ $State = DTD_STATE;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -7540,7 +7540,7 @@ $State = DOCTYPE_MDO_STATE_ENTI;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -7553,7 +7553,7 @@ push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -7580,7 +7580,7 @@ $State = DTD_STATE;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -7651,7 +7651,7 @@ $State = DOCTYPE_MDO_STATE_ENTIT;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -7664,7 +7664,7 @@ push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -7691,7 +7691,7 @@ $State = DTD_STATE;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -7756,7 +7756,7 @@ if ($Input =~ /\G([\ ])/gcs) {
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -7769,7 +7769,7 @@ push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -7816,7 +7816,7 @@ $State = ENT_STATE;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -7887,7 +7887,7 @@ $State = DOCTYPE_MDO_STATE_NO;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -7900,7 +7900,7 @@ push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -7927,7 +7927,7 @@ $State = DTD_STATE;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -7998,7 +7998,7 @@ $State = DOCTYPE_MDO_STATE_NOT;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -8011,7 +8011,7 @@ push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -8038,7 +8038,7 @@ $State = DTD_STATE;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -8109,7 +8109,7 @@ $State = DOCTYPE_MDO_STATE_NOTA;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -8122,7 +8122,7 @@ push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -8149,7 +8149,7 @@ $State = DTD_STATE;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -8220,7 +8220,7 @@ $State = DOCTYPE_MDO_STATE_NOTAT;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -8233,7 +8233,7 @@ push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -8260,7 +8260,7 @@ $State = DTD_STATE;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -8331,7 +8331,7 @@ $State = DOCTYPE_MDO_STATE_NOTATI;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -8344,7 +8344,7 @@ push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -8371,7 +8371,7 @@ $State = DTD_STATE;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -8442,7 +8442,7 @@ $State = DOCTYPE_MDO_STATE_NOTATIO;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -8455,7 +8455,7 @@ push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -8482,7 +8482,7 @@ $State = DTD_STATE;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -8547,7 +8547,7 @@ if ($Input =~ /\G([\ ])/gcs) {
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -8560,7 +8560,7 @@ push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -8607,7 +8607,7 @@ $State = NOTATION_STATE;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -9186,7 +9186,7 @@ $State = DOCTYPE_PI_STATE;
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bare stago', level => 'm',
@@ -9198,7 +9198,7 @@ push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -9223,7 +9223,7 @@ $State = DTD_STATE;
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 $State = DTD_STATE;
@@ -10325,11 +10325,11 @@ return 0;
 };
 $StateActions->[ENT_VALUE__DQ__STATE] = sub {
 if ($Input =~ /\G([^\\"\%\&\ ]+)/gcs) {
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 
 } elsif ($Input =~ /\G([\])/gcs) {
 push @{$Token->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = ENT_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 undef $InLiteral;
@@ -10347,7 +10347,7 @@ $State = ENT_VALUE__DQ__STATE___CHARREF_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } else {
 if ($EOF) {
 
@@ -10408,7 +10408,7 @@ $State = ENT_VALUE__DQ__STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bare hcro', level => 'm',
@@ -10416,7 +10416,7 @@ push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = ENT_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
@@ -10451,7 +10451,7 @@ $State = ENT_VALUE__DQ__STATE___CHARREF_STATE;
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__DQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -10584,7 +10584,7 @@ $State = ENT_VALUE__DQ__STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -10624,7 +10624,7 @@ push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = ENT_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
@@ -10787,7 +10787,7 @@ $State = ENT_VALUE__DQ__STATE___CHARREF_STATE;
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__DQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -10952,7 +10952,7 @@ $State = ENT_VALUE__DQ__STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -10992,7 +10992,7 @@ push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = ENT_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
@@ -11155,7 +11155,7 @@ $State = ENT_VALUE__DQ__STATE___CHARREF_STATE;
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__DQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -11266,7 +11266,7 @@ $Temp .= $1;
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__DQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -11274,7 +11274,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = ENT_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
@@ -11291,7 +11291,7 @@ $State = A_ENT_PARAMETER_STATE;
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__DQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\%])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -11317,7 +11317,7 @@ $State = ENT_VALUE__DQ__STATE___CHARREF_STATE;
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__DQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\<])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -11325,7 +11325,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__DQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\=])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -11333,7 +11333,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__DQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -11341,7 +11341,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__DQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\`])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -11349,7 +11349,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__DQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -11419,7 +11419,7 @@ $State = ENT_VALUE__DQ__STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bare nero', level => 'm',
@@ -11427,7 +11427,7 @@ push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = ENT_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
@@ -11469,7 +11469,7 @@ $State = ENT_VALUE__DQ__STATE___CHARREF_BEFORE_HEX_NUM_STATE;
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__DQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -11540,7 +11540,7 @@ $State = ENT_VALUE__DQ__STATE___CHARREF_NAME_STATE;
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__DQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bare ero', level => 'm',
@@ -11548,7 +11548,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = ENT_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
@@ -11583,7 +11583,7 @@ $State = ENT_VALUE__DQ__STATE___CHARREF_STATE;
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__DQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\<])/gcs) {
 
             push @$Errors, {type => 'bare ero', level => 'm',
@@ -11591,7 +11591,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__DQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\=])/gcs) {
 
             push @$Errors, {type => 'bare ero', level => 'm',
@@ -11599,7 +11599,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__DQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -11607,7 +11607,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__DQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\`])/gcs) {
 
             push @$Errors, {type => 'bare ero', level => 'm',
@@ -11615,7 +11615,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__DQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G(.)/gcs) {
 $Temp .= $1;
 $State = ENT_VALUE__DQ__STATE___CHARREF_NAME_STATE;
@@ -11676,7 +11676,7 @@ if ($Input =~ /\G([\
 $State = ENT_VALUE__DQ__STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
 push @{$Token->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = ENT_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 undef $InLiteral;
@@ -11695,10 +11695,10 @@ $State = ENT_VALUE__DQ__STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = ENT_VALUE__DQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 $State = ENT_VALUE__DQ__STATE;
@@ -11747,11 +11747,11 @@ return 0;
 };
 $StateActions->[ENT_VALUE__SQ__STATE] = sub {
 if ($Input =~ /\G([^\\%\&\'\ ]+)/gcs) {
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 
 } elsif ($Input =~ /\G([\])/gcs) {
 push @{$Token->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = ENT_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\%])/gcs) {
 $Temp = q@%@;
@@ -11769,7 +11769,7 @@ $State = A_ENT_PARAMETER_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } else {
 if ($EOF) {
 
@@ -11830,7 +11830,7 @@ $State = ENT_VALUE__SQ__STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bare hcro', level => 'm',
@@ -11838,7 +11838,7 @@ push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = ENT_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
@@ -11873,7 +11873,7 @@ $State = A_ENT_PARAMETER_STATE;
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__SQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -12006,7 +12006,7 @@ $State = ENT_VALUE__SQ__STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -12046,7 +12046,7 @@ push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = ENT_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
@@ -12209,7 +12209,7 @@ $State = A_ENT_PARAMETER_STATE;
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__SQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -12374,7 +12374,7 @@ $State = ENT_VALUE__SQ__STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -12414,7 +12414,7 @@ push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = ENT_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
@@ -12577,7 +12577,7 @@ $State = A_ENT_PARAMETER_STATE;
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__SQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -12688,7 +12688,7 @@ $Temp .= $1;
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__SQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -12696,7 +12696,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = ENT_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
@@ -12705,7 +12705,7 @@ $State = ENT_VALUE__SQ__STATE_CR;
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__SQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\#])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -12713,7 +12713,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__SQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\%])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -12747,7 +12747,7 @@ $State = A_ENT_PARAMETER_STATE;
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__SQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\=])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -12755,7 +12755,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__SQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -12763,7 +12763,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__SQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\`])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -12771,7 +12771,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__SQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -12841,7 +12841,7 @@ $State = ENT_VALUE__SQ__STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bare nero', level => 'm',
@@ -12849,7 +12849,7 @@ push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = ENT_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
@@ -12891,7 +12891,7 @@ $State = ENT_VALUE__SQ__STATE___CHARREF_BEFORE_HEX_NUM_STATE;
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__SQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -12962,7 +12962,7 @@ $State = ENT_VALUE__SQ__STATE___CHARREF_NAME_STATE;
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__SQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bare ero', level => 'm',
@@ -12970,7 +12970,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = ENT_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
@@ -12979,7 +12979,7 @@ $State = ENT_VALUE__SQ__STATE_CR;
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__SQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\%])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -13013,7 +13013,7 @@ $State = A_ENT_PARAMETER_STATE;
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__SQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\=])/gcs) {
 
             push @$Errors, {type => 'bare ero', level => 'm',
@@ -13021,7 +13021,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__SQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -13029,7 +13029,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__SQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\`])/gcs) {
 
             push @$Errors, {type => 'bare ero', level => 'm',
@@ -13037,7 +13037,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__SQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G(.)/gcs) {
 $Temp .= $1;
 $State = ENT_VALUE__SQ__STATE___CHARREF_NAME_STATE;
@@ -13098,7 +13098,7 @@ if ($Input =~ /\G([\
 $State = ENT_VALUE__SQ__STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
 push @{$Token->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = ENT_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\%])/gcs) {
 $Temp = q@%@;
@@ -13117,10 +13117,10 @@ $State = ENT_VALUE__SQ__STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = ENT_VALUE__SQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 $State = ENT_VALUE__SQ__STATE;
@@ -13169,11 +13169,11 @@ return 0;
 };
 $StateActions->[ENT_VALUE_IN_ENT_STATE] = sub {
 if ($Input =~ /\G([^\\%\&\ ]+)/gcs) {
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 
 } elsif ($Input =~ /\G([\])/gcs) {
 push @{$Token->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = ENT_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\%])/gcs) {
 $Temp = q@%@;
@@ -13188,7 +13188,7 @@ $State = ENT_VALUE_IN_ENT_STATE___CHARREF_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } else {
 if ($EOF) {
 if ($InMDEntity) { return 1 }
@@ -13245,7 +13245,7 @@ $State = ENT_VALUE_IN_ENT_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bare hcro', level => 'm',
@@ -13253,7 +13253,7 @@ push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = ENT_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
@@ -13280,7 +13280,7 @@ $State = ENT_VALUE_IN_ENT_STATE___CHARREF_STATE;
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE_IN_ENT_STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -13409,7 +13409,7 @@ $State = ENT_VALUE_IN_ENT_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -13449,7 +13449,7 @@ push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = ENT_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
@@ -13572,7 +13572,7 @@ $State = ENT_VALUE_IN_ENT_STATE___CHARREF_STATE;
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE_IN_ENT_STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -13733,7 +13733,7 @@ $State = ENT_VALUE_IN_ENT_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -13773,7 +13773,7 @@ push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = ENT_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
@@ -13896,7 +13896,7 @@ $State = ENT_VALUE_IN_ENT_STATE___CHARREF_STATE;
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE_IN_ENT_STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -14003,7 +14003,7 @@ $Temp .= $1;
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE_IN_ENT_STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -14011,7 +14011,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = ENT_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
@@ -14020,7 +14020,7 @@ $State = ENT_VALUE_IN_ENT_STATE_CR;
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE_IN_ENT_STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\#])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -14028,7 +14028,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE_IN_ENT_STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\%])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -14054,7 +14054,7 @@ $State = ENT_VALUE_IN_ENT_STATE___CHARREF_STATE;
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE_IN_ENT_STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\<])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -14062,7 +14062,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE_IN_ENT_STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\=])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -14070,7 +14070,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE_IN_ENT_STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -14078,7 +14078,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE_IN_ENT_STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\`])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -14086,7 +14086,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE_IN_ENT_STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -14152,7 +14152,7 @@ $State = ENT_VALUE_IN_ENT_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bare nero', level => 'm',
@@ -14160,7 +14160,7 @@ push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = ENT_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
@@ -14194,7 +14194,7 @@ $State = ENT_VALUE_IN_ENT_STATE___CHARREF_BEFORE_HEX_NUM_STATE;
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE_IN_ENT_STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -14261,7 +14261,7 @@ $State = ENT_VALUE_IN_ENT_STATE___CHARREF_NAME_STATE;
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE_IN_ENT_STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bare ero', level => 'm',
@@ -14269,7 +14269,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = ENT_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
@@ -14278,7 +14278,7 @@ $State = ENT_VALUE_IN_ENT_STATE_CR;
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE_IN_ENT_STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\%])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -14304,7 +14304,7 @@ $State = ENT_VALUE_IN_ENT_STATE___CHARREF_STATE;
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE_IN_ENT_STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\<])/gcs) {
 
             push @$Errors, {type => 'bare ero', level => 'm',
@@ -14312,7 +14312,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE_IN_ENT_STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\=])/gcs) {
 
             push @$Errors, {type => 'bare ero', level => 'm',
@@ -14320,7 +14320,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE_IN_ENT_STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -14328,7 +14328,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE_IN_ENT_STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\`])/gcs) {
 
             push @$Errors, {type => 'bare ero', level => 'm',
@@ -14336,7 +14336,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE_IN_ENT_STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G(.)/gcs) {
 $Temp .= $1;
 $State = ENT_VALUE_IN_ENT_STATE___CHARREF_NAME_STATE;
@@ -14393,7 +14393,7 @@ if ($Input =~ /\G([\
 $State = ENT_VALUE_IN_ENT_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
 push @{$Token->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = ENT_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\%])/gcs) {
 $Temp = q@%@;
@@ -14409,10 +14409,10 @@ $State = ENT_VALUE_IN_ENT_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = ENT_VALUE_IN_ENT_STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 $State = ENT_VALUE_IN_ENT_STATE;
@@ -15266,11 +15266,11 @@ return 0;
 };
 $StateActions->[PI_DATA_STATE] = sub {
 if ($Input =~ /\G([^\\?\ ]+)/gcs) {
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 
 } elsif ($Input =~ /\G([\])/gcs) {
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = PI_DATA_STATE_CR;
 } elsif ($Input =~ /\G([\?])/gcs) {
 $State = IN_PIC_STATE;
@@ -15279,7 +15279,7 @@ $State = IN_PIC_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } else {
 if ($EOF) {
 
@@ -15305,7 +15305,7 @@ if ($Input =~ /\G([\
 $State = PI_DATA_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = PI_DATA_STATE_CR;
 } elsif ($Input =~ /\G([\?])/gcs) {
 $State = IN_PIC_STATE;
@@ -15315,10 +15315,10 @@ $State = PI_DATA_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = PI_DATA_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -15363,7 +15363,7 @@ $State = PI_TARGET_STATE;
       
 $Token->{q<data>} = [[q@?@, $DI, $Offset + (pos $Input) - length $1]];
 $State = BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bare pio', level => 'm',
@@ -15375,7 +15375,7 @@ push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
       
 $Token->{q<data>} = [[q@?@, $DI, $Offset + (pos $Input) - length $1]];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\?])/gcs) {
 
@@ -15388,7 +15388,7 @@ $State = BOGUS_COMMENT_STATE_CR;
       
 $Token->{q<data>} = [[q@?@, $DI, $Offset + (pos $Input) - length $1]];
 $State = BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G(.)/gcs) {
 
         $Token = {type => PROCESSING_INSTRUCTION_TOKEN, tn => 0, DTDMode => $DTDMode,
@@ -15437,7 +15437,7 @@ $State = PI_DATA_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'no s after target', level => 'm',
@@ -15445,7 +15445,7 @@ push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
           
 $Token->{q<data>} = [[q@?@, $DI, $Offset + (pos $Input) - length $1]];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = PI_DATA_STATE_CR;
 } elsif ($Input =~ /\G([\?])/gcs) {
 
@@ -15461,7 +15461,7 @@ $State = IN_PIC_STATE;
           
 $Token->{q<data>} = [[q@?@, $DI, $Offset + (pos $Input) - length $1]];
 $State = PI_DATA_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -26232,10 +26232,10 @@ $State = PI_DATA_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = PI_DATA_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -26274,10 +26274,10 @@ $State = PI_DATA_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = PI_DATA_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -50926,7 +50926,7 @@ if ($Input =~ /\G([\])/gcs) {
         }
       
 push @{$Token->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = ENT_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
@@ -51003,7 +51003,7 @@ $State = ENT_VALUE_IN_ENT_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G(.)/gcs) {
 
         $Temp = '';
@@ -51025,7 +51025,7 @@ push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
         }
       
 $State = ENT_VALUE_IN_ENT_STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -60155,13 +60155,13 @@ return 0;
 };
 $StateActions->[BOGUS_COMMENT_STATE] = sub {
 if ($Input =~ /\G([^\ \\>]+)/gcs) {
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 
 } elsif ($Input =~ /\G([\ ])/gcs) {
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 push @$Tokens, $Token;
@@ -60185,20 +60185,20 @@ return 0;
 $StateActions->[BOGUS_COMMENT_STATE_CR] = sub {
 if ($Input =~ /\G([\ ])/gcs) {
 $State = BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\
 ])/gcs) {
 $State = BOGUS_COMMENT_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 push @$Tokens, $Token;
 $State = DATA_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 push @$Tokens, $Token;
@@ -60612,12 +60612,12 @@ return 0;
 };
 $StateActions->[COMMENT_END_BANG_STATE] = sub {
 if ($Input =~ /\G([\])/gcs) {
-push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - (length $1) - 3];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\-])/gcs) {
-push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - (length $1) - 3];
 $State = COMMENT_END_DASH_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 $State = DATA_STATE;
@@ -60627,11 +60627,11 @@ push @$Tokens, $Token;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<data>}}, [q@--!�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@--!�@, $DI, $Offset + (pos $Input) - (length $1) - 3];
 $State = COMMENT_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
-push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - length $1];
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - (length $1) - 3];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 $State = COMMENT_STATE;
 } else {
 if ($EOF) {
@@ -60655,9 +60655,9 @@ return 0;
 };
 $StateActions->[COMMENT_END_DASH_STATE] = sub {
 if ($Input =~ /\G([\])/gcs) {
-push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + (pos $Input) - (length $1) - 1];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\-])/gcs) {
 $State = COMMENT_END_STATE;
@@ -60666,11 +60666,11 @@ $State = COMMENT_END_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<data>}}, [q@-�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@-�@, $DI, $Offset + (pos $Input) - (length $1) - 1];
 $State = COMMENT_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
-push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + (pos $Input) - length $1];
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + (pos $Input) - (length $1) - 1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 $State = COMMENT_STATE;
 } else {
 if ($EOF) {
@@ -60701,16 +60701,16 @@ push @$Tokens, $Token;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<data>}}, [q@--�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@--�@, $DI, $Offset + (pos $Input) - (length $1) - 2];
 $State = COMMENT_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'parser:comment not closed', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + (pos $Input) - (length $1) - 2];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
@@ -60723,14 +60723,14 @@ $State = COMMENT_END_BANG_STATE;
             push @$Errors, {type => 'parser:comment not closed', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'parser:comment not closed', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + (pos $Input) - length $1];
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + (pos $Input) - (length $1) - 2];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 $State = COMMENT_STATE;
 } else {
 if ($EOF) {
@@ -60754,9 +60754,9 @@ return 0;
 };
 $StateActions->[COMMENT_START_DASH_STATE] = sub {
 if ($Input =~ /\G([\])/gcs) {
-push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + (pos $Input) - (length $1) - 1];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\-])/gcs) {
 $State = COMMENT_END_STATE;
@@ -60765,7 +60765,7 @@ $State = COMMENT_END_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<data>}}, [q@-�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@-�@, $DI, $Offset + (pos $Input) - (length $1) - 1];
 $State = COMMENT_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -60775,8 +60775,8 @@ $State = COMMENT_STATE;
 $State = DATA_STATE;
 push @$Tokens, $Token;
 } elsif ($Input =~ /\G(.)/gcs) {
-push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + (pos $Input) - length $1];
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + (pos $Input) - (length $1) - 1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 $State = COMMENT_STATE;
 } else {
 if ($EOF) {
@@ -60801,7 +60801,7 @@ return 0;
 $StateActions->[COMMENT_START_STATE] = sub {
 if ($Input =~ /\G([\])/gcs) {
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\-])/gcs) {
 $State = COMMENT_START_DASH_STATE;
@@ -60810,7 +60810,7 @@ $State = COMMENT_START_DASH_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = COMMENT_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -60820,7 +60820,7 @@ $State = COMMENT_STATE;
 $State = DATA_STATE;
 push @$Tokens, $Token;
 } elsif ($Input =~ /\G(.)/gcs) {
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 $State = COMMENT_STATE;
 } else {
 if ($EOF) {
@@ -60844,11 +60844,11 @@ return 0;
 };
 $StateActions->[COMMENT_STATE] = sub {
 if ($Input =~ /\G([^\\-\ ]+)/gcs) {
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 
 } elsif ($Input =~ /\G([\])/gcs) {
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\-])/gcs) {
 $State = COMMENT_END_DASH_STATE;
@@ -60857,7 +60857,7 @@ $State = COMMENT_END_DASH_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } else {
 if ($EOF) {
 
@@ -60884,7 +60884,7 @@ if ($Input =~ /\G([\
 $State = COMMENT_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\-])/gcs) {
 $State = COMMENT_END_DASH_STATE;
@@ -60894,10 +60894,10 @@ $State = COMMENT_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -73677,7 +73677,7 @@ $State = TAG_NAME_STATE;
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 $State = BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bare etago', level => 'm',
@@ -73689,7 +73689,7 @@ push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -74026,30 +74026,30 @@ return 0;
 };
 $StateActions->[IN_PIC_STATE] = sub {
 if ($Input =~ /\G([\])/gcs) {
-push @{$Token->{q<data>}}, [q@?@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@?@, $DI, $Offset + (pos $Input) - (length $1) - 2];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = PI_DATA_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 $State = DATA_STATE;
 push @$Tokens, $Token;
 } elsif ($Input =~ /\G([\?])/gcs) {
-push @{$Token->{q<data>}}, [q@?@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@?@, $DI, $Offset + (pos $Input) - (length $1) - 2];
 } elsif ($Input =~ /\G([\ ])/gcs) {
-push @{$Token->{q<data>}}, [q@?@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@?@, $DI, $Offset + (pos $Input) - (length $1) - 2];
 $State = PI_DATA_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G(.)/gcs) {
-push @{$Token->{q<data>}}, [q@?@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@?@, $DI, $Offset + (pos $Input) - (length $1) - 2];
 $State = PI_DATA_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
-push @{$Token->{q<data>}}, [q@?@, $DI, $Offset + (pos $Input)];
+push @{$Token->{q<data>}}, [q@?@, $DI, $Offset + (pos $Input) - 2];
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
@@ -74096,7 +74096,7 @@ $State = MDO_STATE_D;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -74109,7 +74109,7 @@ push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -74136,7 +74136,7 @@ $State = DATA_STATE;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -74183,7 +74183,7 @@ $State = COMMENT_START_STATE;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -74196,7 +74196,7 @@ push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -74223,7 +74223,7 @@ $State = DATA_STATE;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -74269,7 +74269,7 @@ $State = MDO_STATE_DO;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -74282,7 +74282,7 @@ push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -74309,7 +74309,7 @@ $State = DATA_STATE;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -74355,7 +74355,7 @@ $State = MDO_STATE_DOC;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -74368,7 +74368,7 @@ push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -74395,7 +74395,7 @@ $State = DATA_STATE;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -74441,7 +74441,7 @@ $State = MDO_STATE_DOCT;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -74454,7 +74454,7 @@ push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -74481,7 +74481,7 @@ $State = DATA_STATE;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -74527,7 +74527,7 @@ $State = MDO_STATE_DOCTY;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -74540,7 +74540,7 @@ push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -74567,7 +74567,7 @@ $State = DATA_STATE;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -74613,7 +74613,7 @@ $State = MDO_STATE_DOCTYP;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -74626,7 +74626,7 @@ push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -74653,7 +74653,7 @@ $State = DATA_STATE;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -74693,7 +74693,7 @@ if ($Input =~ /\G([\ ])/gcs) {
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -74706,7 +74706,7 @@ push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -74753,7 +74753,7 @@ $State = DOCTYPE_STATE;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -74796,7 +74796,7 @@ $State = MDO_STATE__5BC;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -74809,7 +74809,7 @@ push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -74836,7 +74836,7 @@ $State = DATA_STATE;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -74879,7 +74879,7 @@ $State = MDO_STATE__5BCD;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -74892,7 +74892,7 @@ push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -74919,7 +74919,7 @@ $State = DATA_STATE;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -74962,7 +74962,7 @@ $State = MDO_STATE__5BCDA;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -74975,7 +74975,7 @@ push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -75002,7 +75002,7 @@ $State = DATA_STATE;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -75045,7 +75045,7 @@ $State = MDO_STATE__5BCDAT;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -75058,7 +75058,7 @@ push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -75085,7 +75085,7 @@ $State = DATA_STATE;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -75128,7 +75128,7 @@ $State = MDO_STATE__5BCDATA;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -75141,7 +75141,7 @@ push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -75168,7 +75168,7 @@ $State = DATA_STATE;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -75208,7 +75208,7 @@ if ($Input =~ /\G([\ ])/gcs) {
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -75221,7 +75221,7 @@ push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<data>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -75256,7 +75256,7 @@ $State = CDATA_SECTION_STATE;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -75956,7 +75956,7 @@ $Temp .= q@�@;
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__DQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -75964,7 +75964,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = ENT_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
@@ -75981,7 +75981,7 @@ $State = A_ENT_PARAMETER_STATE;
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__DQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\%])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -76007,7 +76007,7 @@ $State = ENT_VALUE__DQ__STATE___CHARREF_STATE;
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__DQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\<])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -76015,7 +76015,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__DQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\=])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -76023,7 +76023,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__DQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -76031,7 +76031,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__DQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\`])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -76039,7 +76039,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__DQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -76156,7 +76156,7 @@ $Temp .= q@�@;
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__SQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -76164,7 +76164,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = ENT_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
@@ -76173,7 +76173,7 @@ $State = ENT_VALUE__SQ__STATE_CR;
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__SQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\#])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -76181,7 +76181,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__SQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\%])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -76215,7 +76215,7 @@ $State = A_ENT_PARAMETER_STATE;
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__SQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\=])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -76223,7 +76223,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__SQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -76231,7 +76231,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__SQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\`])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -76239,7 +76239,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE__SQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -76356,7 +76356,7 @@ $Temp .= q@�@;
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE_IN_ENT_STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -76364,7 +76364,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = ENT_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
@@ -76373,7 +76373,7 @@ $State = ENT_VALUE_IN_ENT_STATE_CR;
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE_IN_ENT_STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\#])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -76381,7 +76381,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE_IN_ENT_STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\%])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -76407,7 +76407,7 @@ $State = ENT_VALUE_IN_ENT_STATE___CHARREF_STATE;
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE_IN_ENT_STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\<])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -76415,7 +76415,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE_IN_ENT_STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\=])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -76423,7 +76423,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE_IN_ENT_STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -76431,7 +76431,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE_IN_ENT_STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\`])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -76439,7 +76439,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE_IN_ENT_STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -77223,12 +77223,12 @@ $State = MDO_STATE__;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 $State = COMMENT_START_STATE;
 $State = COMMENT_START_DASH_STATE;
-push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
 push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
 $State = COMMENT_STATE;
 push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
 $State = COMMENT_END_DASH_STATE;
-push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
 push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
 $State = COMMENT_STATE;
 push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
@@ -77303,7 +77303,7 @@ push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
 $State = COMMENT_STATE;
 push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
 $State = COMMENT_END_DASH_STATE;
-push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
 push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
 $State = COMMENT_STATE;
 push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
@@ -77431,7 +77431,7 @@ $State = MDO_STATE__;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 $State = COMMENT_START_STATE;
 $State = COMMENT_START_DASH_STATE;
-push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
 push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
 $State = COMMENT_STATE;
 push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
@@ -77608,7 +77608,7 @@ $State = TEXT_DECL_IN_ENT_VALUE_IN_ENT_STATE_CR;
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE_IN_ENT_STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\%])/gcs) {
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
@@ -77690,7 +77690,7 @@ $State = ENT_VALUE_IN_ENT_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } else {
 if ($EOF) {
 
@@ -77775,7 +77775,7 @@ $State = TEXT_DECL_IN_ENT_VALUE_IN_ENT_STATE_CR;
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENT_VALUE_IN_ENT_STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } elsif ($Input =~ /\G([\%])/gcs) {
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
@@ -77857,7 +77857,7 @@ $State = ENT_VALUE_IN_ENT_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = TEXT_DECL_IN_ENT_VALUE_IN_ENT_STATE;
 $Temp .= $1;
@@ -77962,7 +77962,7 @@ sub dom_tree ($$) {
           ($data->{ns}, [$data->{prefix}, $data->{local_name}]);
       $el->manakai_set_source_location (['', $data->{di}, $data->{index}]);
       ## Note that $data->{ns} can be 0.
-      for my $attr (@{$data->{attr_list} or []}) { # XXXxml
+      for my $attr (@{$data->{attr_list} or []}) {
         $el->manakai_set_attribute_indexed_string_ns
             (@{$attr->{name_args}} => $attr->{value}); # IndexedString
       }
@@ -78053,8 +78053,8 @@ sub dom_tree ($$) {
           (['', $op->[1]->{di}, $op->[1]->{index}]);
       $nodes->[$op->[2]]->append_child ($comment);
     } elsif ($op->[0] eq 'pi') {
-      my $pi = $doc->create_processing_instruction
-          ($op->[1]->{target}, join '', map { $_->[0] } @{$op->[1]->{data}}); # IndexedString
+      my $pi = $doc->create_processing_instruction ($op->[1]->{target}, '');
+      $pi->manakai_append_indexed_string ($op->[1]->{data});
       $pi->manakai_set_source_location
           (['', $op->[1]->{di}, $op->[1]->{index}]);
       if ($op->[2] == 1) { # DOCTYPE

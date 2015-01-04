@@ -861,11 +861,15 @@ sub serialize_actions ($;%) {
         if ($field eq 'value' or $field eq 'data') {
           # IndexedString
           if (defined $_->{capture_index}) {
-            push @result, sprintf q[push @{$Token->{q<%s>}}, [%s, $DI, $Offset + $-[%d]];], $field, $value, $_->{capture_index};
+            push @result, sprintf q[push @{$Token->{q<%s>}}, [%s, $DI, $Offset + $-[%d]%s];],
+                $field, $value, $_->{capture_index},
+                (defined $_->{index_offset} ? ' - ' . $_->{index_offset} : '');
           } elsif ($args{in_eof}) {
-            push @result, sprintf q[push @{$Token->{q<%s>}}, [%s, $DI, $Offset + (pos $Input)];], $field, $value;
+            push @result, sprintf q[push @{$Token->{q<%s>}}, [%s, $DI, $Offset + (pos $Input)%s];], $field, $value,
+                (defined $_->{index_offset} ? ' - ' . $_->{index_offset} : '');
           } else {
-            push @result, sprintf q[push @{$Token->{q<%s>}}, [%s, $DI, $Offset + (pos $Input) - length $1];], $field, $value;
+            push @result, sprintf q[push @{$Token->{q<%s>}}, [%s, $DI, $Offset + (pos $Input) - (length $1)%s];], $field, $value,
+                (defined $_->{index_offset} ? ' - ' . $_->{index_offset} : '');
           }
         } else {
           push @result, sprintf q[$Token->{q<%s>} .= %s;], $field, $value;
@@ -4357,7 +4361,7 @@ sub dom_tree ($$) {
           (%s, [$data->{prefix}, $data->{local_name}]);
       $el->manakai_set_source_location (['', $data->{di}, $data->{index}]);
       ## Note that $data->{ns} can be 0.
-      for my $attr (@{$data->{attr_list} or []}) { # XXXxml
+      for my $attr (@{$data->{attr_list} or []}) {
         $el->manakai_set_attribute_indexed_string_ns
             (@{$attr->{name_args}} => $attr->{value}); # IndexedString
       }
@@ -4448,8 +4452,8 @@ sub dom_tree ($$) {
           (['', $op->[1]->{di}, $op->[1]->{index}]);
       $nodes->[$op->[2]]->append_child ($comment);
     } elsif ($op->[0] eq 'pi') {
-      my $pi = $doc->create_processing_instruction
-          ($op->[1]->{target}, join '', map { $_->[0] } @{$op->[1]->{data}}); # IndexedString
+      my $pi = $doc->create_processing_instruction ($op->[1]->{target}, '');
+      $pi->manakai_append_indexed_string ($op->[1]->{data});
       $pi->manakai_set_source_location
           (['', $op->[1]->{di}, $op->[1]->{index}]);
       if ($op->[2] == 1) { # DOCTYPE
