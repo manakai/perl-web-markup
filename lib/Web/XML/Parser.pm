@@ -21217,7 +21217,7 @@ $State = PE_NAME_IN_STATUS_KWD_STATE;
 } elsif ($Input =~ /\G([\[])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-ignore-keyword-005b-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -21228,20 +21228,20 @@ $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-ignore-keyword-003c-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
           }
         
 
-            push @$Errors, {type => 'after-ignore-keyword-003c', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-003c-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -21253,20 +21253,20 @@ $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-ignore-keyword-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
           }
         
 
-            push @$Errors, {type => 'after-ignore-keyword-003e', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -21277,20 +21277,20 @@ $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\]])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-ignore-keyword-005d-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
           }
         
 
-            push @$Errors, {type => 'after-ignore-keyword-005d', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-005d-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -21411,7 +21411,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = A_IGNORE_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-ignore-keyword-005b-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -21440,20 +21440,20 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = A_IGNORE_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-ignore-keyword-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
           }
         
 
-            push @$Errors, {type => 'after-ignore-keyword-003e', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -21482,20 +21482,20 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = A_IGNORE_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-ignore-keyword-005d-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
           }
         
 
-            push @$Errors, {type => 'after-ignore-keyword-005d', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-005d-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -22047,7 +22047,7 @@ $State = PE_NAME_IN_STATUS_KWD_STATE;
 } elsif ($Input =~ /\G([\[])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'mdc in pe in md', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -22058,7 +22058,7 @@ $State = DTD_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-include-keyword-003c-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -22071,7 +22071,7 @@ $State = DTD_STATE;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-003c-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -22083,20 +22083,20 @@ $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-include-keyword-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
           }
         
 
-            push @$Errors, {type => 'after-include-keyword-003e', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -22107,20 +22107,20 @@ $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\]])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-include-keyword-005d-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
           }
         
 
-            push @$Errors, {type => 'after-include-keyword-005d', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-005d-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -22241,7 +22241,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = A_INCLUDE_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'mdc in pe in md', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -22270,20 +22270,20 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = A_INCLUDE_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-include-keyword-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
           }
         
 
-            push @$Errors, {type => 'after-include-keyword-003e', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -22312,20 +22312,20 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = A_INCLUDE_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-include-keyword-005d-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
           }
         
 
-            push @$Errors, {type => 'after-include-keyword-005d', level => 'm',
+            push @$Errors, {type => 'ms:no dso', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-005d-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -28542,7 +28542,7 @@ $State = A_MSS_STATE_I;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-mss-003c-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -28555,7 +28555,7 @@ $State = A_MSS_STATE_I;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-003c-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -28567,31 +28567,7 @@ $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-mss-003e-md-fragment', level => 'm',
-                            di => $DI, index => $Offset + (pos $Input) - 1};
-            $State = BOGUS_STATUS_KWD_STATE;
-            return 1;
-          }
-        
-
-            push @$Errors, {type => 'after-mss-003e', level => 'm',
-                            di => $DI, index => $Offset + (pos $Input) - 1};
-          
-$State = BOGUS_STATUS_KWD_STATE;
-
-          if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-003e-md-fragment', level => 'm',
-                            di => $DI, index => $Offset + (pos $Input) - 1};
-            $State = BOGUS_STATUS_KWD_STATE;
-            return 1;
-          }
-        
-push @$OpenMarkedSections, 'IGNORE';
-$State = IGNORED_SECTION_STATE;
-} elsif ($Input =~ /\G([\[])/gcs) {
-
-          if ($InMDEntity) {
-            push @$Errors, {type => 'after-mss-005b-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -28604,7 +28580,31 @@ $State = IGNORED_SECTION_STATE;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-005b-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} elsif ($Input =~ /\G([\[])/gcs) {
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'string after md def', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+            $State = BOGUS_STATUS_KWD_STATE;
+            return 1;
+          }
+        
+
+            push @$Errors, {type => 'ms:no status keyword', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_STATUS_KWD_STATE;
+
+          if ($InMDEntity) {
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -28615,20 +28615,20 @@ $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\]])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-mss-005d-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
           }
         
 
-            push @$Errors, {type => 'after-mss-005d', level => 'm',
+            push @$Errors, {type => 'ms:no status keyword', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-005d-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -28791,20 +28791,20 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = A_MSS_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-mss-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
           }
         
 
-            push @$Errors, {type => 'after-mss-003e', level => 'm',
+            push @$Errors, {type => 'ms:no status keyword', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -28833,7 +28833,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = A_MSS_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-mss-005b-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -28846,7 +28846,7 @@ $State = A_MSS_STATE;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-005b-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -28875,20 +28875,20 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = A_MSS_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'after-mss-005d-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
           }
         
 
-            push @$Errors, {type => 'after-mss-005d', level => 'm',
+            push @$Errors, {type => 'ms:no status keyword', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-005d-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -29450,7 +29450,7 @@ $State = A_MSS_STATE_IN;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-0025-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -29466,7 +29466,7 @@ $State = IGNORED_SECTION_STATE;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-003c-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -29483,7 +29483,7 @@ $AnchoredIndex = $Offset + (pos $Input) - 1;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -29499,7 +29499,7 @@ $State = IGNORED_SECTION_STATE;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-005b-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -29515,7 +29515,7 @@ $State = IGNORED_SECTION_STATE;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-005d-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -29584,7 +29584,7 @@ $State = A_MSS_STATE_IGN;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-0025-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -29600,7 +29600,7 @@ $State = IGNORED_SECTION_STATE;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-003c-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -29617,7 +29617,7 @@ $AnchoredIndex = $Offset + (pos $Input) - 1;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -29633,7 +29633,7 @@ $State = IGNORED_SECTION_STATE;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-005b-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -29649,7 +29649,7 @@ $State = IGNORED_SECTION_STATE;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-005d-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -29718,7 +29718,7 @@ $State = A_MSS_STATE_IGNO;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-0025-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -29734,7 +29734,7 @@ $State = IGNORED_SECTION_STATE;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-003c-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -29751,7 +29751,7 @@ $AnchoredIndex = $Offset + (pos $Input) - 1;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -29767,7 +29767,7 @@ $State = IGNORED_SECTION_STATE;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-005b-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -29783,7 +29783,7 @@ $State = IGNORED_SECTION_STATE;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-005d-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -29852,7 +29852,7 @@ $State = A_MSS_STATE_IGNOR;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-0025-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -29868,7 +29868,7 @@ $State = IGNORED_SECTION_STATE;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-003c-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -29885,7 +29885,7 @@ $AnchoredIndex = $Offset + (pos $Input) - 1;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -29901,7 +29901,7 @@ $State = IGNORED_SECTION_STATE;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-005b-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -29917,7 +29917,7 @@ $State = IGNORED_SECTION_STATE;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-005d-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -29980,7 +29980,7 @@ if ($Input =~ /\G([\%])/gcs) {
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-0025-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -29996,7 +29996,7 @@ $State = IGNORED_SECTION_STATE;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-003c-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -30013,7 +30013,7 @@ $AnchoredIndex = $Offset + (pos $Input) - 1;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -30039,7 +30039,7 @@ $State = A_IGNORE_KWD_STATE;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-005b-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -30055,7 +30055,7 @@ $State = IGNORED_SECTION_STATE;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-005d-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -30134,7 +30134,7 @@ $State = A_MSS_STATE_INC;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-0025-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -30150,7 +30150,7 @@ $State = IGNORED_SECTION_STATE;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-003c-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -30167,7 +30167,7 @@ $AnchoredIndex = $Offset + (pos $Input) - 1;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -30183,7 +30183,7 @@ $State = IGNORED_SECTION_STATE;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-005b-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -30199,7 +30199,7 @@ $State = IGNORED_SECTION_STATE;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-005d-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -30268,7 +30268,7 @@ $State = A_MSS_STATE_INCL;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-0025-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -30284,7 +30284,7 @@ $State = IGNORED_SECTION_STATE;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-003c-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -30301,7 +30301,7 @@ $AnchoredIndex = $Offset + (pos $Input) - 1;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -30317,7 +30317,7 @@ $State = IGNORED_SECTION_STATE;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-005b-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -30333,7 +30333,7 @@ $State = IGNORED_SECTION_STATE;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-005d-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -30402,7 +30402,7 @@ $State = A_MSS_STATE_INCLU;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-0025-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -30418,7 +30418,7 @@ $State = IGNORED_SECTION_STATE;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-003c-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -30435,7 +30435,7 @@ $AnchoredIndex = $Offset + (pos $Input) - 1;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -30451,7 +30451,7 @@ $State = IGNORED_SECTION_STATE;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-005b-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -30467,7 +30467,7 @@ $State = IGNORED_SECTION_STATE;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-005d-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -30536,7 +30536,7 @@ $State = A_MSS_STATE_INCLUD;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-0025-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -30552,7 +30552,7 @@ $State = IGNORED_SECTION_STATE;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-003c-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -30569,7 +30569,7 @@ $AnchoredIndex = $Offset + (pos $Input) - 1;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -30585,7 +30585,7 @@ $State = IGNORED_SECTION_STATE;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-005b-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -30601,7 +30601,7 @@ $State = IGNORED_SECTION_STATE;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-005d-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -30664,7 +30664,7 @@ if ($Input =~ /\G([\%])/gcs) {
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-0025-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -30680,7 +30680,7 @@ $State = IGNORED_SECTION_STATE;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-003c-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -30697,7 +30697,7 @@ $AnchoredIndex = $Offset + (pos $Input) - 1;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -30723,7 +30723,7 @@ $State = A_INCLUDE_KWD_STATE;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-005b-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -30739,7 +30739,7 @@ $State = IGNORED_SECTION_STATE;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-005d-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -58648,7 +58648,7 @@ if ($Input =~ /\G([^\%\<\>\[\]]+)/gcs) {
 } elsif ($Input =~ /\G([\%])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-0025-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -58659,7 +58659,7 @@ $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-003c-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -58671,7 +58671,7 @@ $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -58682,7 +58682,7 @@ $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\[])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-005b-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -58693,7 +58693,7 @@ $State = IGNORED_SECTION_STATE;
 } elsif ($Input =~ /\G([\]])/gcs) {
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-005d-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -74955,7 +74955,7 @@ $State = BOGUS_STATUS_KWD_STATE;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-0025-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -74983,7 +74983,7 @@ $State = BOGUS_STATUS_KWD_STATE;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-003c-md-fragment', level => 'm',
+            push @$Errors, {type => 'string after md def', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
@@ -75006,7 +75006,7 @@ $State = BOGUS_STATUS_KWD_STATE;
 $State = BOGUS_STATUS_KWD_STATE;
 
           if ($InMDEntity) {
-            push @$Errors, {type => 'bogus-status-keyword-003e-md-fragment', level => 'm',
+            push @$Errors, {type => 'mdc in pe in md', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
             $State = BOGUS_STATUS_KWD_STATE;
             return 1;
