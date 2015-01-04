@@ -19,7 +19,7 @@ sub package_name { $GeneratedPackageName }
 sub _expanded_tokenizer_defs ($) {
   if ($LANG eq 'XML') {
     my $expanded_json_path = $DefDataPath->child
-        ('../../../../../data-web-defs/data/xml-tokenizer-expanded.json'); # XXX
+        ('xml-tokenizer-expanded.json');
     return json_bytes2perl $expanded_json_path->slurp;
   } else {
     my $expanded_json_path = $DefDataPath->child
@@ -31,7 +31,7 @@ sub _expanded_tokenizer_defs ($) {
 sub _parser_defs ($) {
   if ($LANG eq 'XML') {
     my $expanded_json_path = $DefDataPath->child
-        ('../../../../../data-web-defs/data/xml-tree-constructor-expanded.json'); # XXX
+        ('xml-tree-constructor-expanded.json');
     return json_bytes2perl $expanded_json_path->slurp;
   } else {
     my $expanded_json_path = $DefDataPath->child
@@ -5095,8 +5095,6 @@ sub generate_api ($) {
       ## XML 5. If not well-formed, throw SyntaxError - should be
       ## handled by callee using $self->onerror.
 
-      ## XXX and well-formedness errors not detected by this parser
-
       ## 7.
       return defined $context ? $root->child_nodes : $doc->child_nodes;
     } # parse_char_string_with_context
@@ -5383,7 +5381,7 @@ sub generate_api ($) {
   push @sub_code, q{
 
 {
-  package XXX::AttrEntityParser;
+  package Web::XML::Parser::AttrEntityParser;
   push our @ISA, qw(Web::XML::Parser);
 
   sub parse ($$$) {
@@ -5440,7 +5438,7 @@ sub generate_api ($) {
 }
 
 {
-  package XXX::ContentEntityParser;
+  package Web::XML::Parser::ContentEntityParser;
   push our @ISA, qw(Web::XML::Parser);
 
   sub parse ($$$) {
@@ -5572,7 +5570,7 @@ sub generate_api ($) {
 }
 
 {
-  package XXX::DTDEntityParser;
+  package Web::XML::Parser::DTDEntityParser;
   push our @ISA, qw(Web::XML::Parser);
 
   sub parse ($$$) {
@@ -5693,7 +5691,7 @@ sub generate_api ($) {
 }
 
 {
-  package XXX::EntityValueEntityParser;
+  package Web::XML::Parser::EntityValueEntityParser;
   push our @ISA, qw(Web::XML::Parser);
 
   sub parse ($$$) {
@@ -5816,7 +5814,7 @@ sub generate_api ($) {
 }
 
 {
-  package XXX::MDEntityParser;
+  package Web::XML::Parser::MDEntityParser;
   push our @ISA, qw(Web::XML::Parser);
 
   sub parse ($$$) {
@@ -6144,7 +6142,7 @@ my $OnAttrEntityReference = sub {
                                di => $data->{ref}->{di},
                                index => $data->{ref}->{index}}]);
   } else {
-    my $sub = XXX::AttrEntityParser->new;
+    my $sub = Web::XML::Parser::AttrEntityParser->new;
     local $data->{entity}->{open} = 1;
     $sub->parse ($main, $data);
   }
@@ -6167,7 +6165,7 @@ my $OnContentEntityReference = sub {
                                di => $data->{ref}->{di},
                                index => $data->{ref}->{index}}]);
   } else {
-    my $sub = XXX::ContentEntityParser->new;
+    my $sub = Web::XML::Parser::ContentEntityParser->new;
     my $ops = $data->{ops};
     my $parent_id = $main->{saved_lists}->{OE}->[-1]->{id};
     my $main2 = $main;
@@ -6211,7 +6209,7 @@ my $OnDTDEntityReference = sub {
                                di => $data->{ref}->{di},
                                index => $data->{ref}->{index}}]);
   } else {
-    my $sub = XXX::DTDEntityParser->new;
+    my $sub = Web::XML::Parser::DTDEntityParser->new;
     my $main2 = $main;
     $sub->onparsed (sub {
       my $sub = $_[0];
@@ -6249,7 +6247,7 @@ my $OnEntityValueEntityReference = sub {
                                di => $data->{ref}->{di},
                                index => $data->{ref}->{index}}]);
   } else {
-    my $sub = XXX::EntityValueEntityParser->new;
+    my $sub = Web::XML::Parser::EntityValueEntityParser->new;
     my $main2 = $main;
     $sub->onparsed (sub {
       my $sub = $_[0];
@@ -6287,7 +6285,7 @@ my $OnMDEntityReference = sub {
                                di => $data->{ref}->{di},
                                index => $data->{ref}->{index}}]);
   } else {
-    my $sub = XXX::MDEntityParser->new;
+    my $sub = Web::XML::Parser::MDEntityParser->new;
     my $main2 = $main;
     $sub->onparsed (sub {
       my $sub = $_[0];
@@ -6310,7 +6308,7 @@ my $OnMDEntityReference = sub {
       }
       $main2->{saved_states}->{Attr} = $sub->{saved_states}->{Attr};
 
-      my $sub2 = XXX::MDEntityParser->new;
+      my $sub2 = Web::XML::Parser::MDEntityParser->new;
       $sub2->onparsed (sub {
         $main2->{saved_states}->{State} = $_[0]->{saved_states}->{State};
         $main2->{saved_states}->{Attr} = $_[0]->{saved_states}->{Attr};

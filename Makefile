@@ -61,8 +61,8 @@ lib/Web/HTML/Parser.pm: bin/generate-parser.pl \
 	$(PERL) bin/generate-parser.pl > $@
 	$(PERL) -c $@
 lib/Web/XML/Parser.pm: bin/generate-parser.pl \
-    local/html-tokenizer-expanded.json \
-    local/html-tree-constructor-expanded-no-isindex.json \
+    local/xml-tokenizer-expanded.json \
+    local/xml-tree-constructor-expanded.json \
     local/elements.json local/bin/pmbp.pl $(JSON_PS)
 	#perl local/bin/pmbp.pl --create-perl-command-shortcut perl \
 	#    --install-module Path::Tiny
@@ -121,6 +121,12 @@ local/html-tokenizer-expanded.json:
 local/html-tree-constructor-expanded-no-isindex.json:
 	mkdir -p local
 	$(WGET) -O $@ https://raw.githubusercontent.com/manakai/data-web-defs/master/data/html-tree-constructor-expanded-no-isindex.json
+local/xml-tokenizer-expanded.json:
+	mkdir -p local
+	$(WGET) -O $@ https://raw.githubusercontent.com/manakai/data-web-defs/master/data/xml-tokenizer-expanded.json
+local/xml-tree-constructor-expanded.json:
+	mkdir -p local
+	$(WGET) -O $@ https://raw.githubusercontent.com/manakai/data-web-defs/master/data/xml-tree-constructor-expanded.json
 
 local/maps.json:
 	mkdir -p local
