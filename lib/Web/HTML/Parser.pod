@@ -18,21 +18,16 @@ Web::HTML::Parser - An HTML parser
 
 =head1 DESCRIPTION
 
-The C<Web::HTML::Parser> module is an implementation of the HTML
-parsing algorithm defined by the HTML Standard and implemented by Web
-browsers.
+The C<Web::HTML::Parser> module is an HTML parser, as specified by the
+HTML Standard (i.e. an "HTML5" parser), written in pure Perl.
 
-This module is intended to be a component of Web user agents, such as
-browsers, data mining tools, validators, and so on.  However, such
-applications might not want to use this module directly.  Rather, this
-module should be used indirectly through more abstract or
-domain-specific modules, such as DOM implementations, scrapers, or
-feed processors, which can provide more convinient APIs.
-
-The perl-web-dom package contains an implementation of the standard
-DOM APIs in pure Perl, which implements HTML parsing API including
-C<inner_html> and C<DOMParser> using this module.  See L<Web::DOM>
-documentation for more information.
+This module provides a low-level API to the parser, which accepts byte
+or character sequence as input and construct DOM tree as output,
+optionally reporting errors and warnings detected during the parsing.
+Applications such as browsers, data mining tools, validators, and so
+on, can use this module directly.  However, it is encouraged to use
+higher-level APIs such as DOM C<inner_html> method (see
+L<Web::DOM::ParentNode> in the perl-web-dom package, for example).
 
 =head1 METHODS
 
@@ -46,10 +41,10 @@ Create a new parser.
 
 =item $parser->parse_char_string ($chars => $doc)
 
-Parse a character string as HTML.  The first argument must be the
-character string (i.e. a latin1 or utf8 string) to parse.  The second
-argument must be a DOM C<Document> object.  The C<Document> is mutated
-during the process of parsing.
+Parse a character string as HTML.  The first argument must be a
+character string (i.e. a latin1 or utf8 string).  The second argument
+must be a DOM C<Document> object.  The C<Document> is to be mutated
+during the parsing.
 
 See <https://github.com/manakai/perl-web-markup#dependency> for the
 requirements on the C<Document> object.
@@ -58,9 +53,9 @@ requirements on the C<Document> object.
 
 Parse a byte string as HTML.  The first argument must be a character
 encoding label fo the byte string, if any, or C<undef> (See
-L</SPECIFYING ENCODING>).  The second argument must be the byte string
-to parse.  The third argument must be a DOM C<Document> object.  The
-C<Document> is mutated during the process of parsing.
+L</SPECIFYING ENCODING>).  The second argument must be a byte string.
+The third argument must be a DOM C<Document> object.  The C<Document>
+is to be mutated during the parsing.
 
 See <https://github.com/manakai/perl-web-markup#dependency> for the
 requirements on the C<Document> object.
@@ -68,13 +63,13 @@ requirements on the C<Document> object.
 =item $node_list = $parser->parse_char_string_with_context ($chars, $context, $empty_doc)
 
 Parse a character string as HTML in the specified context.  The first
-argument must be the character string (i.e. a latin1 or utf8 string)
-to parse.  The second argument must be an C<Element> object used as
-the context, or C<undef> if there is no context.  The third argument
-must be an empty C<Document> object used in the process of parsing.
-Note that the C<Document>'s children list is not affected by the
-parsing.  The method returns an C<HTMLCollection> object containing
-the result of the parsing (zero or more C<Node> objects).
+argument must be a character string (i.e. a latin1 or utf8 string).
+The second argument must be an C<Element> object used as the context,
+or C<undef> if there is no context.  The third argument must be an
+empty C<Document> object used in the parsing.  Note that the
+C<Document>'s children list is not to be affected by the parsing.  The
+method returns an C<HTMLCollection> object containing the result of
+the parsing (zero or more C<Node> objects).
 
 This method can be used to implement the C<inner_html> method of an
 C<Element>.
@@ -135,10 +130,26 @@ handler.  See
 <https://github.com/manakai/data-errors/blob/master/doc/onerror.txt>
 for details of error handling.
 
+The code is not expected to throw any exception.  See also C<throw>.
+
 The value should not be set while the parser is running.  If the value
 is changed, the result is undefined.
 
+=item $parser->throw ($code)
+
+Terminate the parser and run the specified code reference.  The code
+reference must throw an exception.
+
+When the error handler specified by the C<onerror> method is intended
+to abort the parsing, it must invoke this method and return.
+Otherwise resources used by the parser might not be destroyed due to
+the unexpected termination.
+
 =back
+
+The module also has following methods for API compatibility with
+L<Web::XML::Parser> but they have no effect: C<max_entity_depth>,
+C<max_entity_expansions>.
 
 =begin comment
 
@@ -154,7 +165,9 @@ $parser->onappcacheselection
 $parser->onscript
 $parser->onelementspopped
 $parser->onrestartwithencoding
+$parser->onextentref
 $parser->restart
+$parser->cant_expand_extentref
 
 $parser->parse_chars_start
 $parser->parse_chars_feed
@@ -163,6 +176,8 @@ $parser->parse_chars_end
 $parser->parse_bytes_start
 $parser->parse_bytes_feed
 $parser->parse_bytes_end
+
+$parser->strict_checker
 
 Also, need to add a section on how to determine the node's source
 location and errors' source location using |di| and |index|,
@@ -174,7 +189,7 @@ L<Web::HTML::SourceMap> API.
 =head1 SPECIFYING ENCODING
 
 The input to the C<parse_char_*> methods are a string of characters.
-It is always interpreted as a Perl string (utf8 or latin1).
+It is always interpreted as a Perl character string (utf8 or latin1).
 
 The input to the C<parse_byte*> methods are a string of bytes, where
 characters are encoded in some Web-compatible character encoding.  It
@@ -253,7 +268,7 @@ Wakaba <wakaba@suikawiki.org>.
 
 =head1 LICENSE
 
-Copyright 2007-2014 Wakaba <wakaba@suikawiki.org>.
+Copyright 2007-2015 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

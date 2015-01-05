@@ -5,31 +5,35 @@ Web::XML::Parser - An XML parser
 =head1 SYNOPSIS
 
   use Web::XML::Parser;
-  use Message::DOM::DOMImplementation;
+  use Web::DOM::Document;
   $parser = Web::XML::Parser->new;
-  $dom = Message::DOM::DOMImplementation->new;
-  $doc = $dom->create_document;
+  $doc = Web::DOM::Document->new;
   
   $parser->parse_char_string ($chars => $doc);
+  $parser->parse_byte_string ($encoding, $bytes => $doc);
 
   ## Or, just use DOM attribute:
   $doc->inner_html ($chars);
 
 =head1 DESCRIPTION
 
-The C<Web::XML::Parser> module is an implementation of the XML
-parser.  The parser is not Draconian - the parser does not holt on
-well-formedness errors.  It implements a variant of XML5 proposal,
-which defines error handling for ill-formed XML documents.
+The C<Web::XML::Parser> module is an XML parser, supporting XML 1.0
+and XML Namespaces 1.0, written in pure Perl.
+
+This parser is inspired by the HTML Standard and the draft XML5
+specification.  It is not a Draconian parser; it does not abort the
+parsing just because of a well-formedness error but does try to
+recover from the error.
+
+This module provides a low-level API to the parser, which accepts byte
+or character sequence as input and construct DOM tree as output,
+optionally reporting errors and warnings detected during the parsing.
+Applications such as browsers, data mining tools, validators, and so
+on, can use this module directly.  However, it is encouraged to use
+higher-level APIs such as DOM C<inner_html> method (see
+L<Web::DOM::ParentNode> in the perl-web-dom package, for example).
 
 =head1 METHODS
-
-It is recommended to use standard DOM interface, such as C<inner_html>
-method of the C<Document> object, to parse an XML string, where
-possible.  The L<Web::XML::Parser> module, which, in fact, is used
-to implement the C<inner_html> method, offers more control on how
-parser behaves, which would not be useful unless you are writing a
-complex user agent such as browser or validator.
 
 The L<Web::XML::Parser> module provides following methods:
 
@@ -41,25 +45,51 @@ Create a new parser.
 
 =item $parser->parse_char_string ($chars => $doc)
 
-Parse a string of characters (i.e. a possibly utf8-flagged string) as
-XML and construct the DOM tree.
+Parse a character string as XML.  The first argument must be a
+character string (i.e. a latin1 or utf8 string).  The second argument
+must be a DOM C<Document> object.  The C<Document> is to be mutated
+during the parsing.
 
-The first argument to the method must be a string to parse.  It may or
-may not be a valid or well-formed XML document.
+See <https://github.com/manakai/perl-web-markup#dependency> for the
+requirements on the C<Document> object.
 
-The second argument to the method must be a DOM C<Document> object
-(L<Message::DOM::Document>).  Any child nodes of the document is first
-removed by the parser.
+=item $parser->parse_byte_string ($encoding, $bytes => $doc)
+
+Parse a byte string as XML.  The first argument must be a character
+encoding label fo the byte string, if any, or C<undef> (See
+L</SPECIFYING ENCODING>).  The second argument must be a byte string.
+The third argument must be a DOM C<Document> object.  The C<Document>
+is to be mutated during the parsing.
+
+See <https://github.com/manakai/perl-web-markup#dependency> for the
+requirements on the C<Document> object.
 
 =item $node_list = $parser->parse_char_string_with_context ($chars, $context, $empty_doc)
 
-Parse a string of characters using the context node I<$context>, using
-the empty document I<$empty_doc>.
+Parse a character string as XML in the specified context.  The first
+argument must be a character string (i.e. a latin1 or utf8 string).
+The second argument must be an C<Element> object used as the context,
+or C<undef> if there is no context.  The third argument must be an
+empty C<Document> object used in the parsing.  Note that the
+C<Document>'s children list is not to be affected by the parsing.  The
+method returns an C<HTMLCollection> object containing the result of
+the parsing (zero or more C<Node> objects).
 
-The first argument to the method must be a string of characters.  The
-second argument must be an element or C<undef>.
+This method can be used to implement the C<inner_html> method of an
+C<Element>.
 
-The method returns the result node list.
+See <https://github.com/manakai/perl-web-markup#dependency> for the
+requirements on the C<Document> and C<Element> objects.
+
+=item $string = $parser->known_definite_encoding
+
+=item $parser->known_definite_encoding ($string)
+
+Get or set a known character encoding used to parse the document.  See
+also L</SPECIFYING ENCODING>.
+
+The value should not be set while the parser is running.  If the value
+is changed, the result is undefined.
 
 =item $code = $parser->onerror
 
@@ -71,15 +101,20 @@ handler.  See
 <https://github.com/manakai/data-errors/blob/master/doc/onerror.txt>
 for details of error handling.
 
+The code is not expected to throw any exception.  See also C<throw>.
+
+The value should not be set while the parser is running.  If the value
+is changed, the result is undefined.
+
 =item $parser->throw ($code)
 
 Terminate the parser and run the specified code reference.  The code
 reference must throw an exception.
 
-If the error handler specified by the C<onerror> method throw an
-exception, it must not be directly thrown and this method must be used
-instead.  Otherwise resources used by the parser is not destroyed due
-to the unexpected termination.
+When the error handler specified by the C<onerror> method is intended
+to abort the parsing, it must invoke this method and return.
+Otherwise resources used by the parser might not be destroyed due to
+the unexpected termination.
 
 =item $parser->max_entity_depth ($integer)
 
@@ -99,12 +134,42 @@ into account for the number of entity expansions.
 
 =back
 
-Parsed document structure is reflected to the C<Document> object
-specified as an argument to parse methods.
+The module also has following methods for API compatibility with
+L<Web::HTML::Parser> but they have no effect: C<locale_tag>,
+C<scripting>.
+
+=head1 SPECIFYING ENCODING
+
+The input to the C<parse_char_*> methods are a string of characters.
+It is always interpreted as a Perl character string (utf8 or latin1).
+
+The input to the C<parse_byte*> methods are a string of bytes, where
+characters are encoded in some Web-compatible character encoding.  It
+is decoded as specified by Encoding standards.
+
+The C<parse_byte*> methods accept a character encoding label as one of
+arguments.  It is interpreted as the transport layer character
+encoding metadata.  In HTTP, it is the value of the C<charset>
+parameter in the C<Content-Type> header.  If it is unknown, the
+argument must be set to C<undef>.
+
+The C<known_definite_encoding> method can be used to set a known
+definite encoding.  If its value is not C<undef>, it is used to decode
+the document.  This takes precedence over the transport layer
+character encoding metadata and is always respected.
+
+The character encoding, if specified, must be represented by one of
+its labels, defined by the Encoding Standard.  Unknown labels are
+ignored.  Examples of labels include (but not limited to): C<utf-8>,
+C<windows-1252>, C<shift_jis>, C<euc-jp>, C<iso-2022-jp>, and
+C<gb18030>.  Encoding labels are ASCII case-insensitive.
 
 =head1 SEE ALSO
 
-L<Message::DOM::Document>, L<Message::DOM::Element>.
+L<Web::DOM::Document>, L<Web::DOM::Element> in the perl-web-dom
+package.
+
+L<Web::XML::Serializer>.
 
 L<Web::HTML::Validator>.
 
@@ -122,28 +187,24 @@ for details of source location annotations using DOM3 user data.
 
 XML 1.0 <http://www.w3.org/TR/xml/>.
 
-XML 1.1 <http://www.w3.org/TR/xml11/>.
+=item XMLNS
 
 Namespaces in XML 1.0 <http://www.w3.org/TR/xml-names/>.
 
-Namespaces in XML 1.1 <http://www.w3.org/TR/xml-names11/>.
+=item INFOSET
 
 XML Information Set <http://www.w3.org/TR/xml-infoset/>.
 
 DOM Level 3 Core - Infoset Mapping
 <http://www.w3.org/TR/DOM-Level-3-Core/infoset-mapping.html>.
 
-XML5.  See <http://suika.suikawiki.org/~wakaba/wiki/sw/n/XML5> for
-references.
+=item XML5
 
-XXX XML-DOM mapping is not fully defined.
-
-The C<xmlns> attribute in an XML document MUST be mapped to an C<Attr>
-object whose namespace is the XMLNS namespace and name is C<xmlns>.
+XML-ER <https://dvcs.w3.org/hg/xml-er/raw-file/tip/Overview.html>.
 
 =item HTML
 
-HTML Living Standard - Parsing XHTML documents
+HTML Standard - Parsing XHTML documents
 <http://www.whatwg.org/specs/web-apps/current-work/#parsing-xhtml-documents>.
 
 The XML fragment parsing algorithm must return the children of the
@@ -162,13 +223,18 @@ manakai DOM Extensions
 
 =back
 
+Note that there is no single specification that completely defines XML
+parsing.
+
+XML 1.1 is no longer supported.
+
 =head1 AUTHOR
 
 Wakaba <wakaba@suikawiki.org>.
 
 =head1 LICENSE
 
-Copyright 2007-2014 Wakaba <wakaba@suikawiki.org>.
+Copyright 2007-2015 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
