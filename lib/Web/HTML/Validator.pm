@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use warnings FATAL => 'recursion';
 no warnings 'utf8';
-our $VERSION = '133.0';
+our $VERSION = '134.0';
 use Scalar::Util qw(refaddr);
 use Web::HTML::Validator::_Defs;
 use Web::HTML::SourceMap;
@@ -4110,7 +4110,8 @@ $Element->{+HTML_NS}->{meta} = {
       if ($keyword eq 'content-type' or
           $keyword eq 'default-style' or
           $keyword eq 'refresh' or
-          $keyword eq 'pics-label') {
+          $keyword eq 'pics-label' or
+          $keyword eq 'x-ua-compatible') {
         #
       } elsif ($keyword eq 'content-language' or
                $keyword eq 'set-cookie') {
@@ -4186,6 +4187,14 @@ $Element->{+HTML_NS}->{meta} = {
         }
       } elsif ($keyword eq 'set-cookie') {
         ## XXX set-cookie-string [OBSVOCAB]
+      } elsif ($keyword eq 'x-ua-compatible') {
+        if ($content_attr) {
+          my $content = $content_attr->value;
+          $self->{onerror}->(node => $content_attr,
+                             type => 'invalid attribute value',
+                             level => 'm')
+              unless $content eq 'IE=edge';
+        }
       } # $keyword
     } # $http_equiv_attr
 
