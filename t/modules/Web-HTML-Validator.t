@@ -638,9 +638,9 @@ for my $test (
 }
 
 for my $test (
-  ['shift_jis', 'x-sjis'],
-  ['utf-8', 'UTF8'],
-  ['windows-1252', 'US-ASCII'],
+  ['shift_jis', 'x-sjis', 'Shift_JIS'],
+  ['utf-8', 'UTF8', 'UTF-8'],
+  ['windows-1252', 'US-ASCII', 'windows-1252'],
 ) {
   test {
     my $c = shift;
@@ -661,7 +661,7 @@ for my $test (
     eq_or_diff \@error,
         $test->[0] eq 'utf-8' ? [] :
             [{type => 'non-utf-8 character encoding',
-              value => $test->[0],
+              value => $test->[2],
               node => $doc, level => 's'}];
     done $c;
   } n => 1, name => ['charset', @$test];
@@ -686,7 +686,7 @@ for my $test (
     eq_or_diff \@error,
         $test->[0] eq 'utf-8' ? [] :
             [{type => 'non-utf-8 character encoding',
-              value => $test->[0],
+              value => $test->[2],
               node => $doc, level => 's'}];
     done $c;
   } n => 1, name => ['charset', @$test];
@@ -707,7 +707,7 @@ test {
   });
   $validator->check_node ($doc);
   eq_or_diff \@error, [{type => 'non-utf-8 character encoding',
-                        value => 'utf-16be',
+                        value => 'UTF-16BE',
                         node => $doc, level => 's'}];
   done $c;
 } n => 1, name => ['UTF-16 BOM'];
@@ -733,10 +733,10 @@ test {
                         value => 'utf-16le',
                         level => 'm'},
                        {type => 'charset:not ascii compat',
-                        value => 'utf-16be',
+                        value => 'UTF-16BE',
                         node => $doc, level => 'm'},
                        {type => 'non-utf-8 character encoding',
-                        value => 'utf-16be',
+                        value => 'UTF-16BE',
                         node => $doc, level => 's'}];
   done $c;
 } n => 1, name => ['UTF-16 BOM'];
@@ -756,7 +756,7 @@ test {
   });
   $validator->check_node ($doc);
   eq_or_diff \@error, [{type => 'non-utf-8 character encoding',
-                        value => 'utf-16be',
+                        value => 'UTF-16BE',
                         node => $doc, level => 's'}];
   done $c;
 } n => 1, name => ['Content-Type charset=""'];
@@ -776,7 +776,7 @@ test {
   });
   $validator->check_node ($doc);
   eq_or_diff \@error, [{type => 'non-utf-8 character encoding',
-                        value => 'utf-16be',
+                        value => 'UTF-16BE',
                         node => $doc, level => 's'}];
   done $c;
 } n => 1, name => ['iframe srcdoc'];
@@ -817,12 +817,14 @@ test {
   });
   $validator->check_node ($doc);
   eq_or_diff \@error, [{type => 'charset:not ascii compat',
-                        value => 'ISO-2022-CN-EXT',
+                        #value => 'ISO-2022-CN-EXT',
+                        value  => undef,
                         node => $doc, level => 'm'},
                        {type => 'no character encoding declaration',
                         node => $doc, level => 'm'},
                        {type => 'non-utf-8 character encoding',
-                        value => 'ISO-2022-CN-EXT',
+                        #value => 'ISO-2022-CN-EXT',
+                        value => undef,
                         node => $doc, level => 's'}];
   done $c;
 } n => 1, name => ['not labelled / replacement'];

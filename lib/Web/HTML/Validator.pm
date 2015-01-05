@@ -9358,7 +9358,7 @@ sub _check_doc_charset ($$) {
       }
     }
 
-    unless ($doc->input_encoding eq 'utf-8') {
+    unless ($doc->input_encoding eq 'UTF-8') {
       $self->{onerror}->(node => $doc,
                          type => 'non-utf-8 character encoding',
                          value => $doc->input_encoding,
