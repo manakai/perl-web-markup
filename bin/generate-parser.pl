@@ -2447,7 +2447,7 @@ sub cond_to_code ($) {
     return join ' or ', map { sprintf q{$IM == %s}, im_const $_ } @{$cond->[2]};
   } elsif ($cond->[0] eq 'DOCTYPE system identifier' and
            $cond->[1] eq 'non-empty') {
-    return q{length $DTDDefs->{system_identifier}};
+    return q{defined $DTDDefs->{system_identifier} and length $DTDDefs->{system_identifier}};
   } elsif ($cond->[0] eq 'stack of template insertion modes' and
            $cond->[1] eq 'is not empty') {
     return q{@$TEMPLATE_IMS};
@@ -5014,14 +5014,14 @@ sub generate_api ($) {
       if ($EOF) {
 ## <XML>
         unless ($self->{is_sub_parser}) {
-          for my $en (keys %{$DTDDefs->{entity_names_in_entity_values} || {}}) {
+          for my $en (keys %%{$DTDDefs->{entity_names_in_entity_values} || {}}) {
             my $vt = $DTDDefs->{entity_names_in_entity_values}->{$en};
             $SC->check_hidden_name (name => (substr $en, 1, -2+length $en), onerror => sub {
-              $self->onerrors->($self, [{%{$DTDDefs->{entity_names_in_entity_values}->{$en}}, @_}]);
+              $self->onerrors->($self, [{%%{$DTDDefs->{entity_names_in_entity_values}->{$en}}, @_}]);
             });
             my $def = $DTDDefs->{ge}->{$en};
             if (defined $def->{notation_name}) {
-              push @$Errors, {%{$DTDDefs->{entity_names_in_entity_values}->{$en}},
+              push @$Errors, {%%{$DTDDefs->{entity_names_in_entity_values}->{$en}},
                               level => 'w',
                               type => 'xml:dtd:entity value:unparsed entref',
                               value => $en};
@@ -5029,9 +5029,9 @@ sub generate_api ($) {
           } # $en
           $SC->check_ncnames (names => $DTDDefs->{el_ncnames} || {},
                               onerror => sub { $self->onerrors->($self, [{@_}]) });
-          for my $en (keys %{$DTDDefs->{entity_names} || {}}) {
+          for my $en (keys %%{$DTDDefs->{entity_names} || {}}) {
             $SC->check_hidden_name (name => (substr $en, 1, -2+length $en), onerror => sub {
-              $self->onerrors->($self, [{%{$DTDDefs->{entity_names}->{$en}}, @_}]);
+              $self->onerrors->($self, [{%%{$DTDDefs->{entity_names}->{$en}}, @_}]);
             });
           }
         }
@@ -5259,7 +5259,7 @@ sub generate_api ($) {
             $prefixes->{$prefix} = 1 if defined $prefix;
             $p = $p->parent_node;
           }
-          for ('', keys %$prefixes) {
+          for ('', keys %%$prefixes) {
             $nsmap->{$_} = $context->lookup_namespace_uri ($_);
           }
           $nsmap->{xml} = q<http://www.w3.org/XML/1998/namespace>;

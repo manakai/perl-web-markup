@@ -1413,7 +1413,7 @@ return;
         
           } else {
             
-          if (length $DTDDefs->{system_identifier}) {
+          if (defined $DTDDefs->{system_identifier} and length $DTDDefs->{system_identifier}) {
             
         push @$Callbacks, [$OnDTDEntityReference,
                            {entity => {system_identifier => $DTDDefs->{system_identifier}},
@@ -3313,7 +3313,7 @@ return;
         ## [141] in subset;EOD
         sub {
           
-          if (length $DTDDefs->{system_identifier}) {
+          if (defined $DTDDefs->{system_identifier} and length $DTDDefs->{system_identifier}) {
             
         push @$Callbacks, [$OnDTDEntityReference,
                            {entity => {system_identifier => $DTDDefs->{system_identifier}},
