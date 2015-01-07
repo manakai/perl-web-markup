@@ -54,6 +54,17 @@ for details of error handling.
 The value should not be set during the validation.  If the value is
 changed, the result is undefined.
 
+=item $dids = $val->di_data_set
+
+=item $val->di_data_set ($dids)
+
+Get or set the "di" data set for the validator.  It is used for
+reporting errors in nested subdocuments contained in the validated
+document (e.g. C<iframe> C<srcdoc> documents).
+
+See also SuikaWiki:manakai index data structure
+<http://wiki.suikawiki.org/n/manakai%20index%20data%20structures>.
+
 =item $boolean = $val->scripting
 
 =item $val->scripting ($boolean)
@@ -398,7 +409,7 @@ Wakaba <wakaba@suikawiki.org>.
 
 =head1 LICENSE
 
-Copyright 2007-2014 Wakaba <wakaba@suikawiki.org>.
+Copyright 2007-2015 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

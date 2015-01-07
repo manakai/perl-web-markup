@@ -4,9 +4,11 @@ use Path::Class;
 use lib file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'lib')->stringify;
 use lib glob file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'modules', '*', 'lib')->stringify;
 use Test::X1;
+use Test::More;
 use Test::Differences;
 use Web::DOM::Document;
 use Web::HTML::Validator;
+use Web::HTML::SourceMap;
 
 for my $attr (qw(xml:lang xml:space xml:base)) {
   test {
@@ -1152,6 +1154,50 @@ test {
   eq_or_diff $preferred, [{type => 'css_prop', name => 'text-align'}];
   done $c;
 } n => 1, name => 'obsolete attribute preferred';
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  $doc->manakai_is_html (1);
+  my $dids = [];
+  $doc->inner_html (q{<!DOCTYPE HTML><title>y</title><iframe>x</iframe>});
+  $doc->query_selector ('iframe')->set_attribute (srcdoc => "ho&xxx;");
+  my $val = new Web::HTML::Validator;
+  my $errors = [];
+  $val->onerror (sub {
+    my %args = @_;
+    push @$errors, \%args;
+  });
+  $val->di_data_set ($dids);
+  $val->check_node ($doc);
+  @$errors = grep { $_->{type} =~ /entity not declared/ } @$errors;
+  is $errors->[0]->{di}, 0;
+  is $errors->[0]->{index}, 2;
+  done $c;
+} n => 2, name => 'di_data_set no source document data';
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  $doc->manakai_is_html (1);
+  my $dids = [undef, undef];
+  $doc->inner_html (q{<!DOCTYPE HTML><title>y</title><iframe srcdoc="ho&amp;xxx;">x</iframe>});
+  my $val = new Web::HTML::Validator;
+  my $errors = [];
+  $val->onerror (sub {
+    my %args = @_;
+    push @$errors, \%args;
+  });
+  $val->di_data_set ($dids);
+  $val->check_node ($doc);
+  @$errors = grep { $_->{type} =~ /entity not declared/ } @$errors;
+  is $errors->[0]->{di}, 2;
+  is $errors->[0]->{index}, 2;
+  my ($di, $index) = resolve_index_pair ($dids, $errors->[0]->{di}, $errors->[0]->{index});
+  is $di, 1;
+  is $index, 49;
+  done $c;
+} n => 4, name => 'di_data_set has source document data';
 
 run_tests;
 
