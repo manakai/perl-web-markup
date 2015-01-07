@@ -1055,8 +1055,7 @@ test {
       [{type => 'css:prop:unknown',
         value => 'hoge',
         level => 'm',
-        node => $el->attributes->[0],
-        line => 1, column => 1, di => -1}];
+        node => $el->attributes->[0]}];
   done $c;
 } n => 1, name => ['check_node', 'style="" with no line data'];
 
@@ -1107,16 +1106,13 @@ for my $test (
     });
     $validator->scripting (1);
     $validator->check_node ($el1);
-    eq_or_diff [map {
-      # XXXindex
-      delete $_->{di}; delete $_->{line}; delete $_->{column}; $_;
-    } grep { $_->{type} !~ /^status:/ } @error],
+    eq_or_diff [grep { $_->{type} !~ /^status:/ } @error],
         [{type => $test->[1],
           level => 'm',
           node => $el2,
-          },#XXXindex line => 1, column => 1, di => -1},
+          di => 1, index => 0},
          ($test->[2] ? ({type => $test->[2],
-                         #XXXindex line => 1, column => 11, di => -1,
+                         di => 1, index => 0,
                          level => 'm',
                          node => $el2}) : ())];
     done $c;
@@ -1161,7 +1157,7 @@ test {
   $doc->manakai_is_html (1);
   my $dids = [];
   $doc->inner_html (q{<!DOCTYPE HTML><title>y</title><iframe>x</iframe>});
-  $doc->query_selector ('iframe')->set_attribute (srcdoc => "ho&xxx;");
+  $doc->query_selector ('iframe')->set_attribute (srcdoc => "ho&xxy;");
   my $val = new Web::HTML::Validator;
   my $errors = [];
   $val->onerror (sub {
@@ -1181,7 +1177,7 @@ test {
   my $doc = new Web::DOM::Document;
   $doc->manakai_is_html (1);
   my $dids = [undef, undef];
-  $doc->inner_html (q{<!DOCTYPE HTML><title>y</title><iframe srcdoc="ho&amp;xxx;">x</iframe>});
+  $doc->inner_html (q{<!DOCTYPE HTML><title>y</title><iframe srcdoc="ho&amp;xxy;">x</iframe>});
   my $val = new Web::HTML::Validator;
   my $errors = [];
   $val->onerror (sub {

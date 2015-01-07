@@ -58,6 +58,7 @@ my $GetNestedOnError = sub ($$) {
     $args{node} = $node;
     delete $args{line};
     delete $args{column};
+    delete $args{uri}; # XXX
     $_onerror->(%args);
   };
 }; # $GetNestedOnError
@@ -9168,7 +9169,12 @@ $CheckDIVContent = sub {
   my $dids = $self->di_data_set;
   $parser->di_data_set ($dids);
 
-  my $is = $node->manakai_get_indexed_string;
+  my $is = [];
+  for ($node->child_nodes->to_list) {
+    if ($_->node_type == 3) { # TEXT_NODE
+      push @$is, @{$_->manakai_get_indexed_string};
+    }
+  }
   $dids->[@$dids]->{map} = indexed_string_to_mapping $is;
   $parser->di ($#$dids);
   my $nodes = $parser->parse_char_string_with_context
