@@ -16,6 +16,13 @@ sub new ($) {
 
 ## ------ Validator error handler ------
 
+sub di_data_set ($;$) {
+  if (@_ > 1) {
+    $_[0]->{di_data_set} = $_[1];
+  }
+  return $_[0]->{di_data_set} ||= [];
+} # di_data_set
+
 sub onerror ($;$) {
   if (@_ > 1) {
     $_[0]->{onerror} = $_[1];
@@ -34,31 +41,25 @@ sub onerror ($;$) {
   };
 } # onerror
 
-my $GetNestedOnError = sub ($$$;$) {
-  my ($onerror, $node, undef, $sps) = @_;
-
-  my $map_parsed = create_pos_lc_map $_[2];
-  my $map_source = $sps || $node->get_user_data ('manakai_sps') || [];
-  if (sps_is_empty $map_source) {
-    my $sp = [0, 0,
-              $node->get_user_data ('manakai_source_line'),
-              $node->get_user_data ('manakai_source_column'),
-              $node->get_user_data ('manakai_di')];
-    $map_source = [$sp] if defined $sp->[3];
-  }
-
-  return sub {
+my $GetNestedOnError = sub ($$) {
+  my ($_onerror, $node) = @_;
+  my $onerror = sub {
     my %args = @_;
-    delete $args{uri}; # XXX
-
-    if (not defined $args{column} and defined $args{node}) {
-      $args{line} = $args{node}->get_user_data ('manakai_source_line');
-      $args{column} = $args{node}->get_user_data ('manakai_source_column');
-      $args{di} = $args{node}->get_user_data ('manakai_di');
+    if (not defined $args{index} and defined $args{node}) {
+      my $loc = $args{node}->manakai_get_source_location;
+      if ($loc->[1] >= 0) {
+        $args{di} = $loc->[1];
+        $args{index} = $loc->[2];
+      }
     }
-    lc_lc_mapper $map_parsed => $map_source, \%args;
-
-    $onerror->(%args, node => $node);
+    if (defined $args{node} and not defined $args{di} and not defined $args{value}) {
+      $args{value} = $args{node}->node_value;
+    }
+    $args{node} = $node;
+    delete $args{line};
+    delete $args{column};
+    delete $args{uri}; # XXX
+    $_onerror->(%args);
   };
 }; # $GetNestedOnError
 
@@ -300,8 +301,9 @@ sub _check_attr_bidi ($$) {
   my ($self, $attr) = @_;
   my $value = $attr->value;
   my @expected;
-  my $onerror = $GetNestedOnError->($self->onerror, $attr, $value);
+  my $onerror = $GetNestedOnError->($self->onerror, $attr);
 
+  # XXX index
   my $line = 1;
   my $col_offset = -1;
   while ($value =~ /([\x{202A}-\x{202E}\x{2066}-\x{2069}\x0A]|\x0D\x0A?)/g) {
@@ -3267,7 +3269,7 @@ my %HTMLTextChecker = (
         || $ElementTextCheckerByType->{$el_def->{text_type} || ''};
     if (defined $checker) {
       my ($value, undef, $sps, undef) = node_to_text_and_tc_and_sps $item->{node};
-      my $onerror = $GetNestedOnError->($self->onerror, $item->{node}, $value, $sps);
+      my $onerror = $GetNestedOnError->($self->onerror, $item->{node});
       $checker->($self, $value, $onerror);
     } # $checker
   }, # check_end
@@ -4520,7 +4522,7 @@ $Element->{+HTML_NS}->{script} = {
       require Web::JS::Checker;
       my $jsc = Web::JS::Checker->new;
       $jsc->impl ('JE');
-      $jsc->onerror ($GetNestedOnError->($self->onerror, $item->{node}, $text, $text_sps));
+      $jsc->onerror ($GetNestedOnError->($self->onerror, $item->{node}));
       $jsc->check_char_string ($text);
     } elsif (defined $element_state->{content_type}) {
       $self->{onerror}->(node => $item->{node},
@@ -4568,7 +4570,7 @@ $CheckerByType->{'event handler'} = sub {
   require Web::JS::Checker;
   my $jsc = Web::JS::Checker->new;
   $jsc->impl ('JE');
-  $jsc->onerror ($GetNestedOnError->($self->onerror, $attr, $attr->value));
+  $jsc->onerror ($GetNestedOnError->($self->onerror, $attr));
   $jsc->check_char_string ($attr->value);
 }; # event handler
 
@@ -9083,7 +9085,7 @@ sub _check_fallback_html ($$$$) {
   my $container = $context->owner_document->create_element ($container_ln);
 
   my (undef, $value, undef, $sps) = node_to_text_and_tc_and_sps $context;
-  my $onerror = $GetNestedOnError->($self->onerror, $context, $value, $sps);
+  my $onerror = $GetNestedOnError->($self->onerror, $context);
 
   require Web::DOM::Document;
   my $doc = new Web::DOM::Document;
@@ -9134,13 +9136,18 @@ $ElementAttrChecker->{(HTML_NS)}->{iframe}->{''}->{srcdoc} = sub {
     require Web::XML::Parser;
     $parser = Web::XML::Parser->new;
   }
-  my $value = $attr->value;
-  my $onerror = $GetNestedOnError->($self->onerror, $attr, $value);
+  my $onerror = $GetNestedOnError->($self->onerror, $attr);
   $parser->onerror ($onerror);
-  $parser->parse_char_string ($value => $doc);
+  my $dids = $self->di_data_set;
+  $parser->di_data_set ($dids);
+  my $is = $attr->manakai_get_indexed_string;
+  $dids->[@$dids]->{map} = indexed_string_to_mapping $is;
+  $parser->di ($#$dids);
+  $parser->parse_char_string ((join '', map { $_->[0] } @$is) => $doc);
   
   my $checker = Web::HTML::Validator->new;
   $checker->onerror ($onerror);
+  $checker->di_data_set ($dids);
   $checker->scripting ($self->scripting);
   $checker->check_node ($doc);
 }; # <iframe srcdoc="">
@@ -9157,18 +9164,28 @@ $CheckDIVContent = sub {
   my $parser = Web::HTML::Parser->new;
   $parser->scripting ($self->scripting);
 
-  my ($value, undef, $sps, undef) = node_to_text_and_tc_and_sps $node;
-  my $onerror = $GetNestedOnError->($self->onerror, $node, $value, $sps);
+  my $onerror = $GetNestedOnError->($self->onerror, $node);
   $parser->onerror ($onerror);
+  my $dids = $self->di_data_set;
+  $parser->di_data_set ($dids);
 
-  for (@{$parser->parse_char_string_with_context ($value, $div => $doc)}) {
-    $div->append_child ($_);
+  my $is = [];
+  for ($node->child_nodes->to_list) {
+    if ($_->node_type == 3) { # TEXT_NODE
+      push @$is, @{$_->manakai_get_indexed_string};
+    }
   }
+  $dids->[@$dids]->{map} = indexed_string_to_mapping $is;
+  $parser->di ($#$dids);
+  my $nodes = $parser->parse_char_string_with_context
+      ((join '', map { $_->[0] } @$is), $div => $doc);
+  $div->append_child ($_) for $nodes->to_list;
 
   require Web::HTML::Validator;
   my $checker = Web::HTML::Validator->new;
   $checker->scripting ($self->scripting);
   $checker->onerror ($onerror);
+  $checker->di_data_set ($dids);
   $checker->check_node ($div);
 }; # $CheckDIVContent
 
@@ -9306,7 +9323,7 @@ sub _css_parser ($$$;$) {
   $context->base_url ($node->base_uri);
   $parser->context ($context);
   $parser->media_resolver->set_supported (all => 1);
-  $parser->onerror ($GetNestedOnError->($self->onerror, $node, $value, $sps));
+  $parser->onerror ($GetNestedOnError->($self->onerror, $node));
   #$parser->init_parser;
   return $parser;
 } # _css_parser
@@ -9367,7 +9384,7 @@ sub _check_doc_charset ($$) {
       }
     }
 
-    unless ($doc->input_encoding eq 'utf-8') {
+    unless ($doc->input_encoding eq 'UTF-8') {
       $self->{onerror}->(node => $doc,
                          type => 'non-utf-8 character encoding',
                          value => $doc->input_encoding,
@@ -11088,7 +11105,7 @@ $Web::HTML::Validator::LinkType = {
 
 =head1 LICENSE
 
-Copyright 2007-2014 Wakaba <wakaba@suikawiki.org>.
+Copyright 2007-2015 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

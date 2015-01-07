@@ -1,6 +1,6 @@
 all: generated-pm-files lib/Web/HTML/Validator/_Defs.pm \
     lib/Web/HTML/_SyntaxDefs.pm lib/Web/HTML/_NamedEntityList.pm \
-    lib/Web/HTML/Parser.pm
+    lib/Web/HTML/Parser.pm lib/Web/XML/Parser.pm
 clean: clean-json-ps
 	rm -fr local/*.json
 
@@ -60,6 +60,15 @@ lib/Web/HTML/Parser.pm: bin/generate-parser.pl \
 	    --install-module Path::Tiny
 	$(PERL) bin/generate-parser.pl > $@
 	$(PERL) -c $@
+lib/Web/XML/Parser.pm: bin/generate-parser.pl \
+    local/xml-tokenizer-expanded.json \
+    local/xml-tree-constructor-expanded.json \
+    local/elements.json local/bin/pmbp.pl $(JSON_PS)
+	#perl local/bin/pmbp.pl --create-perl-command-shortcut perl \
+	#    --install-module Path::Tiny
+	PARSER_LANG=XML \
+	$(PERL) bin/generate-parser.pl > $@
+	$(PERL) -c $@
 
 lib/Web/HTML/_NamedEntityList.pm: local/html-charrefs.json local/bin/pmbp.pl \
     Makefile
@@ -112,6 +121,12 @@ local/html-tokenizer-expanded.json:
 local/html-tree-constructor-expanded-no-isindex.json:
 	mkdir -p local
 	$(WGET) -O $@ https://raw.githubusercontent.com/manakai/data-web-defs/master/data/html-tree-constructor-expanded-no-isindex.json
+local/xml-tokenizer-expanded.json:
+	mkdir -p local
+	$(WGET) -O $@ https://raw.githubusercontent.com/manakai/data-web-defs/master/data/xml-tokenizer-expanded.json
+local/xml-tree-constructor-expanded.json:
+	mkdir -p local
+	$(WGET) -O $@ https://raw.githubusercontent.com/manakai/data-web-defs/master/data/xml-tree-constructor-expanded.json
 
 local/maps.json:
 	mkdir -p local

@@ -8,7 +8,7 @@ use Test::X1;
 use Test::More;
 use Test::Differences;
 use JSON::PS;
-use Web::HTML::Parser;
+use Web::XML::Parser;
 use Web::HTML::SourceMap;
 use Web::DOM::Document;
 
@@ -18,16 +18,16 @@ my $error_defs = json_bytes2perl $path->slurp;
 $error_defs = $error_defs->{errors} if defined $error_defs->{errors};
 
 test {
-  ok @{$error_defs->{'stray end tag'}->{parser_tests}};
+  ok @{$error_defs->{'ref outside of root element'}->{parser_tests}};
   shift->done;
 } n => 1, name => 'test loaded';
 
 for my $error_type (keys %$error_defs) {
   for my $test (@{$error_defs->{$error_type}->{parser_tests} or []}) {
-    next unless $test->{lang} eq 'HTML';
+    next unless $test->{lang} eq 'XML';
     test {
       my $c = shift;
-      my $parser = Web::HTML::Parser->new;
+      my $parser = Web::XML::Parser->new;
       my $errors = [];
       $parser->onerrors (sub { push @$errors, @{$_[1]} });
       my $doc = new Web::DOM::Document;

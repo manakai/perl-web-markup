@@ -34,12 +34,12 @@ sub _html_parser_change_the_encoding_char_string : Test(4) {
   my $doc = new Web::DOM::Document;
   $parser->parse_char_string ('<meta charset=shift_jis>' => $doc);
   ok !$called;
-  is $doc->input_encoding, 'utf-8';
+  is $doc->input_encoding, 'UTF-8';
   
   my $doc2 = new Web::DOM::Document;
   $parser->parse_char_string ('<meta http-equiv=Content-Type content="text/html; charset=shift_jis">' => $doc2);
   ok !$called;
-  is $doc2->input_encoding, 'utf-8';
+  is $doc2->input_encoding, 'UTF-8';
 } # _html_parser_change_the_encoding_char_string
 
 sub _html_parser_change_the_encoding_fragment : Test(2) {
@@ -116,7 +116,7 @@ sub _html_parser_change_the_encoding_byte_string : Test(64) {
       undef $called;
       $parser->parse_byte_string (undef, (' ' x 1024) . $input => $doc);
       ok $called, $input; # prescan fails but parser detects <meta charset>
-      is $doc->input_encoding, 'shift_jis';
+      is $doc->input_encoding, 'Shift_JIS';
     }
     {
       my $parser = Web::HTML::Parser->new;
@@ -129,7 +129,7 @@ sub _html_parser_change_the_encoding_byte_string : Test(64) {
       undef $called;
       $parser->parse_byte_string (undef, $input => $doc);
       ok !$called; # prescan detects <meta charset>
-      is $doc->input_encoding, 'shift_jis';
+      is $doc->input_encoding, 'Shift_JIS';
     }
   }
 } # _html_parser_change_the_encoding_byte_string
@@ -138,33 +138,33 @@ sub _html_parser_change_the_encoding_byte_string_changed : Test(96) {
   my $dom = Web::DOM::Implementation->new;
 
   for (
-    ['<meta charset=shift_jis>' => 'shift_jis'],
-    ['<meta charset=euc-jp>' => 'euc-jp'],
-    ['<meta charset=iso-2022-jp>' => 'iso-2022-jp'],
-    ['<meta charset=utf-8>' => 'utf-8'],
-    ['<meta charset=utf-16>' => 'utf-8'],
-    ['<meta charset=utf-16be>' => 'utf-8'],
-    ['<meta charset=utf-16le>' => 'utf-8'],
+    ['<meta charset=shift_jis>' => 'Shift_JIS'],
+    ['<meta charset=euc-jp>' => 'EUC-JP'],
+    ['<meta charset=iso-2022-jp>' => 'ISO-2022-JP'],
+    ['<meta charset=utf-8>' => 'UTF-8'],
+    ['<meta charset=utf-16>' => 'UTF-8'],
+    ['<meta charset=utf-16be>' => 'UTF-8'],
+    ['<meta charset=utf-16le>' => 'UTF-8'],
 
-    ['<meta http-equiv=content-type content="text/html; charset=euc-jp">' => 'euc-jp'],
-    ['<meta http-equiv=content-type content="text/html; charset=utf-8">' => 'utf-8'],
-    ['<meta http-equiv=content-type content="text/html; charset=utf-16">' => 'utf-8'],
-    ['<meta http-equiv=content-type content="text/html; charset=utf-16be">' => 'utf-8'],
-    ['<meta http-equiv=content-type content="text/html; charset=utf-16le">' => 'utf-8'],
+    ['<meta http-equiv=content-type content="text/html; charset=euc-jp">' => 'EUC-JP'],
+    ['<meta http-equiv=content-type content="text/html; charset=utf-8">' => 'UTF-8'],
+    ['<meta http-equiv=content-type content="text/html; charset=utf-16">' => 'UTF-8'],
+    ['<meta http-equiv=content-type content="text/html; charset=utf-16be">' => 'UTF-8'],
+    ['<meta http-equiv=content-type content="text/html; charset=utf-16le">' => 'UTF-8'],
 
-    ['<p><meta charset=shift_jis>' => 'shift_jis'],
-    ['<p><meta charset=euc-jp>' => 'euc-jp'],
-    ['<p><meta charset=iso-2022-jp>' => 'iso-2022-jp'],
-    ['<p><meta charset=utf-8>' => 'utf-8'],
-    ['<p><meta charset=utf-16>' => 'utf-8'],
-    ['<p><meta charset=utf-16be>' => 'utf-8'],
-    ['<p><meta charset=utf-16le>' => 'utf-8'],
+    ['<p><meta charset=shift_jis>' => 'Shift_JIS'],
+    ['<p><meta charset=euc-jp>' => 'EUC-JP'],
+    ['<p><meta charset=iso-2022-jp>' => 'ISO-2022-JP'],
+    ['<p><meta charset=utf-8>' => 'UTF-8'],
+    ['<p><meta charset=utf-16>' => 'UTF-8'],
+    ['<p><meta charset=utf-16be>' => 'UTF-8'],
+    ['<p><meta charset=utf-16le>' => 'UTF-8'],
 
-    ['<p><meta http-equiv=content-type content="text/html; charset=euc-jp">' => 'euc-jp'],
-    ['<p><meta http-equiv=content-type content="text/html; charset=utf-8">' => 'utf-8'],
-    ['<p><meta http-equiv=content-type content="text/html; charset=utf-16">' => 'utf-8'],
-    ['<p><meta http-equiv=content-type content="text/html; charset=utf-16be">' => 'utf-8'],
-    ['<p><meta http-equiv=content-type content="text/html; charset=utf-16le">' => 'utf-8'],
+    ['<p><meta http-equiv=content-type content="text/html; charset=euc-jp">' => 'EUC-JP'],
+    ['<p><meta http-equiv=content-type content="text/html; charset=utf-8">' => 'UTF-8'],
+    ['<p><meta http-equiv=content-type content="text/html; charset=utf-16">' => 'UTF-8'],
+    ['<p><meta http-equiv=content-type content="text/html; charset=utf-16be">' => 'UTF-8'],
+    ['<p><meta http-equiv=content-type content="text/html; charset=utf-16le">' => 'UTF-8'],
   ) {
     {
       my $parser = Web::HTML::Parser->new;
@@ -256,7 +256,7 @@ sub _html_parser_change_the_encoding_byte_string_with_charset : Test(4) {
       my $doc = $dom->create_document;
       $parser->parse_byte_string ('euc-jp', (' ' x 1024) . $input => $doc);
       ok !$called;
-      is $doc->input_encoding, 'euc-jp';
+      is $doc->input_encoding, 'EUC-JP';
     }
     {
       my $parser = Web::HTML::Parser->new;
@@ -268,7 +268,7 @@ sub _html_parser_change_the_encoding_byte_string_with_charset : Test(4) {
       my $doc = $dom->create_document;
       $parser->parse_byte_string ('euc-jp', $input => $doc);
       ok !$called;
-      is $doc->input_encoding, 'euc-jp';
+      is $doc->input_encoding, 'EUC-JP';
     }
   }
 } # _html_parser_change_the_encoding_byte_string_with_charset
@@ -296,7 +296,7 @@ sub _html_parser_bom : Test(20) {
     my $doc = $dom->create_document;
     $parser->parse_byte_string ($test->[1], $test->[0] => $doc);
     ok !$called;
-    is $doc->input_encoding, $test->[2];
+    is lc $doc->input_encoding, $test->[2];
   }
 } # _html_parser_bom
 
@@ -308,7 +308,7 @@ sub _parse_char_string : Test(4) {
   $parser->parse_char_string ($input => $doc);
   is scalar @{$doc->child_nodes}, 2;
   eq_or_diff $doc->inner_html, qq{<!DOCTYPE html><html lang="en"><head><title>\x{0500}\x{0200}</title></head><body>\x{0500}</body></html>};
-  is $doc->input_encoding, 'utf-8';
+  is $doc->input_encoding, 'UTF-8';
   is $doc->manakai_is_html, 1;
 } # _parse_char_string
 
@@ -369,7 +369,7 @@ sub _parse_char_string_encoding_decl : Test(2) {
   my $parser = Web::HTML::Parser->new;
   $parser->parse_char_string ($input => $doc);
   eq_or_diff $doc->inner_html, q{<html lang="en"><head><meta charset="euc-jp"></head><body></body></html>};
-  is $doc->input_encoding, 'utf-8';
+  is $doc->input_encoding, 'UTF-8';
 } # _parse_char_string_encoding_decl
 
 sub _parse_byte_string_latin1 : Test(2) {
@@ -391,7 +391,7 @@ sub _parse_byte_string_utf8 : Test(2) {
   $parser->parse_byte_string ('utf-8', $input => $doc);
 
   eq_or_diff $doc->inner_html, qq{<html lang="en"><head></head><body>\x{03ef}\x{fffd}\x21\x21</body></html>};
-  is $doc->input_encoding, 'utf-8';
+  is $doc->input_encoding, 'UTF-8';
 } # _parse_byte_string_utf8
 
 sub _parse_byte_string_sjis_detected : Test(2) {
@@ -402,7 +402,7 @@ sub _parse_byte_string_sjis_detected : Test(2) {
   $parser->parse_byte_string (undef, $input => $doc);
 
   eq_or_diff $doc->inner_html, qq{<html lang="en"><head></head><body>\x{307b}\x{3052}\x{307b}\x{3052}nemui\x{3067}\x{3059}</body></html>};
-  is $doc->input_encoding, 'shift_jis';
+  is $doc->input_encoding, 'Shift_JIS';
 } # _parse_byte_string_sjis_detected
 
 sub _parse_byte_string_utf8_detected : Test(2) {
@@ -413,7 +413,7 @@ sub _parse_byte_string_utf8_detected : Test(2) {
   $parser->parse_byte_string (undef, $input => $doc);
 
   eq_or_diff $doc->inner_html, qq{<html lang="en"><head></head><body>\x{03ef}\x{fffd}\x21\x21</body></html>};
-  is $doc->input_encoding, 'utf-8';
+  is $doc->input_encoding, 'UTF-8';
 } # _parse_byte_string_utf8_detected
 
 sub _parse_byte_string_jis_detected : Test(2) {
@@ -424,7 +424,7 @@ sub _parse_byte_string_jis_detected : Test(2) {
   $parser->parse_byte_string (undef, $input => $doc);
 
   eq_or_diff $doc->inner_html, qq{<html lang="en"><head></head><body>\x{307f}\x{30fb}\x{3059}\x{30fb}\x{3058}</body></html>};
-  is $doc->input_encoding, 'iso-2022-jp';
+  is $doc->input_encoding, 'ISO-2022-JP';
 } # _parse_byte_string_jis_detected
 
 sub _parse_byte_string_onerror_new : Test(2) {
@@ -451,7 +451,7 @@ sub _parse_byte_string_with_a_known_definite_encoding : Test(1) {
   my $parser = Web::HTML::Parser->new;
   $parser->known_definite_encoding ('shift_jis');
   $parser->parse_byte_string ('euc-jp', "<!DOCTYPE html><meta charset=iso-8859-1>\x81\x40" => $doc);
-  is $doc->input_encoding, 'shift_jis';
+  is $doc->input_encoding, 'Shift_JIS';
 } # _parse_byte_string_with_a_known_definite_encoding
 
 sub _parse_byte_string_with_a_known_definite_encoding_2 : Test(1) {
@@ -530,7 +530,7 @@ sub _parse_bytes_stream_change_encoding_by_main_parser : Test(3) {
   $parser->parse_bytes_end;
   
   ok $doc->manakai_is_html;
-  is $doc->input_encoding, 'shift_jis';
+  is $doc->input_encoding, 'Shift_JIS';
   is $doc->inner_html, qq(<html><head><meta charset="shift_jis"><link></head><body><p><q>\x{3000}</q></p></body></html>);
 } # _parse_bytes_stream_change_encoding_by_main_parser
 
@@ -586,7 +586,7 @@ sub _parse_bytes_stream_locale_default_2 : Test(2) {
   $parser->parse_bytes_feed ('<!DOCTYPE html>hoge', start_parsing => 1);
   $parser->parse_bytes_end;
   
-  is $doc->input_encoding, 'shift_jis';
+  is $doc->input_encoding, 'Shift_JIS';
   is $doc->inner_html, q(<!DOCTYPE html><html><head></head><body>hoge</body></html>);
 } # _parse_bytes_stream_locale_default_2
 
@@ -599,7 +599,7 @@ sub _parse_bytes_stream_locale_default_2_long : Test(2) {
   $parser->parse_bytes_feed ('<!DOCTYPE html>hoge', start_parsing => 1);
   $parser->parse_bytes_end;
   
-  is $doc->input_encoding, 'shift_jis';
+  is $doc->input_encoding, 'Shift_JIS';
   is $doc->inner_html, q(<!DOCTYPE html><html><head></head><body>hoge</body></html>);
 } # _parse_bytes_stream_locale_default_2_long
 
@@ -624,7 +624,7 @@ sub _parse_bytes_stream_with_a_known_definite_encoding : Test(1) {
   $parser->parse_bytes_start ('euc-jp', $doc);
   $parser->parse_bytes_feed ("<!DOCTYPE html><meta charset=iso-8859-1>\x81\x40");
   $parser->parse_bytes_end;
-  is $doc->input_encoding, 'shift_jis';
+  is $doc->input_encoding, 'Shift_JIS';
 } # _parse_bytes_stream_with_a_known_definite_encoding
 
 __PACKAGE__->runtests;
@@ -633,7 +633,7 @@ __PACKAGE__->runtests;
 
 =head1 LICENSE
 
-Copyright 2009-2014 Wakaba <wakaba@suikawiki.org>.
+Copyright 2009-2015 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

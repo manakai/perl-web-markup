@@ -4,7 +4,7 @@ use Path::Class;
 use lib glob file (__FILE__)->dir->parent->subdir ('t_deps', 'modules', '*', 'lib');
 use Encode;
 use Web::DOM::Document;
-use Web::HTML::Parser;
+use Web::XML::Parser;
 use Web::HTML::Validator;
 use Web::HTML::SourceMap;
 
@@ -45,7 +45,7 @@ my $onerror = sub {
 }; # $onerror
 
 my $doc = new Web::DOM::Document;
-my $parser = Web::HTML::Parser->new;
+my $parser = Web::XML::Parser->new;
 $parser->scripting (1);
 $parser->di_data_set ($dids);
 $parser->locale_tag (lc $ENV{LANG}) if $ENV{LANG};

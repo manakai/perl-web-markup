@@ -50,6 +50,7 @@ if ($DEBUG) {
 
 use Web::XML::Parser;
 use Web::HTML::Dumper qw/dumptree/;
+use Web::HTML::SourceMap;
 
 my $dom_class = $ENV{DOM_IMPL_CLASS} || 'Web::DOM::Implementation';
 eval qq{ require $dom_class } or die $@;
@@ -73,17 +74,29 @@ sub _test ($$) {
 
   my $doc = $dom->create_document;
   my $p = Web::XML::Parser->new;
-  my $ges = $p->{ge} ||= {};
-  my $pes = $p->{pe} ||= {};
+
+  my $ip = [];
+  my $main_di = 0;
+  $p->di (0);
+  $ip->[$main_di]->{data} = $test->{data}->[0];
+  $ip->[$main_di]->{lc_map} = create_index_lc_mapping $ip->[$main_di]->{data};
+  my $url_to_di = {};
+  for (0..$#{$test->{resource} or []}) {
+    my $res = $test->{resource}->[$_];
+    $ip->[$_+1]->{data} = $res->[0];
+    $ip->[$_+1]->{lc_map} = create_index_lc_mapping $ip->[$_+1]->{data};
+    $ip->[$_+1]->{url} = $res->[1]->[0]; # or undef
+    $url_to_di->{$res->[1]->[0]} = $_+1 if defined $res->[1]->[0];
+  }
+  $p->di_data_set ($ip);
 
   my @errors;
   $p->onerror (sub {
     my %opt = @_;
-    my $di = $opt{di};
-    $di = $opt{token}->{di} if not defined $di and defined $opt{token};
+    my ($di, $index) = resolve_index_pair $ip, $opt{di}, $opt{index};
+    my ($l, $c) = index_pair_to_lc_pair $ip, $di, $index;
     push @errors, join ';',
-        ($di ? "[$di]" : '') . ($opt{line} || $opt{token}->{line}),
-        defined $opt{column} ? $opt{column} : $opt{token}->{column},
+        ($di != $main_di ? "[$di]" : '') . ($l || 0), ($c || 0),
         $opt{type},
         defined $opt{text} ? $opt{text} : '',
         defined $opt{value} ? $opt{value} : '',
@@ -96,6 +109,8 @@ sub _test ($$) {
   }
 
   my $result;
+  my $ges;
+  my $pes;
   my $code = sub {
     my @expected = sort {$a cmp $b} @{$test->{errors}->[0] ||= []};
     @errors = sort {$a cmp $b} @errors;
@@ -116,26 +131,26 @@ sub _test ($$) {
       for (sort { $a cmp $b } keys %$ges) {
         my $ent = $ges->{$_};
         my $v = '<!ENTITY ' . $ent->{name} . ' "'; 
-        $v .= $ent->{value} if defined $ent->{value};
+        $v .= join '', map { $_->[0] } @{$ent->{value} or []};
         $v .= '" "';
-        $v .= $ent->{pubid} if defined $ent->{pubid};
+        $v .= $ent->{public_identifier} if defined $ent->{public_identifier};
         $v .= '" "';
-        $v .= $ent->{sysid} if defined $ent->{sysid};
+        $v .= $ent->{system_identifier} if defined $ent->{system_identifier};
         $v .= '" ';
-        $v .= $ent->{notation} if defined $ent->{notation};
+        $v .= $ent->{notation_name} if defined $ent->{notation_name};
         $v .= '>';
         push @e, $v;
       }
       for (sort { $a cmp $b } keys %$pes) {
         my $ent = $pes->{$_};
         my $v = '<!ENTITY % ' . $ent->{name} . ' "'; 
-        $v .= $ent->{value} if defined $ent->{value};
+        $v .= join '', map { $_->[0] } @{$ent->{value} or []};
         $v .= '" "';
-        $v .= $ent->{pubid} if defined $ent->{pubid};
+        $v .= $ent->{public_identifier} if defined $ent->{public_identifier};
         $v .= '" "';
-        $v .= $ent->{sysid} if defined $ent->{sysid};
+        $v .= $ent->{system_identifier} if defined $ent->{system_identifier};
         $v .= '" ';
-        $v .= $ent->{notation} if defined $ent->{notation};
+        $v .= $ent->{notation_name} if defined $ent->{notation_name};
         $v .= '>';
         push @e, $v;
       }
@@ -151,33 +166,45 @@ sub _test ($$) {
   }; # $code
 
   if (defined $test->{resource}) {
-    my %res;
-    my $i = 0;
-    for (@{$test->{resource}}) {
-      $res{defined $_->[1]->[0] ? $_->[1]->[0] : ''} = [++$i, $_->[0]];
-    }
     $p->onextentref (sub {
-      my ($parser, $ent, $subparser) = @_;
-      my $e = $res{$ent->{entdef}->{sysid} || ''}; # XXX
-      $subparser->di ($e->[0]) if defined $e;
-      $subparser->parse_bytes_start ('utf-8');
-      $subparser->parse_bytes_feed (encode 'utf-8', defined $e->[1] ? $e->[1] : '<?xml encoding="utf-8"?>'); # XXX
-      $subparser->parse_bytes_end;
+      my ($parser, $data, $subparser) = @_;
+      my $di = defined $data->{entity}->{system_identifier} ? $url_to_di->{$data->{entity}->{system_identifier}} : undef;
+      if (defined $di) {
+        $subparser->di ($di);
+        $subparser->parse_bytes_start ('utf-8', $parser);
+        $subparser->parse_bytes_feed (encode 'utf-8', $ip->[$di]->{data});
+        $subparser->parse_bytes_end;
+      } else {
+        # XXX
+        $subparser->parse_bytes_start ('utf-8', $parser);
+        $subparser->parse_bytes_feed ('<?xml encoding="utf-8"?>');
+        $subparser->parse_bytes_end;
+      }
     });
     $p->onparsed (sub {
+      my $p = $_[0];
       test {
         $result = dumptree ($doc);
+        $ges = $p->{saved_maps}->{DTDDefs}->{ge} ||= {};
+        $pes = $p->{saved_maps}->{DTDDefs}->{pe} ||= {};
         $code->();
       } $c;
     });
 
     $p->parse_bytes_start (undef, $doc);
-    $p->parse_bytes_feed (encode 'utf-8', $test->{data}->[0]);
+    $p->parse_bytes_feed (encode 'utf-8', $ip->[$main_di]->{data});
     $p->parse_bytes_end;
   } elsif (not defined $test->{element}) {
-    $p->parse_char_string ($test->{data}->[0] => $doc);
-    $result = dumptree ($doc);
-    $code->();
+    $p->onparsed (sub {
+      my $p = $_[0];
+      test {
+        $result = dumptree ($doc);
+        $ges = $p->{saved_maps}->{DTDDefs}->{ge} ||= {};
+        $pes = $p->{saved_maps}->{DTDDefs}->{pe} ||= {};
+        $code->();
+      } $c;
+    });
+    $p->parse_char_string ($ip->[$main_di]->{data} => $doc);
   } else {
     my $el;
     if ($test->{element} =~ s/^svg\s*//) {
@@ -193,8 +220,12 @@ sub _test ($$) {
           (q<http://www.w3.org/1999/xhtml>, [undef, $test->{element}]);
     }
     my $children = $p->parse_char_string_with_context
-        ($test->{data}->[0], $el, $dom->create_document);
-    $el->append_child ($_) for $children->to_list;
+        ($ip->[$main_di]->{data}, $el, $dom->create_document);
+    if ($el->manakai_element_type_match ('http://www.w3.org/1999/xhtml', 'template')) {
+      $el->content->append_child ($_) for $children->to_list;
+    } else {
+      $el->append_child ($_) for $children->to_list;
+    }
     $result = dumptree ($el);
     $code->();
   }

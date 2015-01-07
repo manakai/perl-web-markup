@@ -4,9 +4,11 @@ use Path::Class;
 use lib file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'lib')->stringify;
 use lib glob file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'modules', '*', 'lib')->stringify;
 use Test::X1;
+use Test::More;
 use Test::Differences;
 use Web::DOM::Document;
 use Web::HTML::Validator;
+use Web::HTML::SourceMap;
 
 for my $attr (qw(xml:lang xml:space xml:base)) {
   test {
@@ -638,9 +640,9 @@ for my $test (
 }
 
 for my $test (
-  ['shift_jis', 'x-sjis'],
-  ['utf-8', 'UTF8'],
-  ['windows-1252', 'US-ASCII'],
+  ['shift_jis', 'x-sjis', 'Shift_JIS'],
+  ['utf-8', 'UTF8', 'UTF-8'],
+  ['windows-1252', 'US-ASCII', 'windows-1252'],
 ) {
   test {
     my $c = shift;
@@ -661,7 +663,7 @@ for my $test (
     eq_or_diff \@error,
         $test->[0] eq 'utf-8' ? [] :
             [{type => 'non-utf-8 character encoding',
-              value => $test->[0],
+              value => $test->[2],
               node => $doc, level => 's'}];
     done $c;
   } n => 1, name => ['charset', @$test];
@@ -686,7 +688,7 @@ for my $test (
     eq_or_diff \@error,
         $test->[0] eq 'utf-8' ? [] :
             [{type => 'non-utf-8 character encoding',
-              value => $test->[0],
+              value => $test->[2],
               node => $doc, level => 's'}];
     done $c;
   } n => 1, name => ['charset', @$test];
@@ -707,7 +709,7 @@ test {
   });
   $validator->check_node ($doc);
   eq_or_diff \@error, [{type => 'non-utf-8 character encoding',
-                        value => 'utf-16be',
+                        value => 'UTF-16BE',
                         node => $doc, level => 's'}];
   done $c;
 } n => 1, name => ['UTF-16 BOM'];
@@ -733,10 +735,10 @@ test {
                         value => 'utf-16le',
                         level => 'm'},
                        {type => 'charset:not ascii compat',
-                        value => 'utf-16be',
+                        value => 'UTF-16BE',
                         node => $doc, level => 'm'},
                        {type => 'non-utf-8 character encoding',
-                        value => 'utf-16be',
+                        value => 'UTF-16BE',
                         node => $doc, level => 's'}];
   done $c;
 } n => 1, name => ['UTF-16 BOM'];
@@ -756,7 +758,7 @@ test {
   });
   $validator->check_node ($doc);
   eq_or_diff \@error, [{type => 'non-utf-8 character encoding',
-                        value => 'utf-16be',
+                        value => 'UTF-16BE',
                         node => $doc, level => 's'}];
   done $c;
 } n => 1, name => ['Content-Type charset=""'];
@@ -776,7 +778,7 @@ test {
   });
   $validator->check_node ($doc);
   eq_or_diff \@error, [{type => 'non-utf-8 character encoding',
-                        value => 'utf-16be',
+                        value => 'UTF-16BE',
                         node => $doc, level => 's'}];
   done $c;
 } n => 1, name => ['iframe srcdoc'];
@@ -817,12 +819,14 @@ test {
   });
   $validator->check_node ($doc);
   eq_or_diff \@error, [{type => 'charset:not ascii compat',
-                        value => 'ISO-2022-CN-EXT',
+                        #value => 'ISO-2022-CN-EXT',
+                        value  => undef,
                         node => $doc, level => 'm'},
                        {type => 'no character encoding declaration',
                         node => $doc, level => 'm'},
                        {type => 'non-utf-8 character encoding',
-                        value => 'ISO-2022-CN-EXT',
+                        #value => 'ISO-2022-CN-EXT',
+                        value => undef,
                         node => $doc, level => 's'}];
   done $c;
 } n => 1, name => ['not labelled / replacement'];
@@ -1051,8 +1055,7 @@ test {
       [{type => 'css:prop:unknown',
         value => 'hoge',
         level => 'm',
-        node => $el->attributes->[0],
-        line => 1, column => 1, di => -1}];
+        node => $el->attributes->[0]}];
   done $c;
 } n => 1, name => ['check_node', 'style="" with no line data'];
 
@@ -1103,16 +1106,13 @@ for my $test (
     });
     $validator->scripting (1);
     $validator->check_node ($el1);
-    eq_or_diff [map {
-      # XXXindex
-      delete $_->{di}; delete $_->{line}; delete $_->{column}; $_;
-    } grep { $_->{type} !~ /^status:/ } @error],
+    eq_or_diff [grep { $_->{type} !~ /^status:/ } @error],
         [{type => $test->[1],
           level => 'm',
           node => $el2,
-          },#XXXindex line => 1, column => 1, di => -1},
+          di => 1, index => 0},
          ($test->[2] ? ({type => $test->[2],
-                         #XXXindex line => 1, column => 11, di => -1,
+                         di => 1, index => 0,
                          level => 'm',
                          node => $el2}) : ())];
     done $c;
@@ -1150,6 +1150,50 @@ test {
   eq_or_diff $preferred, [{type => 'css_prop', name => 'text-align'}];
   done $c;
 } n => 1, name => 'obsolete attribute preferred';
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  $doc->manakai_is_html (1);
+  my $dids = [];
+  $doc->inner_html (q{<!DOCTYPE HTML><title>y</title><iframe>x</iframe>});
+  $doc->query_selector ('iframe')->set_attribute (srcdoc => "ho&xxy;");
+  my $val = new Web::HTML::Validator;
+  my $errors = [];
+  $val->onerror (sub {
+    my %args = @_;
+    push @$errors, \%args;
+  });
+  $val->di_data_set ($dids);
+  $val->check_node ($doc);
+  @$errors = grep { $_->{type} =~ /entity not declared/ } @$errors;
+  is $errors->[0]->{di}, 0;
+  is $errors->[0]->{index}, 2;
+  done $c;
+} n => 2, name => 'di_data_set no source document data';
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  $doc->manakai_is_html (1);
+  my $dids = [undef, undef];
+  $doc->inner_html (q{<!DOCTYPE HTML><title>y</title><iframe srcdoc="ho&amp;xxy;">x</iframe>});
+  my $val = new Web::HTML::Validator;
+  my $errors = [];
+  $val->onerror (sub {
+    my %args = @_;
+    push @$errors, \%args;
+  });
+  $val->di_data_set ($dids);
+  $val->check_node ($doc);
+  @$errors = grep { $_->{type} =~ /entity not declared/ } @$errors;
+  is $errors->[0]->{di}, 2;
+  is $errors->[0]->{index}, 2;
+  my ($di, $index) = resolve_index_pair ($dids, $errors->[0]->{di}, $errors->[0]->{index});
+  is $di, 1;
+  is $index, 49;
+  done $c;
+} n => 4, name => 'di_data_set has source document data';
 
 run_tests;
 

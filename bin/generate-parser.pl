@@ -4,8 +4,9 @@ use warnings;
 use Path::Tiny;
 use JSON::PS;
 
+my $LANG = $ENV{PARSER_LANG} ||= 'HTML';
 
-my $GeneratedPackageName = q{Web::HTML::Parser};
+my $GeneratedPackageName = q{Web::}.$LANG.q{::Parser};
 my $DefDataPath = path (__FILE__)->parent->parent->child (q{local});
 my $UseLibCode = q{};
 
@@ -16,15 +17,27 @@ sub new ($) {
 sub package_name { $GeneratedPackageName }
 
 sub _expanded_tokenizer_defs ($) {
-  my $expanded_json_path = $DefDataPath->child
-      ('html-tokenizer-expanded.json');
-  return json_bytes2perl $expanded_json_path->slurp;
+  if ($LANG eq 'XML') {
+    my $expanded_json_path = $DefDataPath->child
+        ('xml-tokenizer-expanded.json');
+    return json_bytes2perl $expanded_json_path->slurp;
+  } else {
+    my $expanded_json_path = $DefDataPath->child
+        ('html-tokenizer-expanded.json');
+    return json_bytes2perl $expanded_json_path->slurp;
+  }
 } # _expanded_tokenizer_defs
 
 sub _parser_defs ($) {
-  my $expanded_json_path = $DefDataPath->child
-      ('html-tree-constructor-expanded-no-isindex.json');
-  return json_bytes2perl $expanded_json_path->slurp;
+  if ($LANG eq 'XML') {
+    my $expanded_json_path = $DefDataPath->child
+        ('xml-tree-constructor-expanded.json');
+    return json_bytes2perl $expanded_json_path->slurp;
+  } else {
+    my $expanded_json_path = $DefDataPath->child
+        ('html-tree-constructor-expanded-no-isindex.json');
+    return json_bytes2perl $expanded_json_path->slurp;
+  }
 } # _parser_defs
 
 sub _element_defs ($) {
@@ -37,7 +50,7 @@ my $Vars = {
   IframeSrcdoc => {input => 1, type => 'boolean'},
   Confident => {save => 1, type => 'boolean'},
   DI => {save => 1, type => 'index'},
-  AnchoredIndex => {save => 1, type => 'index'},
+  AnchoredIndex => {save => 1, type => 'index', default => 0},
   EOF => {save => 1, type => 'boolean'},
   Offset => {save => 1, type => 'index', default => 0},
   State => {save => 1, type => 'enum'},
@@ -65,6 +78,18 @@ my $Vars = {
   InForeign => {type => 'boolean'},
   Callbacks => {unchanged => 1, type => 'list'},
 };
+
+if ($LANG eq 'XML') {
+  $Vars->{DTDMode} = {type => 'enum', save => 1, default => 'N/A'};
+  $Vars->{OpenMarkedSections} = {unchanged => 1, type => 'list'};
+  $Vars->{OpenCMGroups} = {unchanged => 1, type => 'list'};
+  $Vars->{InitialCMGroupDepth} = {save => 1, type => 'integer', default => 0};
+  $Vars->{DTDDefs} = {unchanged => 1, type => 'map'};
+  $Vars->{OriginalState} = {save => 1, type => 'enum'};
+  $Vars->{SC} = {input => 1, from_method => 1};
+  $Vars->{InMDEntity} = {input => 1, unchanged => 1, type => 'boolean'};
+  $Vars->{InLiteral} = {save => 1, type => 'boolean'};
+}
 
 ## ------ Input byte stream ------
 
@@ -426,7 +451,7 @@ sub _change_the_encoding ($$$) {
 
     sub di_data_set ($;$) {
       if (@_ > 1) {
-        $_[0]->{di_data_set} = 0+$_[1];
+        $_[0]->{di_data_set} = $_[1];
       }
       return $_[0]->{di_data_set} ||= [];
     } # di_data_set
@@ -464,6 +489,15 @@ sub state_const ($) {
   $s =~ s/HEXADECIMAL/HEX/g;
   $s =~ s/IDENTIFIER/ID/g;
   $s =~ s/AFTER_000D/CR/g;
+  $s =~ s/PARAMETER_ENTITY/PE/g;
+  $s =~ s/DECLARATION/DECL/g;
+  $s =~ s/CONTENT_MODEL/CM/g;
+  $s =~ s/KEYWORD/KWD/g;
+  $s =~ s/ENTITY/ENT/g;
+  $s =~ s/REFERENCE/REF/g;
+  $s =~ s/NUMBER/NUM/g;
+  $s =~ s/^BEFORE_/B_/;
+  $s =~ s/^AFTER_/A_/;
   return $s;
 } # state_const
 
@@ -481,7 +515,7 @@ sub switch_state_code ($) {
   my $state = $_[0];
   my @code;
   push @code, sprintf q{$State = %s;}, state_const $state;
-  if ($state eq 'tag open state' or
+  if ($state =~ /(?<!end )tag open state/ or
       $state =~ /less-than sign state/) {
     push @code,
         q{$AnchoredIndex = $Offset + (pos $Input) - 1;};
@@ -490,25 +524,63 @@ sub switch_state_code ($) {
   return join "\n", @code;
 } # switch_state_code
 
+sub serialize_actions ($;%);
 sub serialize_actions ($;%) {
   my ($acts, %args) = @_;
   ## Generate |return 1| to abort tokenizer, |return 0| to abort
   ## current steps.
   my @result;
+  my $return;
   my $reconsume;
   for (@{$acts->{actions}}) {
     my $type = $_->{type};
     if ($type eq 'parse error') {
-      if ($args{in_eof}) {
-        push @result, sprintf q[
-          push @$Errors, {type => '%s', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input)};
-        ], $_->{error_type} // $_->{name};
+      if (defined $_->{if}) {
+        if ($_->{if} eq 'temp-wrong-case') {
+          push @result, sprintf q{
+            unless ($Temp eq q{%s}) {
+              push @$Errors, {type => '%s', level => 'm',
+                              value => $Temp,
+                              di => $DI, index => $Offset + (pos $Input) - 1%s};
+            }
+          },
+              $_->{expected_keyword}, $_->{error_type} // $_->{name},
+              (defined $_->{index_offset} ? sprintf q{ - %d}, $_->{index_offset} : '');
+        } elsif ($_->{if} eq 'OE is empty') {
+          push @result, sprintf q{
+            unless (@$OE) {
+              push @$Errors, {type => '%s', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input) - 1};
+            }
+          }, $_->{error_type} // $_->{name};
+        } elsif ($_->{if} eq 'sections is not empty') {
+          push @result, sprintf q{
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => '%s', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)%s};
+            }
+          },
+              $_->{error_type} // $_->{name},
+              $args{in_eof} ? '' : ' - 1';
+        } else {
+          die "Unknown condition |$_->{if}|";
+        }
       } else {
-        push @result, sprintf q[
-          push @$Errors, {type => '%s', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-        ], $_->{error_type} // $_->{name};
+        if ($args{in_eof}) {
+          push @result, sprintf q[
+            push @$Errors, {type => '%s', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)%s};
+          ],
+              $_->{error_type} // $_->{name},
+              (defined $_->{index_offset} ? sprintf q{ - %d}, $_->{index_offset} : '');
+        } else {
+          push @result, sprintf q[
+            push @$Errors, {type => '%s', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1%s};
+          ],
+              $_->{error_type} // $_->{name},
+              (defined $_->{index_offset} ? sprintf q{ - %d}, $_->{index_offset} : '');
+        }
       }
     } elsif ($type eq 'switch') {
       if (not defined $_->{if}) {
@@ -535,8 +607,68 @@ sub serialize_actions ($;%) {
             }
           }
         }, switch_state_code $_->{state};
+      } elsif ($_->{if} eq 'DTD mode is not internal subset') {
+        die unless $_->{break};
+        push @result, sprintf q[
+          unless ($DTDMode eq 'internal subset' or
+                  $DTDMode eq 'parameter entity in internal subset') {
+            %s
+            return 1;
+          }
+        ], switch_state_code $_->{state};
+      } elsif ($_->{if} eq 'DTD mode is internal subset') {
+        die unless $_->{break};
+        push @result, sprintf q[
+          if ($DTDMode eq 'internal subset' or
+              $DTDMode eq 'parameter entity in internal subset') {
+            %s
+            return 1;
+          }
+        ], switch_state_code $_->{state};
+      } elsif ($_->{if} eq 'fragment') {
+        die unless $_->{break};
+        push @result, sprintf q[
+          if (defined $CONTEXT) {
+            %s
+            return 1;
+          }
+        ], switch_state_code $_->{state};
       } else {
         die "Unknown if |$_->{if}|";
+      }
+    } elsif ($type eq 'parse error-and-switch') {
+      if (defined $_->{if}) {
+        die unless $_->{break};
+        my $cond;
+        if ($_->{if} eq 'fragment') {
+          $cond = 'defined $CONTEXT';
+        } elsif ($_->{if} eq 'md-fragment') {
+          $cond = '$InMDEntity';
+        } else {
+          die $_->{if};
+        }
+        push @result, sprintf q{
+          if (%s) {
+            push @$Errors, {type => '%s', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1%s};
+            %s
+            return 1;
+          }
+        },
+            $cond,
+            $_->{error_type} // $_->{name},
+            (defined $_->{index_offset} ? sprintf q{ - %d}, $_->{index_offset} : ''),
+            switch_state_code $_->{state};
+      } else {
+        push @result, sprintf q{
+          push @$Errors, {type => '%s', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)%s%s};
+          %s
+        },
+            $_->{error_type} // $_->{name},
+            ($args{in_eof} ? '' : ' - 1'),
+            (defined $_->{index_offset} ? sprintf q{ - %d}, $_->{index_offset} : ''),
+            switch_state_code $_->{state};
       }
     } elsif ($type eq 'switch-and-emit') {
       die "Unknown if |$_->{if}|" unless $_->{if} eq 'appropriate end tag';
@@ -558,6 +690,12 @@ sub serialize_actions ($;%) {
           %s
         }
       ], switch_state_code $_->{script_state}, switch_state_code $_->{state};
+    } elsif ($type eq 'break') { # XML
+      if ($_->{if} eq 'md-fragment') {
+        push @result, sprintf q{if ($InMDEntity) { return %s }}, $return // '1';
+      } else {
+        die $_->{if};
+      }
     } elsif ($type eq 'reconsume') {
       $reconsume = 1;
     } elsif ($type eq 'emit') {
@@ -603,16 +741,45 @@ sub serialize_actions ($;%) {
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         };
       }
+      if ($_->{possible_token_types}->{'ENTITY token'} or
+          $_->{possible_token_types}->{'NOTATION token'} or
+          $_->{possible_token_types}->{'ATTLIST token'} or
+          $_->{possible_token_types}->{'ELEMENT token'}) {
+        push @result, q{$Token->{StopProcessing} = 1 if $DTDDefs->{StopProcessing};};
+      }
+      if ($_->{possible_token_types}->{'DOCTYPE token'} and
+          $LANG eq 'XML') {
+        $return = q{1 if $Token->{type} == DOCTYPE_TOKEN};
+      }
+      if ($_->{possible_token_types}->{'ENTITY token'}) {
+        $return = q{1 if $Token->{type} == ENTITY_TOKEN};
+      }
     } elsif ($type eq 'emit-eof') {
-      push @result, q{
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      };
+      if (defined $_->{if}) {
+        if ($_->{if} eq 'fragment' and $_->{break}) {
+          push @result, q{
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          };
+        } else {
+          die $_->{if};
+        }
+      } else {
+        push @result, q{
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+        };
+        $return = 1;
+      }
     } elsif ($type eq 'emit-temp') {
       push @result, q{
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -622,9 +789,11 @@ sub serialize_actions ($;%) {
       };
     } elsif ($type eq 'create') {
       push @result, sprintf q{
-        $Token = {type => %s_TOKEN, tn => 0,
+        $Token = {type => %s_TOKEN, tn => 0, %s
                   di => $DI, index => $AnchoredIndex};
-      }, map { s/ token$//; s/[- ]/_/g; uc $_ } $_->{token};
+      },
+          (map { s/ token$//; s/[- ]/_/g; uc $_ } $_->{token}),
+          ($LANG eq 'XML' ? q{DTDMode => $DTDMode,} : '');
     } elsif ($type eq 'create-attr') {
       push @result, q[$Attr = {di => $DI};];
     } elsif ($type eq 'set-attr') {
@@ -644,10 +813,15 @@ sub serialize_actions ($;%) {
     } elsif ($type eq 'set' or
              $type eq 'set-to-attr' or
              $type eq 'set-to-temp' or
+             $type eq 'set-to-allowed-token' or
+             $type eq 'set-to-cmgroup' or
+             $type eq 'set-to-cmelement' or
              $type eq 'append' or
              $type eq 'emit-char' or
              $type eq 'append-to-attr' or
-             $type eq 'append-to-temp') {
+             $type eq 'append-to-temp' or
+             $type eq 'append-to-allowed-token' or
+             $type eq 'append-to-cmelement') {
       my $field = $_->{field};
       $field =~ tr/ -/__/ if defined $field;
       die if defined $field and $field eq 'type';
@@ -662,9 +836,20 @@ sub serialize_actions ($;%) {
         $value = sprintf q[$%d], $index;
       }
       if ($type eq 'set') {
-        push @result, sprintf q[$Token->{q<%s>} = %s;], $field, $value;
+        if ($field eq 'value' or $field eq 'data') {
+          # IndexedString
+          if (defined $_->{capture_index}) {
+            push @result, sprintf q[$Token->{q<%s>} = [[%s, $DI, $Offset + $-[%d]]];], $field, $value, $_->{capture_index};
+          } elsif ($args{in_eof}) {
+            push @result, sprintf q[$Token->{q<%s>} = [[%s, $DI, $Offset + (pos $Input)]];], $field, $value;
+          } else {
+            push @result, sprintf q[$Token->{q<%s>} = [[%s, $DI, $Offset + (pos $Input) - length $1]];], $field, $value;
+          }
+        } else {
+          push @result, sprintf q[$Token->{q<%s>} = %s;], $field, $value;
+        }
       } elsif ($type eq 'set-to-attr') {
-        die if $field eq 'value';
+        #die if $field eq 'value' or $field eq 'data';
         push @result, sprintf q[$Attr->{q<%s>} = %s;], $field, $value;
         if ($field eq 'name') {
           if (defined $_->{capture_index}) {
@@ -675,9 +860,24 @@ sub serialize_actions ($;%) {
           }
         }
       } elsif ($type eq 'append') {
-        push @result, sprintf q[$Token->{q<%s>} .= %s;], $field, $value;
+        if ($field eq 'value' or $field eq 'data') {
+          # IndexedString
+          if (defined $_->{capture_index}) {
+            push @result, sprintf q[push @{$Token->{q<%s>}}, [%s, $DI, $Offset + $-[%d]%s];],
+                $field, $value, $_->{capture_index},
+                (defined $_->{index_offset} ? ' - ' . $_->{index_offset} : '');
+          } elsif ($args{in_eof}) {
+            push @result, sprintf q[push @{$Token->{q<%s>}}, [%s, $DI, $Offset + (pos $Input)%s];], $field, $value,
+                (defined $_->{index_offset} ? ' - ' . $_->{index_offset} : '');
+          } else {
+            push @result, sprintf q[push @{$Token->{q<%s>}}, [%s, $DI, $Offset + (pos $Input) - (length $1)%s];], $field, $value,
+                (defined $_->{index_offset} ? ' - ' . $_->{index_offset} : '');
+          }
+        } else {
+          push @result, sprintf q[$Token->{q<%s>} .= %s;], $field, $value;
+        }
       } elsif ($type eq 'append-to-attr') {
-        if ($field eq 'value') {
+        if ($field eq 'value' or $field eq 'data') {
           # IndexedString
           if (defined $_->{capture_index}) {
             push @result, sprintf q[push @{$Attr->{q<%s>}}, [%s, $DI, $Offset + $-[%d]];], $field, $value, $_->{capture_index};
@@ -697,6 +897,19 @@ sub serialize_actions ($;%) {
           $index_delta .= sprintf q{ - %d}, $_->{index_offset};
         }
         push @result, sprintf q{$TempIndex = %s;}, $index_delta;
+      } elsif ($type eq 'set-to-allowed-token') {
+        push @result, sprintf q[$Attr->{allowed_tokens}->[-1] = %s;], $value;
+      } elsif ($type eq 'append-to-allowed-token') {
+        push @result, sprintf q[$Attr->{allowed_tokens}->[-1] .= %s;], $value;
+      } elsif ($type eq 'set-to-cmgroup') {
+        push @result, sprintf q[$OpenCMGroups->[-1]->{q<%s>} = %s;],
+            $field, $value;
+      } elsif ($type eq 'append-to-cmelement') {
+        push @result, sprintf q[$OpenCMGroups->[-1]->{items}->[-1]->{q<%s>} .= %s;],
+            $field, $value;
+      } elsif ($type eq 'set-to-cmelement') {
+        push @result, sprintf q[$OpenCMGroups->[-1]->{items}->[-1]->{q<%s>} = %s;],
+            $field, $value;
       } elsif ($type eq 'emit-char') {
         my $index_delta = q{$Offset + (pos $Input) - (length $1)};
         if (defined $_->{value}) {
@@ -714,15 +927,25 @@ sub serialize_actions ($;%) {
                           value => %s,
                           di => $DI, index => %s};
         }, $value, $index_delta;
+      } else {
+        die $type;
       }
     } elsif ($type eq 'set-empty') {
       my $field = $_->{field};
       $field =~ tr/ -/__/ if defined $field;
-      push @result, sprintf q[$Token->{q<%s>} = '';], $field;
+      if ($field eq 'value' or $field eq 'data') {
+        if (defined $_->{index_offset}) {
+          push @result, sprintf q[$Token->{q<%s>} = [['', $DI, $Offset + (pos $Input) - %d]];], $field, $_->{index_offset}; # IndexedString
+        } else {
+          push @result, sprintf q[$Token->{q<%s>} = [['', $DI, $Offset + pos $Input]];], $field; # IndexedString
+        }
+      } else {
+        push @result, sprintf q[$Token->{q<%s>} = '';], $field;
+      }
     } elsif ($type eq 'set-empty-to-attr') {
       my $field = $_->{field};
       $field =~ tr/ -/__/ if defined $field;
-      if ($field eq 'value') {
+      if ($field eq 'value' or $field eq 'data') {
         push @result, sprintf q[$Attr->{q<%s>} = [['', $Attr->{di}, $Attr->{index}]];], $field; # IndexedString
       } else {
         push @result, sprintf q[$Attr->{q<%s>} = '';], $field;
@@ -735,12 +958,16 @@ sub serialize_actions ($;%) {
     } elsif ($type eq 'append-temp') {
       my $field = $_->{field};
       $field =~ tr/ -/__/ if defined $field;
-      push @result, sprintf q[$Token->{q<%s>} .= $Temp;], $field;
+      if ($field eq 'value' or $field eq 'data') {
+        push @result, sprintf q[push @{$Token->{q<%s>}}, [$Temp, $DI, $TempIndex];], $field; # IndexedString
+      } else {
+        push @result, sprintf q[$Token->{q<%s>} .= $Temp;], $field;
+      }
     } elsif ($type eq 'append-temp-to-attr') {
       my $field = $_->{field};
       $field =~ tr/ -/__/ if defined $field;
-      if ($field eq 'value') {
-        push @result, sprintf q[push @{$Attr->{q<%s>}}, [$Temp, $DI, $TempIndex];], $field;
+      if ($field eq 'value' or $field eq 'data') {
+        push @result, sprintf q[push @{$Attr->{q<%s>}}, [$Temp, $DI, $TempIndex];], $field; # IndexedString
       } else {
         push @result, sprintf q[$Attr->{q<%s>} .= $Temp;], $field;
       }
@@ -749,9 +976,18 @@ sub serialize_actions ($;%) {
       $field =~ tr/ -/__/ if defined $field;
       push @result, sprintf q[$Token->{q<%s>} = 1;], $field;
     } elsif ($type eq 'process-temp-as-decimal') {
+      use Data::Dumper;
+      push @result, sprintf q{
+        if (not @$OE and $DTDMode eq 'N/A') {
+          push @$Errors, {level => 'm',
+                          type => 'ref outside of root element',
+                          value => $Temp.';',
+                          di => $DI, index => $TempIndex};
+        }
+      } if $LANG eq 'XML' and not $_->{in_attr};
       push @result, q{
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
-        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
+        if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
@@ -763,14 +999,30 @@ sub serialize_actions ($;%) {
                           level => 'm',
                           di => $DI, index => $TempIndex};
           $code = 0xFFFD;
+        ## <XML>
+        } elsif ($Web::HTML::_SyntaxDefs->{xml_char_discouraged}->{$code}) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U+%04X', $code),
+                          level => 'w',
+                          di => $DI, index => $TempIndex};
+        ## </XML>
         }
         $Temp = chr $code;
       };
+      $result[-1] =~ s{<XML>.*?</XML>}{}gs unless $LANG eq 'XML';
       push @result, q{$Attr->{has_ref} = 1;} if $_->{in_attr};
     } elsif ($type eq 'process-temp-as-hexadecimal') {
       push @result, q{
+        if (not @$OE and $DTDMode eq 'N/A') {
+          push @$Errors, {level => 'm',
+                          type => 'ref outside of root element',
+                          value => $Temp.';',
+                          di => $DI, index => $TempIndex};
+        }
+      } if $LANG eq 'XML' and not $_->{in_attr};
+      push @result, q{
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
-        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
+        if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
@@ -782,31 +1034,103 @@ sub serialize_actions ($;%) {
                           level => 'm',
                           di => $DI, index => $TempIndex};
           $code = 0xFFFD;
+        ## <XML>
+        } elsif ($Web::HTML::_SyntaxDefs->{xml_char_discouraged}->{$code}) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U+%04X', $code),
+                          level => 'w',
+                          di => $DI, index => $TempIndex};
+        ## </XML>
         }
         $Temp = chr $code;
       };
+      $result[-1] =~ s{<XML>.*?</XML>}{}gs unless $LANG eq 'XML';
       push @result, q{$Attr->{has_ref} = 1;} if $_->{in_attr};
     } elsif ($type eq 'process-temp-as-named') {
       if ($_->{in_attr}) {
         push @result, sprintf q{
+          my $return;
           REF: {
+            ## <XML>
+            if (defined $DTDDefs->{ge}->{$Temp}) {
+              my $ent = $DTDDefs->{ge}->{$Temp};
+
+              if (my $ext = $ent->{external}) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
+                  push @$Errors, {level => 'm',
+                                  type => 'VC:Standalone Document Declaration:entity',
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                  $ext->{vc_error_reported} = 1;
+                }
+              }
+
+              if (defined $ent->{notation_name}) {
+                ## Unparsed entity
+                push @$Errors, {level => 'm',
+                                type => 'unparsed entity',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              } elsif ($ent->{open}) {
+                push @$Errors, {level => 'm',
+                                type => 'WFC:No Recursion',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              } elsif (defined $ent->{value}) {
+                ## Internal entity with "&" and/or "<"
+                my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
+                if ($value =~ /</) {
+                  push @$Errors, {level => 'm',
+                                  type => 'entref in attr has element',
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                  last REF;
+                } else {
+                  push @$Callbacks, [$OnAttrEntityReference,
+                                     {entity => $ent,
+                                      ref => {di => $DI, index => $TempIndex},
+                                      in_default_attr => %d}];
+                  $TempIndex += length $Temp;
+                  $Temp = '';
+                  $return = 1;
+                  last REF;
+                }
+              } else {
+                ## External parsed entity
+                push @$Errors, {level => 'm',
+                                type => 'WFC:No External Entity References',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              }
+            }
+            ## </XML>
+
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (%d) { # before_equals
+                    ## <HTML>
                     push @$Errors, {type => 'no refc',
                                     level => 'm',
                                     di => $DI,
                                     index => $TempIndex + $_};
+                    ## </HTML>
                     last REF;
                   } else {
+                    ## <HTML>
                     push @$Errors, {type => 'no refc',
                                     level => 'm',
                                     di => $DI,
                                     index => $TempIndex + $_};
+                    ## </HTML>
                   }
 
                   ## A variant of |append-to-attr|
@@ -815,29 +1139,135 @@ sub serialize_actions ($;%) {
                   $TempIndex += $_;
                   $value = '';
                 }
+
+                ## <XML>
+                if ($DTDDefs->{has_charref_decls}) {
+                  if ($DTDDefs->{charref_vc_error}) {
+                    push @$Errors, {level => 'm',
+                                    type => 'VC:Standalone Document Declaration:entity',
+                                    value => $Temp,
+                                    di => $DI, index => $temp_index};
+                  }
+                } elsif ({
+                  '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
+                  '&apos;' => 1,
+                }->{$Temp}) {
+                  if ($DTDDefs->{need_predefined_decls} or
+                      not $DTDMode eq 'N/A') {
+                    push @$Errors, {level => 's',
+                                    type => 'entity not declared',
+                                    value => $Temp,
+                                    di => $DI, index => $temp_index};
+                  }
+                  ## If the document has no DOCTYPE, skip warning.
+                } else {
+                  ## Not a declared XML entity.
+                  push @$Errors, {level => 'm',
+                                  type => 'entity not declared',
+                                  value => $Temp,
+                                  di => $DI, index => $temp_index};
+                }
+                ## </XML>
+
                 $Attr->{has_ref} = 1;
                 substr ($Temp, 0, $_) = $value;
                 last REF;
               }
             }
-            push @$Errors, {type => 'entity not declared',
-                            value => $Temp,
-                            level => 'm',
-                            di => $DI, index => $TempIndex}
-                if $Temp =~ /;\z/;
+            if ($Temp =~ /;\z/) {
+              push @$Errors, {type => 'entity not declared',
+                              value => $Temp,
+                              level => 'm',
+                              di => $DI, index => $TempIndex};
+              ## <XML>
+              $DTDDefs->{entity_names}->{$Temp}
+                  ||= {di => $DI, index => $TempIndex};
+              ## </XML>
+            }
           } # REF
-        }, !!$_->{before_equals};
+        }, !!$_->{in_default_attr}, !!$_->{before_equals};
+      } elsif ($_->{in_entity_value}) { ## XML only
+        die;
       } else { # in content
         push @result, q{
+          my $return;
           REF: {
+            ## <XML>
+
+            if (not @$OE) {
+              push @$Errors, {level => 'm',
+                              type => 'ref outside of root element',
+                              value => $Temp,
+                              di => $DI, index => $TempIndex};
+              $TempIndex += length $Temp;
+              $Temp = '';
+              last REF;
+            }
+
+            if (defined $DTDDefs->{ge}->{$Temp}) {
+              my $ent = $DTDDefs->{ge}->{$Temp};
+
+              if (my $ext = $ent->{external}) {
+                if (not $ext->{vc_error_reported} and $DTDDefs->{XMLStandalone}) {
+                  push @$Errors, {level => 'm',
+                                  type => 'VC:Standalone Document Declaration:entity',
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                  $ext->{vc_error_reported} = 1;
+                }
+              }
+
+              if ($ent->{only_text}) {
+                ## Internal entity with no "&" or "<"
+
+                ## A variant of |emit-temp|
+                push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                                value => $_->[0],
+                                di => $_->[1], index => $_->[2]}
+                    for @{$ent->{value}};
+                $TempIndex += length $Temp;
+                $Temp = '';
+                last REF;
+              } elsif (defined $ent->{notation_name}) {
+                ## Unparsed entity
+                push @$Errors, {level => 'm',
+                                type => 'unparsed entity',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              } elsif ($ent->{open}) {
+                push @$Errors, {level => 'm',
+                                type => 'WFC:No Recursion',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              } else {
+                ## Internal entity with "&" and/or "<"
+                ## External parsed entity
+                push @$Callbacks, [$OnContentEntityReference,
+                                   {entity => $ent,
+                                    ref => {di => $DI, index => $TempIndex},
+                                    ops => $OP}];
+                $TempIndex += length $Temp;
+                $Temp = '';
+                $return = 1;
+                last REF;
+              }
+            }
+            ## </XML>
+
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
+                my $temp_index = $TempIndex;
+
                 unless (';' eq substr $Temp, $_-1, 1) {
+                  ## <HTML>
                   push @$Errors, {type => 'no refc',
                                   level => 'm',
                                   di => $DI,
                                   index => $TempIndex + $_};
+                  ## </HTML>
 
                   ## A variant of |emit-temp|
                   push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -846,22 +1276,345 @@ sub serialize_actions ($;%) {
                   $TempIndex += $_;
                   $value = '';
                 }
+
+                ## <XML>
+                if ($DTDDefs->{has_charref_decls}) {
+                  if ($DTDDefs->{charref_vc_error}) {
+                    push @$Errors, {level => 'm',
+                                    type => 'VC:Standalone Document Declaration:entity',
+                                    value => $Temp,
+                                    di => $DI, index => $temp_index};
+                  }
+                } elsif ({
+                  '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
+                  '&apos;' => 1,
+                }->{$Temp}) {
+                  if ($DTDDefs->{need_predefined_decls} or
+                      not $DTDMode eq 'N/A') {
+                    push @$Errors, {level => 's',
+                                    type => 'entity not declared',
+                                    value => $Temp,
+                                    di => $DI, index => $temp_index};
+                  }
+                  ## If the document has no DOCTYPE, skip warning.
+                } else {
+                  ## Not a declared XML entity.
+                  push @$Errors, {level => 'm',
+                                  type => 'entity not declared',
+                                  value => $Temp,
+                                  di => $DI, index => $temp_index};
+                }
+                ## </XML>
+
                 substr ($Temp, 0, $_) = $value;
                 last REF;
               }
             }
-            push @$Errors, {type => 'entity not declared', value => $Temp,
-                            level => 'm',
-                            di => $DI, index => $TempIndex}
-                if $Temp =~ /;\z/;
+            if ($Temp =~ /;\z/) {
+              push @$Errors, {level => 'm',
+                              type => 'entity not declared',
+                              value => $Temp,
+                              di => $DI, index => $TempIndex};
+              ## <XML>
+              $DTDDefs->{entity_names}->{$Temp}
+                  ||= {di => $DI, index => $TempIndex};
+              ## </XML>
+            }
           } # REF
         };
       }
+      $return = '1 if $return';
+      $result[-1] =~ s{<XML>.*?</XML>}{}gs unless $LANG eq 'XML';
+      $result[-1] =~ s{<HTML>.*?</HTML>}{}gs unless $LANG eq 'HTML';
+    } elsif ($type eq 'validate-temp-as-entref') {
+      push @result, q{
+        $DTDDefs->{entity_names_in_entity_values}->{$Temp}
+            ||= {di => $DI, index => $TempIndex};
+      };
+    } elsif ($type eq 'process-temp-as-peref-dtd') { # XML only
+      push @result, q{
+        my $return;
+        REF: {
+          if ($DTDDefs->{StopProcessing}) {
+            $TempIndex += length $Temp;
+            $Temp = '';
+            last REF;
+          } elsif (defined $DTDDefs->{pe}->{$Temp}) {
+            my $ent = $DTDDefs->{pe}->{$Temp};
+            if ($ent->{open}) {
+              push @$Errors, {level => 'm',
+                              type => 'WFC:No Recursion',
+                              value => $Temp,
+                              di => $DI, index => $TempIndex};
+            } elsif (defined $ent->{public_identifier} and
+                     $Web::HTML::_SyntaxDefs->{charrefs_pubids}->{$ent->{public_identifier}}) {
+              ## Public identifier normalization is intentionally not
+              ## done (Chrome behavior).
+
+              $DTDDefs->{has_charref_decls} = 1;
+              $DTDDefs->{charref_vc_error} = 1 if $DTDDefs->{XMLStandalone};
+              $TempIndex += length $Temp;
+              $Temp = '';
+              $return = 1;
+              last REF;
+            } else {
+              push @$Callbacks, [$OnDTDEntityReference,
+                                 {entity => $ent,
+                                  ref => {di => $DI, index => $TempIndex}}];
+              $TempIndex += length $Temp;
+              $Temp = '';
+              $return = 1;
+              last REF;
+            }
+          } else {
+            push @$Errors, {level => 'm',
+                            type => 'entity not declared',
+                            value => $Temp,
+                            di => $DI, index => $TempIndex};
+            $DTDDefs->{entity_names}->{$Temp}
+              ||= {di => $DI, index => $TempIndex};
+          }
+
+          if (not $DTDDefs->{StopProcessing} and
+              not $DTDDefs->{XMLStandalone}) {
+            push @$Errors, {level => 'i',
+                            type => 'stop processing',
+                            di => $DI, index => $TempIndex};
+            $DTDDefs->{StopProcessing} = 1;
+          }
+        } # REF
+      };
+      $return = '1 if $return';
+    } elsif ($type eq 'process-temp-as-peref-entity-value') { # XML only
+      push @result, q{
+        my $return;
+        REF: {
+          if ($DTDDefs->{StopProcessing}) {
+            $TempIndex += length $Temp;
+            $Temp = '';
+            last REF;
+          } elsif (defined $DTDDefs->{pe}->{$Temp}) {
+            my $ent = $DTDDefs->{pe}->{$Temp};
+            if ($ent->{open}) {
+              push @$Errors, {level => 'm',
+                              type => 'WFC:No Recursion',
+                              value => $Temp,
+                              di => $DI, index => $TempIndex};
+            } elsif ($DTDMode eq 'internal subset' or
+                     $DTDMode eq 'parameter entity in internal subset') {
+              ## In a markup declaration in internal subset
+              push @$Errors, {level => 'm',
+                              type => 'WFC:PEs in Internal Subset',
+                              value => $Temp,
+                              di => $DI, index => $TempIndex};
+            } else {
+              push @$Callbacks, [$OnEntityValueEntityReference,
+                                 {entity => $ent,
+                                  ref => {di => $DI, index => $TempIndex}}];
+              $TempIndex += length $Temp;
+              $Temp = '';
+              $return = 1;
+              last REF;
+            }
+          } else {
+            push @$Errors, {level => 'm',
+                            type => 'entity not declared',
+                            value => $Temp,
+                            di => $DI, index => $TempIndex};
+            $DTDDefs->{entity_names}->{$Temp}
+              ||= {di => $DI, index => $TempIndex};
+          }
+
+          if (not $DTDDefs->{StopProcessing} and
+              not $DTDDefs->{XMLStandalone}) {
+            push @$Errors, {level => 'i',
+                            type => 'stop processing',
+                            di => $DI, index => $TempIndex};
+            $DTDDefs->{StopProcessing} = 1;
+          }
+        } # REF
+      };
+      $return = '1 if $return';
+    } elsif ($type eq 'process-temp-as-peref-md') { # XML only
+      push @result, sprintf q{
+        my $return;
+        REF: {
+          if ($DTDDefs->{StopProcessing}) {
+            $TempIndex += length $Temp;
+            $Temp = '';
+            last REF;
+          } elsif (defined $DTDDefs->{pe}->{$Temp}) {
+            my $ent = $DTDDefs->{pe}->{$Temp};
+            if ($ent->{open}) {
+              push @$Errors, {level => 'm',
+                              type => 'WFC:No Recursion',
+                              value => $Temp,
+                              di => $DI, index => $TempIndex};
+            } elsif ($DTDMode eq 'internal subset' or
+                     $DTDMode eq 'parameter entity in internal subset') {
+              ## In a markup declaration in internal subset
+              push @$Errors, {level => 'm',
+                              type => 'WFC:PEs in Internal Subset',
+                              value => $Temp,
+                              di => $DI, index => $TempIndex};
+            } else {
+              push @$Callbacks, [$OnMDEntityReference,
+                                 {entity => $ent,
+                                  ref => {di => $DI, index => $TempIndex}}];
+              $TempIndex += length $Temp;
+              $Temp = '';
+              $return = 1;
+              last REF;
+            }
+          } else {
+            push @$Errors, {level => 'm',
+                            type => 'entity not declared',
+                            value => $Temp,
+                            di => $DI, index => $TempIndex};
+            $DTDDefs->{entity_names}->{$Temp}
+              ||= {di => $DI, index => $TempIndex};
+          }
+
+          if (not $DTDDefs->{StopProcessing} and
+              not $DTDDefs->{XMLStandalone}) {
+            push @$Errors, {level => 'i',
+                            type => 'stop processing',
+                            di => $DI, index => $TempIndex};
+            %s
+            $DTDDefs->{StopProcessing} = 1;
+          }
+        } # REF
+      }, switch_state_code 'bogus markup declaration state';
+      $return = '1 if $return';
+    } elsif ($type eq 'set-original-state') { # XML only
+      push @result, sprintf q{$OriginalState = [%s, %s];},
+          state_const $_->{state}, state_const $_->{external_state};
+
+    } elsif ($type eq 'process-xml-declaration-in-temp') {
+      push @result, sprintf q{
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
+                           di => $DI, index => $TempIndex};
+          $TempIndex += length $1;
+          $text_decl->{data}->[0]->[0] =~ s/^([\x09\x0A\x0C\x20]*)//;
+          $text_decl->{data}->[0]->[2] += length $1;
+          _process_xml_decl $text_decl;
+        } else {
+          push @$Errors, {level => 's',
+                          type => 'no XML decl',
+                          di => $DI, index => $TempIndex};
+          %s
+        }
+      }, (serialize_actions {actions => $_->{false_actions} || []}, %args);
+
+    } elsif ($type eq 'set-in-literal') {
+      push @result, q{$InLiteral = 1;};
+    } elsif ($type eq 'unset-in-literal') {
+      push @result, q{undef $InLiteral;};
+
+    } elsif ($type eq 'set-DTD-mode') {
+      push @result, sprintf q{$DTDMode = q{%s};}, $_->{value};
+    } elsif ($type eq 'emit-end-of-DOCTYPE') {
+      push @result, q{
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+      };
+      $return = 1;
+    } elsif ($type eq 'insert-IGNORE') {
+      push @result, q{push @$OpenMarkedSections, 'IGNORE';};
+    } elsif ($type eq 'insert-INCLUDE') {
+      push @result, q{push @$OpenMarkedSections, 'INCLUDE';};
+    } elsif ($type eq 'pop-section') { # and reset
+      push @result, sprintf q{
+        if (@$OpenMarkedSections) {
+          pop @$OpenMarkedSections;
+          if (@$OpenMarkedSections) {
+            if ($OpenMarkedSections->[-1] eq 'INCLUDE') {
+              %s
+            } else {
+              %s
+            }
+          } else {
+            %s
+          }
+        } else {
+          push @$Errors, {level => 'm',
+                          type => 'string in internal subset', # ]]>
+                          di => $DI, index => $Offset + (pos $Input) - 3};
+          %s
+        }
+      },
+          switch_state_code 'DTD state',
+          switch_state_code 'ignored section state',
+          switch_state_code 'DTD state',
+          switch_state_code 'DTD state';
+    } elsif ($type eq 'create-attrdef') {
+      push @result, q[
+        $Attr = {di => $DI, index => $Offset + pos $Input};
+      ];
+    } elsif ($type eq 'insert-attrdef') {
+      push @result, q[
+        push @{$Token->{attr_list} ||= []}, $Attr;
+      ];
+    } elsif ($type eq 'insert-allowed-token') {
+      push @result, q{push @{$Attr->{allowed_tokens} ||= []}, '';};
+    } elsif ($type eq 'create-cmgroup') {
+      push @result, q{my $cmgroup = {items => [], separators => [], di => $DI, index => $Offset + pos $Input};};
+    } elsif ($type eq 'set-cmgroup') {
+      push @result, q{$Token->{cmgroup} = $cmgroup;};
+    } elsif ($type eq 'push-cmgroup') {
+      push @result, q{push @$OpenCMGroups, $cmgroup;};
+    } elsif ($type eq 'push-cmgroup-as-only-item') {
+      push @result, q{@$OpenCMGroups = ($cmgroup);};
+    } elsif ($type eq 'append-cmgroup') {
+      push @result, q{push @{$OpenCMGroups->[-1]->{items}}, $cmgroup;};
+    } elsif ($type eq 'pop-cmgroup') {
+      push @result, sprintf q{
+        if ($InitialCMGroupDepth < @$OpenCMGroups) {
+          pop @$OpenCMGroups;
+        } else {
+          push @$Errors, {level => 'm',
+                          type => 'unmatched mgc',
+                          di => $DI, index => $Offset + (pos $Input)};
+          %s
+        }
+      }, switch_state_code 'bogus markup declaration state';
+    } elsif ($type eq 'insert-cmelement') {
+      push @result, q{
+        push @{$OpenCMGroups->[-1]->{items}},
+            {di => $DI, index => $Offset + pos $Input};
+      };
+    } elsif ($type eq 'append-separator-to-cmgroup') {
+      push @result, sprintf q{
+        push @{$OpenCMGroups->[-1]->{separators}},
+            {di => $DI, index => $Offset + pos $Input, type => $%d};
+      }, $_->{capture_index} || 1;
+    } elsif ($type eq 'if-empty') {
+      my $list = $_->{list};
+      if ($list eq 'cm-group') {
+        $list = q{@$OpenCMGroups};
+      } else {
+        die "Unknown list type |$list|";
+      }
+      push @result, sprintf q{
+        if (not %s) {
+          %s
+        } else {
+          %s
+        }
+      }, $list,
+          (serialize_actions {actions => $_->{false_actions} || []}, %args),
+          (serialize_actions $_, %args);
+
     } else {
       die "Bad action type |$type|";
     }
   }
   push @result, q[pos ($Input)--;] if $reconsume;
+  if (defined $return) {
+    push @result, qq{return $return;};
+  }
   return join '', map { $_ . "\n" } @result;
 } # serialize_actions
 
@@ -870,6 +1623,12 @@ sub generate_tokenizer {
   
   my $defs = $self->_expanded_tokenizer_defs->{tokenizer};
   my @def_code;
+
+  if ($LANG eq 'HTML') {
+    push @def_code, q{my $InvalidCharRefs = $Web::HTML::_SyntaxDefs->{charref_invalid};};
+  } else {
+    push @def_code, q{my $InvalidCharRefs = $Web::HTML::_SyntaxDefs->{xml_charref_invalid};};
+  }
 
   my $next_token_type_id = 1;
   for my $key (sort { $a cmp $b } keys %{$defs->{tokens}}) {
@@ -983,6 +1742,249 @@ $case .= q[
     push @sub_code, $code;
   } # $state
 
+  if ($LANG eq 'XML') {
+    push @def_code, q{
+my $OnAttrEntityReference = sub {
+  my ($main, $data) = @_;
+  if (($main->{entity_depth} || 0) > $main->max_entity_depth) {
+    $main->onerrors->($main, [{level => 'm',
+                               type => 'entity:too deep',
+                               text => $main->max_entity_depth,
+                               value => '&'.$data->{entity}->{name}.';',
+                               di => $data->{ref}->{di},
+                               index => $data->{ref}->{index}}]);
+  } elsif ((${$main->{entity_expansion_count} || \0}) > $main->max_entity_expansions + 1) {
+    $main->onerrors->($main, [{level => 'm',
+                               type => 'entity:too many refs',
+                               text => $main->max_entity_expansions,
+                               value => '&'.$data->{entity}->{name}.';',
+                               di => $data->{ref}->{di},
+                               index => $data->{ref}->{index}}]);
+  } else {
+    my $sub = Web::XML::Parser::AttrEntityParser->new;
+    local $data->{entity}->{open} = 1;
+    $sub->parse ($main, $data);
+  }
+}; # $OnAttrEntityReference
+
+my $OnContentEntityReference = sub {
+  my ($main, $data) = @_;
+  if (($main->{entity_depth} || 0) > $main->max_entity_depth) {
+    $main->onerrors->($main, [{level => 'm',
+                               type => 'entity:too deep',
+                               text => $main->max_entity_depth,
+                               value => '&'.$data->{entity}->{name}.';',
+                               di => $data->{ref}->{di},
+                               index => $data->{ref}->{index}}]);
+  } elsif ((${$main->{entity_expansion_count} || \0}) > $main->max_entity_expansions + 1) {
+    $main->onerrors->($main, [{level => 'm',
+                               type => 'entity:too many refs',
+                               text => $main->max_entity_expansions,
+                               value => '&'.$data->{entity}->{name}.';',
+                               di => $data->{ref}->{di},
+                               index => $data->{ref}->{index}}]);
+  } else {
+    my $sub = Web::XML::Parser::ContentEntityParser->new;
+    my $ops = $data->{ops};
+    my $parent_id = $main->{saved_lists}->{OE}->[-1]->{id};
+    my $main2 = $main;
+    $sub->onparsed (sub {
+      my $sub = $_[0];
+      my $nodes = $sub->{nodes}->[$sub->{saved_lists}->{OE}->[0]->{id}]->child_nodes;
+      push @$ops, ['append-by-list', $nodes => $parent_id];
+      $data->{entity}->{open}--;
+      $main2->{pause}--;
+      $main2->_parse_sub_done;
+      undef $main2;
+    });
+    $data->{entity}->{open}++;
+    $main->{pause}++;
+    $main->{pause}++;
+    if (defined $data->{entity}->{value}) { # internal
+      $sub->parse ($main, $data);
+    } else { # external
+      $main->onextentref->($main, $data, $sub);
+    }
+    $main->{pause}--;
+  }
+}; # $OnContentEntityReference
+
+my $OnDTDEntityReference = sub {
+  my ($main, $data) = @_;
+  if (defined $data->{entity}->{name} and
+      ($main->{entity_depth} || 0) > $main->max_entity_depth) {
+    $main->onerrors->($main, [{level => 'm',
+                               type => 'entity:too deep',
+                               text => $main->max_entity_depth,
+                               value => '%'.$data->{entity}->{name}.';',
+                               di => $data->{ref}->{di},
+                               index => $data->{ref}->{index}}]);
+  } elsif (defined $data->{entity}->{name} and
+           (${$main->{entity_expansion_count} || \0}) > $main->max_entity_expansions + 1) {
+    $main->onerrors->($main, [{level => 'm',
+                               type => 'entity:too many refs',
+                               text => $main->max_entity_expansions,
+                               value => '%'.$data->{entity}->{name}.';',
+                               di => $data->{ref}->{di},
+                               index => $data->{ref}->{index}}]);
+  } else {
+    my $sub = Web::XML::Parser::DTDEntityParser->new;
+    my $main2 = $main;
+    $sub->onparsed (sub {
+      my $sub = $_[0];
+      $data->{entity}->{open}--;
+      $main2->{pause}--;
+      $main2->_parse_sub_done;
+      undef $main2;
+    });
+    $data->{entity}->{open}++;
+    $main->{pause}++;
+    $main->{pause}++;
+    if (defined $data->{entity}->{value}) { # internal
+      $sub->parse ($main, $data);
+    } else { # external
+      $main->onextentref->($main, $data, $sub);
+    }
+    $main->{pause}--;
+  }
+}; # $OnDTDEntityReference
+
+my $OnEntityValueEntityReference = sub {
+  my ($main, $data) = @_;
+  if (($main->{entity_depth} || 0) > $main->max_entity_depth) {
+    $main->onerrors->($main, [{level => 'm',
+                               type => 'entity:too deep',
+                               text => $main->max_entity_depth,
+                               value => '%'.$data->{entity}->{name}.';',
+                               di => $data->{ref}->{di},
+                               index => $data->{ref}->{index}}]);
+  } elsif ((${$main->{entity_expansion_count} || \0}) > $main->max_entity_expansions + 1) {
+    $main->onerrors->($main, [{level => 'm',
+                               type => 'entity:too many refs',
+                               text => $main->max_entity_expansions,
+                               value => '%'.$data->{entity}->{name}.';',
+                               di => $data->{ref}->{di},
+                               index => $data->{ref}->{index}}]);
+  } else {
+    my $sub = Web::XML::Parser::EntityValueEntityParser->new;
+    my $main2 = $main;
+    $sub->onparsed (sub {
+      my $sub = $_[0];
+      $data->{entity}->{open}--;
+      $main2->{pause}--;
+      $main2->_parse_sub_done;
+      undef $main2;
+    });
+    $data->{entity}->{open}++;
+    $main->{pause}++;
+    $main->{pause}++;
+    if (defined $data->{entity}->{value}) { # internal
+      $sub->parse ($main, $data);
+    } else { # external
+      $main->onextentref->($main, $data, $sub);
+    }
+    $main->{pause}--;
+  }
+}; # $OnEntityValueEntityReference
+
+my $OnMDEntityReference = sub {
+  my ($main, $data) = @_;
+  if (($main->{entity_depth} || 0) > $main->max_entity_depth) {
+    $main->onerrors->($main, [{level => 'm',
+                               type => 'entity:too deep',
+                               text => $main->max_entity_depth,
+                               value => '%'.$data->{entity}->{name}.';',
+                               di => $data->{ref}->{di},
+                               index => $data->{ref}->{index}}]);
+  } elsif ((${$main->{entity_expansion_count} || \0}) > $main->max_entity_expansions + 1) {
+    $main->onerrors->($main, [{level => 'm',
+                               type => 'entity:too many refs',
+                               text => $main->max_entity_expansions,
+                               value => '%'.$data->{entity}->{name}.';',
+                               di => $data->{ref}->{di},
+                               index => $data->{ref}->{index}}]);
+  } else {
+    my $sub = Web::XML::Parser::MDEntityParser->new;
+    my $main2 = $main;
+    $sub->onparsed (sub {
+      my $sub = $_[0];
+      package Web::XML::Parser;
+      if ($sub->{saved_states}->{InLiteral}) {
+        $main2->{saved_states}->{State} = STATE ("bogus markup declaration state") ();
+        $main2->onerrors->($main2, [{level => 'm',
+                                     type => 'unclosed literal',
+                                     di => $sub->{saved_states}->{Token}->{di},
+                                     index => $sub->{saved_states}->{Token}->{index}}]);
+      } else {
+        $main2->{saved_states}->{State} = $sub->{saved_states}->{State};
+      }
+      if ($sub->{saved_states}->{InitialCMGroupDepth} < @{$sub->{saved_lists}->{OpenCMGroups}}) {
+        $main2->onerrors->($main2, [{level => 'm',
+                                     type => 'unclosed cmgroup',
+                                     di => $sub->{saved_states}->{Token}->{di},
+                                     index => $sub->{saved_states}->{Token}->{index}}]);
+        $#{$sub->{saved_lists}->{OpenCMGroups}} = $sub->{saved_states}->{InitialCMGroupDepth}-1;
+      }
+      $main2->{saved_states}->{Attr} = $sub->{saved_states}->{Attr};
+
+      my $sub2 = Web::XML::Parser::MDEntityParser->new;
+      $sub2->onparsed (sub {
+        $main2->{saved_states}->{State} = $_[0]->{saved_states}->{State};
+        $main2->{saved_states}->{Attr} = $_[0]->{saved_states}->{Attr};
+      });
+      {
+        local $main2->{saved_states}->{OriginalState} = [$main2->{saved_states}->{State}];
+        $sub2->parse ($main2, {entity => {value => [[' ', -1, 0]], name => ''}});
+      }
+
+      $data->{entity}->{open}--;
+      $main2->{pause}--;
+      $main2->_parse_sub_done;
+      undef $main2;
+    });
+    $data->{entity}->{open}++;
+    $main->{pause}++;
+    $main->{pause}++;
+    $sub->{saved_states}->{InitialCMGroupDepth} = $main->{saved_lists}->{OpenCMGroups};
+    if (defined $data->{entity}->{value}) { # internal
+      $sub->parse ($main, $data);
+    } else { # external
+      $main->onextentref->($main, $data, $sub);
+    }
+    $main->{pause}--;
+  }
+}; # $OnMDEntityReference
+    };
+    $def_code[-1] =~ s/\bSTATE\s*\("([^"]+)"\)/state_const $1/ge;
+
+    push @def_code, q{
+      sub cant_expand_extentref ($$$) {
+        my ($self, $data, $sub) = @_;
+        $self->onerrors->($self, [{level => 'i',
+                                   type => 'external entref',
+                                   value => (defined $data->{entity}->{name} ? ($data->{entity}->{is_parameter_entity_flag} ? '%' : '&').$data->{entity}->{name}.';' : undef),
+                                   di => $data->{ref}->{di},
+                                   index => $data->{ref}->{index}}]);
+        if (not $self->{saved_states}->{DTDDefs}->{StopProcessing} and
+            not $self->{saved_states}->{DTDDefs}->{XMLStandalone}) {
+          $self->onerrors->($self, [{level => 'i',
+                                     type => 'stop processing',
+                                     di => $data->{ref}->{di},
+                                   index => $data->{ref}->{index}}])
+              if defined $data->{entity}->{name} and
+                 $data->{entity}->{is_parameter_entity_flag};
+          $self->{saved_maps}->{DTDDefs}->{StopProcessing} = 1;
+        }
+
+        $sub->parse_bytes_start (undef, $self);
+        $sub->parse_bytes_feed ('<?xml encoding="utf-8"?>');
+        $sub->parse_bytes_end;
+      } # cant_expand_extentref
+    };
+  } else { # HTML
+    push @def_code, q{ sub cant_expand_extentref ($$$) { } };
+  }
+
   push @def_code, q{
 my $TokenizerAbortingTagNames = {
   title => 1,
@@ -1014,6 +2016,159 @@ my $TokenizerAbortingTagNames = {
     } # _tokenize
   ],
       (join "\n", @sub_code);
+
+  push @def_code, q{
+
+sub _tokenize_attr_value ($) { # IndexedString
+  my $token = $_[0];
+  my @v;
+  my $non_sp = 0;
+  for my $v (@{$token->{value}}) {
+    next unless length $v->[0];
+    if ($v->[0] =~ /\x20/) {
+      my $pos = $v->[2];
+      for (grep { length } split /(\x20+)/, $v->[0], -1) {
+        if (/\x20/) {
+          push @v, [' ', $v->[1], $pos] if $non_sp;
+          $non_sp = 0;
+        } else {
+          push @v, [$_, $v->[1], $pos];
+          $non_sp = 1;
+        }
+        $pos += length;
+      }
+    } else {
+      push @v, $v;
+      $non_sp = 1;
+    }
+  } # $v
+  if (@v and $v[-1]->[0] eq ' ') {
+    pop @v;
+  }
+  return 0 if (join '', map { $_->[0] } @{$token->{value}}) eq
+              (join '', map { $_->[0] } @v);
+  $token->{value} = \@v;
+  return 1;
+} # _tokenize_attr_value
+
+  } if $LANG eq 'XML';
+
+  push @def_code, q{
+
+sub strict_checker ($;$) {
+  if (@_ > 1) {
+    $_[0]->{strict_checker} = $_[1];
+  }
+  return $_[0]->{strict_checker} || 'Web::XML::Parser::MinimumChecker';
+} # strict_checker
+
+  };
+
+  push @def_code, q{
+
+sub _sc ($) {
+  return $_[0]->{_sc} ||= do {
+    my $sc = $_[0]->strict_checker;
+    eval qq{ require $sc } or die $@;
+    $sc;
+  };
+} # _sc
+
+    sub _process_xml_decl ($) {
+      my $token = $_[0];
+      my $data = join '', map { $_->[0] } @{$token->{data}}; # IndexedString
+
+      my $di = $token->{data}->[0]->[1];
+      my $pos = $token->{data}->[0]->[2];
+      for (@{$token->{data}}) {
+        $di = $_->[1];
+        $pos = $_->[2];
+        last if length $_->[0];
+      }
+      my $req_sp = 0;
+
+      if ($data =~ s/\Aversion[\x09\x0A\x20]*=[\x09\x0A\x20]*
+                       (?>"([^"]*)"|'([^']*)')([\x09\x0A\x20]*)//x) {
+          my $v = defined $1 ? $1 : $2;
+          my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
+          $pos += $+[0] - $-[0];
+          $req_sp = not length $3;
+          $SC->check_hidden_version
+              (name => $v,
+               onerror => sub {
+                 push @$Errors, {@_, di => $di, index => $p};
+               });
+          unless (defined $CONTEXT) { # XML declaration
+            push @$OP, ['xml-version', $v];
+          }
+      } else {
+          if (not defined $CONTEXT) { # XML declaration
+            push @$Errors, {level => 'm',
+                            type => 'attribute missing:version',
+                            di => $di, index => $pos};
+          }
+      }
+
+      if ($data =~ s/\Aencoding[\x09\x0A\x20]*=[\x09\x0A\x20]*
+                       (?>"([^"]*)"|'([^']*)')([\x09\x0A\x20]*)//x) {
+          my $v = defined $1 ? $1 : $2;
+          my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
+          if ($req_sp) {
+            push @$Errors, {level => 'm',
+                            type => 'no space before attr name',
+                            di => $di, index => $pos};
+          }
+          $pos += $+[0] - $-[0];
+          $req_sp = not length $3;
+          $SC->check_hidden_encoding
+              (name => $v,
+               onerror => sub {
+                 push @$Errors, {@_, di => $di, index => $p};
+               });
+          unless (defined $CONTEXT) { # XML declaration
+            push @$OP, ['xml-encoding', $v];
+          }
+      } else {
+        if (defined $CONTEXT) { # text declaration
+          push @$Errors, {level => 'm',
+                          type => 'attribute missing:encoding',
+                          di => $di, index => $pos};
+        }
+      }
+
+      if ($data =~ s/\Astandalone[\x09\x0A\x20]*=[\x09\x0A\x20]*
+                       (?>"([^"]*)"|'([^']*)')[\x09\x0A\x20]*//x) {
+          my $v = defined $1 ? $1 : $2;
+          if ($req_sp) {
+            push @$Errors, {level => 'm',
+                            type => 'no space before attr name',
+                            di => $di, index => $pos};
+          }
+          if ($v eq 'yes' or $v eq 'no') {
+            if (defined $CONTEXT) { # text declaration
+              push @$Errors, {level => 'm',
+                              type => 'attribute not allowed:standalone',
+                              di => $di, index => $pos};
+            } else {
+              push @$OP, ['xml-standalone',
+                          $DTDDefs->{XMLStandalone} = ($v ne 'no')];
+            }
+          } else {
+            my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
+            push @$Errors, {level => 'm',
+                            type => 'XML standalone:syntax error',
+                            di => $di, index => $p, value => $v};
+          }
+          $pos += $+[0] - $-[0];
+      }
+
+      if (length $data) {
+          push @$Errors, {level => 'm',
+                          type => 'bogus XML declaration',
+                          di => $di, index => $pos};
+      }
+    } # _process_xml_decl
+  } if $LANG eq 'XML';
 
   my $def_code = join "\n", @def_code;
   return ($def_code, $generated);
@@ -1097,6 +2252,8 @@ sub pattern_to_code ($$) {
       return sprintf q{%s->{ns} == %s and %s->{local_name} eq $token->{tag_name}},
           $var, ns_const $pattern->{ns}, $var;
     }
+  } elsif ($pattern->{tag_name}) {
+    return sprintf q{$tag_name eq %s->{token}->{tag_name}}, $var;
   } else {
     die "Broken pattern @{[join ' ', %$pattern]}";
   }
@@ -1120,6 +2277,8 @@ sub cond_to_code ($) {
       $cond2 = 'not';
     } elsif ($cond->[1] eq 'is empty') {
       return q{not @$OE};
+    } elsif ($cond->[1] eq '> 1') {
+      return q{@$OE > 1};
     } else {
       die "Unknown cond expr |$cond->[1]|";
     }
@@ -1205,6 +2364,8 @@ sub cond_to_code ($) {
   } elsif ($cond->[0] eq 'token') {
     if ($cond->[1] eq 'has' and $cond->[2] eq 'self-closing flag') {
       return q{$token->{self_closing_flag}};
+    } elsif ($cond->[1] eq 'has' and $cond->[2] eq 'has internal subset flag') {
+      return q{$token->{has_internal_subset_flag}};
     } elsif ($cond->[1] eq 'has attr' and defined $cond->[2]) {
       if (ref $cond->[2]) {
         return join " or \n", map { sprintf q{$token->{attrs}->{q@%s@}}, $_ } @{$cond->[2]};
@@ -1239,6 +2400,12 @@ sub cond_to_code ($) {
       } else {
         die "Unknown token type |$cond->[2]|";
       }
+    } elsif ($cond->[1] eq 'non-empty') {
+      if ($cond->[2] eq 'system identifier') {
+        return sprintf q{(defined $token->{system_identifier} and length $token->{system_identifier})};
+      } else {
+        die "Unknown condition |@$cond|";
+      }
     } else {
       die "Unknown condition |@$cond|";
     }
@@ -1246,6 +2413,10 @@ sub cond_to_code ($) {
            $cond->[1] eq 'is' and
            defined $cond->[2]) {
     return sprintf q{$token->{tag_name} eq q@%s@}, $cond->[2];
+  } elsif ($cond->[0] eq 'token target' and
+           $cond->[1] eq 'is' and
+           defined $cond->[2]) {
+    return sprintf q{$token->{target} eq q@%s@}, $cond->[2];
   } elsif ($cond->[0] eq 'token[type]' and
            $cond->[1] eq 'lc is not' and
            defined $cond->[2]) {
@@ -1274,6 +2445,9 @@ sub cond_to_code ($) {
            $cond->[1] eq 'is' and
            ref $cond->[2] eq 'ARRAY') {
     return join ' or ', map { sprintf q{$IM == %s}, im_const $_ } @{$cond->[2]};
+  } elsif ($cond->[0] eq 'DOCTYPE system identifier' and
+           $cond->[1] eq 'non-empty') {
+    return q{defined $DTDDefs->{system_identifier} and length $DTDDefs->{system_identifier}};
   } elsif ($cond->[0] eq 'stack of template insertion modes' and
            $cond->[1] eq 'is not empty') {
     return q{@$TEMPLATE_IMS};
@@ -1284,8 +2458,9 @@ sub cond_to_code ($) {
     return q{grep { $_->{value} =~ /[^\x09\x0A\x0C\x20]/ } @$TABLE_CHARS};
   } elsif ($cond->[0] eq 'scripting') {
     return q{$Scripting};
+
   } else {
-    die "Unknown condition |$cond->[0]|";
+    die "Unknown condition |@$cond|";
   }
 } # cond_to_code
 
@@ -1324,6 +2499,14 @@ sub foster_code ($$$;$) {
     }, $cmd, $value_code, $target_code;
   }
 } # foster_code
+
+sub E2Tns ($) {
+  if ($LANG eq 'HTML') {
+    return sprintf q{$Element2Type->[%s]}, $_[0];
+  } else {
+    return sprintf q{$Element2Type->{(%s)}}, $_[0];
+  }
+} # E2Tns
 
 sub actions_to_code ($;%);
 sub actions_to_code ($;%) {
@@ -1394,6 +2577,8 @@ sub actions_to_code ($;%) {
         }, im_const $act->{im}, $act->{im};
         $new_im = $act->{im};
       }
+    } elsif ($act->{type} eq 'construct the DOCTYPE node, if necessary') { # XML
+      push @code, q{push @$OP, ['construct-doctype'];};
     } elsif ($act->{type} eq 'reprocess the token') {
       push @code, sprintf q{
         goto &{$ProcessIM->[$IM]->[$token->{type}]->[$token->{tn}]};
@@ -1419,7 +2604,8 @@ sub actions_to_code ($;%) {
         $et_code = '(' . ($ElementToElementGroupExpr->{HTML}->{$tag_name} ||
                           $ElementToElementGroupExpr->{HTML}->{'*'}) . ')';
       } else {
-        $et_code = sprintf q{$Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'}};
+        $et_code = sprintf q{%s->{$token->{tag_name}} || %s->{'*'}},
+            E2Tns 'HTMLNS', E2Tns 'HTMLNS';
       }
       push @code, sprintf q{
         my %s = {id => $NEXT_ID++,
@@ -1493,7 +2679,8 @@ sub actions_to_code ($;%) {
         $et_code = '(' . ($ElementToElementGroupExpr->{HTML}->{$tag_name} ||
                           $ElementToElementGroupExpr->{HTML}->{'*'}) . ')';
       } else {
-        $et_code = sprintf q{$Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'}};
+        $et_code = sprintf q{%s->{$token->{tag_name}} || %s->{'*'}},
+            E2Tns 'HTMLNS', E2Tns 'HTMLNS';
       }
       push @code, sprintf q{
         my $node = {id => $NEXT_ID++,
@@ -1530,9 +2717,9 @@ sub actions_to_code ($;%) {
                     ns => $ns,
                     local_name => $token->{tag_name},
                     attr_list => $token->{attr_list},
-                    et => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0,
-                    aet => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0};
-      };
+                    et => %s->{$token->{tag_name}} || %s->{'*'} || 0,
+                    aet => %s->{$token->{tag_name}} || %s->{'*'} || 0};
+      }, E2Tns '$ns', E2Tns '$ns', E2Tns '$ns', E2Tns '$ns';
       if ($act->{ns} eq 'inherit') {
         push @code, sprintf q{
           if ($ns == MATHMLNS and $node->{local_name} eq 'annotation-xml' and
@@ -1592,16 +2779,177 @@ sub actions_to_code ($;%) {
 
       ## As a non-HTML element can't be a form-associated element, we
       ## don't have to associate the form owner.
+    } elsif ($act->{type} eq 'create an XML element') { # XML
+      push @code, sprintf q{
+        my $nsmap = @$OE ? {%%{$OE->[-1]->{nsmap}}} : {
+          xml => q<http://www.w3.org/XML/1998/namespace>,
+          xmlns => q<http://www.w3.org/2000/xmlns/>,
+        };
+
+        my $attrs = $token->{attrs};
+        my $attrdefs = $DTDDefs->{attrdefs}->{$token->{tag_name}};
+        for my $def (@{$attrdefs or []}) {
+          my $attr_name = $def->{name};
+          if (defined $attrs->{$attr_name}) {
+            $attrs->{$attr_name}->{declared_type} = $def->{declared_type} || 0;
+            if ($def->{tokenize}) {
+              if (_tokenize_attr_value $attrs->{$attr_name} and
+                  $def->{external} and
+                  not $def->{external}->{vc_error_reported} and
+                  $DTDDefs->{XMLStandalone}) {
+                push @$Errors, {level => 'm',
+                                type => 'VC:Standalone Document Declaration:attr',
+                                di => $def->{di}, index => $def->{index},
+                                value => $attr_name};
+                $def->{external}->{vc_error_reported} = 1;
+              }
+            }
+          } elsif (defined $def->{value}) {
+            push @{$token->{attr_list}},
+            $attrs->{$attr_name} = {
+              name => $attr_name,
+              value => $def->{value},
+              declared_type => $def->{declared_type} || 0,
+              not_specified => 1,
+              di => $def->{di}, index => $def->{index},
+            };
+
+            if ($def->{external} and
+                not $def->{external}->{vc_error_reported} and
+                $DTDDefs->{XMLStandalone}) {
+              push @$Errors, {level => 'm',
+                              type => 'VC:Standalone Document Declaration:attr',
+                              di => $def->{di}, index => $def->{index},
+                              value => $attr_name};
+              $def->{external}->{vc_error_reported} = 1;
+            }
+          }
+        }
+        
+        for (keys %%$attrs) {
+          if (/^xmlns:./s) {
+            my $prefix = substr $_, 6;
+            my $value = join '', map { $_->[0] } @{$attrs->{$_}->{value}};
+            if ($prefix eq 'xml' or $prefix eq 'xmlns' or
+                $value eq q<http://www.w3.org/XML/1998/namespace> or
+                $value eq q<http://www.w3.org/2000/xmlns/>) {
+              ## NOTE: Error should be detected at the DOM layer.
+              #
+            } elsif (length $value) {
+              $nsmap->{$prefix} = $value;
+            } else {
+              delete $nsmap->{$prefix};
+            }
+          } elsif ($_ eq 'xmlns') {
+            my $value = join '', map { $_->[0] } @{$attrs->{$_}->{value}};
+            if ($value eq q<http://www.w3.org/XML/1998/namespace> or
+                $value eq q<http://www.w3.org/2000/xmlns/>) {
+              ## NOTE: Error should be detected at the DOM layer.
+              #
+            } elsif (length $value) {
+              $nsmap->{''} = $value;
+            } else {
+              delete $nsmap->{''};
+            }
+          }
+        }
+        
+        my $ns;
+        my ($prefix, $ln) = split /:/, $token->{tag_name}, 2;
+        
+        if (defined $ln and $prefix ne '' and $ln ne '') { # prefixed
+          if (defined $nsmap->{$prefix}) {
+            $ns = $nsmap->{$prefix};
+          } else {
+            ## NOTE: Error should be detected at the DOM layer.
+            ($prefix, $ln) = (undef, $token->{tag_name});
+          }
+        } else {
+          $ns = $nsmap->{''} if $prefix ne '' and not defined $ln;
+          ($prefix, $ln) = (undef, $token->{tag_name});
+        }
+
+        my $nse = defined $ns ? $ns : '';
+        my $node = {
+          id => $NEXT_ID++,
+          token => $token,
+          di => $token->{di}, index => $token->{index},
+          nsmap => $nsmap,
+          ns => $ns, prefix => $prefix, local_name => $ln,
+          attr_list => $token->{attr_list},
+          et => %s->{$ln} || %s->{'*'} || 0,
+          aet => %s->{$ln} || %s->{'*'} || 0,
+        };
+        $DTDDefs->{el_ncnames}->{$prefix} ||= $token if defined $prefix;
+        $DTDDefs->{el_ncnames}->{$ln} ||= $token if defined $ln;
+
+        my $has_attr;
+        for my $attr (@{$node->{attr_list}}) {
+          my $ns;
+          my ($p, $l) = split /:/, $attr->{name}, 2;
+
+          if ($attr->{name} eq 'xmlns:xmlns') {
+            ($p, $l) = (undef, $attr->{name});
+          } elsif (defined $l and $p ne '' and $l ne '') { # prefixed
+            if (defined $nsmap->{$p}) {
+              $ns = $nsmap->{$p};
+            } else {
+              ## NOTE: Error should be detected at the DOM-layer.
+              ($p, $l) = (undef, $attr->{name});
+            }
+          } else {
+            if ($attr->{name} eq 'xmlns') {
+              $ns = $nsmap->{xmlns};
+            }
+            ($p, $l) = (undef, $attr->{name});
+          }
+          
+          if ($has_attr->{defined $ns ? $ns : ''}->{$l}) {
+            $ns = undef;
+            ($p, $l) = (undef, $attr->{name});
+          } else {
+            $has_attr->{defined $ns ? $ns : ''}->{$l} = 1;
+          }
+
+          $attr->{name_args} = [$ns, [$p, $l]];
+          $DTDDefs->{el_ncnames}->{$p} ||= $attr if defined $p;
+          $DTDDefs->{el_ncnames}->{$l} ||= $attr if defined $l;
+          if (defined $attr->{declared_type}) {
+            #
+          } elsif ($DTDDefs->{AllDeclsProcessed}) {
+            $attr->{declared_type} = 0; # no value
+          } else {
+            $attr->{declared_type} = 11; # unknown
+          }
+        }
+      }, E2Tns '$nse', E2Tns '$nse', E2Tns '$nse', E2Tns '$nse';
+    } elsif ($act->{type} eq 'insert a DOCTYPE') { # XML
+      push @code, q{
+        push @$OP, ['doctype', $token => 0];
+
+        ## Public identifier normalization is intentionally not done
+        ## (Chrome behavior).
+        if (defined $token->{public_identifier} and
+            $Web::HTML::_SyntaxDefs->{charrefs_pubids}->{$token->{public_identifier}}) {
+          $DTDDefs->{has_charref_decls} = 1;
+          $DTDDefs->{is_charref_declarations_entity} = 1;
+        } else {
+          $DTDDefs->{need_predefined_decls} = 1;
+        }
+      };
     } elsif ($act->{type} eq 'append-to-document') {
       if (defined $act->{item}) {
         if ($act->{item} eq 'DocumentType') {
-          push @code, q{push @$OP, ['doctype', $token => 0];};
+          push @code, q{push @$OP, ['doctype', $token => 0]; $NEXT_ID++;}; # HTML
         } else {
           die "Unknown item |$act->{item}|";
         }
       } else {
         push @code, q{push @$OP, ['insert', $node => 0];};
       }
+    } elsif ($act->{type} eq 'append-to-current') { # XML
+      push @code, q{push @$OP, ['insert', $node => $OE->[-1]->{id}];};
+
     } elsif ($act->{type} eq 'push-oe') {
       if (defined $act->{item}) {
         if ($act->{item} eq 'head element pointer') {
@@ -1662,22 +3010,40 @@ sub actions_to_code ($;%) {
       } else {
         die "Unknown item |$act->{item}|";
       }
-    } elsif ($act->{type} eq 'insert a comment') {
+    } elsif ($act->{type} eq 'insert a comment' or
+             $act->{type} eq 'insert a processing instruction') {
+      my $type = $act->{type} eq 'insert a comment' ? 'comment' : 'pi';
       if (defined $act->{position}) {
         if ($act->{position} eq 'document') {
           push @code, sprintf q{
-            push @$OP, ['comment', $token => 0];
-          };
+            push @$OP, ['%s', $token => 0];
+          }, $type;
+        } elsif ($act->{position} eq 'doctype') { # XML
+          push @code, sprintf q{
+            push @$OP, ['%s', $token => 1];
+            push @$Errors, {level => 'w',
+                            type => 'xml:dtd:pi',
+                            di => $token->{di}, index => $token->{index}};
+          }, $type;
         } elsif ($act->{position} eq 'oe[0]') {
           push @code, sprintf q{
-            push @$OP, ['comment', $token => $OE->[0]->{id}];
-          };
+            push @$OP, ['%s', $token => $OE->[0]->{id}];
+          }, $type;
         } else {
           die "Unknown insertion position |$act->{position}|";
         }
       } else {
         push @code, sprintf q{
-          push @$OP, ['comment', $token => $OE->[-1]->{id}];
+          push @$OP, ['%s', $token => $OE->[-1]->{id}];
+        }, $type;
+      }
+      if ($type eq 'pi') {
+        push @code, sprintf q{
+          $SC->check_pi_target
+              (name => $token->{target},
+               onerror => sub {
+                 push @$Errors, {@_, di => $token->{di}, index => $token->{index}};
+               });
         };
       }
     } elsif ($act->{type} eq 'insert-chars') {
@@ -1757,7 +3123,8 @@ sub actions_to_code ($;%) {
     } elsif ($act->{type} eq 'doctype-switch') {
       push @code, q{
         if (not defined $token->{name} or not $token->{name} eq 'html') {
-          push @$Errors, {type => 'bad DOCTYPE name', level => 'm',
+          push @$Errors, {level => 'm',
+                          type => 'bad DOCTYPE name',
                           value => $token->{name},
                           di => $token->{di}, index => $token->{index}};
           unless ($IframeSrcdoc) {
@@ -2145,7 +3512,7 @@ sub actions_to_code ($;%) {
         }, $codes->{else}, $codes->{null};
       } else {
         if (defined $act->{char_actions}) {
-          die;
+          die if $LANG eq 'HTML';
           $code = sprintf q{
             while ($token->{value} =~ /(.)/gs) {
               %s
@@ -2179,6 +3546,358 @@ sub actions_to_code ($;%) {
       push @code, q{return;};
     } elsif ($act->{type} eq 'ignore-next-lf') {
       $ignore_newline = 1;
+
+    } elsif ($act->{type} eq 'set-DOCTYPE-system-identifier') {
+      push @code, q{
+        $DTDDefs->{system_identifier} = $token->{system_identifier};
+        $DTDDefs->{di} = $token->{di};
+        $DTDDefs->{index} = $token->{index};
+      };
+    } elsif ($act->{type} eq 'set the stop processing flag') {
+      push @code, q{$DTDDefs->{StopProcessing} = 1;};
+    } elsif ($act->{type} eq 'set-end-tag-name') {
+      push @code, q{my $tag_name = length $token->{tag_name} ? $token->{tag_name} : $OE->[-1]->{token}->{tag_name};};
+    } elsif ($act->{type} eq 'the XML declaration is missing') {
+      push @code, q{
+        push @$Errors, {level => 's',
+                        type => 'no XML decl',
+                        di => $token->{di}, index => 0};
+      };
+    } elsif ($act->{type} eq 'process an XML declaration') {
+      push @code, q{_process_xml_decl $token;};
+
+    } elsif ($act->{type} eq 'process an ELEMENT token') {
+      push @code, q{
+        if (not defined $token->{name}) {
+          #
+        } elsif (not $DTDDefs->{elements}->{$token->{name}}->{has_element_decl}) {
+          push @$Errors, {level => 'w',
+                          type => 'xml:dtd:ext decl',
+                          di => $token->{di}, index => $token->{index}}
+              unless $token->{DTDMode} eq 'internal subset'; # not in parameter entity
+          $SC->check_hidden_name
+              (name => $token->{name},
+               onerror => sub {
+                 push @$Errors, {@_, di => $token->{di}, index => $token->{index}};
+               });
+          my $def = $DTDDefs->{elements}->{$token->{name}};
+          for (qw(name di index cmgroup)) {
+            $def->{$_} = $token->{$_};
+          }
+          if (defined $token->{content_keyword}) {
+            if ({EMPTY => 1, ANY => 1}->{$token->{content_keyword}}) {
+              $def->{content_keyword} = $token->{content_keyword};
+            } else {
+              push @$Errors, {level => 'm',
+                              type => 'xml:dtd:unknown content keyword',
+                              value => $token->{content_keyword},
+                              di => $token->{di}, index => $token->{index}};
+            }
+          }
+          ## XXX $self->{t}->{content} syntax check.
+          $DTDDefs->{elements}->{$token->{name}}->{has_element_decl} = 1;
+        } else {
+          push @$Errors, {level => 'm',
+                          type => 'duplicate element decl',
+                          value => $token->{name},
+                          di => $token->{di}, index => $token->{index}};
+        }
+      };
+    } elsif ($act->{type} eq 'process an ATTLIST token') {
+      push @code, q{
+        if (defined $token->{name}) {
+          $SC->check_hidden_name
+              (name => $token->{name},
+               onerror => sub {
+                 push @$Errors, {@_, di => $token->{di}, index => $token->{index}};
+               });
+          if ($token->{StopProcessing}) {
+            push @$Errors, {level => 'w',
+                            type => 'xml:dtd:attlist ignored',
+                            di => $token->{di}, index => $token->{index}};
+          } else { # not $StopProcessing
+            push @$Errors, {level => 'w',
+                            type => 'xml:dtd:ext decl',
+                            di => $token->{di}, index => $token->{index}}
+                unless $token->{DTDMode} eq 'internal subset'; # not in parameter entity
+
+            if (not defined $DTDDefs->{elements}->{$token->{name}}) {
+              $DTDDefs->{elements}->{$token->{name}}->{name} = $token->{name};
+              $DTDDefs->{elements}->{$token->{name}}->{di} = $token->{di};
+              $DTDDefs->{elements}->{$token->{name}}->{index} = $token->{index};
+            } elsif ($DTDDefs->{elements}->{$token->{name}}->{has_attlist}) {
+              push @$Errors, {level => 'w',
+                              type => 'duplicate attlist decl',
+                              value => $token->{name},
+                              di => $token->{di}, index => $token->{index}};
+            }
+            $DTDDefs->{elements}->{$token->{name}}->{has_attlist} = 1;
+
+            unless (@{$token->{attr_list} or []}) {
+              push @$Errors, {level => 'w',
+                              type => 'empty attlist decl',
+                              value => $token->{name},
+                              di => $token->{di}, index => $token->{index}};
+            }
+          } # not $StopProcessing
+          
+          for my $at (@{$token->{attr_list} or []}) {
+            my $type = defined $at->{declared_type} ? {
+              CDATA => 1, ID => 2, IDREF => 3, IDREFS => 4, ENTITY => 5,
+              ENTITIES => 6, NMTOKEN => 7, NMTOKENS => 8, NOTATION => 9,
+            }->{$at->{declared_type}} : 10;
+            if (defined $type) {
+              $at->{declared_type} = $type;
+            } else {
+              push @$Errors, {level => 'm',
+                              type => 'unknown declared type',
+                              value => $at->{declared_type},
+                              di => $at->{di}, index => $at->{index}};
+              $at->{declared_type} = $type = 0;
+            }
+            
+            my $default = defined $at->{default_type} ? {
+              FIXED => 1, REQUIRED => 2, IMPLIED => 3,
+            }->{$at->{default_type}} : 4;
+            if (defined $default) {
+              $at->{default_type} = $default;
+              if (defined $at->{value}) {
+                if ($default == 1 or $default == 4) {
+                  #
+                } elsif (length $at->{value}) {
+                  push @$Errors, {level => 'm',
+                                  type => 'default value not allowed',
+                                  di => $at->{di}, index => $at->{index}};
+                }
+              } else {
+                if ($default == 1 or $default == 4) {
+                  push @$Errors, {level => 'm',
+                                  type => 'default value not provided',
+                                  di => $at->{di}, index => $at->{index}};
+                }
+              }
+            } else {
+              push @$Errors, {level => 'm',
+                              type => 'unknown default type',
+                              value => $at->{default_type},
+                              di => $at->{di}, index => $at->{index}};
+              $at->{default_type} = 0;
+            }
+            $at->{value} = ($at->{default_type} and ($at->{default_type} == 1 or $at->{default_type} == 4))
+                ? defined $at->{value} ? $at->{value} : [['', $at->{di}, $at->{index}]] : undef;
+
+            $at->{tokenize} = (2 <= $type and $type <= 10);
+
+            if (defined $at->{value}) {
+              _tokenize_attr_value $at if $at->{tokenize};
+            }
+
+            if (not $token->{StopProcessing}) {
+              if (not defined $DTDDefs->{attrdef_by_name}->{$token->{name}}->{$at->{name}}) {
+                $DTDDefs->{attrdef_by_name}->{$token->{name}}->{$at->{name}} = $at;
+                push @{$DTDDefs->{attrdefs}->{$token->{name}} ||= []}, $at;
+                $at->{external} = {} unless $token->{DTDMode} eq 'internal subset'; # not in parameter entity
+              } else {
+                push @$Errors, {level => 'w',
+                                type => 'duplicate attrdef',
+                                value => $at->{name},
+                                di => $at->{di}, index => $at->{index}};
+                if ($at->{declared_type} == 10) { # ENUMERATION
+                  for (@{$at->{allowed_tokens} or []}) {
+                    $SC->check_hidden_nmtoken
+                        (name => $_,
+                         onerror => sub {
+                           push @$Errors, {@_,
+                                           di => $at->{di}, index => $at->{index}};
+                         });
+                  }
+                } elsif ($at->{declared_type} == 9) { # NOTATION
+                  for (@{$at->{allowed_tokens} or []}) {
+                    $SC->check_hidden_name
+                        (name => $_,
+                         onerror => sub {
+                           push @$Errors, {@_,
+                                           di => $at->{di}, index => $at->{index}};
+                         });
+                  }
+                }
+              }
+            } # not $StopProcessing
+          } # attr_list
+        }
+      };
+    } elsif ($act->{type} eq 'process an ENTITY token') {
+      push @code, q{
+        if ($token->{StopProcessing}) {
+          push @$Errors, {level => 'w',
+                          type => 'xml:dtd:entity ignored',
+                          di => $token->{di}, index => $token->{index}};
+          $SC->check_hidden_name
+              (name => $token->{name},
+               onerror => sub {
+                 push @$Errors, {@_, di => $token->{di}, index => $token->{index}};
+               })
+              if defined $token->{name};
+        } elsif (not defined $token->{name}) {
+          #
+        } else { # not stop processing
+          if ($token->{is_parameter_entity_flag}) {
+            if (not $DTDDefs->{pe}->{'%'.$token->{name} . ';'}) {
+              push @$Errors, {level => 'w',
+                              type => 'xml:dtd:ext decl',
+                              di => $token->{di}, index => $token->{index}}
+                  unless $token->{DTDMode} eq 'internal subset'; # and not in param entity
+              $SC->check_hidden_name
+                  (name => $token->{name},
+                   onerror => sub {
+                     push @$Errors, {@_,
+                                     di => $token->{di}, index => $token->{index}};
+                   });
+              $DTDDefs->{pe}->{'%'.$token->{name} . ';'} = $token;
+            } else {
+              push @$Errors, {level => 'w',
+                              type => 'duplicate entity decl',
+                              value => '%'.$token->{name}.';',
+                              di => $token->{di}, index => $token->{index}};
+            }
+          } else { # general entity
+            if ({
+              amp => 1, apos => 1, quot => 1, lt => 1, gt => 1,
+            }->{$token->{name}}) {
+              if (not defined $token->{value} or # external entity
+                  not join ('', map { $_->[0] } @{$token->{value}}) =~ { # IndexedString
+                    amp => qr/\A&#(?:x0*26|0*38);\z/,
+                    lt => qr/\A&#(?:x0*3[Cc]|0*60);\z/,
+                    gt => qr/\A(?>&#(?:x0*3[Ee]|0*62);|>)\z/,
+                    quot => qr/\A(?>&#(?:x0*22|0*34);|")\z/,
+                    apos => qr/\A(?>&#(?:x0*27|0*39);|')\z/,
+                  }->{$token->{name}}) {
+                push @$Errors, {level => 'm',
+                                type => 'bad predefined entity decl',
+                                value => $token->{name},
+                                di => $token->{di}, index => $token->{index}};
+              }
+
+              $DTDDefs->{ge}->{'&'.$token->{name}.';'} = {
+                name => $token->{name},
+                value => [[{
+                  amp => '&',
+                  lt => '<',
+                  gt => '>',
+                  quot => '"',
+                  apos => "'",
+                }->{$token->{name}}, -1, 0]],
+                only_text => 1,
+              };
+            } elsif (not $DTDDefs->{ge}->{'&'.$token->{name}.';'}) {
+              my $is_external = not $token->{DTDMode} eq 'internal subset'; # not in param entity
+              push @$Errors, {level => 'w',
+                              type => 'xml:dtd:ext decl',
+                              di => $token->{di}, index => $token->{index}}
+                  if $is_external;
+              $SC->check_hidden_name
+                  (name => $token->{name},
+                   onerror => sub {
+                     push @$Errors, {@_,
+                                     di => $token->{di}, index => $token->{index}};
+                   });
+
+              $DTDDefs->{ge}->{'&'.$token->{name}.';'} = $token;
+              if (defined $token->{value} and # IndexedString
+                  not join ('', map { $_->[0] } @{$token->{value}}) =~ /[&<]/) {
+                $token->{only_text} = 1;
+              }
+              $token->{external} = {} if $is_external;
+            } else {
+              push @$Errors, {level => 'w',
+                              type => 'duplicate entity decl',
+                              value => '&'.$token->{name}.';',
+                              di => $token->{di}, index => $token->{index}};
+            }
+          }
+
+          if (defined $token->{public_identifier}) {
+            $SC->check_hidden_pubid
+                (name => $token->{public_identifier},
+                 onerror => sub {
+                   push @$Errors, {@_,
+                                   di => $token->{di}, index => $token->{index}};
+                 });
+          }
+          if (defined $token->{system_identifier}) {
+            $SC->check_hidden_sysid
+                (name => $token->{system_identifier},
+                 onerror => sub {
+                   push @$Errors, {@_,
+                                   di => $token->{di}, index => $token->{index}};
+                 });
+          }
+          if (defined $token->{notation_name}) {
+            $SC->check_hidden_name
+                (name => $token->{notation_name},
+                 onerror => sub {
+                   push @$Errors, {@_,
+                                   di => $token->{di}, index => $token->{index}};
+                 });
+            if ($token->{is_parameter_entity_flag}) {
+              push @$Errors, {level => 'm',
+                              type => 'xml:dtd:param entity with ndata',
+                              value => '%'.$token->{name}.';',
+                              di => $token->{di}, index => $token->{index}};
+              delete $token->{notation_name};
+            }
+          }
+        } # not stop processing
+      };
+    } elsif ($act->{type} eq 'process a NOTATION token') {
+      push @code, q{
+        if (defined $token->{name}) {
+          if (defined $DTDDefs->{notations}->{$token->{name}}) {
+            push @$Errors, {level => 'm',
+                            type => 'duplicate notation decl',
+                            value => $token->{name},
+                            di => $token->{di}, index => $token->{index}};
+          } else {
+            push @$Errors, {level => 'w',
+                            type => 'xml:dtd:ext decl',
+                            di => $token->{di}, index => $token->{index}}
+                unless $token->{DTDMode} eq 'internal subset'; # not in param entity
+            $SC->check_hidden_name
+                (name => $token->{name},
+                 onerror => sub {
+                   push @$Errors, {@_,
+                                   di => $token->{di}, index => $token->{index}};
+                 });
+            # XXX $token->{base_url}
+            $DTDDefs->{notations}->{$token->{name}} = $token;
+          }
+          if (defined $token->{public_identifier}) {
+            $SC->check_hidden_pubid
+                (name => $token->{public_identifier},
+                 onerror => sub {
+                   push @$Errors, {@_,
+                                   di => $token->{di}, index => $token->{index}};
+                 });
+          }
+          if (defined $token->{system_identifier}) {
+            $SC->check_hidden_sysid
+                (name => $token->{system_identifier},
+                 onerror => sub {
+                   push @$Errors, {@_,
+                                   di => $token->{di}, index => $token->{index}};
+                 });
+          }
+        }
+      };
+
+    } elsif ($act->{type} eq 'process the external subset') { # XML
+      push @code, q{
+        push @$Callbacks, [$OnDTDEntityReference,
+                           {entity => {system_identifier => $DTDDefs->{system_identifier}},
+                            ref => {di => $DTDDefs->{di},
+                                    index => $DTDDefs->{index}}}]
+            unless $DTDDefs->{is_charref_declarations_entity};
+      };
     } else {
       die "Unknown tree construction action |$act->{type}|";
     }
@@ -2223,7 +3942,7 @@ sub generate_tree_constructor ($) {
   }
 
   ## ---- DOCTYPE definitions ----
-  {
+  if ($LANG eq 'HTML') {
     push @def_code, sprintf q{my $QPublicIDPrefixPattern = qr{%s};},
         $defs->{doctype_switch}->{quirks}->{regexp}->{public_id_prefix};
     push @def_code, sprintf q{my $LQPublicIDPrefixPattern = qr{%s};},
@@ -2256,16 +3975,19 @@ sub generate_tree_constructor ($) {
     $IM = $ORIGINAL_IM;
     goto &{$ProcessIM->[$IM]->[$_->{type}]->[$_->{tn}]};
   };
-  $defs->{actions}->{'before ignored newline and text;TEXT'} = sprintf q{
-    $_->{index}++ if $_->{value} =~ s/^\x0A//;
-    $IM = %s;
-    goto &{$ProcessIM->[$IM]->[$_->{type}]->[0]} if length $_->{value};
-  }, im_const 'text';
-  $defs->{actions}->{'before ignored newline and text;ELSE'} = sprintf q{
-    $IM = %s;
-    goto &{$ProcessIM->[$IM]->[$_->{type}]->[$_->{tn}]};
-  }, im_const 'text';
+  if (defined $defs->{ims}->{text}) {
+    $defs->{actions}->{'before ignored newline and text;TEXT'} = sprintf q{
+      $_->{index}++ if $_->{value} =~ s/^\x0A//;
+      $IM = %s;
+      goto &{$ProcessIM->[$IM]->[$_->{type}]->[0]} if length $_->{value};
+    }, im_const 'text';
+    $defs->{actions}->{'before ignored newline and text;ELSE'} = sprintf q{
+      $IM = %s;
+      goto &{$ProcessIM->[$IM]->[$_->{type}]->[$_->{tn}]};
+    }, im_const 'text';
+  }
   for my $im ('before ignored newline', 'before ignored newline and text') {
+    next if not defined $defs->{ims}->{text} and $im =~ /and text/;
     $defs->{ims}->{$im}->{conds}->{TEXT} = $im.';TEXT';
     $defs->{ims}->{$im}->{conds}->{'START-ELSE'} = $im.';ELSE';
     $defs->{ims}->{$im}->{conds}->{'END-ELSE'} = $im.';ELSE';
@@ -2366,15 +4088,15 @@ sub generate_tree_constructor ($) {
           $const_name = (uc $const_name) . '_EL';
           $const_name =~ s/[^A-Z0-9]/_/g;
           push @group_code,
-              sprintf q{sub %s () { %s } $Element2Type->[%s]->{q@%s@} = %s;},
+              sprintf q{sub %s () { %s } %s->{q@%s@} = %s;},
                   $const_name, $et_codes->{$ns}->{$ln},
-                  ns_const $ns, $ln, $const_name;
+                  E2Tns (ns_const $ns), $ln, $const_name;
           $GroupNameToElementTypeConst->{"$ns:$ln"} ||= $const_name;
           $ElementToElementGroupExpr->{$ns}->{$ln} = $const_name;
         } else {
           push @group_code,
-              sprintf q{$Element2Type->[%s]->{q@%s@} = %s;},
-                  ns_const $ns, $ln, $et_codes->{$ns}->{$ln};
+              sprintf q{%s->{q@%s@} = %s;},
+                  E2Tns (ns_const $ns), $ln, $et_codes->{$ns}->{$ln};
           $ElementToElementGroupExpr->{$ns}->{$ln} = $et_codes->{$ns}->{$ln};
         }
       }
@@ -2534,11 +4256,13 @@ sub generate_tree_constructor ($) {
           redo LOOP;
         } # LOOP
       } # reset_im
-    };
+    } if $LANG eq 'HTML';
 
     for (
-      ['aaa', (foster_code {}, 'append', q{$last_node->{id}}, q{$common_ancestor})],
-      ['aaa_foster', (foster_code {foster_parenting => 1}, 'append', q{$last_node->{id}}, q{$common_ancestor})],
+      $LANG eq 'HTML' ? (
+        ['aaa', (foster_code {}, 'append', q{$last_node->{id}}, q{$common_ancestor})],
+        ['aaa_foster', (foster_code {foster_parenting => 1}, 'append', q{$last_node->{id}}, q{$common_ancestor})],
+      ) : (),
     ) {
       my $aaa_code = sprintf q{
         sub %s ($$;%%) {
@@ -2680,7 +4404,7 @@ sub generate_tree_constructor ($) {
                    ns => HTMLNS,
                    local_name => $node->{token}->{tag_name},
                    attr_list => $node->{token}->{attr_list},
-                   et => $Element2Type->[HTMLNS]->{$node->{token}->{tag_name}} || $Element2Type->[HTMLNS]->{'*'}};
+                   et => %s->{$node->{token}->{tag_name}} || %s->{'*'}};
           $node->{aet} = $node->{et};
           $AFE->[$node_afe_i] = $node;
           $OE->[$node_i] = $node;
@@ -2746,13 +4470,16 @@ sub generate_tree_constructor ($) {
       },
           $_->[0],
           im_const 'in body',
+          E2Tns 'HTMLNS', E2Tns 'HTMLNS',
           $_->[1];
       push @substep_code, $aaa_code;
     }
 
     for (
-      ['reconstruct_afe', (foster_code {}, 'insert', '$node')],
-      ['reconstruct_afe_foster', (foster_code {foster_parenting => 1}, 'insert', '$node')],
+      $LANG eq 'HTML' ? (
+        ['reconstruct_afe', (foster_code {}, 'insert', '$node')],
+        ['reconstruct_afe_foster', (foster_code {foster_parenting => 1}, 'insert', '$node')],
+      ) : (),
     ) {
       my $reconstruct_code = sprintf q{
         sub %s () {
@@ -2785,7 +4512,7 @@ sub generate_tree_constructor ($) {
                         ns => HTMLNS,
                         local_name => $entry->{token}->{tag_name},
                         attr_list => $entry->{token}->{attr_list},
-                        et => $Element2Type->[HTMLNS]->{$entry->{token}->{tag_name}} || $Element2Type->[HTMLNS]->{'*'}};
+                        et => %s->{$entry->{token}->{tag_name}} || %s->{'*'}};
             $node->{aet} = $node->{et};
             %s
             push @$OE, $node;
@@ -2793,7 +4520,7 @@ sub generate_tree_constructor ($) {
             $AFE->[$entry_i] = $node;
           }
         }
-      }, $_->[0], $_->[1];
+      }, $_->[0], E2Tns 'HTMLNS', E2Tns 'HTMLNS', $_->[1];
       push @substep_code, $reconstruct_code;
     }
 
@@ -2804,7 +4531,8 @@ sub generate_tree_constructor ($) {
       }ge;
       s{\bET_CATEGORY_IS\s*\(\s*([^()"',\s]+)\s*,\s*'([^']+)'\s*\)}{
         my $var = $1;
-        my $p = $Defs->{tree_patterns}->{$2} or die "No definition for |$2|";
+        my $p = $Defs->{tree_patterns}->{$2}
+            or die "No definition for |$2|";
         pattern_to_code $p, $var;
       }ge;
       push @def_code, $_;
@@ -2812,13 +4540,14 @@ sub generate_tree_constructor ($) {
   }
 
   my $def_code = join "\n",
-      q{my $Element2Type = [];},
+      ($LANG eq 'HTML' ? q{my $Element2Type = [];} : q{my $Element2Type = {};}),
       q{my $ProcessIM = [];},
       (join "\n", @group_code),
       (join "\n", @im_code),
       (join "\n", @def_code);
 
-  my $code = sprintf q{
+  my $code;
+  $code = sprintf q{
     sub _construct_tree ($$) {
       my $self = shift;
 
@@ -2842,7 +4571,23 @@ sub generate_tree_constructor ($) {
     } # _construct_tree
   },
       (cond_to_code $defs->{dispatcher_html}),
-      im_const 'in foreign content';
+      im_const 'in foreign content'
+      if $LANG eq 'HTML';
+
+  $code = sprintf q{
+    sub _construct_tree ($$) {
+      my $self = shift;
+
+      for my $token (@$Tokens) {
+        local $_ = $token;
+        &{$ProcessIM->[$IM]->[$token->{type}]->[$token->{tn}]};
+      }
+
+      $self->dom_tree ($OP);
+      @$OP = ();
+      @$Tokens = ();
+    } # _construct_tree
+  } if $LANG eq 'XML';
 
   return ($def_code, $code);
 } # generate_tree_constructor
@@ -2869,14 +4614,14 @@ sub dom_tree ($$) {
         $op->[0] eq 'create') {
       my $data = $op->[1];
       my $el = $doc->create_element_ns
-          ($NSToURL->[$data->{ns}], [undef, $data->{local_name}]);
+          (%s, [$data->{prefix}, $data->{local_name}]);
       $el->manakai_set_source_location (['', $data->{di}, $data->{index}]);
       ## Note that $data->{ns} can be 0.
       for my $attr (@{$data->{attr_list} or []}) {
         $el->manakai_set_attribute_indexed_string_ns
             (@{$attr->{name_args}} => $attr->{value}); # IndexedString
       }
-      if ($data->{ns} == HTMLNS and $data->{local_name} eq 'template') {
+      if (%s) {
         $nodes->[$data->{id}] = $el->content;
         $el->content->manakai_set_source_location
             (['', $data->{di}, $data->{index}]);
@@ -2930,6 +4675,14 @@ sub dom_tree ($$) {
 
     } elsif ($op->[0] eq 'append') {
       $nodes->[$op->[2]]->append_child ($nodes->[$op->[1]]);
+    } elsif ($op->[0] eq 'append-by-list') {
+      my @node = $op->[1]->to_list;
+      if (@node and $node[0]->node_type == $node[0]->TEXT_NODE) {
+        my $node = shift @node;
+        $nodes->[$op->[2]]->manakai_append_indexed_string
+            ($node->manakai_get_indexed_string);
+      }
+      $nodes->[$op->[2]]->append_child ($_) for @node;
     } elsif ($op->[0] eq 'append-foster') {
       my $next_sibling = $nodes->[$op->[2]];
       my $parent = $next_sibling->parent_node;
@@ -2950,10 +4703,21 @@ sub dom_tree ($$) {
       }
 
     } elsif ($op->[0] eq 'comment') {
-      my $comment = $doc->create_comment ($op->[1]->{data});
+      my $comment = $doc->create_comment (join '', map { $_->[0] } @{$op->[1]->{data}}); # IndexedString
       $comment->manakai_set_source_location
           (['', $op->[1]->{di}, $op->[1]->{index}]);
       $nodes->[$op->[2]]->append_child ($comment);
+    } elsif ($op->[0] eq 'pi') {
+      my $pi = $doc->create_processing_instruction ($op->[1]->{target}, '');
+      $pi->manakai_append_indexed_string ($op->[1]->{data});
+      $pi->manakai_set_source_location
+          (['', $op->[1]->{di}, $op->[1]->{index}]);
+      if ($op->[2] == 1) { # DOCTYPE
+        local $nodes->[$op->[2]]->owner_document->dom_config->{manakai_allow_doctype_children} = 1;
+        $nodes->[$op->[2]]->append_child ($pi);
+      } else {
+        $nodes->[$op->[2]]->append_child ($pi);
+      }
     } elsif ($op->[0] eq 'doctype') {
       my $data = $op->[1];
       my $dt = $doc->implementation->create_document_type
@@ -2961,6 +4725,7 @@ sub dom_tree ($$) {
            defined $data->{public_identifier} ? $data->{public_identifier} : '',
            defined $data->{system_identifier} ? $data->{system_identifier} : '');
       $dt->manakai_set_source_location (['', $data->{di}, $data->{index}]);
+      $nodes->[1] = $dt;
       $nodes->[$op->[2]]->append_child ($dt);
 
     } elsif ($op->[0] eq 'set-if-missing') {
@@ -3011,8 +4776,74 @@ sub dom_tree ($$) {
     } elsif ($op->[0] eq 'remove') {
       my $parent = $nodes->[$op->[1]]->parent_node;
       $parent->remove_child ($nodes->[$op->[1]]) if defined $parent;
+
     } elsif ($op->[0] eq 'set-compat-mode') {
       $doc->manakai_compat_mode ($op->[1]);
+## <XML>
+    } elsif ($op->[0] eq 'xml-version') {
+      $doc->xml_version ($op->[1]);
+    } elsif ($op->[0] eq 'xml-encoding') {
+      $doc->xml_encoding ($op->[1]);
+    } elsif ($op->[0] eq 'xml-standalone') {
+      $doc->xml_standalone ($op->[1]);
+
+    } elsif ($op->[0] eq 'construct-doctype') {
+      my $doctype = $nodes->[1];
+      my $serialize_cmgroup; $serialize_cmgroup = sub {
+        return '(' . (join {'|' => ' | ', ',' => ', '}->{$_[0]->{separators}->[0]->{type} || ''} || '', map {
+          if ($_->{items}) {
+            $serialize_cmgroup->($_);
+          } else {
+            $_->{name} . ($_->{repetition} || '');
+          }
+        } @{$_[0]->{items}}) . ')' . ($_[0]->{repetition} || '');
+      };
+      for my $data (values %%{$DTDDefs->{elements} or {}}) {
+        my $node = $doc->create_element_type_definition ($data->{name});
+        if (defined $data->{content_keyword}) {
+          $node->content_model_text ($data->{content_keyword});
+        } elsif (defined $data->{cmgroup}) {
+          $node->content_model_text ($serialize_cmgroup->($data->{cmgroup}));
+        }
+        $node->manakai_set_source_location (['', $data->{di}, $data->{index}])
+            if defined $data->{index};
+        $doctype->set_element_type_definition_node ($node);
+      }
+      for my $elname (keys %%{$DTDDefs->{attrdefs} or {}}) {
+        my $et = $doctype->get_element_type_definition_node ($elname);
+        for my $data (@{$DTDDefs->{attrdefs}->{$elname}}) {
+          my $node = $doc->create_attribute_definition ($data->{name});
+          $node->declared_type ($data->{declared_type} || 0);
+          push @{$node->allowed_tokens}, @{$data->{allowed_tokens} or []};
+          $node->default_type ($data->{default_type} || 0);
+          $node->manakai_append_indexed_string ($data->{value})
+              if defined $data->{value};
+          $et->set_attribute_definition_node ($node);
+          $node->manakai_set_source_location
+              (['', $data->{di}, $data->{index}]);
+        }
+      }
+      for my $data (values %%{$DTDDefs->{notations} or {}}) {
+        my $node = $doc->create_notation ($data->{name});
+        $node->public_id ($data->{public_identifier}); # or undef
+        $node->system_id ($data->{system_identifier}); # or undef
+        # XXX base URL
+        $node->manakai_set_source_location (['', $data->{di}, $data->{index}]);
+        $doctype->set_notation_node ($node);
+      }
+      for my $data (values %%{$DTDDefs->{ge} or {}}) {
+
+        next unless defined $data->{notation_name};
+        my $node = $doc->create_general_entity ($data->{name});
+        $node->public_id ($data->{public_identifier}); # or undef
+        $node->system_id ($data->{system_identifier}); # or undef
+        $node->notation_name ($data->{notation_name}); # or undef
+        # XXX base URL
+        $node->manakai_set_source_location (['', $data->{di}, $data->{index}]);
+        $doctype->set_general_entity_node ($node);
+      }
+## </XML>
+
     } else {
       die "Unknown operation |$op->[0]|";
     }
@@ -3021,7 +4852,12 @@ sub dom_tree ($$) {
   $doc->strict_error_checking ($strict);
 } # dom_tree
 
-  }, $grep_popped_code, $grep_popped_code, $grep_popped_code;
+  },
+      ($LANG eq 'HTML' ? q{$NSToURL->[$data->{ns}]} : q{$data->{ns}}),
+      (pattern_to_code 'HTML:template', '$data'),
+      $grep_popped_code, $grep_popped_code, $grep_popped_code;
+  $code =~ s{<XML>.*?</XML>}{}gs unless $LANG eq 'XML';
+
   return $code;
 } # generate_dom_glue
 
@@ -3054,19 +4890,31 @@ sub generate_api ($) {
     push @init_code, map {
       sprintf q{$%s = %d;}, $_, $Vars->{$_}->{default};
     } sort { $a cmp $b } grep {
-      $Vars->{$_}->{type} eq 'index' and
+      ($Vars->{$_}->{type} eq 'index' or $Vars->{$_}->{type} eq 'integer') and
+      defined $Vars->{$_}->{default};
+    } keys %$Vars;
+    push @init_code, map {
+      sprintf q{$%s = q{%s};}, $_, $Vars->{$_}->{default};
+    } sort { $a cmp $b } grep {
+      $Vars->{$_}->{type} eq 'enum' and
       defined $Vars->{$_}->{default};
     } keys %$Vars;
     my @list_var = sort { $a cmp $b } grep { $Vars->{$_}->{type} eq 'list' } keys %$Vars;
     push @init_code, q[$self->{saved_lists} = {] . (join ', ', map {
       sprintf q{%s => ($%s = [])}, $_, $_;
     } @list_var) . q[};];
+    my @map_var = sort { $a cmp $b } grep { $Vars->{$_}->{type} eq 'map' } keys %$Vars;
+    push @init_code, q[$self->{saved_maps} = {] . (join ', ', map {
+      sprintf q{%s => ($%s = {})}, $_, $_;
+    } @map_var) . q[};];
     $vars_codes->{INIT} = join "\n", @init_code;
 
     $vars_codes->{RESET} = join "\n", map {
       if (defined $Vars->{$_}->{default}) {
         sprintf q{$%s = defined $self->{%s} ? $self->{%s} : %s;},
             $_, $_, $_, $Vars->{$_}->{default};
+      } elsif ($Vars->{$_}->{from_method}) {
+        sprintf q{$%s = $self->%s;}, $_, '_' . lc $_;
       } else {
         sprintf q{$%s = $self->{%s};}, $_, $_;
       }
@@ -3084,12 +4932,17 @@ sub generate_api ($) {
     push @restore_code, sprintf q{(%s) = @{$self->{saved_lists}}{qw(%s)};},
         (join ', ', map { sprintf q{$%s}, $_ } @list_var),
         (join ' ', @list_var);
+    push @restore_code, sprintf q{(%s) = @{$self->{saved_maps}}{qw(%s)};},
+        (join ', ', map { sprintf q{$%s}, $_ } @map_var),
+        (join ' ', @map_var);
     $vars_codes->{RESTORE} = join "\n", @restore_code;
   }
 
-  push @code, sprintf q{
+  my @sub_code;
+  push @sub_code, sprintf q{
     sub _run ($) {
       my ($self) = @_;
+      return 1 if $self->{pause};
       my $is = $self->{input_stream};
       # XXX rewrite loop conditions
       my $length = @$is == 0 ? 0 : defined $is->[0]->[0] ? length $is->[0]->[0] : 0;
@@ -3123,21 +4976,32 @@ sub generate_api ($) {
           $self->_tokenize;
           $self->_construct_tree;
 
-          if (@$Callbacks or @$Errors) {
+          if (@$Callbacks or @$Errors or $self->{is_sub_parser}) {
             VARS::SAVE;
+            {
+              my $Errors = $Errors;
+              my $Callbacks = $Callbacks;
 
-            $self->onerrors->($self, $Errors) if @$Errors;
-            for my $cb (@$Callbacks) {
-              $cb->[0]->($self, $cb->[1]);
+              $self->onerrors->($self, $Errors) if @$Errors;
+              @$Errors = ();
+              while (@$Callbacks) {
+                my $cb = shift @$Callbacks;
+                $cb->[0]->($self, $cb->[1]);
+              }
+
+              if ($self->{restart}) {
+                delete $self->{restart};
+                return 0;
+              }
+
+              if ($self->{pause}) {
+                my $pos = pos $Input;
+                $is->[0] = [substr $is->[0]->[0], $in_offset + $pos]
+                    if defined $is->[0]->[0];
+                $Offset += $pos;
+                return 1;
+              }
             }
-            @$Errors = ();
-            @$Callbacks = ();
-
-            if ($self->{restart}) {
-              delete $self->{restart};
-              return 0;
-            }
-
             VARS::RESTORE;
           }
 
@@ -3147,9 +5011,42 @@ sub generate_api ($) {
         $in_offset += $len;
         redo unless $EOF;
       }
+      if ($EOF) {
+## <XML>
+        unless ($self->{is_sub_parser}) {
+          for my $en (keys %%{$DTDDefs->{entity_names_in_entity_values} || {}}) {
+            my $vt = $DTDDefs->{entity_names_in_entity_values}->{$en};
+            $SC->check_hidden_name (name => (substr $en, 1, -2+length $en), onerror => sub {
+              $self->onerrors->($self, [{%%{$DTDDefs->{entity_names_in_entity_values}->{$en}}, @_}]);
+            });
+            my $def = $DTDDefs->{ge}->{$en};
+            if (defined $def->{notation_name}) {
+              push @$Errors, {%%{$DTDDefs->{entity_names_in_entity_values}->{$en}},
+                              level => 'w',
+                              type => 'xml:dtd:entity value:unparsed entref',
+                              value => $en};
+            }
+          } # $en
+          $SC->check_ncnames (names => $DTDDefs->{el_ncnames} || {},
+                              onerror => sub { $self->onerrors->($self, [{@_}]) });
+          for my $en (keys %%{$DTDDefs->{entity_names} || {}}) {
+            $SC->check_hidden_name (name => (substr $en, 1, -2+length $en), onerror => sub {
+              $self->onerrors->($self, [{%%{$DTDDefs->{entity_names}->{$en}}, @_}]);
+            });
+          }
+        }
+        $self->onerrors->($self, $Errors) if @$Errors;
+        @$Errors = ();
+## </XML>
+        $self->onparsed->($self);
+        $self->_cleanup_states;
+      }
       return 1;
     } # _run
+  };
+  $sub_code[-1] =~ s{<XML>.*?</XML>}{}gs unless $LANG eq 'XML';
 
+  push @sub_code, sprintf q{
     sub _feed_chars ($$) {
       my ($self, $input) = @_;
       pos ($input->[0]) = 0;
@@ -3174,20 +5071,52 @@ sub generate_api ($) {
 
       return $self->_run;
     } # _feed_chars
+  } if $LANG eq 'HTML';
 
+  push @sub_code, sprintf q{
+    sub _feed_chars ($$) {
+      my ($self, $input) = @_;
+      pos ($input->[0]) = 0;
+      while ($input->[0] =~ /[\x{0001}-\x{0008}\x{000B}\x{000C}\x{000E}-\x{001F}\x{D800}-\x{DFFF}\x{FFFE}\x{FFFF}\x{007F}-\x{009F}\x{FDD0}-\x{FDEF}\x{1FFFE}-\x{1FFFF}\x{2FFFE}-\x{2FFFF}\x{3FFFE}-\x{3FFFF}\x{4FFFE}-\x{4FFFF}\x{5FFFE}-\x{5FFFF}\x{6FFFE}-\x{6FFFF}\x{7FFFE}-\x{7FFFF}\x{8FFFE}-\x{8FFFF}\x{9FFFE}-\x{9FFFF}\x{AFFFE}-\x{AFFFF}\x{BFFFE}-\x{BFFFF}\x{CFFFE}-\x{CFFFF}\x{DFFFE}-\x{DFFFF}\x{EFFFE}-\x{EFFFF}\x{FFFFE}-\x{FFFFF}\x{10FFFE}-\x{10FFFF}]/gcx) {
+        my $index = $-[0];
+        my $char = ord substr $input->[0], $index, 1;
+        my $level = (substr $input->[0], $index, 1) =~ /[\x{0001}-\x{0008}\x{000B}\x{000C}\x{000E}-\x{001F}\x{D800}-\x{DFFF}\x{FFFE}\x{FFFF}]/ ? 'm' : 'w';
+        if ($char < 0x100) {
+          push @$Errors, {type => 'control char', level => $level,
+                          text => (sprintf 'U+%%04X', $char),
+                          di => $DI, index => $index};
+        } elsif ($char < 0xE000) {
+          push @$Errors, {type => 'char:surrogate', level => $level,
+                          text => (sprintf 'U+%%04X', $char),
+                          di => $DI, index => $index};
+        } else {
+          push @$Errors, {type => 'nonchar', level => $level,
+                          text => (sprintf 'U+%%04X', $char),
+                          di => $DI, index => $index};
+        }
+      }
+      push @{$self->{input_stream}}, $input;
+
+      return $self->_run;
+    } # _feed_chars
+  } if $LANG eq 'XML';
+
+  push @sub_code, sprintf q{
     sub _feed_eof ($) {
       my $self = $_[0];
       push @{$self->{input_stream}}, [undef];
       return $self->_run;
     } # _feed_eof
+  };
 
+  push @sub_code, sprintf q{
     sub parse_char_string ($$$) {
       my $self = $_[0];
       my $input = [$_[1]]; # string copy
 
       $self->{document} = my $doc = $_[2];
       $self->{IframeSrcdoc} = $doc->manakai_is_srcdoc;
-      $doc->manakai_is_html (1);
+      $doc->manakai_is_html (%d);
       $doc->manakai_compat_mode ('no quirks');
       $doc->remove_child ($_) for $doc->child_nodes->to_list;
       $self->{nodes} = [$doc];
@@ -3196,7 +5125,7 @@ sub generate_api ($) {
       VARS::RESET;
       $Confident = 1; # irrelevant
       SWITCH_STATE ("data state");
-      $IM = IM ("initial");
+      $IM = IM (HTML => "initial", XML => "before XML declaration");
 
       $self->{input_stream} = [];
       my $dids = $self->di_data_set;
@@ -3204,13 +5133,15 @@ sub generate_api ($) {
       $dids->[$DI] ||= {} if $DI >= 0;
       $doc->manakai_set_source_location (['', $DI, 0]);
 
+      local $self->{onextentref};
       $self->_feed_chars ($input) or die "Can't restart";
       $self->_feed_eof or die "Can't restart";
 
-      $self->_cleanup_states;
       return;
     } # parse_char_string
+  }, $LANG eq 'HTML';
 
+  push @sub_code, sprintf q{
     sub parse_char_string_with_context ($$$$) {
       my $self = $_[0];
       my $context = $_[2]; # an Element or undef
@@ -3218,26 +5149,30 @@ sub generate_api ($) {
       ## HTML fragment parsing algorithm
       ## <http://www.whatwg.org/specs/web-apps/current-work/#parsing-html-fragments>.
 
+      ## XML fragment parsing algorithm
+      ## <http://www.whatwg.org/specs/web-apps/current-work/#parsing-xhtml-fragments>
+
       ## 1.
       $self->{document} = my $doc = $_[3]; # an empty Document
       $self->{IframeSrcdoc} = $doc->manakai_is_srcdoc;
-      $doc->manakai_is_html (1);
       $doc->remove_child ($_) for $doc->child_nodes->to_list;
       my $nodes = $self->{nodes} = [$doc];
+      ## <HTML>
+      $doc->manakai_is_html (1);
 
-      ## 2.
+      ## HTML 2.
       if (defined $context) {
         $doc->manakai_compat_mode ($context->owner_document->manakai_compat_mode);
       } else {
         ## Not in spec
         $doc->manakai_compat_mode ('no quirks');
       }
+      ## </HTML>
 
       VARS::LOCAL;
       VARS::INIT;
       VARS::RESET;
       SWITCH_STATE ("data state");
-      $IM = IM ("initial");
 
       ## 3.
       my $input = [$_[1]]; # string copy
@@ -3246,26 +5181,31 @@ sub generate_api ($) {
       $self->{di} = $DI = defined $self->{di} ? $self->{di} : @$dids || 1;
       $dids->[$DI] ||= {} if $DI >= 0;
 
-      ## 4.
+      ## HTML 4. / XML 3. (cnt.)
       my $root;
       if (defined $context) {
-        ## 4.1.
+        $IM = IM (HTML => "initial", XML => "in element");
+
+        ## HTML 4.1. / XML 2., 4., 6.
         my $node_ns = $context->namespace_uri || '';
         my $node_ln = $context->local_name;
         if ($node_ns eq 'http://www.w3.org/1999/xhtml') {
+          ## <HTML>
           if ($Scripting and $node_ln eq 'noscript') {
             SWITCH_STATE ("RAWTEXT state");
           } else {
             $State = $StateByElementName->{$node_ln} || $State;
           }
+          ## </HTML>
           $CONTEXT = {id => $NEXT_ID++,
                       #token => undef,
                       #di => $token->{di}, index => $token->{index},
                       ns => HTMLNS,
                       local_name => $node_ln,
                       attr_list => {}, # not relevant
-                      et => $Element2Type->[HTMLNS]->{$node_ln} || $Element2Type->[HTMLNS]->{'*'},
-                      aet => $Element2Type->[HTMLNS]->{$node_ln} || $Element2Type->[HTMLNS]->{'*'}};
+                      et => %s->{$node_ln} || %s->{'*'},
+                      aet => %s->{$node_ln} || %s->{'*'}};
+        ## <HTML>
         } elsif ($node_ns eq 'http://www.w3.org/2000/svg') {
           $CONTEXT = {id => $NEXT_ID++,
                       #token => undef,
@@ -3273,8 +5213,8 @@ sub generate_api ($) {
                       ns => SVGNS,
                       local_name => $node_ln,
                       attr_list => {}, # not relevant
-                      et => $Element2Type->[SVGNS]->{$node_ln} || $Element2Type->[SVGNS]->{'*'},
-                      aet => $Element2Type->[SVGNS]->{$node_ln} || $Element2Type->[SVGNS]->{'*'}};
+                      et => %s->{$node_ln} || %s->{'*'},
+                      aet => %s->{$node_ln} || %s->{'*'}};
         } elsif ($node_ns eq 'http://www.w3.org/1998/Math/MathML') {
           $CONTEXT = {id => $NEXT_ID++,
                       #token => undef,
@@ -3282,8 +5222,8 @@ sub generate_api ($) {
                       ns => MATHMLNS,
                       local_name => $node_ln,
                       attr_list => {}, # not relevant
-                      et => $Element2Type->[MATHMLNS]->{$node_ln} || $Element2Type->[MATHMLNS]->{'*'},
-                      aet => $Element2Type->[MATHMLNS]->{$node_ln} || $Element2Type->[MATHMLNS]->{'*'}};
+                      et => %s->{$node_ln} || %s->{'*'},
+                      aet => %s->{$node_ln} || %s->{'*'}};
           if ($node_ln eq 'annotation-xml') {
             my $encoding = $context->get_attribute_ns (undef, 'encoding');
             if (defined $encoding) {
@@ -3295,6 +5235,7 @@ sub generate_api ($) {
               }
             }
           }
+        ## </HTML>
         } else {
           $CONTEXT = {id => $NEXT_ID++,
                       #token => undef,
@@ -3305,35 +5246,81 @@ sub generate_api ($) {
                       et => 0,
                       aet => 0};
         }
+        ## <XML>
+        my $nsmap = {};
+        {
+          my $prefixes = {};
+          my $p = $context;
+          while ($p and $p->node_type == 1) { # ELEMENT_NODE
+            $prefixes->{$_->local_name} = 1 for grep {
+              ($_->namespace_uri || '') eq q<http://www.w3.org/2000/xmlns/>;
+            } @{$p->attributes or []};
+            my $prefix = $p->prefix;
+            $prefixes->{$prefix} = 1 if defined $prefix;
+            $p = $p->parent_node;
+          }
+          for ('', keys %%$prefixes) {
+            $nsmap->{$_} = $context->lookup_namespace_uri ($_);
+          }
+          $nsmap->{xml} = q<http://www.w3.org/XML/1998/namespace>;
+          $nsmap->{xmlns} = q<http://www.w3.org/2000/xmlns/>;
+        }
+        $CONTEXT->{nsmap} = $nsmap;
+        ## </XML>
         $nodes->[$CONTEXT->{id}] = $context;
 
-        ## 4.2.
+        ## <HTML>
+        ## HTML 4.2.
         $root = $doc->create_element ('html');
+        ## </HTML>
+        ## <XML>
+        $root = $doc->create_element_ns
+            ($context->namespace_uri, [$context->prefix, $context->local_name]);
+        ## </XML>
 
-        ## 4.3.
+        ## HTML 4.3.
         $doc->append_child ($root);
 
-        ## 4.4.
+        ## <HTML>
+        ## HTML 4.4.
         @$OE = ({id => $NEXT_ID++,
                  #token => undef,
                  #di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'html',
                  attr_list => {},
-                 et => $Element2Type->[HTMLNS]->{html},
+                 et => %s->{html},
                  aet => $CONTEXT->{aet}});
+        ## </HTML>
+        ## <XML>
+        @$OE = ({id => $NEXT_ID++,
+                 #token => undef,
+                 #di => $token->{di}, index => $token->{index},
+                 ns => $CONTEXT->{ns},
+                 local_name => $CONTEXT->{local_name},
+                 nsmap => $CONTEXT->{nsmap},
+                 attr_list => {},
+                 et => $CONTEXT->{et},
+                 aet => $CONTEXT->{aet}});
+        ## </XML>
 
-        ## 4.5.
+        ## HTML 4.5.
         if ($node_ns eq 'http://www.w3.org/1999/xhtml' and
             $node_ln eq 'template') {
+          ## <HTML>
           push @$TEMPLATE_IMS, IM ("in template");
+          ## </HTML>
+          ## <XML>
+          $root = $root->content;
+          ## </XML>
         }
         $nodes->[$OE->[-1]->{id}] = $root;
 
-        ## 4.6.
+        ## <HTML>
+        ## HTML 4.6.
         &reset_im;
 
-        ## 4.7.
+        ## HTML 4.7.
         my $anode = $context;
         while (defined $anode) {
           if ($anode->node_type == 1 and
@@ -3348,35 +5335,48 @@ sub generate_api ($) {
                                ns => HTMLNS,
                                local_name => 'form',
                                attr_list => {}, # not relevant
-                               et => $Element2Type->[HTMLNS]->{form},
-                               aet => $Element2Type->[HTMLNS]->{form}};
+                               et => %s->{form},
+                               aet => %s->{form}};
             }
             last;
           }
           $anode = $anode->parent_node;
         }
+        ## </HTML>
+      } else { # $context
+        $IM = IM (HTML => "initial", XML => "before XML declaration");
       } # $context
 
-      ## 5.
+      ## HTML 5.
       $Confident = 1; # irrelevant
 
-      ## 6.
+      ## HTML 6. / XML 3. (cnt.)
+      local $self->{onextentref};
       $self->_feed_chars ($input) or die "Can't restart";
       $self->_feed_eof or die "Can't restart";
 
-      $self->_cleanup_states;
+      ## XML 5. If not well-formed, throw SyntaxError - should be
+      ## handled by callee using $self->onerror.
 
       ## 7.
       return defined $context ? $root->child_nodes : $doc->child_nodes;
     } # parse_char_string_with_context
+  },
+    E2Tns 'HTMLNS', E2Tns 'HTMLNS', E2Tns 'HTMLNS', E2Tns 'HTMLNS',
+    E2Tns 'SVGNS', E2Tns 'SVGNS', E2Tns 'SVGNS', E2Tns 'SVGNS',
+    E2Tns 'MATHMLNS', E2Tns 'MATHMLNS', E2Tns 'MATHMLNS', E2Tns 'MATHMLNS',
+    E2Tns 'HTMLNS', E2Tns 'HTMLNS', E2Tns 'HTMLNS';
+  $sub_code[-1] =~ s{<XML>.*?</XML>}{}gs unless $LANG eq 'XML';
+  $sub_code[-1] =~ s{<HTML>.*?</HTML>}{}gs unless $LANG eq 'HTML';
 
+  push @sub_code, sprintf q{
     sub parse_chars_start ($$) {
       my ($self, $doc) = @_;
 
       $self->{input_stream} = [];
       $self->{document} = $doc;
       $self->{IframeSrcdoc} = $doc->manakai_is_srcdoc;
-      $doc->manakai_is_html (1);
+      $doc->manakai_is_html (%d);
       $doc->manakai_compat_mode ('no quirks');
       $doc->remove_child ($_) for $doc->child_nodes->to_list;
       $self->{nodes} = [$doc];
@@ -3386,7 +5386,7 @@ sub generate_api ($) {
       VARS::RESET;
       $Confident = 1; # irrelevant
       SWITCH_STATE ("data state");
-      $IM = IM ("initial");
+      $IM = IM (HTML => "initial", XML => "before XML declaration");
 
       my $dids = $self->di_data_set;
       $DI = @$dids || 1;
@@ -3394,11 +5394,15 @@ sub generate_api ($) {
       $dids->[$source_di] ||= {} if $source_di >= 0; # the main data source of the input stream
       $dids->[$DI]->{map} = [[0, $source_di, 0]]; # the input stream
       $doc->manakai_set_source_location (['', $DI, 0]);
+      ## Note that $DI != $source_di to support document.write()'s
+      ## insertion.
 
       VARS::SAVE;
       return;
     } # parse_chars_start
+  }, $LANG eq 'HTML';
 
+  push @sub_code, sprintf q{
     sub parse_chars_feed ($$) {
       my $self = $_[0];
       my $input = [$_[1]]; # string copy
@@ -3421,7 +5425,6 @@ sub generate_api ($) {
 
       $self->_feed_eof or die "Can't restart";
       
-      $self->_cleanup_states;
       return;
     } # parse_chars_end
 
@@ -3437,12 +5440,15 @@ sub generate_api ($) {
 ## XXX The policy mentioned above might change when we implement
 ## Encoding Standard spec.
 
+  };
+
+  push @sub_code, sprintf q{
     sub parse_byte_string ($$$$) {
       my $self = $_[0];
 
       $self->{document} = my $doc = $_[3];
       $self->{IframeSrcdoc} = $doc->manakai_is_srcdoc;
-      $doc->manakai_is_html (1);
+      $doc->manakai_is_html (%d);
       $doc->manakai_compat_mode ('no quirks');
       $self->{can_restart} = 1;
 
@@ -3470,16 +5476,18 @@ sub generate_api ($) {
         $doc->manakai_set_source_location (['', $DI, 0]);
 
         SWITCH_STATE ("data state");
-        $IM = IM ("initial");
+        $IM = IM (HTML => "initial", XML => "before XML declaration");
 
+        local $self->{onextentref};
         $self->_feed_chars ($input) or redo PARSER;
         $self->_feed_eof or redo PARSER;
       } # PARSER
 
-      $self->_cleanup_states;
       return;
     } # parse_byte_string
+  }, $LANG eq 'HTML';
 
+  push @sub_code, sprintf q{
     sub _parse_bytes_init ($) {
       my $self = $_[0];
 
@@ -3493,7 +5501,7 @@ sub generate_api ($) {
       VARS::INIT;
       VARS::RESET;
       SWITCH_STATE ("data state");
-      $IM = IM ("initial");
+      $IM = IM (HTML => "initial", XML => "before XML declaration");
 
       my $dids = $self->di_data_set;
       $DI = @$dids || 1;
@@ -3501,8 +5509,12 @@ sub generate_api ($) {
       $dids->[$DI]->{map} = [[0, $source_di, 0]]; # the input stream
       $dids->[$source_di] ||= {} if $source_di >= 0; # the main data source of the input stream
       $doc->manakai_set_source_location (['', $DI, 0]);
+      ## Note that $DI != $source_di to support document.write()'s
+      ## insertion.
     } # _parse_bytes_init
+  };
 
+  push @sub_code, sprintf q{
     sub _parse_bytes_start_parsing ($;%%) {
       my ($self, %%args) = @_;
       
@@ -3518,7 +5530,6 @@ sub generate_api ($) {
       $self->{document}->input_encoding ($self->{input_encoding});
 
       $self->{parse_bytes_started} = 1;
-      #XXXxml $self->{is_xml} = 1;
 
       my $input = [decode $self->{input_encoding}, $self->{byte_buffer}, Encode::FB_QUIET]; # XXXencoding
 
@@ -3526,7 +5537,9 @@ sub generate_api ($) {
 
       return 1;
     } # _parse_bytes_start_parsing
+  };
 
+  push @sub_code, sprintf q{
     sub parse_bytes_start ($$$) {
       my $self = $_[0];
 
@@ -3535,7 +5548,7 @@ sub generate_api ($) {
       $self->{transport_encoding_label} = $_[1];
 
       $self->{document} = my $doc = $_[2];
-      $doc->manakai_is_html (1);
+      $doc->manakai_is_html (%d);
       $self->{can_restart} = 1;
 
       VARS::LOCAL;
@@ -3550,7 +5563,9 @@ sub generate_api ($) {
       VARS::SAVE;
       return;
     } # parse_bytes_start
+  }, $LANG eq 'HTML';
 
+  push @sub_code, sprintf q{
     ## The $args{start_parsing} flag should be set true if it has
     ## taken more than 500ms from the start of overall parsing
     ## process. XXX should this be a separate method?
@@ -3622,13 +5637,603 @@ sub generate_api ($) {
         };
       } # PARSER
       
-      $self->_cleanup_states;
       return;
     } # parse_bytes_end
   };
-  $code[-1] =~ s/\bSWITCH_STATE\s*\("([^"]+)"\)/switch_state_code $1/ge;
-  $code[-1] =~ s/\bIM\s*\("([^"]+)"\)/im_const $1/ge;
-  $code[-1] =~ s/\bVARS::(\w+);/$vars_codes->{$1}/ge;
+
+  push @sub_code, q{
+
+{
+  package Web::XML::Parser::AttrEntityParser;
+  push our @ISA, qw(Web::XML::Parser);
+
+  sub parse ($$$) {
+    my ($self, $main, $in) = @_;
+
+    VARS::LOCAL;
+    VARS::INIT;
+    VARS::RESET;
+    $Confident = 1; # irrelevant
+    {
+      package Web::XML::Parser;
+      if ($in->{in_default_attr}) {
+        SWITCH_STATE ("default attribute value in entity state");
+      } else {
+        SWITCH_STATE ("attribute value in entity state");
+      }
+      $IM = IM (HTML => "initial", XML => "before XML declaration");
+    }
+
+    my $doc = $self->{document} = $main->{document}->implementation->create_document;
+    $doc->manakai_is_html ($main->{document}->manakai_is_html);
+    $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
+    for (qw(onextentref entity_expansion_count
+            max_entity_depth max_entity_expansions)) {
+      $self->{$_} = $main->{$_};
+    }
+    $self->{onerror} = $main->onerror;
+    $self->{onerrors} = $main->onerrors;
+    $self->{nodes} = [$doc];
+
+    $self->{entity_depth} = ($main->{entity_depth} || 0) + 1;
+    ${$self->{entity_expansion_count} = $main->{entity_expansion_count} ||= \(my $v = 0)}++;
+
+    $self->{input_stream} = [@{$in->{entity}->{value}}];
+    $self->{di_data_set} = my $dids = $main->di_data_set;
+    $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
+    require Web::HTML::SourceMap;
+    $dids->[$DI] ||= {
+      name => '&'.$in->{entity}->{name}.';',
+      map => Web::HTML::SourceMap::indexed_string_to_mapping ($self->{input_stream}),
+    } if $DI >= 0;
+
+    $Attr = $main->{saved_states}->{Attr};
+    $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
+    $self->{is_sub_parser} = 1;
+
+    $self->_run or die "Can't restart";
+    $self->_feed_eof or die "Can't restart";
+  } # parse
+
+  sub _construct_tree ($) {
+    #
+  } # _construct_tree
+}
+
+{
+  package Web::XML::Parser::ContentEntityParser;
+  push our @ISA, qw(Web::XML::Parser);
+
+  sub parse ($$$) {
+    my ($self, $main, $in) = @_;
+
+    VARS::LOCAL;
+    VARS::INIT;
+    VARS::RESET;
+    $Confident = 1; # irrelevant
+    {
+      package Web::XML::Parser;
+      SWITCH_STATE ("data state");
+      $IM = IM ("in element");
+    }
+
+    my $doc = $self->{document} = $main->{document}->implementation->create_document;
+    $doc->manakai_is_html ($main->{document}->manakai_is_html);
+    $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
+    for (qw(onextentref entity_expansion_count
+            max_entity_depth max_entity_expansions)) {
+      $self->{$_} = $main->{$_};
+    }
+    $self->{onerror} = $main->onerror;
+    $self->{onerrors} = $main->onerrors;
+    $self->{nodes} = [$doc];
+
+    $self->{entity_depth} = ($main->{entity_depth} || 0) + 1;
+    ${$self->{entity_expansion_count} = $main->{entity_expansion_count} ||= \(my $v = 0)}++;
+
+    $self->{input_stream} = [@{$in->{entity}->{value}}];
+    $self->{di_data_set} = my $dids = $main->di_data_set;
+    $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
+    require Web::HTML::SourceMap;
+    $dids->[$DI] ||= {
+      name => '&'.$in->{entity}->{name}.';',
+      map => Web::HTML::SourceMap::indexed_string_to_mapping ($self->{input_stream}),
+    } if $DI >= 0;
+
+    $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
+    $self->{is_sub_parser} = 1;
+
+    my $root = $doc->create_element_ns (undef, 'dummy');
+    @$OE = ({id => $NEXT_ID++,
+             #token => undef,
+             #di => $token->{di}, index => $token->{index},
+             ns => undef,
+             local_name => 'dummy',
+             attr_list => {},
+             nsmap => $main->{saved_lists}->{OE}->[-1]->{nsmap},
+             et => 0,
+             aet => 0});
+    $self->{nodes}->[$CONTEXT = $OE->[-1]->{id}] = $root;
+
+    $self->_run or die "Can't restart";
+    $self->_feed_eof or die "Can't restart";
+  } # parse
+
+    sub parse_bytes_start ($$$) {
+      my $self = $_[0];
+
+      $self->{byte_buffer} = '';
+      $self->{byte_buffer_orig} = '';
+      $self->{transport_encoding_label} = $_[1];
+
+      $self->{main_parser} = $_[2];
+      $self->{can_restart} = 1;
+
+      VARS::LOCAL;
+      PARSER: {
+        $self->_parse_bytes_init;
+        $self->_parse_bytes_start_parsing (no_body_data_yet => 1) or do {
+          $self->{byte_buffer} = $self->{byte_buffer_orig};
+          redo PARSER;
+        };
+      } # PARSER
+
+      VARS::SAVE;
+      return;
+    } # parse_bytes_start
+
+  sub _parse_bytes_init ($$) {
+    my $self = $_[0];
+    my $main = $self->{main_parser};
+
+    delete $self->{parse_bytes_started};
+
+    VARS::INIT;
+    VARS::RESET;
+    {
+      package Web::XML::Parser;
+      SWITCH_STATE ("data state");
+      $IM = IM ("before content text declaration");
+    }
+
+    my $doc = $self->{document} = $main->{document}->implementation->create_document;
+    $doc->manakai_is_html ($main->{document}->manakai_is_html);
+    $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
+    for (qw(onextentref entity_expansion_count
+            max_entity_depth max_entity_expansions)) {
+      $self->{$_} = $main->{$_};
+    }
+    $self->{onerror} = $main->onerror;
+    $self->{onerrors} = $main->onerrors;
+    $self->{nodes} = [$doc];
+
+    $self->{entity_depth} = ($main->{entity_depth} || 0) + 1;
+    ${$self->{entity_expansion_count} = $main->{entity_expansion_count} ||= \(my $v = 0)}++;
+
+    $self->{input_stream} = [];
+    $self->{di_data_set} = my $dids = $main->di_data_set;
+    $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
+    $dids->[$DI] ||= {} if $DI >= 0;
+
+    $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
+    $self->{is_sub_parser} = 1;
+
+    my $root = $doc->create_element_ns (undef, 'dummy');
+    @$OE = ({id => $NEXT_ID++,
+             #token => undef,
+             #di => $token->{di}, index => $token->{index},
+             ns => undef,
+             local_name => 'dummy',
+             attr_list => {},
+             nsmap => $main->{saved_lists}->{OE}->[-1]->{nsmap},
+             et => 0,
+             aet => 0});
+    $self->{nodes}->[$CONTEXT = $OE->[-1]->{id}] = $root;
+  } # _parse_bytes_init
+}
+
+{
+  package Web::XML::Parser::DTDEntityParser;
+  push our @ISA, qw(Web::XML::Parser);
+
+  sub parse ($$$) {
+    my ($self, $main, $in) = @_;
+
+    VARS::LOCAL;
+    VARS::INIT;
+    VARS::RESET;
+    $Confident = 1; # irrelevant
+    {
+      package Web::XML::Parser;
+      SWITCH_STATE ("DTD state");
+      $IM = IM ("in subset");
+    }
+
+    my $doc = $self->{document} = $main->{document}->implementation->create_document;
+    $doc->manakai_is_html ($main->{document}->manakai_is_html);
+    $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
+    for (qw(onextentref entity_expansion_count
+            max_entity_depth max_entity_expansions)) {
+      $self->{$_} = $main->{$_};
+    }
+    $self->{onerror} = $main->onerror;
+    $self->{onerrors} = $main->onerrors;
+    $self->{nodes} = [$doc];
+
+    $self->{entity_depth} = ($main->{entity_depth} || 0) + 1;
+    ${$self->{entity_expansion_count} = $main->{entity_expansion_count} ||= \(my $v = 0)}++;
+
+    $self->{input_stream} = [@{$in->{entity}->{value}}];
+    $self->{di_data_set} = my $dids = $main->di_data_set;
+    $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
+    require Web::HTML::SourceMap;
+    $dids->[$DI] ||= {
+      name => '%'.$in->{entity}->{name}.';',
+      map => Web::HTML::SourceMap::indexed_string_to_mapping ($self->{input_stream}),
+    } if $DI >= 0;
+
+    $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
+    $self->{is_sub_parser} = 1;
+    if ($main->{saved_states}->{DTDMode} eq 'internal subset' or
+        $main->{saved_states}->{DTDMode} eq 'parameter entity in internal subset') {
+      $DTDMode = 'parameter entity in internal subset';
+    } else {
+      $DTDMode = 'parameter entity';
+    }
+
+    $NEXT_ID++;
+    $self->{nodes}->[$CONTEXT = 1] = $main->{nodes}->[1]; # DOCTYPE
+
+    $self->_run or die "Can't restart";
+    $self->_feed_eof or die "Can't restart";
+  } # parse
+
+    sub parse_bytes_start ($$$) {
+      my $self = $_[0];
+
+      $self->{byte_buffer} = '';
+      $self->{byte_buffer_orig} = '';
+      $self->{transport_encoding_label} = $_[1];
+
+      $self->{main_parser} = $_[2];
+      $self->{can_restart} = 1;
+
+      VARS::LOCAL;
+      PARSER: {
+        $self->_parse_bytes_init;
+        $self->_parse_bytes_start_parsing (no_body_data_yet => 1) or do {
+          $self->{byte_buffer} = $self->{byte_buffer_orig};
+          redo PARSER;
+        };
+      } # PARSER
+
+      VARS::SAVE;
+      return;
+    } # parse_bytes_start
+
+  sub _parse_bytes_init ($$) {
+    my $self = $_[0];
+    my $main = $self->{main_parser};
+
+    delete $self->{parse_bytes_started};
+
+    VARS::INIT;
+    VARS::RESET;
+    {
+      package Web::XML::Parser;
+      SWITCH_STATE ("DTD state");
+      $IM = IM ("before DTD text declaration");
+    }
+
+    my $doc = $self->{document} = $main->{document}->implementation->create_document;
+    $doc->manakai_is_html ($main->{document}->manakai_is_html);
+    $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
+    for (qw(onextentref entity_expansion_count
+            max_entity_depth max_entity_expansions)) {
+      $self->{$_} = $main->{$_};
+    }
+    $self->{onerror} = $main->onerror;
+    $self->{onerrors} = $main->onerrors;
+    $self->{nodes} = [$doc];
+
+    $self->{entity_depth} = ($main->{entity_depth} || 0) + 1;
+    ${$self->{entity_expansion_count} = $main->{entity_expansion_count} ||= \(my $v = 0)}++;
+
+    $self->{input_stream} = [];
+    $self->{di_data_set} = my $dids = $main->di_data_set;
+    $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
+    $dids->[$DI] ||= {} if $DI >= 0;
+
+    $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
+    $self->{is_sub_parser} = 1;
+    $DTDMode = 'parameter entity';
+
+    $NEXT_ID++;
+    $self->{nodes}->[$CONTEXT = 1] = $main->{nodes}->[1]; # DOCTYPE
+  } # _parse_bytes_init
+}
+
+{
+  package Web::XML::Parser::EntityValueEntityParser;
+  push our @ISA, qw(Web::XML::Parser);
+
+  sub parse ($$$) {
+    my ($self, $main, $in) = @_;
+
+    VARS::LOCAL;
+    VARS::INIT;
+    VARS::RESET;
+    $Confident = 1; # irrelevant
+    {
+      package Web::XML::Parser;
+      SWITCH_STATE ("ENTITY value in entity state");
+      $IM = IM ("in subset");
+    }
+
+    my $doc = $self->{document} = $main->{document}->implementation->create_document;
+    $doc->manakai_is_html ($main->{document}->manakai_is_html);
+    $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
+    for (qw(onextentref entity_expansion_count
+            max_entity_depth max_entity_expansions)) {
+      $self->{$_} = $main->{$_};
+    }
+    $self->{onerror} = $main->onerror;
+    $self->{onerrors} = $main->onerrors;
+    $self->{nodes} = [$doc];
+
+    $self->{entity_depth} = ($main->{entity_depth} || 0) + 1;
+    ${$self->{entity_expansion_count} = $main->{entity_expansion_count} ||= \(my $v = 0)}++;
+
+    $self->{input_stream} = [@{$in->{entity}->{value}}];
+    $self->{di_data_set} = my $dids = $main->di_data_set;
+    $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
+    require Web::HTML::SourceMap;
+    $dids->[$DI] ||= {
+      name => '%'.$in->{entity}->{name}.';',
+      map => Web::HTML::SourceMap::indexed_string_to_mapping ($self->{input_stream}),
+    } if $DI >= 0;
+
+    $Token = $main->{saved_states}->{Token};
+    $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
+    $self->{is_sub_parser} = 1;
+    if ($main->{saved_states}->{DTDMode} eq 'internal subset' or
+        $main->{saved_states}->{DTDMode} eq 'parameter entity in internal subset') {
+      $DTDMode = 'parameter entity in internal subset';
+    } else {
+      $DTDMode = 'parameter entity';
+    }
+
+    $NEXT_ID++;
+    $self->{nodes}->[$CONTEXT = 1] = $main->{nodes}->[1]; # DOCTYPE
+
+    $self->_run or die "Can't restart";
+    $self->_feed_eof or die "Can't restart";
+  } # parse
+
+    sub parse_bytes_start ($$$) {
+      my $self = $_[0];
+
+      $self->{byte_buffer} = '';
+      $self->{byte_buffer_orig} = '';
+      $self->{transport_encoding_label} = $_[1];
+
+      $self->{main_parser} = $_[2];
+      $self->{can_restart} = 1;
+
+      VARS::LOCAL;
+      PARSER: {
+        $self->_parse_bytes_init;
+        $self->_parse_bytes_start_parsing (no_body_data_yet => 1) or do {
+          $self->{byte_buffer} = $self->{byte_buffer_orig};
+          redo PARSER;
+        };
+      } # PARSER
+
+      VARS::SAVE;
+      return;
+    } # parse_bytes_start
+
+  sub _parse_bytes_init ($$) {
+    my $self = $_[0];
+    my $main = $self->{main_parser};
+
+    delete $self->{parse_bytes_started};
+
+    VARS::INIT;
+    VARS::RESET;
+    {
+      package Web::XML::Parser;
+      SWITCH_STATE ("before ENTITY value in entity state");
+      $IM = IM ("in subset");
+    }
+
+    my $doc = $self->{document} = $main->{document}->implementation->create_document;
+    $doc->manakai_is_html ($main->{document}->manakai_is_html);
+    $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
+    for (qw(onextentref entity_expansion_count
+            max_entity_depth max_entity_expansions)) {
+      $self->{$_} = $main->{$_};
+    }
+    $self->{onerror} = $main->onerror;
+    $self->{onerrors} = $main->onerrors;
+    $self->{nodes} = [$doc];
+
+    $self->{entity_depth} = ($main->{entity_depth} || 0) + 1;
+    ${$self->{entity_expansion_count} = $main->{entity_expansion_count} ||= \(my $v = 0)}++;
+
+    $self->{input_stream} = [];
+    $self->{di_data_set} = my $dids = $main->di_data_set;
+    $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
+    $dids->[$DI] ||= {} if $DI >= 0;
+
+    $Token = $main->{saved_states}->{Token};
+    $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
+    $self->{is_sub_parser} = 1;
+    $DTDMode = 'parameter entity';
+
+    $NEXT_ID++;
+    $self->{nodes}->[$CONTEXT = 1] = $main->{nodes}->[1]; # DOCTYPE
+  } # _parse_bytes_init
+}
+
+{
+  package Web::XML::Parser::MDEntityParser;
+  push our @ISA, qw(Web::XML::Parser);
+
+  sub parse ($$$) {
+    my ($self, $main, $in) = @_;
+
+    $self->{InMDEntity} = 1;
+    VARS::LOCAL;
+    VARS::INIT;
+    VARS::RESET;
+    $Confident = 1; # irrelevant
+    {
+      package Web::XML::Parser;
+      $State = $main->{saved_states}->{OriginalState}->[0];
+      $IM = IM ("in subset");
+    }
+
+    my $doc = $self->{document} = $main->{document}->implementation->create_document;
+    $doc->manakai_is_html ($main->{document}->manakai_is_html);
+    $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
+    for (qw(onextentref entity_expansion_count
+            max_entity_depth max_entity_expansions)) {
+      $self->{$_} = $main->{$_};
+    }
+    $self->{onerror} = $main->onerror;
+    my $onerrors = $main->onerrors;
+    $self->{onerrors} = sub {
+      my ($self, $errors) = @_;
+      $onerrors->($self, [grep { $_->{type} ne 'parser:EOF' } @$errors]);
+    };
+    $self->{nodes} = [$doc];
+
+    $self->{entity_depth} = ($main->{entity_depth} || 0) + 1;
+    ${$self->{entity_expansion_count} = $main->{entity_expansion_count} ||= \(my $v = 0)}++;
+
+    $self->{input_stream} = [@{$in->{entity}->{value}}];
+    $self->{di_data_set} = my $dids = $main->di_data_set;
+    $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
+    require Web::HTML::SourceMap;
+    $dids->[$DI] ||= {
+      name => '%'.$in->{entity}->{name}.';',
+      map => Web::HTML::SourceMap::indexed_string_to_mapping ($self->{input_stream}),
+    } if $DI >= 0;
+
+    $Token = $main->{saved_states}->{Token};
+    $Attr = $main->{saved_states}->{Attr};
+    $OpenCMGroups = $main->{saved_lists}->{OpenCMGroups};
+    $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
+    $self->{is_sub_parser} = 1;
+    if ($main->{saved_states}->{DTDMode} eq 'internal subset' or
+        $main->{saved_states}->{DTDMode} eq 'parameter entity in internal subset') {
+      $DTDMode = 'parameter entity in internal subset';
+    } else {
+      $DTDMode = 'parameter entity';
+    }
+
+    $NEXT_ID++;
+    $self->{nodes}->[$CONTEXT = 1] = $main->{nodes}->[1]; # DOCTYPE
+
+    $self->_run or die "Can't restart";
+    $self->_feed_eof or die "Can't restart";
+  } # parse
+
+    sub parse_bytes_start ($$$) {
+      my $self = $_[0];
+
+      $self->{byte_buffer} = '';
+      $self->{byte_buffer_orig} = '';
+      $self->{transport_encoding_label} = $_[1];
+
+      $self->{main_parser} = $_[2];
+      $self->{can_restart} = 1;
+
+      $self->{InMDEntity} = 1;
+
+      VARS::LOCAL;
+      PARSER: {
+        $self->_parse_bytes_init;
+        $self->_parse_bytes_start_parsing (no_body_data_yet => 1) or do {
+          $self->{byte_buffer} = $self->{byte_buffer_orig};
+          redo PARSER;
+        };
+      } # PARSER
+
+      VARS::SAVE;
+      return;
+    } # parse_bytes_start
+
+  sub _parse_bytes_init ($$) {
+    my $self = $_[0];
+    my $main = $self->{main_parser};
+
+    delete $self->{parse_bytes_started};
+
+    VARS::INIT;
+    VARS::RESET;
+    {
+      package Web::XML::Parser;
+      $State = $main->{saved_states}->{OriginalState}->[1];
+      $IM = IM ("in subset");
+    }
+
+    my $doc = $self->{document} = $main->{document}->implementation->create_document;
+    $doc->manakai_is_html ($main->{document}->manakai_is_html);
+    $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
+    for (qw(onextentref entity_expansion_count
+            max_entity_depth max_entity_expansions)) {
+      $self->{$_} = $main->{$_};
+    }
+    $self->{onerror} = $main->onerror;
+    my $onerrors = $main->onerrors;
+    $self->{onerrors} = sub {
+      my ($self, $errors) = @_;
+      $onerrors->($self, [grep { $_->{type} ne 'parser:EOF' } @$errors]);
+    };
+    $self->{nodes} = [$doc];
+
+    $self->{entity_depth} = ($main->{entity_depth} || 0) + 1;
+    ${$self->{entity_expansion_count} = $main->{entity_expansion_count} ||= \(my $v = 0)}++;
+
+    $self->{input_stream} = [];
+    $self->{di_data_set} = my $dids = $main->di_data_set;
+    $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
+    $dids->[$DI] ||= {} if $DI >= 0;
+
+    $Token = $main->{saved_states}->{Token};
+    $Attr = $main->{saved_states}->{Attr};
+    $OpenCMGroups = $main->{saved_lists}->{OpenCMGroups};
+    $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
+    $self->{is_sub_parser} = 1;
+    $DTDMode = 'parameter entity';
+
+    $NEXT_ID++;
+    $self->{nodes}->[$CONTEXT = 1] = $main->{nodes}->[1]; # DOCTYPE
+  } # _parse_bytes_init
+
+}
+
+    sub _parse_sub_done ($) {
+      my $self = $_[0];
+      VARS::LOCAL;
+      VARS::RESET;
+      VARS::RESTORE;
+
+      $self->_run or die "Can't restart";
+    } # _parse_sub_done
+  } if $LANG eq 'XML';
+
+  for (@sub_code) {
+    s/\bSWITCH_STATE\s*\("([^"]+)"\)/switch_state_code $1/ge;
+    s{\bIM\s*\(HTML\s*=>\s*"([^"]+)"\s*,\s*XML\s*=>\s*"([^"]+)"\)}{
+      im_const ($LANG eq 'HTML' ? $1 : $2);
+    }ge;
+    s/\bIM\s*\("([^"]+)"\)/im_const $1/ge;
+    s/\bVARS::(\w+);/$vars_codes->{$1}/ge;
+  }
+  push @code, @sub_code;
 
   return join ("\n", @def_code), join "\n", @code;
 } # generate_api
@@ -3656,21 +6261,9 @@ sub generate ($) {
     use Encode qw(decode); # XXX
     use Web::Encoding;
     use Web::HTML::ParserData;
+    use Web::HTML::_SyntaxDefs;
 
-    sub HTMLNS () { 1 }
-    sub SVGNS () { 2 }
-    sub MATHMLNS () { 3 }
-    my $NSToURL = [
-      undef,
-      'http://www.w3.org/1999/xhtml',
-      'http://www.w3.org/2000/svg',
-      'http://www.w3.org/1998/Math/MathML',
-    ];
-    my $ForeignAttrMap = [
-      undef, undef,
-      $Web::HTML::ParserData::ForeignAttrNameToArgs->{'http://www.w3.org/2000/svg'},
-      $Web::HTML::ParserData::ForeignAttrNameToArgs->{'http://www.w3.org/1998/Math/MathML'},
-    ];
+    %s
     my $TagName2Group = {};
 
     ## ------ Common handlers ------
@@ -3679,33 +6272,53 @@ sub generate ($) {
       return bless {
         ## Input parameters
         # Scripting IframeSrcdoc DI known_definite_encoding locale_tag
+        # di_data_set is_sub_parser
 
         ## Callbacks
         # onerror onerrors onappcacheselection onscript
         # onelementspopped onrestartwithencoding
+        # onextentref onparsed
 
         ## Parser internal states
-        # input_stream input_encoding saved_stats saved_lists
+        # input_stream input_encoding saved_states saved_lists saved_maps
         # nodes document can_restart restart
         # parse_bytes_started transport_encoding_label
         # byte_bufer byte_buffer_orig
       }, $_[0];
     } # new
 
-our $DefaultErrorHandler = sub {
-  my $error = {@_};
-  my $index = $error->{token} ? $error->{token}->{index} : $error->{index};
-  $index = -1 if not defined $index;
-  my $text = defined $error->{text} ? qq{ - $error->{text}} : '';
-  my $value = defined $error->{value} ? qq{ "$error->{value}"} : '';
-  warn "Parse error ($error->{type}$text) at index $index$value\n";
-}; # $DefaultErrorHandler
+my $GetDefaultErrorHandler = sub {
+  my $dids = $_[0]->di_data_set;
+  return sub {
+    my $error = {@_};
+    require Web::HTML::SourceMap;
+    my ($di, $index) = Web::HTML::SourceMap::resolve_index_pair ($dids, $error->{di}, $error->{index});
+    my $text = defined $error->{text} ? qq{ - $error->{text}} : '';
+    my $value = defined $error->{value} ? qq{ "$error->{value}"} : '';
+    my $level = {
+      m => 'Parse error',
+      s => 'SHOULD-level error',
+      w => 'Warning',
+      i => 'Information',
+    }->{$error->{level} || ''} || $error->{level};
+    my $doc = 'document #' . $error->{di};
+    if (not $di == -1) {
+      my $did = $dids->[$di];
+      if (defined $did->{name}) {
+        $doc = $did->{name};
+      } elsif (defined $did->{url}) {
+        $doc = 'document <' . $did->{url} . '>';
+      }
+    }
+    warn "$level ($error->{type}$text) at $doc index $index$value\n";
+  };
+}; # $GetDefaultErrorHandler
 
 sub onerror ($;$) {
   if (@_ > 1) {
     $_[0]->{onerror} = $_[1];
   }
-  return $_[0]->{onerror} || $DefaultErrorHandler;
+  return $_[0]->{onerror} ||= $GetDefaultErrorHandler->($_[0]);
 } # onerror
 
 sub onerrors ($;$) {
@@ -3732,6 +6345,30 @@ sub onscript ($;$) {
   return $_[0]->{onscript} || sub { };
 } # onscript
 
+sub onextentref ($;$) {
+  if (@_ > 1) {
+    $_[0]->{onextentref} = $_[1];
+  }
+  return $_[0]->{onextentref} || sub {
+    my ($self, $data, $sub) = @_;
+    $self->cant_expand_extentref ($data, $sub);
+  };
+} # onextentref
+
+sub max_entity_depth ($;$) {
+  if (@_ > 1) {
+    $_[0]->{max_entity_depth} = $_[1];
+  }
+  return $_[0]->{max_entity_depth} || 10;
+} # max_entity_depth
+
+sub max_entity_expansions ($;$) {
+  if (@_ > 1) {
+    return $_[0]->{max_entity_expansions} = $_[1];
+  }
+  return $_[0]->{max_entity_expansions} || 1000;
+} # max_entity_expansions
+
 sub onelementspopped ($;$) {
   if (@_ > 1) {
     $_[0]->{onelementspopped} = $_[1];
@@ -3750,6 +6387,8 @@ sub onrestartwithencoding ($;$) {
   };
 } # onrestartwithencoding
 
+    sub throw ($$) { $_[1]->() }
+
     sub restart ($) {
       unless ($_[0]->{can_restart}) {
         croak "The current parsing method can't restart the parser";
@@ -3764,16 +6403,26 @@ sub onrestartwithencoding ($;$) {
       return $_[0]->{Scripting};
     } # scripting
 
+    sub onparsed ($;$) {
+      if (@_ > 1) {
+        $_[0]->{onparsed} = $_[1];
+      }
+      return $_[0]->{onparsed} || sub { };
+    } # onparsed
+
     sub _cleanup_states ($) {
       my $self = $_[0];
       delete $self->{input_stream};
       delete $self->{input_encoding};
       delete $self->{saved_states};
       delete $self->{saved_lists};
+      delete $self->{saved_maps};
       delete $self->{nodes};
       delete $self->{document};
       delete $self->{can_restart};
       delete $self->{restart};
+      delete $self->{pause};
+      delete $self->{main_parser};
     } # _cleanup_states
 
     ## ------ Common defs ------
@@ -3798,7 +6447,7 @@ sub onrestartwithencoding ($;$) {
 
 =head1 LICENSE
 
-Copyright 2007-2014 Wakaba <wakaba@suikawiki.org>.
+Copyright 2007-2015 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
@@ -3808,6 +6457,24 @@ it under the same terms as Perl itself.
   },
       $self->package_name,
       $UseLibCode,
+      ($LANG eq 'HTML' ? q{
+    sub HTMLNS () { 1 }
+    sub SVGNS () { 2 }
+    sub MATHMLNS () { 3 }
+    my $NSToURL = [
+      undef,
+      'http://www.w3.org/1999/xhtml',
+      'http://www.w3.org/2000/svg',
+      'http://www.w3.org/1998/Math/MathML',
+    ];
+    my $ForeignAttrMap = [
+      undef, undef,
+      $Web::HTML::ParserData::ForeignAttrNameToArgs->{'http://www.w3.org/2000/svg'},
+      $Web::HTML::ParserData::ForeignAttrNameToArgs->{'http://www.w3.org/1998/Math/MathML'},
+    ];
+      } : q{
+        sub HTMLNS () { q<http://www.w3.org/1999/xhtml> }
+      }),
       $var_decls,
       $tokenizer_defs_code,
       $tree_defs_code, $api_defs_code,
