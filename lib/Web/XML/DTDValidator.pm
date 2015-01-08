@@ -123,13 +123,39 @@ XXX
 
 sub validate_document ($$) {
   my ($self, $doc) = @_;
+  my $dt;
+  my $root_el_name;
+  my @pi;
   for my $node ($doc->child_nodes->to_list) {
     my $nt = $node->node_type;
     if ($nt == $node->DOCUMENT_TYPE_NODE) {
       $self->_validate_doctype ($node);
+      $dt = $node if not defined $dt;
+      for ($dt->child_nodes->to_list) {
+        push @pi, $_ if $_->node_type == $node->PROCESSING_INSTRUCTION_NODE;
+      }
     } elsif ($nt == $node->ELEMENT_NODE) {
       $self->_validate_element ($node);
+      $root_el_name = $node->node_name unless defined $root_el_name;
+    } elsif ($nt == $node->PROCESSING_INSTRUCTION_NODE) {
+      push @pi, $node;
     }
+  }
+
+  if (defined $root_el_name and defined $dt) {
+    $self->onerror->(level => 'm',
+                     type => 'VC:Root Element Type',
+                     text => $root_el_name,
+                     node => $dt, value => $dt->node_name)
+        unless $root_el_name eq $dt->node_name;
+  }
+
+  for my $pi (@pi) {
+    my $target = $pi->target;
+    $self->onerror->(level => 'w',
+                     type => 'xml:pi:target not declared',
+                     node => $pi, value => $target)
+        if not defined $dt or not defined $dt->notations->{$target};
   }
 } # validate_document
 
@@ -211,18 +237,22 @@ sub _validate_doctype ($$) {
                                  node => $at, value => $_);
               } else {
                 $self->onerror->(level => 'w',
-                                 type => 'xml:dtd:notation not declared',
+                                 type => 'VC:Notation Attributes:declared',
                                  node => $at, value => $_);
               }
             }
           }
           $has_token->{$_} = 1;
         }
-      }
+      } # $tokens
 
       my $default_type = $at->default_type;
       my $dv = $at->node_value;
       if ($declared_type == $at->ID_ATTR) {
+        $self->onerror->(level => 'w',
+                         type => 'xml:dtd:non-id ID',
+                         node => $at)
+            unless $at->node_name eq 'id';
         if ($default_type == $at->EXPLICIT_DEFAULT or
             $default_type == $at->FIXED_DEFAULT) {
           $self->onerror->(level => 'm',
@@ -305,6 +335,11 @@ sub _validate_doctype ($$) {
                            node => $at) if $cm eq 'EMPTY';
         }
       } # $declared_type
+      if ($declared_type != $at->ID_ATTR and $at->node_name eq 'id') {
+        $self->onerror->(level => 'w',
+                         type => 'xml:dtd:id non-ID',
+                         node => $at);
+      }
     } # $at
   } # $et
 
@@ -320,188 +355,144 @@ sub _validate_doctype ($$) {
   } # $ent
 } # _validate_doctype
 
+sub _validate_element ($$) {
+  my ($self, $node) = @_;
+
+  my $dt = $node->owner_document->doctype ||
+           $node->owner_document->create_document_type;
+
+  my $ids = {};
+  my $idrefs = {};
+
+  my @node = ($node);
+  while (@node) {
+    my $node = shift @node;
+
+    my $node_name = $node->node_name;
+    my $et = $dt->element_types->{$node_name};
+    my $cm = defined $et ? $et->content_model_text : undef;
+    if (not defined $cm) {
+      $self->onerror->(level => 'm',
+                       type => 'VC:Element Valid:declared',
+                       node => $node, value => $node_name);
+    }
+
+    if (defined $et) {
+      my $has_attr = {};
+      for my $attr ($node->attributes->to_list) {
+        my $attr_name = $attr->name;
+        $has_attr->{$attr_name} = 1;
+        my $at = $et->attribute_definitions->{$attr_name};
+        if (defined $at) {
+          my $declared_type = $at->declared_type;
+          my $value = $attr->value;
+          if ($declared_type == $at->ID_ATTR) {
+            $self->onerror->(level => 'm',
+                             type => 'xml:name syntax',
+                             node => $attr, value => $value)
+                unless $value =~ /\A$XMLName\z/o;
+            $self->onerror->(level => 'm',
+                             type => 'xml:ncname syntax',
+                             node => $attr, value => $value)
+                if $value =~ /:/;
+            if (defined $ids->{$value}) {
+              $self->onerror->(level => 'm',
+                               type => 'VC:ID:unique',
+                               node => $attr, value => $value);
+            } else {
+              $ids->{$value} = $attr;
+            }
+          } elsif ($declared_type == $at->IDREF_ATTR) {
+            push @{$idrefs->{$value} ||= []}, $attr;
+          } elsif ($declared_type == $at->IDREFS_ATTR) {
+            for (split /\x20/, $value, -1) {
+              push @{$idrefs->{$_} ||= []}, $attr;
+            }
+          } elsif ($declared_type == $at->ENUMERATION_ATTR) {
+            CHK: {
+              for (@{$at->allowed_tokens}) {
+                last CHK if $_ eq $value;
+              }
+              $self->onerror->(level => 'm',
+                               type => 'VC:Enumeration',
+                               node => $attr, value => $value);
+            } # CHK
+          } elsif ($declared_type == $at->NOTATION_ATTR) {
+            CHK: {
+              for (@{$at->allowed_tokens}) {
+                last CHK if $_ eq $value;
+              }
+              $self->onerror->(level => 'm',
+                               type => 'VC:Notation Attributes:enumeration',
+                               node => $attr, value => $value);
+            } # CHK
+          } elsif ($declared_type == $at->NMTOKEN_ATTR) {
+            $self->onerror->(level => 'm',
+                             type => 'xml:nmtoken syntax',
+                             node => $attr, value => $value)
+                unless $value =~ /\A\p{InXMLNameChar}+\z/o;
+          } elsif ($declared_type == $at->NMTOKENS_ATTR) {
+            $self->onerror->(level => 'm',
+                             type => 'xml:nmtokens syntax',
+                             node => $attr, value => $value)
+                unless $value =~ /\A\p{InXMLNameChar}+(?>\x20\p{InXMLNameChar}+)*\z/o;
+          } # $declared_type
+          
+          my $default_type = $at->default_type;
+          if ($default_type == $at->FIXED_DEFAULT) {
+            unless ($attr->value eq $at->node_value) {
+              $self->onerror->(level => 'm',
+                               type => 'VC:Fixed Attribute Default',
+                               text => $at->node_value,
+                               node => $attr);
+            }
+          }
+        } else { # no <!ATTLIST>
+          $self->onerror->(level => 'm',
+                           type => 'VC:Attribute Value Type:declared',
+                           node => $attr, value => $attr_name)
+              if defined $et;
+        }
+      } # $attr
+
+      my $attrs = $node->attributes;
+      for my $at ($et->attribute_definitions->to_list) {
+        my $name = $at->node_name;
+        if (not $has_attr->{$name} and $at->default_type == $at->REQUIRED_DEFAULT) {
+          $self->onerror->(level => 'm',
+                           type => 'VC:Required Attribute',
+                           text => $name,
+                           node => $node);
+        }
+      }
+    } # $et
+
+    for my $child ($node->child_nodes->to_list) {
+      my $child_nt = $child->node_type;
+      if ($child_nt == $child->PROCESSING_INSTRUCTION_NODE) {
+        my $target = $child->target;
+        $self->onerror->(level => 'w',
+                         type => 'xml:pi:target not declared',
+                         node => $child, value => $target)
+            if not defined $dt->notations->{$target};
+      }
+    } # $child
+  } # $node
+
+  ## IDREF/IDREFS attribute values
+  for my $id (keys %$idrefs) {
+    unless (defined $ids->{$id}) {
+      for (@{$idrefs->{$id}}) {
+        $self->onerror->(level => 'm',
+                         type => 'VC:IDREF:referenced element',
+                         node => $_, value => $id);
+      }
+    }
+  }
+} # _validate_element
+
 =pod
 
-sub _validate_document_instance ($$;%) {
-  my ($self, $node, %opt) = @_;
-  my $valid = 1;
-  $opt{_element} = {};
-  $opt{entMan}->get_entities ($opt{_elements}, namespace_uri => $NS{SGML}.'element');
-  $opt{_idref_attr} = [];
-  $opt{_idref_value} = {};
-  for (@{$node->{node}}) {
-    if ($_->{type} eq '#element') {
-      $valid &= $self->_validate_element ($_, \%opt);
-    }
-  }
-  
-  ## IDREF/IDREFS attribute values
-  for (@{$opt{_idref_attr}}) {
-    unless ($opt{_id_value}->{$_->[0]}) {
-      $self->{error}->raise_error ($_->[1], type => 'VC_IDREF_MATCH', t => $_->[0]);
-      $valid = 0;
-    }
-  }
-  $valid;
-}
-sub _validate_element ($$$) {
-  my ($self, $node, $opt) = @_;
-  my $valid = 1;
-  ### DEBUG: 
-  #Carp::croak join qq!\t!, caller(0) unless eval q{$node->qname};
-  my $qname = $node->qname;
-  unless ($opt->{_element}->{$qname}) {
-    $opt->{_element}->{$qname} = $opt->{entMan}->get_entity ($qname,
-                                                 namespace_uri => $NS{SGML}.'element');
-    unless ($opt->{_element}->{$qname}) {
-      $self->{error}->raise_error ($node, type => 'VC_ELEMENT_VALID_DECLARED', t => $qname);
-      $opt->{_element}->{$qname} = 'undeclared';
-      $valid = 0;
-    }
-  }
-  unless ($opt->{_attrs}->{$qname}) {
-    $opt->{_attrs}->{$qname} = $opt->{entMan}->get_attr_definitions (qname => $qname);
-  }
-  #$opt->{_id_value};
-  #$opt->{_idref_attr} = [[$id, $node],...]
-  my %specified;
-  my $has_child = 0;
-  for (@{$node->{node}},
-       ## NS attributes
-       grep {ref $_} values %{$node->{ns_specified}}) {
-    if ($_->{type} eq '#attribute') {
-      my $attr_qname = $_->qname;
-      $specified{$attr_qname} = 1;	## defined explicilly or by default declaration
-      my $attrdef = $opt->{_attrs}->{$qname}->{attr}->{$attr_qname};
-      if (ref $attrdef) {
-        my $attr_type = $attrdef->get_attribute ('type', make_new_node => 1)->inner_text;
-        my $attr_value = $_->inner_text;
-        my $attr_deftype = $attrdef->get_attribute ('default_type', make_new_node => 1)->inner_text;
-        if ($attr_type eq 'CDATA') {
-          ## Check FIXED value
-          if ($attr_deftype eq 'FIXED') {
-            my $dv = $attrdef->get_attribute ('default_value')->inner_text;
-            unless ($attr_value eq $dv) {
-              $self->{error}->raise_error ($_, type => 'VC_FIXED_ATTR_DEFAULT',
-                                           t => [$attr_value, $dv]);
-              $valid = 0;
-            }
-          }
-        } elsif ({qw/ID 1 IDREF 1 IDREFS 1 NMTOKEN 1 NMTOKENS 1 NOTATION 1/}->{$attr_type}) {
-          ## Normalization
-          $attr_value =~ s/\x20\x20+/\x20/g;
-          $attr_value =~ s/^\x20+//;  $attr_value =~ s/\x20+$//;
-          ## Check FIXED value
-          if ($attr_deftype eq 'FIXED') {
-            my $dv = $attrdef->get_attribute ('default_value')->inner_text;
-            $dv =~ s/\x20\x20+/\x20/g;
-            $dv =~ s/^\x20+//;  $dv =~ s/\x20+$//;
-            unless ($attr_value eq $dv) {
-              $self->{error}->raise_error ($_, type => 'VC_FIXED_ATTR_DEFAULT',
-                                           t => [$attr_value, $dv]);
-              $valid = 0;
-            }
-          }
-          ## Check value syntax and semantics
-          if ({qw/ID 1 IDREF 1 NOTATION 1/}->{$attr_type}) {
-            if ($attr_value !~ /^$xml_re{Name}$/) {
-              $self->{error}->raise_error ($_, type => 'VC_'.$attr_type.'_SYNTAX',
-                                           t => $attr_value);
-              $valid = 0;
-            } elsif (index ($attr_value, ':') > -1) {
-              $self->{error}->raise_error ($_, type => 'VALID_NS_NAME_IS_NCNAME',
-                                           t => $attr_value);
-              $valid = 0;
-            }
-            if ($attr_type eq 'ID') {
-              if ($opt->{_id_value}->{$attr_value}) {
-                $self->{error}->raise_error ($_, type => 'VC_ID_UNIQUE',
-                                             t => $attr_value);
-                $valid = 0;
-              } else {
-                $opt->{_id_value}->{$attr_value} = 1;
-              }
-            } elsif ($attr_type eq 'IDREF') {
-              unless ($opt->{_id_value}->{$attr_value}) {
-                ## Referred ID is not defined yet, so check later
-                push @{$opt->{_idref_attr}}, [$attr_value, $_];
-              }
-            } elsif ($attr_type eq 'NOTATION') {
-              unless ($opt->{_attrs}->{$qname}->{enum}->{$attr_qname}->{$attr_value}) {
-                $self->{error}->raise_error ($_, type => 'VC_NOTATION_ATTR_ENUMED',
-                                             t => $attr_value);
-                $valid = 0;
-              }
-              unless ($opt->{entMan}->get_entity ($attr_value,
-                                                  namespace_uri => $NS{SGML}.'notation')) {
-                $self->{error}->raise_error ($_, type => 'VC_NOTATION_ATTR_DECLARED',
-                                             t => $attr_value);
-                $valid = 0;
-              }
-            }
-          } elsif ($attr_type eq 'NMTOKEN') {
-            if ($attr_value =~ /\P{InXMLNameChar}/) {
-              $self->{error}->raise_error ($_, type => 'VC_NAME_TOKEN_NNTOKEN',
-                                           t => $attr_value);
-              $valid = 0;
-            }
-          } elsif ($attr_type eq 'NMTOKENS') {
-            if ($attr_value =~ /[^\p{InXMLNameChar}\x20]/) {
-              $self->{error}->raise_error ($_, type => 'VC_NAME_TOKEN_NMTOKENS',
-                                           t => $attr_value);
-              $valid = 0;
-            }
-          } else {	## IDREFS
-            for my $anid (split /\x20/, $attr_value) {
-              if ($anid !~ /^$xml_re{Name}$/) {
-                $self->{error}->raise_error ($_, type => 'VC_IDREF_IDREFS_NAME',
-                                             t => $anid);
-                $valid = 0;
-              } else {
-                if (index ($anid, ':') > -1) {
-                  $self->{error}->raise_error ($_, type => 'VALID_NS_NAME_IS_NCNAME',
-                                               t => $anid);
-                  $valid = 0;
-                }
-              }
-              unless ($opt->{_id_value}->{$attr_value}) {
-                ## Referred ID is not defined yet, so check later
-                push @{$opt->{_idref_attr}}, [$attr_value, $_];
-              }
-            }	# IDREFS values
-          }
-        } elsif ($attr_type eq 'enum') {
-          ## Normalization
-          $attr_value =~ s/\x20\x20+/\x20/g;
-          $attr_value =~ s/^\x20+//;  $attr_value =~ s/\x20+$//;
-          unless ($opt->{_attrs}->{$qname}->{enum}->{$attr_qname}->{$attr_value}) {
-            $self->{error}->raise_error ($_, type => 'VC_ENUMERATION', t => $attr_value);
-            $valid = 0;
-          }
-        }	# enum
-      } else {
-        $self->{error}->raise_error ($_, type => 'VC_ATTR_DECLARED', t => $attr_qname);
-        $valid = 0;
-      }
-    } else {
-      $has_child = 1;
-    }
-  }
-  
-  for my $attr_qname (keys %{$opt->{_attrs}->{$qname}->{attr}}) {
-    my $attrdef = $opt->{_attrs}->{$qname}->{attr}->{$attr_qname};
-    if ($attrdef->get_attribute_value ('default_type') eq 'REQUIRED') {
-      unless ($specified{$attr_qname}
-       || ($attr_qname eq 'xmlns' and $node->{ns_specified}->{''})
-       || (substr ($attr_qname, 0, 6) eq 'xmlns:'
-           and defined $node->{ns_specified}->{substr $attr_qname, 6})) {
-        $self->{error}->raise_error ($node, type => 'VC_REQUIRED_ATTR',
-                                     t => [$qname, $attr_qname]);
-        $valid = 0;
-      }
-    }
-  }
-  
   ## Content check
   my $cmodel = ref $opt->{_element}->{$qname}
                ? $opt->{_element}->{$qname}->get_attribute_value ('content',
