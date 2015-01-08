@@ -1,52 +1,35 @@
-
-=head1 NAME
-
-Message::Markup::XML::Validate --- manakai: XML Validator
-
-=head1 DESCRIPTION
-
-This module provides validator facilities for XML document.
-With Message::Markup::XML::Parser, it is possible to validate
-an XML document.
-
-This module is part of manakai.
-
-=cut
-
-package Message::Markup::XML::Validate;
+package Web::XML::DTDValidator;
 use strict;
-our $VERSION = do{my @r=(q$Revision: 1.7 $=~/\d+/g);sprintf "%d."."%02d" x $#r,@r};
-require Message::Markup::XML::Parser;
-our (%NS);
-*NS = \%Message::Markup::XML::NS;
-use Char::Class::XML qw!InXML_NameStartChar InXMLNameChar!;
-my %xml_re = (
-	Name	=> qr/\p{InXML_NameStartChar}\p{InXMLNameChar}*/,
-	_s__chars	=> qr/\x09\x0A\x0D\x20/s,
-);
+use warnings;
+our $VERSION = '8.0';
+use Char::Class::XML qw!InXMLNameStartChar InXMLNameChar!;
 
-sub new ($;%) {
-  my $class = shift;
-  my $self = bless {@_}, $class;
-  require Message::Markup::XML::Error;
-  $self->{error} = Message::Markup::XML::Error->new ({
-    ## Validity error
-    VC_ATTR_DEFAULT_LEGAL_VAL_IS_NAME	=> {
-    	description	=> 'The declared default value "%s" must meet the lexical constraints of the declared attribute type (%s) : default value must be a valid Name',
-    	level	=> 'vc',
-    },
-    VC_ATTR_DEFAULT_LEGAL_VAL_IS_NAMES	=> {
-    	description	=> 'The declared default value "%s" must meet the lexical constraints of the declared attribute type (%s) : default value must be a list of valid Names',
-    	level	=> 'vc',
-    },
-    VC_ATTR_DEFAULT_LEGAL_VAL_IS_NMTOKEN	=> {
-    	description	=> 'The declared default value "%s" must meet the lexical constraints of the declared attribute type (%s) : default value must be a valid NMToken',
-    	level	=> 'vc',
-    },
-    VC_ATTR_DEFAULT_LEGAL_VAL_IS_NMTOKENS	=> {
-    	description	=> 'The declared default value "%s" must meet the lexical constraints of the declared attribute type (%s) : default value must be a list of valid NMTokens',
-    	level	=> 'vc',
-    },
+sub new ($) {
+  return bless {}, $_[0];
+} # new
+
+sub onerror ($;$) {
+  if (@_ > 1) {
+    $_[0]->{onerror} = $_[1];
+  }
+  return $_[0]->{onerror} ||= sub {
+    my $error = {@_};
+    my $text = defined $error->{text} ? qq{ - $error->{text}} : '';
+    my $value = defined $error->{value} ? qq{ "$error->{value}"} : '';
+    my $level = {
+      m => 'Error',
+      s => 'SHOULD-level error',
+      w => 'Warning',
+      i => 'Information',
+    }->{$error->{level} || ''} || $error->{level};
+    warn "$level ($error->{type}$text) at node @{[$error->{node}->node_name]}\n";
+  };
+} # onerror
+
+=pod
+
+XXX
+
     VC_ATTR_DECLARED	=> {	## VC: Attribute Value Type
     	description	=> 'Attribute "%s" should (or must to be valid) be declared',
     	level	=> 'vc',
@@ -99,10 +82,6 @@ sub new ($;%) {
     	description	=> 'Attribute value "%s" must match the default value ("%s")',
     	level	=> 'vc',
     },
-    VC_ID_ATTR_DEFAULT	=> {
-    	description	=> 'ID attribute (%s/@%s) cannot have its default value',
-    	level	=> 'vc',
-    },
     VC_ID_SYNTAX	=> {
     	description	=> 'Value of ID attribute ("%s") must be a valid Name',
     	level	=> 'vc',
@@ -115,22 +94,6 @@ sub new ($;%) {
     	description	=> 'Value of IDREF/IDREFS attribute ("%s") must be match one of ID specified in the document',
     	level	=> 'vc',
     },
-    VC_IDREF_SYNTAX	=> {
-    	description	=> 'Value of IDREF attribute ("%s") must be a valid Name',
-    	level	=> 'vc',
-    },
-    VC_NAME_TOKEN_NNTOKEN	=> {
-    	description	=> 'NMTOKEN attribute value "%s" must be consist only of Name characters',
-    	level	=> 'vc',
-    },
-    VC_NAME_TOKEN_NMTOKENS	=> {
-    	description	=> 'NMTOKENS attribute value "%s" must be a whitespace separated list of NMTOKENs',
-    	level	=> 'vc',
-    },
-    VC_NO_NOTATION_ON_EMPTY_ELEMENT	=> {
-    	description	=> 'For compatibility, NOTATION attribute (%s) cannot be declared on EMPTY element type (%s)',
-    	level	=> 'vc',
-    },
     VC_NOTATION_ATTR_DECLARED	=> {
     	description	=> 'Notation "%s" should (or must to be valid) be declared',
     	level	=> 'vc',
@@ -139,43 +102,13 @@ sub new ($;%) {
     	description	=> 'Notation "%s" must be included in group of the declaration',
     	level	=> 'vc',
     },
-    VC_NOTATION_DECLARED	=> {
-    	description	=> 'Notation "%s" should (or must to be valid) be declared',
-    	level	=> 'vc',
-    },
     VC_NOTATION_SYNTAX	=> {
     	description	=> 'Value of NOTATION attribute ("%s") must be a valid Name',
-    	level	=> 'vc',
-    },
-    VC_ONE_ID_PER_ELEMENT_TYPE	=> {
-    	description	=> 'ID attribute is already declared (Invalid: %s/@%s, Declared: @%s)',
-    	level	=> 'vc',
-    },
-    VC_ONE_NOTATION_PER_ELEMENT_TYPE	=> {
-    	description	=> 'NOTATION attribute is already declared (Invalid: %s/@%s, Declared: @%s)',
     	level	=> 'vc',
     },
     VC_REQUIRED_ATTR	=> {
     	description	=> 'Required attribute %s/@%s must be specified',
     	level	=> 'vc',
-    },
-    ## Namespace validity error
-    VALID_NS_NAME_IS_NCNAME	=> {
-    	description	=> 'Name with colon ("%s") cannot be used here in namespaced XML document',
-    	level	=> 'nsvc',
-    },
-    ## XML spec. warning
-    WARN_XML_ATTLIST_AT_MOST_ONE_ATTR_DEF	=> {
-    	description	=> 'For interoperability, at most one definition for given attribute (%s/@%s) should be provided',
-    	level	=> 'warn',
-    },
-    WARN_XML_ATTLIST_ELEMENT_DECLARED	=> {
-    	description	=> 'Element type "%s" should be declared',
-    	level	=> 'warn',
-    },
-    WARN_XML_ATTLIST_UNIQUE_ENUM_TOKEN	=> {
-    	description	=> 'For interoperability, same enumeration token should not be used in an element type (%s/@*="%s")',
-    	level	=> 'warn',
     },
     WARN_XML_EMPTY_NET	=> {
     	description	=> 'For interoperability, NET (EmptyElemTag) syntax should be used for mandatorlly empty element',
@@ -185,207 +118,209 @@ sub new ($;%) {
     	description	=> 'For interoperability, NET (EmptyElemTag) syntax should not be used other than for mandatorlly empty element',
     	level	=> 'warn',
     },
-    ## Implementation-defined warning
-    WARN__PI_TARGET_NOTATION	=> {
-    	description	=> 'Target name of the process instruction ("%s") should be declared as a notation name to ensure interoperability',
-    	level	=> 'warn',
-    },
-    ## Misc.
-    UNKNOWN	=> {
-    	description	=> q(Unknown error (%s)),
-    	level	=> q(fatal),
-    },
-    -error_handler => $self->{option}->{error_handler} || sub {
-      my ($self, $node, $error_type, $error_msg, $err) = @_;
-      return 1;
-    },
-  });
-  $self;
-}
 
-sub validate ($$;%) {
-  my ($self, $node, %opt) = @_;
-  unless ($opt{entMan}) {
-    $opt{entMan} = $node->_get_entity_manager;
-  }
-  my $valid = 1;
-  for (
-       $self->_validate_notation_declared ($node, entMan => $opt{entMan}),
-       $self->_validate_attlist_declaration ($node, entMan => $opt{entMan}),
-       $self->_validate_document_instance ($node, entMan => $opt{entMan})
-      ) {
-    $valid &= $_;
-  }
-  return $valid;
-}
+=cut
 
-sub _validate_attlist_declaration ($$;%) {
-  my ($self, $c, %opt) = @_;
-  my $valid = 1;
-  my $l = [];
-  
-  ## Default attribute value syntacally valid?
-  $opt{entMan}->get_entities ($l, namespace_uri => $NS{SGML}.'attlist');
-  my %defined;
-  my %edef;
-  for my $attlist (@$l) {
-    my $element_qname = $attlist->get_attribute ('qname', make_new_node => 1)->inner_text;
-    unless ($edef{$element_qname}) {
-      $edef{$element_qname} = $opt{entMan}->get_entity ($element_qname,
-                                                         namespace_uri => $NS{SGML}.'element');
-      unless ($edef{$element_qname}) {
-        $self->{error}->raise_error ($attlist, type => 'WARN_XML_ATTLIST_ELEMENT_DECLARED',
-                                     t => $element_qname);
-        $edef{$element_qname} = 'undeclared';
-      }
+sub validate_document ($$) {
+  my ($self, $doc) = @_;
+  for my $node ($doc->child_nodes->to_list) {
+    my $nt = $node->node_type;
+    if ($nt == $node->DOCUMENT_TYPE_NODE) {
+      $self->_validate_doctype ($node);
+    } elsif ($nt == $node->ELEMENT_NODE) {
+      $self->_validate_element ($node);
     }
-    for (@{$attlist->{node}}) {
-      my $attr_qname = $_->get_attribute ('qname', make_new_node => 1)->inner_text;
-      if ($_->{type} eq '#element'
-      and $_->{namespace_uri} eq $NS{XML}.'attlist'
-      and $_->{local_name} eq 'AttDef') {
-        if ($defined{$element_qname}->{$attr_qname}) {
-          $self->{error}->raise_error ($attlist, type => 'WARN_XML_ATTLIST_AT_MOST_ONE_ATTR_DEF',
-                                       t => [$element_qname, $attr_qname]);
+  }
+} # validate_document
+
+my $XMLName = qr/\p{InXMLNameStartChar}\p{InXMLNameChar}*/;
+my $XMLNCName = qr/\p{InXMLNCNameStartChar}\p{InXMLNCNameChar}*/;
+
+sub _validate_doctype ($$) {
+  my ($self, $dt) = @_;
+
+  ## Element type definitions (created from <!ELEMENT> and/or <!ATTLIST>)
+  for my $et ($dt->element_types->to_list) {
+    my $et_name = $et->node_name;
+    unless ($et_name =~ /\A$XMLName\z/o) {
+      $self->onerror->(level => 'm',
+                       type => 'xml:name syntax',
+                       node => $et, value => $et_name);
+    }
+    if ($et_name =~ /:/ and not $et_name =~ /\A$XMLNCName:$XMLNCName\z/o) {
+      $self->onerror->(level => 'm',
+                       type => 'xml:qname syntax',
+                       node => $et, value => $et_name);
+    }
+
+    my $cm = $et->content_model_text;
+    my @at = $et->attribute_definitions->to_list;
+    if (@at and not defined $cm) {
+      $self->onerror->(level => 'w',
+                       type => 'xml:dtd:attlist element declared',
+                       node => $at[0], value => $et_name);
+    }
+
+    ## Attribute definitions (created from <!ATTLIST>)
+    my $has_id;
+    my $has_notation;
+    my $et_has_token = {};
+    for my $at (@at) {
+      my $at_name = $at->node_name;
+      unless ($at_name =~ /\A$XMLName\z/o) {
+        $self->onerror->(level => 'm',
+                         type => 'xml:name syntax',
+                         node => $at, value => $at_name);
+      }
+      if ($at_name =~ /:/ and not $at_name =~ /\A$XMLNCName:$XMLNCName\z/o) {
+        $self->onerror->(level => 'm',
+                         type => 'xml:qname syntax',
+                         node => $at, value => $at_name);
+      }
+
+      my $declared_type = $at->declared_type;
+      my $tokens = $at->allowed_tokens;
+      my $has_token = {};
+      for (@$tokens) {
+        if ($has_token->{$_}) {
+          $self->onerror->(level => 'm',
+                           type => 'VC:No Duplicate Tokens',
+                           node => $at, value => $_);
         } else {
-          $defined{$element_qname}->{$attr_qname} = 1;
-        }
-        my $type = $_->get_attribute_value ('type');
-        if ({qw/ID 1 IDREF 1 IDREFS 1 NMTOKEN 1 NMTOKENS 1 NOTATION 1/}->{$type}) {
-          my $dt = $_->get_attribute_value ('default_type');
-          if (not {qw/IMPLIED 1 REQUIRED 1/}->{$dt}) {
-            my $dv = $_->get_attribute_value ('default_value');
-            $dv =~ s/\x20\x20+/\x20/g;
-            $dv =~ s/^\x20+//;  $dv =~ s/\x20+$//;
-            if ({qw/ID 1 IDREF 1 NOTATION 1/}->{$type}) {
-              if ($type eq 'ID') {
-                $self->{error}->raise_error ($attlist,
-                                             type => 'VC_ID_ATTR_DEFAULT',
-                                             t => [$element_qname, $attr_qname]);
-                $valid = 0;
-              }
-              if ($dv !~ /^$xml_re{Name}$/) {
-                $self->{error}->raise_error ($attlist,
-                                             type => 'VC_ATTR_DEFAULT_LEGAL_VAL_IS_NAME',
-                                             t => [$dv, $type]);
-                $valid = 0;
-              } elsif (index ($dv, ':') > -1) {
-                $self->{error}->raise_error ($attlist,
-                                             type => 'VALID_NS_NAME_IS_NCNAME',
-                                             t => $dv);
-                $valid = 0;
-              }
-            } elsif ($type eq 'NMTOKEN') {
-              if ($dv =~ /\P{InXMLNameChar}/) {
-                $self->{error}->raise_error ($attlist,
-                                             type => 'VC_ATTR_DEFAULT_LEGAL_VAL_IS_NMTOKEN',
-                                             t => [$dv, $type]);
-                $valid = 0;
-              }
-            } elsif ($type eq 'NMTOKENS') {
-              if ($dv =~ /[^\p{InXMLNameChar}\x20]/) {
-                $self->{error}->raise_error ($attlist,
-                                             type => 'VC_ATTR_DEFAULT_LEGAL_VAL_IS_NMTOKENS',
-                                             t => [$dv, $type]);
-                $valid = 0;
-              }
-            } else {	## IDREFS
-              if ($dv !~ /^$xml_re{Name}(?:\x20$xml_re{Name})*$/) {
-                $self->{error}->raise_error ($attlist, type => 'VC_ATTR_DEFAULT_LEGAL_VAL_IS_NAMES',
-                                             t => [$dv, $type]);
-                $valid = 0;
-              } elsif (index ($dv, ':') > -1) {
-                $self->{error}->raise_error ($attlist, type => 'VALID_NS_NAME_IS_NCNAME',
-                                             t => $dv);
-                $valid = 0;
-              }
+          if ($declared_type == $at->ENUMERATION_ATTR) {
+            unless ($_ =~ /\A\p{InXMLNameChar}+\z/) {
+              $self->onerror->(level => 'm',
+                               type => 'xml:nmtoken syntax',
+                               node => $at, value => $_);
             }
-          }	# default attr exist
-          
-          if ({qw/ID 1 NOTATION 1/}->{$type}) {
-                if ($defined{$element_qname}->{'>'.$type.'<'}) {
-                  $self->{error}->raise_error ($attlist, type => 'VC_ONE_'.$type.'_PER_ELEMENT_TYPE',
-                                               t => [$element_qname, $attr_qname,
-                                                     $defined{$element_qname}->{'>'.$type.'<'}]);
-                  $valid = 0;
-                } else {
-                  $defined{$element_qname}->{'>'.$type.'<'} = $attr_qname;
-                  if ($type eq 'NOTATION') {
-                    if ($edef{$element_qname}) {
-                      if ($edef{$element_qname}->get_attribute_value ('content')
-                          eq 'EMPTY') {
-                        $self->{error}->raise_error ($attlist,
-                                                     type => 'VC_NO_NOTATION_ON_EMPTY_ELEMENT',
-                                                     t => [$element_qname, $attr_qname]);
-                        $valid = 0;
-                      }	# EMPTY
-                    }
-                  }	# NOTATION
-                }
-          }	# NOTATION or ID
-        } elsif ($type eq 'enum') {
-          for my $enum (@{$_->{node}}) {
-            if ($enum->{type} eq '#element'
-            and $enum->{namespace_uri} eq $NS{XML}.'attlist'
-            and $enum->{local_name} eq 'enum') {
-              my $enum_val = $enum->inner_text;
-              if ($defined{$element_qname}->{'>enum<'}->{$enum_val}) {
-                $self->{error}->raise_error ($attlist,
-                                             type => 'WARN_XML_ATTLIST_UNIQUE_ENUM_TOKEN',
-                                             t => [$element_qname, $enum_val]);
+            if ($et_has_token->{$_}) {
+              $self->onerror->(level => 's',
+                               type => 'xml:dtd:duplicate nmtoken in element',
+                               node => $at, value => $_);
+            }
+            $et_has_token->{$_} = 1;
+          } elsif ($declared_type == $at->NOTATION_ATTR) {
+            if (not defined $dt->notations->{$_}) {
+              if (not $_ =~ /\A$XMLName\z/o) {
+                $self->onerror->(level => 'm',
+                                 type => 'xml:name syntax',
+                                 node => $at, value => $_);
+              } elsif ($_ =~ /:/) {
+                $self->onerror->(level => 'm',
+                                 type => 'xml:ncname syntax',
+                                 node => $at, value => $_);
               } else {
-                $defined{$element_qname}->{'>enum<'}->{$enum_val} = 1;
+                $self->onerror->(level => 'w',
+                                 type => 'xml:dtd:notation not declared',
+                                 node => $at, value => $_);
               }
             }
           }
-        }	# enum
-      }
-    }
-  }
-  $valid;
-}
-
-sub _validate_notation_declared ($$;%) {
-  my ($self, $c, %opt) = @_;
-  my $valid = 1;
-    my $l = [];
-    my %defined;
-    
-    ## NDATA notation declared?
-    $opt{entMan}->get_entities ($l, namespace_uri => $NS{SGML}.'entity');
-    for my $ent (@$l) {
-      for ($ent->get_attribute ('NDATA')) {
-      if (ref $_) {
-        my $nname = $_->inner_text;
-        if ($defined{$nname} > 0
-         || $opt{entMan}->get_entity ($nname, namespace_uri => $NS{SGML}.'notation')) {
-          $defined{$nname} = 1;
-        } else {
-          $self->{error}->raise_error ($ent, type => 'VC_NOTATION_DECLARED',
-                                       t => $nname);
-          $defined{$nname} = -1;
-          $valid = 0;
+          $has_token->{$_} = 1;
         }
-      }}	# NDATA exist
-    }
-    
-    ## PI target name notation declared?
-    @$l = ();
-    $opt{entMan}->get_entities ($l, parent_node => $c, type => '#pi', namespace_uri => '');
-    for my $pi (@$l) {
-      my $nname = $pi->local_name;
-      if (($defined{$nname} and $defined{$nname} > 0)
-       || $opt{entMan}->get_entity ($nname, namespace_uri => $NS{SGML}.'notation')) {
-        $defined{$nname} = 1;
-      } else {
-        $self->{error}->raise_error ($pi, type => 'WARN__PI_TARGET_NOTATION',
-                                     t => $nname)
-          unless lc (substr ($nname, 0, 3)) eq 'xml';	## Target name xml* is maintained by W3C
-        $defined{$nname} = -1;
       }
-    }	# pi
-  return $valid;
-}
+
+      my $default_type = $at->default_type;
+      my $dv = $at->node_value;
+      if ($declared_type == $at->ID_ATTR) {
+        if ($default_type == $at->EXPLICIT_DEFAULT or
+            $default_type == $at->FIXED_DEFAULT) {
+          $self->onerror->(level => 'm',
+                           type => 'VC:ID Attribute Default',
+                           node => $at);
+        }
+        $self->onerror->(level => 'm',
+                         type => 'VC:One ID per Element Type',
+                         node => $at) if $has_id;
+        $has_id = 1;
+      } elsif ($declared_type == $at->IDREF_ATTR or
+               $declared_type == $at->ENTITY_ATTR) {
+        if ($default_type == $at->EXPLICIT_DEFAULT or
+            $default_type == $at->FIXED_DEFAULT) {
+          ## VC:Attribute Default Value Syntactically Correct
+          unless ($dv =~ /\A$XMLName\z/o) {
+            $self->onerror->(level => 'm',
+                             type => 'xml:name syntax',
+                             node => $at, value => $dv);
+          }
+          if ($dv =~ /:/) {
+            $self->onerror->(level => 'm',
+                             type => 'xml:ncname syntax',
+                             node => $at, value => $dv);
+          }
+        }
+      } elsif ($declared_type == $at->IDREFS_ATTR or
+               $declared_type == $at->ENTITIES_ATTR) {
+        if ($default_type == $at->EXPLICIT_DEFAULT or
+            $default_type == $at->FIXED_DEFAULT) {
+          ## VC:Attribute Default Value Syntactically Correct
+          unless ($dv =~ /\A$XMLName\x20$XMLName)*\z/o) {
+            $self->onerror->(level => 'm',
+                             type => 'xml:names syntax',
+                             node => $at, value => $dv);
+          }
+          if ($dv =~ /:/) {
+            $self->onerror->(level => 'm',
+                             type => 'xml:ncname syntax',
+                             node => $at, value => $dv);
+          }
+        }
+      } elsif ($declared_type == $at->NMTOKEN_ATTR) {
+        if ($default_type == $at->EXPLICIT_DEFAULT or
+            $default_type == $at->FIXED_DEFAULT) {
+          ## VC:Attribute Default Value Syntactically Correct
+          unless ($dv =~ /\A\p{InXMLNameChar}+\z/o) {
+            $self->onerror->(level => 'm',
+                             type => 'xml:nmtoken syntax',
+                             node => $at, value => $dv);
+          }
+        }
+      } elsif ($declared_type == $at->NMTOKENS_ATTR) {
+        if ($default_type == $at->EXPLICIT_DEFAULT or
+            $default_type == $at->FIXED_DEFAULT) {
+          ## VC:Attribute Default Value Syntactically Correct
+          unless ($dv =~ /\A\p{InXMLNameChar}+(?>\x20\p{InXMLNameChar}+)*\z/o) {
+            $self->onerror->(level => 'm',
+                             type => 'xml:nmtokens syntax',
+                             node => $at, value => $dv);
+          }
+        }
+      } elsif ($declared_type == $at->ENUMERATION_ATTR or
+               $declared_type == $at->NOTATION_ATTR) {
+        if ($default_type == $at->EXPLICIT_DEFAULT or
+            $default_type == $at->FIXED_DEFAULT) {
+          ## VC:Attribute Default Value Syntactically Correct
+          $self->onerror->(level => 'm',
+                           type => 'VC:Attribute Default Value Syntactically Correct:enumeration',
+                           node => $at, value => $dv)
+              unless $has_token->{$dv};
+        }
+        if ($declared_type == $at->NOTATION_ATTR) {
+          $self->onerror->(level => 'm',
+                           type => 'VC:One Notation per Element Type',
+                           node => $at) if $has_notation;
+          $has_notation = 1;
+          $self->onerror->(level => 'm',
+                           type => 'VC:No Notation on Empty Element',
+                           node => $at) if $cm eq 'EMPTY';
+        }
+      } # $declared_type
+    } # $at
+  } # $et
+
+  for my $ent ($dt->entities->to_list) {
+    my $ndata = $ent->notation_name;
+    if (defined $ndata) {
+      unless (defined $dt->notations->{$ndata}) {
+        $self->onerror->(level => 'm',
+                         type => 'VC:Notation Declared',
+                         node => $ent, value => $ndata);
+      }
+    }
+  } # $ent
+} # _validate_doctype
+
+=pod
 
 sub _validate_document_instance ($$;%) {
   my ($self, $node, %opt) = @_;
@@ -837,35 +772,15 @@ sub _validate_element ($$$) {
   $valid;
 }
 
-#sub _CLASS_NAME () { 'Message::Markup::XML::Validate' }
+=cut
 
-sub option ($$;$%) {
-  my ($self, $name, $value, %opt) = @_;
-  if (defined $value) {
-    $self->{option}->{$name} = $value;
-  }
-  if (!defined $self->{option}->{$name} && $opt{-see_parent} && $self->{parent}) {
-    $self->{parent}->option ($name, $value, %opt);
-  } else {
-    $self->{option}->{$name};
-  }
-}
-
-sub flag ($$;$) {
-  my ($self, $name, $value) = @_;
-  if (defined $value) {
-    $self->{flag}->{$name} = $value;
-  }
-  $self->{flag}->{$name};
-}
+1;
 
 =head1 LICENSE
 
-Copyright 2003 Wakaba <w@suika.fam.cx>
+Copyright 2003-2015 Wakaba <wakaba@suikawiki.org>
 
-This program is free software; you can redistribute it and/or
-modify it under the same terms as Perl itself.
+This program is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
 
 =cut
-
-1; # $Date: 2003/10/31 08:41:35 $
