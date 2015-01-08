@@ -26,100 +26,13 @@ sub onerror ($;$) {
   };
 } # onerror
 
-=pod
-
-XXX
-
-    VC_ATTR_DECLARED	=> {	## VC: Attribute Value Type
-    	description	=> 'Attribute "%s" should (or must to be valid) be declared',
-    	level	=> 'vc',
-    },
-    VC_ELEMENT_VALID_DECLARED	=> {
-    	description	=> 'Element type "%s" should (or must to be valid) be declared',
-    	level	=> 'vc',
-    },
-    VC_ELEMENT_VALID_MIXED	=> {
-    	description	=> 'Element type "%s" cannot come here by definition',
-    	level	=> 'vc',
-    },
-    VC_ELEMENT_VALID_ELEMENT_CDATA	=> {
-    	description	=> 'In element content, character data (other than S) cannot be written',
-    	level	=> 'vc',
-    },
-    VC_ELEMENT_VALID_ELEMENT_MATCH	=> {
-    	description	=> 'Child element (type = "%s") cannot appear here, since it does not match to the content model',
-    	level	=> 'vc',
-    },
-    VC_ELEMENT_VALID_ELEMENT_MATCH_EMPTY	=> {
-    	description	=> 'Required child element does not found',
-    	level	=> 'vc',
-    },
-    VC_ELEMENT_VALID_ELEMENT_MATCH_NEED_MORE_ELEMENT	=> {
-    	description	=> 'Required child element does not found',
-    	level	=> 'vc',
-    },
-    VC_ELEMENT_VALID_ELEMENT_MATCH_TOO_MANY_ELEMENT	=> {
-    	description	=> 'Child element (type = "%s") does not match to the content model',
-    	level	=> 'vc',
-    },
-    VC_ELEMENT_VALID_ELEMENT_REF	=> {
-    	description	=> 'In element content, entity or character reference cannot be used',
-    	level	=> 'vc',
-    },
-    VC_ELEMENT_VALID_ELEMENT_SECTION	=> {
-    	description	=> 'In element content, marked section cannot be used',
-    	level	=> 'vc',
-    },
-    VC_ELEMENT_VALID_EMPTY	=> {
-    	description	=> 'Content must be empty, i.e. no element, comment, PCDATA nor markup declaration can be contained',
-    	level	=> 'vc',
-    },
-    VC_ENUMERATION	=> {
-    	description	=> 'Attribute value "%s" must match one of name token defined in ATTLIST declaration',
-    	level	=> 'vc',
-    },
-    VC_FIXED_ATTR_DEFAULT	=> {
-    	description	=> 'Attribute value "%s" must match the default value ("%s")',
-    	level	=> 'vc',
-    },
-    VC_ID_SYNTAX	=> {
-    	description	=> 'Value of ID attribute ("%s") must be a valid Name',
-    	level	=> 'vc',
-    },
-    VC_ID_UNIQUE	=> {
-    	description	=> 'Value of ID attribute ("%s") must be unique in the document',
-    	level	=> 'vc',
-    },
-    VC_IDREF_MATCH	=> {
-    	description	=> 'Value of IDREF/IDREFS attribute ("%s") must be match one of ID specified in the document',
-    	level	=> 'vc',
-    },
-    VC_NOTATION_ATTR_DECLARED	=> {
-    	description	=> 'Notation "%s" should (or must to be valid) be declared',
-    	level	=> 'vc',
-    },
-    VC_NOTATION_ATTR_ENUMED	=> {
-    	description	=> 'Notation "%s" must be included in group of the declaration',
-    	level	=> 'vc',
-    },
-    VC_NOTATION_SYNTAX	=> {
-    	description	=> 'Value of NOTATION attribute ("%s") must be a valid Name',
-    	level	=> 'vc',
-    },
-    VC_REQUIRED_ATTR	=> {
-    	description	=> 'Required attribute %s/@%s must be specified',
-    	level	=> 'vc',
-    },
-    WARN_XML_EMPTY_NET	=> {
-    	description	=> 'For interoperability, NET (EmptyElemTag) syntax should be used for mandatorlly empty element',
-    	level	=> 'warn',
-    },
-    WARN_XML_NON_EMPTY_NET	=> {
-    	description	=> 'For interoperability, NET (EmptyElemTag) syntax should not be used other than for mandatorlly empty element',
-    	level	=> 'warn',
-    },
-
-=cut
+my $XMLS = qr/[\x09\x0A\x0D\x20]/;
+my $XMLName = qr/\p{InXMLNameStartChar}\p{InXMLNameChar}*/;
+my $XMLNCName = qr/\p{InXMLNCNameStartChar}\p{InXMLNCNameChar}*/;
+my $GITEM; {
+  use re 'eval';
+  $GITEM = qr/(?>[^()*+?|,\x09\x0A\x0D\x20]+|\($XMLS*(??{$GITEM})$XMLS*(?>[|,]$XMLS(??{$GITEM})$XMLS*)*\))(?>[*+?]|)/;
+}
 
 sub validate_document ($$) {
   my ($self, $doc) = @_;
@@ -150,17 +63,27 @@ sub validate_document ($$) {
         unless $root_el_name eq $dt->node_name;
   }
 
-  for my $pi (@pi) {
-    my $target = $pi->target;
-    $self->onerror->(level => 'w',
-                     type => 'xml:pi:target not declared',
-                     node => $pi, value => $target)
-        if not defined $dt or not defined $dt->notations->{$target};
+  for my $child (@pi) {
+    my $target = $child->target;
+    if (not defined $dt or not defined $dt->notations->{$target}) {
+      if (not $target =~ /\A$XMLName\z/o or $target =~ /\A[Xx][Mm][Ll]\z/) {
+        $self->onerror->(level => 'm',
+                         type => 'xml:name syntax',
+                         node => $child, value => $target);
+      } else {
+        if ($target =~ /:/) {
+          $self->onerror->(level => 'm',
+                           type => 'xml:ncname syntax',
+                           node => $child, value => $target);
+        } else {
+          $self->onerror->(level => 'w',
+                           type => 'xml:pi:target not declared',
+                           node => $child, value => $target);
+        }
+      }
+    }
   }
 } # validate_document
-
-my $XMLName = qr/\p{InXMLNameStartChar}\p{InXMLNameChar}*/;
-my $XMLNCName = qr/\p{InXMLNCNameStartChar}\p{InXMLNCNameChar}*/;
 
 sub _validate_doctype ($$) {
   my ($self, $dt) = @_;
@@ -168,18 +91,165 @@ sub _validate_doctype ($$) {
   ## Element type definitions (created from <!ELEMENT> and/or <!ATTLIST>)
   for my $et ($dt->element_types->to_list) {
     my $et_name = $et->node_name;
-    unless ($et_name =~ /\A$XMLName\z/o) {
+    if (not defined $et_name =~ /\A$XMLName\z/o) {
       $self->onerror->(level => 'm',
                        type => 'xml:name syntax',
                        node => $et, value => $et_name);
-    }
-    if ($et_name =~ /:/ and not $et_name =~ /\A$XMLNCName:$XMLNCName\z/o) {
+    } else {
       $self->onerror->(level => 'm',
                        type => 'xml:qname syntax',
-                       node => $et, value => $et_name);
+                       node => $et, value => $et_name)
+          if $et_name =~ /:/ and not $et_name =~ /\A$XMLNCName:$XMLNCName\z/o;
     }
 
     my $cm = $et->content_model_text;
+    if (defined $cm) {
+      if ($cm eq 'ANY' or $cm eq 'EMPTY') {
+        $self->{cm}->{$et_name} = [$cm];
+      } else {
+        if ($cm =~ s/^\($XMLS*\#PCDATA$XMLS*[|)]$XMLS*//o) {
+          $self->{cm}->{$et_name} = ['mixed', {}];
+          $cm =~ s/$XMLS*\)\*?\z//o;
+          for (grep { length } split /$XMLS*\|$XMLS*/o, $cm) {
+            if ($self->{cm}->{$et_name}->[1]->{$_}) {
+              $self->onerror->(level => 'm',
+                               type => 'VC:No Duplicate Types',
+                               node => $et, value => $_);
+            } else {
+              $self->{cm}->{$et_name}->[1]->{$_} = 1;
+              if (not defined $dt->element_types->{$_}) {
+                if (not defined $_ =~ /\A$XMLName\z/o) {
+                  $self->onerror->(level => 'm',
+                                   type => 'xml:name syntax',
+                                   node => $et, value => $_);
+                } else {
+                  if ($_ =~ /:/ and not $_ =~ /\A$XMLNCName:$XMLNCName\z/o) {
+                    $self->onerror->(level => 'm',
+                                     type => 'xml:qname syntax',
+                                     node => $et, value => $_);
+                  } else {
+                    $self->onerror->(level => 'w',
+                                     type => 'xml:dtd:cm:element not declared',
+                                     node => $et, value => $_);
+                  }
+                }
+              }
+            }
+          } # $cm
+        } else {
+          my $group = ['group', $cm, '', '|'];
+          my @todo = ($group);
+          while (@todo) {
+            my $todo = shift @todo;
+            $todo->[1] =~ s/\A\($XMLS*//o;
+            $todo->[1] =~ s/$XMLS*\)\z//o;
+            my @item;
+            {
+              if ($todo->[1] =~ s/^($GITEM)$XMLS*//o) {
+                my $item = $1;
+                $item =~ s/([*+?]|)\z//;
+                my $repeat = $1;
+                push @item, [$item =~ /^\(/ ? 'group' : 'element', $item, $repeat, '|'];
+                push @todo, $item[-1] if $item[-1]->[0] eq 'group';
+              }
+              if ($todo->[1] =~ s/^([,|])$XMLS*//o) {
+                $todo->[3] = $1;
+                redo;
+              }
+            }
+            $todo->[1] = \@item;
+          } # @todo
+
+          my @state;
+          $self->{cm}->{$et_name} = ['element', \@state];
+          $state[0] = {};
+          my $g2s; $g2s = sub ($$) {
+            my ($prev_ids, $item) = @_;
+            my $next_ids = [];
+
+            my $plus_id;
+            if ($item->[2] eq '+' or $item->[2] eq '*') {
+              $state[$plus_id = @state] = {};
+              $prev_ids = [@$prev_ids, $plus_id];
+            }
+
+            my $deterministic_error;
+            if ($item->[0] eq 'element') {
+              $state[my $next_id = @state] = {};
+              push @$next_ids, $next_id;
+              for (@$prev_ids) {
+                if (defined $state[$_]->{$item->[1]}) {
+                  $self->onerror->(level => 'm',
+                                   type => 'Deterministic Content Models',
+                                   node => $et, value => $item->[1])
+                      unless $deterministic_error++;
+                } else {
+                  $state[$_]->{$item->[1]} = $next_id;
+                }
+              }
+              unless (defined $dt->element_types->{$item->[1]}) {
+                if (not defined $item->[1] =~ /\A$XMLName\z/o) {
+                  $self->onerror->(level => 'm',
+                                   type => 'xml:name syntax',
+                                   node => $et, value => $item->[1]);
+                } else {
+                  if ($item->[1] =~ /:/ and not $_ =~ /\A$XMLNCName:$XMLNCName\z/o) {
+                    $self->onerror->(level => 'm',
+                                     type => 'xml:qname syntax',
+                                     node => $et, value => $item->[1]);
+                  } else {
+                    $self->onerror->(level => 'w',
+                                     type => 'xml:dtd:element not declared',
+                                     nodde => $et, value => $item->[1]);
+                  }
+                }
+              }
+            } elsif ($item->[0] eq 'group') {
+              if ($item->[3] eq '|') {
+                for (@{$item->[1]}) {
+                  push @$next_ids, @{$g2s->($prev_ids => $_)};
+                }
+              } elsif ($item->[3] eq ',') {
+                $next_ids = $prev_ids;
+                for (@{$item->[1]}) {
+                  $next_ids = $g2s->($next_ids => $_);
+                }
+              } else {
+                die $item->[3];
+              }
+            } else {
+              die $item->[0];
+            }
+
+            if (defined $plus_id) {
+              for my $next_id (@$next_ids) {
+                for (keys %{$state[$plus_id]}) {
+                  if (defined $state[$next_id]->{$_}) {
+                    $self->onerror->(level => 'm',
+                                     type => 'Deterministic Content Models',
+                                     node => $et, value => $_)
+                        unless $deterministic_error++;
+                  } else {
+                    $state[$next_id]->{$_} = $state[$plus_id]->{$_};
+                  }
+                }
+              }
+            }
+
+            if ($item->[2] eq '*' or $item->[2] eq '?') {
+              push @$next_ids, @$prev_ids;
+            }
+
+            return $next_ids;
+          }; # $g2s
+          for (@{$g2s->([0] => $group)}) {
+            $state[$_]->{''} = -1;
+          }
+          undef $g2s;
+        }
+      }
+    } # $cm
+
     my @at = $et->attribute_definitions->to_list;
     if (@at and not defined $cm) {
       $self->onerror->(level => 'w',
@@ -193,12 +263,11 @@ sub _validate_doctype ($$) {
     my $et_has_token = {};
     for my $at (@at) {
       my $at_name = $at->node_name;
-      unless ($at_name =~ /\A$XMLName\z/o) {
+      if (not $at_name =~ /\A$XMLName\z/o) {
         $self->onerror->(level => 'm',
                          type => 'xml:name syntax',
                          node => $at, value => $at_name);
-      }
-      if ($at_name =~ /:/ and not $at_name =~ /\A$XMLNCName:$XMLNCName\z/o) {
+      } elsif ($at_name =~ /:/ and not $at_name =~ /\A$XMLNCName:$XMLNCName\z/o) {
         $self->onerror->(level => 'm',
                          type => 'xml:qname syntax',
                          node => $at, value => $at_name);
@@ -268,12 +337,11 @@ sub _validate_doctype ($$) {
         if ($default_type == $at->EXPLICIT_DEFAULT or
             $default_type == $at->FIXED_DEFAULT) {
           ## VC:Attribute Default Value Syntactically Correct
-          unless ($dv =~ /\A$XMLName\z/o) {
+          if (not $dv =~ /\A$XMLName\z/o) {
             $self->onerror->(level => 'm',
                              type => 'xml:name syntax',
                              node => $at, value => $dv);
-          }
-          if ($dv =~ /:/) {
+          } elsif ($dv =~ /:/) {
             $self->onerror->(level => 'm',
                              type => 'xml:ncname syntax',
                              node => $at, value => $dv);
@@ -284,12 +352,11 @@ sub _validate_doctype ($$) {
         if ($default_type == $at->EXPLICIT_DEFAULT or
             $default_type == $at->FIXED_DEFAULT) {
           ## VC:Attribute Default Value Syntactically Correct
-          unless ($dv =~ /\A$XMLName\x20$XMLName)*\z/o) {
+          if (not $dv =~ /\A$XMLName\x20$XMLName)*\z/o) {
             $self->onerror->(level => 'm',
                              type => 'xml:names syntax',
                              node => $at, value => $dv);
-          }
-          if ($dv =~ /:/) {
+          } elsif ($dv =~ /:/) {
             $self->onerror->(level => 'm',
                              type => 'xml:ncname syntax',
                              node => $at, value => $dv);
@@ -343,7 +410,19 @@ sub _validate_doctype ($$) {
     } # $at
   } # $et
 
+  ## Unparsed entities (<!ENTITY ... NDATA ...>)
   for my $ent ($dt->entities->to_list) {
+    my $name = $ent->node_name;
+    if (not $name =~ /\A$XMLName\z/o) {
+      $self->onerror->(level => 'm',
+                       type => 'xml:name syntax',
+                       node => $ent, value => $name);
+    } elsif ($name =~ /:/) {
+      $self->onerror->(level => 'm',
+                       type => 'xml:ncname syntax',
+                       node => $ent, value => $name);
+    }
+
     my $ndata = $ent->notation_name;
     if (defined $ndata) {
       unless (defined $dt->notations->{$ndata}) {
@@ -353,6 +432,20 @@ sub _validate_doctype ($$) {
       }
     }
   } # $ent
+
+  ## Notations (<!NOTATION>)
+  for my $notation ($dt->notations->to_list) {
+    my $name = $notation->node_name;
+    if (not $name =~ /\A$XMLName\z/o) {
+      $self->onerror->(level => 'm',
+                       type => 'xml:name syntax',
+                       node => $notation, value => $name);
+    } elsif ($name =~ /:/) {
+      $self->onerror->(level => 'm',
+                       type => 'xml:ncname syntax',
+                       node => $notation, value => $name);
+    }
+  }
 } # _validate_doctype
 
 sub _validate_element ($$) {
@@ -370,11 +463,12 @@ sub _validate_element ($$) {
 
     my $node_name = $node->node_name;
     my $et = $dt->element_types->{$node_name};
-    my $cm = defined $et ? $et->content_model_text : undef;
+    my $cm = $self->{cm}->{$node_name};
     if (not defined $cm) {
       $self->onerror->(level => 'm',
                        type => 'VC:Element Valid:declared',
                        node => $node, value => $node_name);
+      $cm = [''];
     }
 
     if (defined $et) {
@@ -387,14 +481,15 @@ sub _validate_element ($$) {
           my $declared_type = $at->declared_type;
           my $value = $attr->value;
           if ($declared_type == $at->ID_ATTR) {
-            $self->onerror->(level => 'm',
-                             type => 'xml:name syntax',
-                             node => $attr, value => $value)
-                unless $value =~ /\A$XMLName\z/o;
-            $self->onerror->(level => 'm',
-                             type => 'xml:ncname syntax',
-                             node => $attr, value => $value)
-                if $value =~ /:/;
+            if (not $value =~ /\A$XMLName\z/o) {
+              $self->onerror->(level => 'm',
+                               type => 'xml:name syntax',
+                               node => $attr, value => $value);
+            } elsif ($value =~ /:/) {
+              $self->onerror->(level => 'm',
+                               type => 'xml:ncname syntax',
+                               node => $attr, value => $value);
+            }
             if (defined $ids->{$value}) {
               $self->onerror->(level => 'm',
                                type => 'VC:ID:unique',
@@ -467,16 +562,79 @@ sub _validate_element ($$) {
       }
     } # $et
 
-    for my $child ($node->child_nodes->to_list) {
+    my @child = $node->child_nodes->to_list;
+    my @child_el;
+    for my $child (@child) {
       my $child_nt = $child->node_type;
-      if ($child_nt == $child->PROCESSING_INSTRUCTION_NODE) {
+      if ($child_nt == 1) { # ELMENT_NODE
+        push @node, $child;
+        push @child_el, $child;
+      } elsif ($child_nt == 3) { # TEXT_NODE
+        if ($cm->[0] eq 'element' and $child->data =~ /[^\x09\x0A\x0D\x20]/) {
+          $self->onerror->(level => 'm',
+                           type => 'VC:Element Valid:element children:text',
+                           node => $child);
+        }
+      } elsif ($child_nt == $child->PROCESSING_INSTRUCTION_NODE) {
         my $target = $child->target;
-        $self->onerror->(level => 'w',
-                         type => 'xml:pi:target not declared',
-                         node => $child, value => $target)
-            if not defined $dt->notations->{$target};
+        if (not defined $dt->notations->{$target}) {
+          if (not $target =~ /\A$XMLName\z/o or $target =~ /\A[Xx][Mm][Ll]\z/) {
+            $self->onerror->(level => 'm',
+                             type => 'xml:name syntax',
+                             node => $child, value => $target);
+          } else {
+            if ($target =~ /:/) {
+              $self->onerror->(level => 'm',
+                               type => 'xml:ncname syntax',
+                               node => $child, value => $target);
+            } else {
+              $self->onerror->(level => 'w',
+                               type => 'xml:pi:target not declared',
+                               node => $child, value => $target);
+            }
+          }
+        }
       }
     } # $child
+
+    if ($cm->[0] eq 'EMPTY') {
+      $self->onerror->(level => 'm',
+                       type => 'VC:Element Valid:EMPTY',
+                       node => $child[0])
+          if @child;
+    } elsif ($cm->[0] eq 'ANY') {
+      #
+    } elsif ($cm->[0] eq 'mixed') {
+      for (@child_el) {
+        $self->onerror->(level => 'm',
+                         type => 'VC:Element Valid:mixed child',
+                         node => $_, value => $_->node_name)
+            unless $cm->[1]->{$_->node_name};
+      }
+    } elsif ($cm->[0] eq 'element') {
+      my $states = $cm->[1];
+      my $state = 0;
+      for (@child_el) {
+        my $next_id = $states->[$state]->{$_->node_name};
+        if (not defined $next_id) {
+          $self->onerror->(level => 'm',
+                           type => 'VC:Element Valid:mixed child:element',
+                           text => (join '|', sort { $a cmp $b } keys %{$states->[$state]}),
+                           node => $_);
+          undef $state;
+          last;
+        }
+        $state = $next_id;
+      }
+      if (defined $state) {
+        unless (($states->[$state]->{''} || 0) == -1) {
+          $self->onerror->(level => 'm',
+                           type => 'VC:Element Valid:mixed child:required element',
+                           text => (join '|', sort { $a cmp $b } keys %{$states->[$state]}),
+                           node => $node);
+        }
+      }
+    }
   } # $node
 
   ## IDREF/IDREFS attribute values
@@ -490,280 +648,6 @@ sub _validate_element ($$) {
     }
   }
 } # _validate_element
-
-=pod
-
-  ## Content check
-  my $cmodel = ref $opt->{_element}->{$qname}
-               ? $opt->{_element}->{$qname}->get_attribute_value ('content',
-                                                                  default => '')
-               : 'ANY';
-  if ($cmodel eq 'EMPTY') {
-    if ($has_child) {
-      $self->{error}->raise_error ($node, type => 'VC_ELEMENT_VALID_EMPTY');
-      $valid = 0;
-    } elsif (!$node->{option}->{use_EmptyElemTag}) {
-      $self->{error}->raise_error ($node, type => 'WARN_XML_EMPTY_NET');
-    }
-  } else {	# not EMPTY
-    if (!$has_child && $node->{option}->{use_EmptyElemTag}) {
-      $self->{error}->raise_error ($node, type => 'WARN_XML_NON_EMPTY_NET');
-    }
-    if ($cmodel eq 'ANY') {
-      for (@{$node->{node}}) {
-        if ($_->{type} eq '#element') {
-          $valid &= $self->_validate_element ($_, $opt);
-        }
-      }
-    } elsif ($cmodel eq 'mixed') {
-      my %accepted_element_type;
-      for (@{$opt->{_element}->{$qname}->{node}}) {
-        if ($_->{type} eq '#element' && $_->{namespace_uri} eq $NS{SGML}.'element'
-         && $_->{local_name} eq 'group') {
-          for my $el (@{$_->{node}}) {
-            if ($el->{type} eq '#element' && $el->{namespace_uri} eq $NS{SGML}.'element'
-             && $el->{local_name} eq 'element') {
-              $accepted_element_type{$el->get_attribute ('qname', make_new_node => 1)->inner_text}
-                = 1;
-            }
-          }
-          last;
-        }	# content model group
-      }
-      
-      for my $child (@{$node->{node}}) {
-        if ($child->{type} eq '#element') {
-          my $child_qname = $child->qname;
-          unless ($accepted_element_type{$child_qname}) {
-            $self->{error}->raise_error ($child, type => 'VC_ELEMENT_VALID_MIXED',
-                                         t => $child_qname);
-            $valid = 0;
-          }
-          $valid &= $self->_validate_element ($child, $opt);
-        }
-      }
-    } else {	# element content
-      my $make_cmodel_arraytree;
-      $make_cmodel_arraytree = sub {
-        my $node = shift;
-        my @r;
-        for (@{$node->{node}}) {
-          if ($_->{type} eq '#element' && $_->{namespace_uri} eq $NS{SGML}.'element') {
-            if ($_->{local_name} eq 'group') {
-              push @r, &$make_cmodel_arraytree ($_);
-            } elsif ($_->{local_name} eq 'element') {
-              push @r, {qname => ($_->get_attribute_value ('qname')),
-                        occurence => ($_->get_attribute_value
-                                            ('occurence', default => '1')),
-                        type => 'element'};
-            }
-          }
-        }
-        my $tree =
-        {connector => ($node->get_attribute ('connector', make_new_node => 1)->inner_text || '|'),
-         occurence => ($node->get_attribute ('occurence', make_new_node => 1)->inner_text || '1'),
-         element => \@r, type => 'group'};
-        if ($tree->{connector} eq '|') {
-          if ($tree->{occurence} eq '1' || $tree->{occurence} eq '+') {
-            for (@{$tree->{element}}) {
-              if ($_->{occurence} eq '?' || $_->{occurence} eq '*') {
-                $tree->{occurence} = {'1'=>'?','+'=>'*'}->{$tree->{occurence}};
-                last;
-              }
-            }
-          }
-        }
-        $tree;
-      };	# $make_cmodel_arraytree
-      my $tree = &$make_cmodel_arraytree ($opt->{_element}->{$qname});
-      
-      my $find_myname;
-      $find_myname = sub {
-        my ($nodes=>$idx, $tree, $opt) = @_;
-        if ($tree->{type} eq 'group') {
-          my $return = {match => 1, some_match => 0, actually_no_match => 1};
-          my $original_idx = $$idx;
-          for (my $i = 0; $i <= $#{$tree->{element}}; $i++) {
-            my $result = (&$find_myname ($nodes=>$idx, $tree->{element}->[$i],
-                                         {depth => 1+$opt->{depth},
-                                          nodes_max => $opt->{nodes_max}}));
-            print STDERR qq(** Lower level match [$opt->{depth}] ("$nodes->[$$idx]->[1]") : Exact = $result->{match}, Some = $result->{some_match}\n) if $main::DEBUG;
-            if ($result->{match} == 1 && !$result->{actually_no_match}) {
-              $return->{actually_no_match} = 0;
-              if ($tree->{connector} eq '|') {
-                $return->{match} = 1;
-                $return->{some_match} = 1;
-                if (($tree->{element}->[$i]->{occurence} eq '*'
-                  || $tree->{element}->[$i]->{occurence} eq '+')
-                  && $$idx <= $opt->{nodes_max}) {
-                  print STDERR qq(** More matching chance ($tree->{element}->[$i]->{occurence}) [$opt->{depth}] : "$tree->{element}->[$i]->{qname}" (model) vs "$nodes->[$$idx]->[1]" (instance)\n) if $main::DEBUG;
-                  $return->{more} = 1;
-                  $i--;
-                  #$$idx++;
-                  next;
-                } else {
-                  return $return;
-                }
-              } else {	# ','
-                $return->{match} &= 1;
-                $return->{some_match} = 1;
-                if ($$idx > $opt->{nodes_max}) {	# already last of instance's nodes
-                  if ($i == $#{$tree->{element}}) {
-                    return $return;
-                  } else {	## (foo1,foo2,foo3,foo4) and <foo1/><foo2/>.
-                          	## If foo3 and foo4 is optional, valid, otherwise invalid
-                    my $isopt = 1;
-                    for ($i+1..$#{$tree->{element}}) {
-                      if ($tree->{element}->[$_]->{occurence} ne '*'
-                       && $tree->{element}->[$_]->{occurence} ne '?') {
-                        $isopt = 0;
-                        last;
-                      }
-                    }
-                    $return->{match} = 0 unless $isopt;
-                    return $return;
-                  }
-                } else {	# not yet last of instance's nodes
-                  if ($tree->{element}->[$i]->{occurence} eq '*'
-                   || $tree->{element}->[$i]->{occurence} eq '+') {
-                    $return->{more} = 1;
-                    $i--;
-                    #$$idx++;
-                    next;
-                  } elsif ($i == $#{$tree->{element}}) {	# already last of model group
-                    return $return;
-                  } else {
-                    #$$idx++;
-                    next;
-                  }
-                }
-              }
-            } else {	# doesn't match
-              # <$return->{match} == 1>
-              if ($return->{more}	## (something*) but not matched
-              || ($tree->{element}->[$i]->{occurence} eq '?'
-               && $tree->{connector} eq ',')) {
-                $return->{more} = 0;
-                $return->{match} = 0 if $result->{some_match};
-                if ($tree->{connector} eq '|') {
-                  return $return;
-                } else {	# ','
-                  next;
-                }
-              } elsif ($result->{some_match} && $tree->{connector} eq '|') {
-                $$idx = $original_idx;
-              }
-              if ($tree->{element}->[$i]->{occurence} eq '*') {
-                $return->{match} = 1;
-                #$return->{actually_no_match} &= 1;	# default
-              } else {
-                $return->{match} = 0;
-                if ($tree->{connector} eq ',') {
-                  return $return;
-                }
-              }
-            }	# match or nomatch
-          }	# content group elements
-          ## - ',' and all matched
-          ## - '|' and match to no elements
-          return $return;
-        } else {	# terminal element
-          print STDERR qq(** Element match [$opt->{depth}] : "$tree->{qname}" (model) vs "$nodes->[$$idx]->[1]" (instance)\n) if $main::DEBUG;
-          if ($tree->{qname} eq $nodes->[$$idx]->[1]) {
-            $$idx++;
-            return {match => 1, some_match => 1};
-          #} elsif ($tree->{occurence} eq '*' || $tree->{occurence} eq '?') {
-          #  return {match => 1, some_match => 1, actually_no_match => 1};
-          } else {
-            return {match => 0, some_match => 0};
-          }
-        }
-      };
-      my @nodes;
-      for my $child (@{$node->{node}}) {
-        if ($child->{type} eq '#element') {
-          push @nodes, [$child, $child->qname];
-        } elsif ($child->{type} eq '#section') {
-          $self->{error}->raise_error ($child, type => 'VC_ELEMENT_VALID_ELEMENT_SECTION');
-          $valid = 0;
-        } elsif ($child->{type} eq '#reference') {
-          $self->{error}->raise_error ($child, type => 'VC_ELEMENT_VALID_ELEMENT_REF');
-          $valid = 0;
-        } elsif ($child->{type} eq '#text') {
-          if ($child->inner_text =~ /[^$xml_re{_s__chars}]/s) {
-            $self->{error}->raise_error ($child, type => 'VC_ELEMENT_VALID_ELEMENT_CDATA',
-                                         t => $child->inner_text);
-            $valid = 0;
-          }
-        }
-      }	# children
-      
-      my $nodes_max = $#nodes;
-      if (@nodes == 0) {	## Empty
-        my $check_empty_ok;
-        $check_empty_ok = sub {
-          my ($tree) = @_;
-          if ($tree->{occurence} eq '*'
-           || $tree->{occurence} eq '?') {
-            return 1;
-          } elsif ($tree->{type} eq 'group') {
-            if ($tree->{connector} eq ',') {
-              my $ok = 1;
-              for (@{$tree->{element}}) {
-                $ok &= &$check_empty_ok ($_);
-                last unless $ok;
-              }
-              return $ok;
-            } else {	# '|'
-              my $ok = 0;
-              for (@{$tree->{element}}) {
-                $ok ||= &$check_empty_ok ($_);
-                last if $ok;
-              }
-              return $ok;
-            }
-          } else {
-            return 0;
-          }
-        };
-        if (&$check_empty_ok ($tree)) {
-          
-        } else {
-          $self->{error}->raise_error ($node, type => 'VC_ELEMENT_VALID_ELEMENT_MATCH_EMPTY');
-          $valid = 0;
-        }
-      } else {	## Non-empty
-        my $i = 0;
-        my $result = &$find_myname (\@nodes, \$i, $tree, {depth => 0, nodes_max => $nodes_max});
-        if ($result->{match}) {
-          if ($i > $nodes_max) {
-            ## All child elements match to the model
-          } else {
-            ## Some more child element does not match to the model
-            $self->{error}->raise_error ($node, type => 'VC_ELEMENT_VALID_ELEMENT_MATCH_TOO_MANY_ELEMENT', t => $nodes[$i]->[1]);
-            $valid = 0;
-          }
-        } else {
-          if ($i <= $nodes_max) {
-            ## Some more child element is required by the model
-            $self->{error}->raise_error ($node, type => 'VC_ELEMENT_VALID_ELEMENT_MATCH_NEED_MORE_ELEMENT');
-            $valid = 0;
-          } else {
-            $self->{error}->raise_error ($node, type => 'VC_ELEMENT_VALID_ELEMENT_MATCH', t => $nodes[$i]->[1]);
-            $valid = 0;
-          }
-        }
-      }
-      for (0..$nodes_max) {
-        $valid &= $self->_validate_element ($nodes[$_]->[0], $opt);
-      }
-      
-    }	# element content
-  }	# not EMPTY
-  $valid;
-}
-
-=cut
 
 1;
 
