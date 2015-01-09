@@ -49,6 +49,7 @@ my $parser = Web::XML::Parser->new;
 $parser->scripting (1);
 $parser->di_data_set ($dids);
 $parser->locale_tag (lc $ENV{LANG}) if $ENV{LANG};
+#$parser->strict_checker ('Web::XML::Parser::ForValidatorChecker');
 $parser->onerror ($onerror);
 
 local $/ = undef;
@@ -56,10 +57,12 @@ my $input = @ARGV ? $ARGV[0] : scalar <>;
 $input = decode 'utf-8', $input;
 $dids->[@$dids]->{lc_map} = create_index_lc_mapping $input;
 $parser->di ($#$dids);
+warn "Parsing...\n";
 $parser->parse_byte_string (undef, $input => $doc);
 
 my $checker = new Web::HTML::Validator;
 $checker->onerror ($onerror);
 $checker->di_data_set ($dids);
 $checker->scripting ($parser->scripting);
+warn "Conformance checking...\n";
 $checker->check_node ($doc);

@@ -89,6 +89,7 @@ if ($LANG eq 'XML') {
   $Vars->{SC} = {input => 1, from_method => 1};
   $Vars->{InMDEntity} = {input => 1, unchanged => 1, type => 'boolean'};
   $Vars->{InLiteral} = {save => 1, type => 'boolean'};
+  $Vars->{TempRef} = {save => 1, type => 'object'};
 }
 
 ## ------ Input byte stream ------
@@ -636,6 +637,20 @@ sub serialize_actions ($;%) {
       } else {
         die "Unknown if |$_->{if}|";
       }
+      if ($LANG eq 'XML') {
+        push @result, q{
+          return 1;
+        } if $_->{state} eq 'markup declaration open state -- [CDAT';
+        push @result, q{
+          if (@$OE and defined $OE->[-1]->{cm_type} and
+              ($OE->[-1]->{cm_type} eq 'element' or
+               $OE->[-1]->{cm_type} eq 'EMPTY')) {
+            push @$Errors, {level => 'm',
+                            type => 'xml:CDATA section not allowed by cm',
+                            di => $DI, index => $Offset + (pos $Input) - 8};
+          }
+        } if $_->{state} eq 'markup declaration open state -- [CDATA';
+      }
     } elsif ($type eq 'parse error-and-switch') {
       if (defined $_->{if}) {
         die unless $_->{break};
@@ -781,12 +796,23 @@ sub serialize_actions ($;%) {
         $return = 1;
       }
     } elsif ($type eq 'emit-temp') {
-      push @result, q{
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      };
+      if ($LANG eq 'XML') {
+        push @result, q{
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        };
+      } else {
+        push @result, q{
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        };
+      }
     } elsif ($type eq 'create') {
       push @result, sprintf q{
         $Token = {type => %s_TOKEN, tn => 0, %s
@@ -976,7 +1002,6 @@ sub serialize_actions ($;%) {
       $field =~ tr/ -/__/ if defined $field;
       push @result, sprintf q[$Token->{q<%s>} = 1;], $field;
     } elsif ($type eq 'process-temp-as-decimal') {
-      use Data::Dumper;
       push @result, sprintf q{
         if (not @$OE and $DTDMode eq 'N/A') {
           push @$Errors, {level => 'm',
@@ -984,6 +1009,7 @@ sub serialize_actions ($;%) {
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       } if $LANG eq 'XML' and not $_->{in_attr};
       push @result, q{
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
@@ -1019,6 +1045,7 @@ sub serialize_actions ($;%) {
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       } if $LANG eq 'XML' and not $_->{in_attr};
       push @result, q{
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
@@ -1786,6 +1813,14 @@ my $OnContentEntityReference = sub {
   } else {
     my $sub = Web::XML::Parser::ContentEntityParser->new;
     my $ops = $data->{ops};
+    my $parent_cm_type = $main->{saved_lists}->{OE}->[-1]->{cm_type};
+    if (defined $parent_cm_type and $parent_cm_type eq 'EMPTY') {
+      $main->onerrors->($main, [{level => 'm',
+                                 type => 'entity:in EMPTY',
+                                 value => '&'.$data->{entity}->{name}.';',
+                                 di => $data->{ref}->{di},
+                                 index => $data->{ref}->{index}}]);
+    }
     my $parent_id = $main->{saved_lists}->{OE}->[-1]->{id};
     my $main2 = $main;
     $sub->onparsed (sub {
@@ -2879,6 +2914,7 @@ sub actions_to_code ($;%) {
           attr_list => $token->{attr_list},
           et => %s->{$ln} || %s->{'*'} || 0,
           aet => %s->{$ln} || %s->{'*'} || 0,
+          cm_type => ($DTDDefs->{elements}->{$token->{tag_name}} || {})->{cm_type},
         };
         $DTDDefs->{el_ncnames}->{$prefix} ||= $token if defined $prefix;
         $DTDDefs->{el_ncnames}->{$ln} ||= $token if defined $ln;
@@ -2920,6 +2956,22 @@ sub actions_to_code ($;%) {
             $attr->{declared_type} = 0; # no value
           } else {
             $attr->{declared_type} = 11; # unknown
+          }
+        }
+
+        if ($token->{self_closing_flag}) {
+          if (defined $node->{cm_type} and not $node->{cm_type} eq 'EMPTY') {
+            push @$Errors, {level => 's',
+                            type => 'xml:empty element tag:non-EMPTY',
+                            text => $token->{tag_name},
+                            di => $token->{di}, index => $token->{index}};
+          }
+        } else {
+          if (defined $node->{cm_type} and $node->{cm_type} eq 'EMPTY') {
+            push @$Errors, {level => 's',
+                            type => 'xml:start tag:EMPTY',
+                            text => $token->{tag_name},
+                            di => $token->{di}, index => $token->{index}};
           }
         }
       }, E2Tns '$nse', E2Tns '$nse', E2Tns '$nse', E2Tns '$nse';
@@ -3060,6 +3112,17 @@ sub actions_to_code ($;%) {
               $act->{value}; # IndexedString
         }
       } else {
+        if ($LANG eq 'XML') {
+          push @code, q{
+            if (defined $token->{TempRef} and
+                defined $OE->[-1]->{cm_type} and
+                $OE->[-1]->{cm_type} eq 'element') {
+              push @$Errors, {%{$token->{TempRef}},
+                              level => 'm',
+                              type => 'VC:Element Valid:charref in element content'};
+            }
+          };
+        }
         $value_code = sprintf q{[[%s, $token->{di}, $token->{index}]]},
             $args{chars} // q{$token->{value}}; # IndexedString
       }
@@ -3581,12 +3644,12 @@ sub actions_to_code ($;%) {
                  push @$Errors, {@_, di => $token->{di}, index => $token->{index}};
                });
           my $def = $DTDDefs->{elements}->{$token->{name}};
-          for (qw(name di index cmgroup)) {
+          for (qw(name di index)) {
             $def->{$_} = $token->{$_};
           }
           if (defined $token->{content_keyword}) {
             if ({EMPTY => 1, ANY => 1}->{$token->{content_keyword}}) {
-              $def->{content_keyword} = $token->{content_keyword};
+              $def->{cm_type} = $def->{content_keyword} = $token->{content_keyword};
             } else {
               push @$Errors, {level => 'm',
                               type => 'xml:dtd:unknown content keyword',
@@ -3594,8 +3657,19 @@ sub actions_to_code ($;%) {
                               di => $token->{di}, index => $token->{index}};
             }
           }
-          ## XXX $self->{t}->{content} syntax check.
-          $DTDDefs->{elements}->{$token->{name}}->{has_element_decl} = 1;
+          if (defined $token->{cmgroup}) {
+            $def->{cmgroup} = $token->{cmgroup};
+            if (@{$def->{cmgroup}->{items}} and
+                defined $def->{cmgroup}->{items}->[0]->{name} and
+                $def->{cmgroup}->{items}->[0]->{name} eq '#PCDATA') {
+              $def->{cm_type} = 'mixed';
+            } else {
+              $def->{cm_type} = 'element';
+            }
+
+            # XXX
+          }
+          $def->{has_element_decl} = 1;
         } else {
           push @$Errors, {level => 'm',
                           type => 'duplicate element decl',
@@ -3804,7 +3878,10 @@ sub actions_to_code ($;%) {
 
               $DTDDefs->{ge}->{'&'.$token->{name}.';'} = $token;
               if (defined $token->{value} and # IndexedString
-                  not join ('', map { $_->[0] } @{$token->{value}}) =~ /[&<]/) {
+                  do {
+                    my $s = join ('', map { $_->[0] } @{$token->{value}});
+                    length ($s) && not ($s =~ /[&<]/);
+                  }) {
                 $token->{only_text} = 1;
               }
               $token->{external} = {} if $is_external;
@@ -5751,6 +5828,7 @@ sub generate_api ($) {
              local_name => 'dummy',
              attr_list => {},
              nsmap => $main->{saved_lists}->{OE}->[-1]->{nsmap},
+             cm_type => $main->{saved_lists}->{OE}->[-1]->{cm_type},
              et => 0,
              aet => 0});
     $self->{nodes}->[$CONTEXT = $OE->[-1]->{id}] = $root;

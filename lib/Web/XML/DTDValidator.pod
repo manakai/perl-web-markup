@@ -1,0 +1,22 @@
+=head1 NAME
+
+Web::XML::DTDValidator - An XML DTD validator
+
+=head1 DESCRIPTION
+
+The C<Web::XML::DTDValidator> module is an XML DTD validator.
+
+XXX
+
+=head1 AUTHOR
+
+Wakaba <wakaba@suikawiki.org>.
+
+=head1 LICENSE
+
+Copyright 2003-2015 Wakaba <wakaba@suikawiki.org>
+
+This program is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut

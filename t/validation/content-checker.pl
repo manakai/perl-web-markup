@@ -119,18 +119,37 @@ sub get_node_path ($) {
     } elsif ($node->node_type == 3) {
       $rs = '"' . $node->data . '"';
       $node = $node->parent_node;
+    } elsif ($node->node_type == 6) {
+      $rs = '!ENTITY '.$node->node_name;
+      $node = $node->owner_document_type_definition;
+    } elsif ($node->node_type == 7) {
+      $rs = '?' . $node->target;
+      $node = $node->parent_node;
     } elsif ($node->node_type == 9) {
       $rs = '';
+      $node = $node->parent_node;
+    } elsif ($node->node_type == 10) {
+      $rs = '!DOCTYPE';
       $node = $node->parent_node;
     } elsif ($node->node_type == 11) {
       $rs = '#df';
       $node = $node->parent_node;
+    } elsif ($node->node_type == 12) {
+      $rs = '!NOTATION '.$node->node_name;
+      $node = $node->owner_document_type_definition;
+    } elsif ($node->node_type == 81001) {
+      $rs = '!ELEMENT ' . $node->node_name;
+      $node = $node->owner_document_type_definition;
+    } elsif ($node->node_type == 81002) {
+      $rs = '@' . $node->node_name;
+      $node = $node->owner_element_type_definition;
     } else {
       $rs = '#' . $node->node_type;
       $node = $node->parent_node;
     }
     unshift @r, $rs;
   }
+  return '/' if @r == 1 and $r[0] eq '';
   return join '/', @r;
 } # get_node_path
 

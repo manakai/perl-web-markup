@@ -180,7 +180,7 @@ sub onrestartwithencoding ($;$) {
     } # _cleanup_states
 
     ## ------ Common defs ------
-    our $AFE;our $AnchoredIndex;our $Attr;our $CONTEXT;our $Callbacks;our $Confident;our $DI;our $DTDDefs;our $DTDMode;our $EOF;our $Errors;our $FORM_ELEMENT;our $FRAMESET_OK;our $HEAD_ELEMENT;our $IM;our $IframeSrcdoc;our $InForeign;our $InLiteral;our $InMDEntity;our $InitialCMGroupDepth;our $Input;our $LastStartTagName;our $NEXT_ID;our $OE;our $OP;our $ORIGINAL_IM;our $Offset;our $OpenCMGroups;our $OpenMarkedSections;our $OriginalState;our $QUIRKS;our $SC;our $Scripting;our $State;our $TABLE_CHARS;our $TEMPLATE_IMS;our $Temp;our $TempIndex;our $Token;our $Tokens;
+    our $AFE;our $AnchoredIndex;our $Attr;our $CONTEXT;our $Callbacks;our $Confident;our $DI;our $DTDDefs;our $DTDMode;our $EOF;our $Errors;our $FORM_ELEMENT;our $FRAMESET_OK;our $HEAD_ELEMENT;our $IM;our $IframeSrcdoc;our $InForeign;our $InLiteral;our $InMDEntity;our $InitialCMGroupDepth;our $Input;our $LastStartTagName;our $NEXT_ID;our $OE;our $OP;our $ORIGINAL_IM;our $Offset;our $OpenCMGroups;our $OpenMarkedSections;our $OriginalState;our $QUIRKS;our $SC;our $Scripting;our $State;our $TABLE_CHARS;our $TEMPLATE_IMS;our $Temp;our $TempIndex;our $TempRef;our $Token;our $Tokens;
     ## ------ Tokenizer defs ------
     my $InvalidCharRefs = $Web::HTML::_SyntaxDefs->{xml_charref_invalid};
 sub ATTLIST_TOKEN () { 1 }
@@ -670,6 +670,14 @@ my $OnContentEntityReference = sub {
   } else {
     my $sub = Web::XML::Parser::ContentEntityParser->new;
     my $ops = $data->{ops};
+    my $parent_cm_type = $main->{saved_lists}->{OE}->[-1]->{cm_type};
+    if (defined $parent_cm_type and $parent_cm_type eq 'EMPTY') {
+      $main->onerrors->($main, [{level => 'm',
+                                 type => 'entity:in EMPTY',
+                                 value => '&'.$data->{entity}->{name}.';',
+                                 di => $data->{ref}->{di},
+                                 index => $data->{ref}->{index}}]);
+    }
     my $parent_id = $main->{saved_lists}->{OE}->[-1]->{id};
     my $main2 = $main;
     $sub->onparsed (sub {
@@ -2369,6 +2377,7 @@ push @$OP, ['stop-parsing'];
           attr_list => $token->{attr_list},
           et => $Element2Type->{($nse)}->{$ln} || $Element2Type->{($nse)}->{'*'} || 0,
           aet => $Element2Type->{($nse)}->{$ln} || $Element2Type->{($nse)}->{'*'} || 0,
+          cm_type => ($DTDDefs->{elements}->{$token->{tag_name}} || {})->{cm_type},
         };
         $DTDDefs->{el_ncnames}->{$prefix} ||= $token if defined $prefix;
         $DTDDefs->{el_ncnames}->{$ln} ||= $token if defined $ln;
@@ -2410,6 +2419,22 @@ push @$OP, ['stop-parsing'];
             $attr->{declared_type} = 0; # no value
           } else {
             $attr->{declared_type} = 11; # unknown
+          }
+        }
+
+        if ($token->{self_closing_flag}) {
+          if (defined $node->{cm_type} and not $node->{cm_type} eq 'EMPTY') {
+            push @$Errors, {level => 's',
+                            type => 'xml:empty element tag:non-EMPTY',
+                            text => $token->{tag_name},
+                            di => $token->{di}, index => $token->{index}};
+          }
+        } else {
+          if (defined $node->{cm_type} and $node->{cm_type} eq 'EMPTY') {
+            push @$Errors, {level => 's',
+                            type => 'xml:start tag:EMPTY',
+                            text => $token->{tag_name},
+                            di => $token->{di}, index => $token->{index}};
           }
         }
       
@@ -2702,6 +2727,7 @@ push @$OP, ['stop-parsing'];
           attr_list => $token->{attr_list},
           et => $Element2Type->{($nse)}->{$ln} || $Element2Type->{($nse)}->{'*'} || 0,
           aet => $Element2Type->{($nse)}->{$ln} || $Element2Type->{($nse)}->{'*'} || 0,
+          cm_type => ($DTDDefs->{elements}->{$token->{tag_name}} || {})->{cm_type},
         };
         $DTDDefs->{el_ncnames}->{$prefix} ||= $token if defined $prefix;
         $DTDDefs->{el_ncnames}->{$ln} ||= $token if defined $ln;
@@ -2745,6 +2771,22 @@ push @$OP, ['stop-parsing'];
             $attr->{declared_type} = 11; # unknown
           }
         }
+
+        if ($token->{self_closing_flag}) {
+          if (defined $node->{cm_type} and not $node->{cm_type} eq 'EMPTY') {
+            push @$Errors, {level => 's',
+                            type => 'xml:empty element tag:non-EMPTY',
+                            text => $token->{tag_name},
+                            di => $token->{di}, index => $token->{index}};
+          }
+        } else {
+          if (defined $node->{cm_type} and $node->{cm_type} eq 'EMPTY') {
+            push @$Errors, {level => 's',
+                            type => 'xml:start tag:EMPTY',
+                            text => $token->{tag_name},
+                            di => $token->{di}, index => $token->{index}};
+          }
+        }
       
 push @$OP, ['insert', $node => $OE->[-1]->{id}];
 push @$OE, $node;
@@ -2763,6 +2805,15 @@ delete $token->{self_closing_flag};
           while (length $token->{value}) {
             if ($token->{value} =~ s/^([^\x00]+)//) {
               
+            if (defined $token->{TempRef} and
+                defined $OE->[-1]->{cm_type} and
+                $OE->[-1]->{cm_type} eq 'element') {
+              push @$Errors, {%{$token->{TempRef}},
+                              level => 'm',
+                              type => 'VC:Element Valid:charref in element content'};
+            }
+          
+
       push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
     
               $token->{index} += length $1;
@@ -3154,12 +3205,12 @@ return;
                  push @$Errors, {@_, di => $token->{di}, index => $token->{index}};
                });
           my $def = $DTDDefs->{elements}->{$token->{name}};
-          for (qw(name di index cmgroup)) {
+          for (qw(name di index)) {
             $def->{$_} = $token->{$_};
           }
           if (defined $token->{content_keyword}) {
             if ({EMPTY => 1, ANY => 1}->{$token->{content_keyword}}) {
-              $def->{content_keyword} = $token->{content_keyword};
+              $def->{cm_type} = $def->{content_keyword} = $token->{content_keyword};
             } else {
               push @$Errors, {level => 'm',
                               type => 'xml:dtd:unknown content keyword',
@@ -3167,8 +3218,19 @@ return;
                               di => $token->{di}, index => $token->{index}};
             }
           }
-          ## XXX $self->{t}->{content} syntax check.
-          $DTDDefs->{elements}->{$token->{name}}->{has_element_decl} = 1;
+          if (defined $token->{cmgroup}) {
+            $def->{cmgroup} = $token->{cmgroup};
+            if (@{$def->{cmgroup}->{items}} and
+                defined $def->{cmgroup}->{items}->[0]->{name} and
+                $def->{cmgroup}->{items}->[0]->{name} eq '#PCDATA') {
+              $def->{cm_type} = 'mixed';
+            } else {
+              $def->{cm_type} = 'element';
+            }
+
+            # XXX
+          }
+          $def->{has_element_decl} = 1;
         } else {
           push @$Errors, {level => 'm',
                           type => 'duplicate element decl',
@@ -3263,7 +3325,10 @@ return;
 
               $DTDDefs->{ge}->{'&'.$token->{name}.';'} = $token;
               if (defined $token->{value} and # IndexedString
-                  not join ('', map { $_->[0] } @{$token->{value}}) =~ /[&<]/) {
+                  do {
+                    my $s = join ('', map { $_->[0] } @{$token->{value}});
+                    length ($s) && not ($s =~ /[&<]/);
+                  }) {
                 $token->{only_text} = 1;
               }
               $token->{external} = {} if $is_external;
@@ -4524,11 +4589,13 @@ return 0;
 $StateActions->[CDATA_SECTION_STATE__5D] = sub {
 if ($Input =~ /\G([\])/gcs) {
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
@@ -4541,11 +4608,13 @@ $Temp .= $1;
 $State = CDATA_SECTION_STATE__5D_5D;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = CDATA_SECTION_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -4555,11 +4624,13 @@ $State = CDATA_SECTION_STATE;
 } else {
 if ($EOF) {
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -4576,11 +4647,13 @@ return 0;
 $StateActions->[CDATA_SECTION_STATE__5D_5D] = sub {
 if ($Input =~ /\G([\])/gcs) {
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
@@ -4598,11 +4671,13 @@ $State = DATA_STATE;
         
 } elsif ($Input =~ /\G(.)/gcs) {
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = CDATA_SECTION_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -4612,11 +4687,13 @@ $State = CDATA_SECTION_STATE;
 } else {
 if ($EOF) {
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -10520,6 +10597,7 @@ $Temp .= $1;
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
@@ -10559,6 +10637,7 @@ $State = ENT_VALUE__DQ__STATE;
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
@@ -10603,6 +10682,7 @@ push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) -
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
@@ -10644,6 +10724,7 @@ $State = ENT_VALUE__DQ__STATE_CR;
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
@@ -10684,6 +10765,7 @@ $State = A_ENT_PARAMETER_STATE;
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
@@ -10725,6 +10807,7 @@ $State = PE_NAME_IN_ENT_VALUE__DQ__STATE;
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
@@ -10766,6 +10849,7 @@ $State = ENT_VALUE__DQ__STATE___CHARREF_STATE;
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
@@ -10807,6 +10891,7 @@ if ($EOF) {
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
@@ -10888,6 +10973,7 @@ $Temp .= $1;
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
@@ -10927,6 +11013,7 @@ $State = ENT_VALUE__DQ__STATE;
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
@@ -10971,6 +11058,7 @@ push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) -
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
@@ -11012,6 +11100,7 @@ $State = ENT_VALUE__DQ__STATE_CR;
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
@@ -11052,6 +11141,7 @@ $State = A_ENT_PARAMETER_STATE;
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
@@ -11093,6 +11183,7 @@ $State = PE_NAME_IN_ENT_VALUE__DQ__STATE;
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
@@ -11134,6 +11225,7 @@ $State = ENT_VALUE__DQ__STATE___CHARREF_STATE;
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
@@ -11175,6 +11267,7 @@ if ($EOF) {
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
@@ -11942,6 +12035,7 @@ $Temp .= $1;
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
@@ -11981,6 +12075,7 @@ $State = ENT_VALUE__SQ__STATE;
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
@@ -12025,6 +12120,7 @@ push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) -
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
@@ -12066,6 +12162,7 @@ $State = ENT_VALUE__SQ__STATE_CR;
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
@@ -12107,6 +12204,7 @@ $State = PE_NAME_IN_ENT_VALUE__SQ__STATE;
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
@@ -12148,6 +12246,7 @@ $State = ENT_VALUE__SQ__STATE___CHARREF_STATE;
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
@@ -12188,6 +12287,7 @@ $State = A_ENT_PARAMETER_STATE;
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
@@ -12229,6 +12329,7 @@ if ($EOF) {
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
@@ -12310,6 +12411,7 @@ $Temp .= $1;
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
@@ -12349,6 +12451,7 @@ $State = ENT_VALUE__SQ__STATE;
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
@@ -12393,6 +12496,7 @@ push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) -
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
@@ -12434,6 +12538,7 @@ $State = ENT_VALUE__SQ__STATE_CR;
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
@@ -12475,6 +12580,7 @@ $State = PE_NAME_IN_ENT_VALUE__SQ__STATE;
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
@@ -12516,6 +12622,7 @@ $State = ENT_VALUE__SQ__STATE___CHARREF_STATE;
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
@@ -12556,6 +12663,7 @@ $State = A_ENT_PARAMETER_STATE;
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
@@ -12597,6 +12705,7 @@ if ($EOF) {
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
@@ -13345,6 +13454,7 @@ $Temp .= $1;
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
@@ -13384,6 +13494,7 @@ $State = ENT_VALUE_IN_ENT_STATE;
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
@@ -13428,6 +13539,7 @@ push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) -
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
@@ -13469,6 +13581,7 @@ $State = ENT_VALUE_IN_ENT_STATE_CR;
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
@@ -13510,6 +13623,7 @@ $State = PE_NAME_IN_ENT_VALUE_IN_ENT_STATE;
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
@@ -13551,6 +13665,7 @@ $State = ENT_VALUE_IN_ENT_STATE___CHARREF_STATE;
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
@@ -13592,6 +13707,7 @@ if ($EOF) {
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
@@ -13669,6 +13785,7 @@ $Temp .= $1;
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
@@ -13708,6 +13825,7 @@ $State = ENT_VALUE_IN_ENT_STATE;
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
@@ -13752,6 +13870,7 @@ push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) -
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
@@ -13793,6 +13912,7 @@ $State = ENT_VALUE_IN_ENT_STATE_CR;
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
@@ -13834,6 +13954,7 @@ $State = PE_NAME_IN_ENT_VALUE_IN_ENT_STATE;
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
@@ -13875,6 +13996,7 @@ $State = ENT_VALUE_IN_ENT_STATE___CHARREF_STATE;
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
@@ -13916,6 +14038,7 @@ if ($EOF) {
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
@@ -60202,11 +60325,13 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 1;
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -60221,11 +60346,13 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 1;
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
@@ -60241,11 +60368,13 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 1;
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -60260,11 +60389,13 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 1;
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -60279,11 +60410,13 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 1;
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = CHARREF_IN_DATA_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 $Temp = q@&@;
@@ -60293,11 +60426,13 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 1;
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -60312,11 +60447,13 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 1;
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = TAG_OPEN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\=])/gcs) {
@@ -60327,11 +60464,13 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 1;
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -60346,11 +60485,13 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 1;
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -60365,11 +60506,13 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 1;
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -60390,11 +60533,13 @@ $TempIndex = $Offset + (pos $Input) - 1;
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -60948,11 +61093,13 @@ $State = DATA_STATE___CHARREF_HEX_NUM_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
@@ -60969,11 +61116,13 @@ $State = DATA_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
@@ -60987,11 +61136,13 @@ $State = DATA_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = CHARREF_IN_DATA_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
@@ -60999,11 +61150,13 @@ $State = CHARREF_IN_DATA_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = TAG_OPEN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\]])/gcs) {
@@ -61012,11 +61165,13 @@ $AnchoredIndex = $Offset + (pos $Input) - 1;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = IN_MSC_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -61029,11 +61184,13 @@ $State = IN_MSC_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -61047,11 +61204,13 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -61076,6 +61235,7 @@ $Temp .= $1;
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
@@ -61102,11 +61262,13 @@ $Temp .= $1;
         $Temp = chr $code;
       
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
@@ -61120,6 +61282,7 @@ $State = DATA_STATE;
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
@@ -61146,11 +61309,13 @@ $State = DATA_STATE;
         $Temp = chr $code;
       
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
@@ -61173,6 +61338,7 @@ $State = DATA_STATE;
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
@@ -61199,11 +61365,13 @@ $State = DATA_STATE;
         $Temp = chr $code;
       
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
@@ -61223,6 +61391,7 @@ $State = DATA_STATE_CR;
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
@@ -61249,11 +61418,13 @@ $State = DATA_STATE_CR;
         $Temp = chr $code;
       
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = CHARREF_IN_DATA_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
@@ -61267,6 +61438,7 @@ $State = CHARREF_IN_DATA_STATE;
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
@@ -61293,11 +61465,13 @@ $State = CHARREF_IN_DATA_STATE;
         $Temp = chr $code;
       
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = TAG_OPEN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\]])/gcs) {
@@ -61312,6 +61486,7 @@ $AnchoredIndex = $Offset + (pos $Input) - 1;
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
@@ -61338,11 +61513,13 @@ $AnchoredIndex = $Offset + (pos $Input) - 1;
         $Temp = chr $code;
       
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = IN_MSC_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -61361,6 +61538,7 @@ $State = IN_MSC_STATE;
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
@@ -61387,11 +61565,13 @@ $State = IN_MSC_STATE;
         $Temp = chr $code;
       
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -61411,6 +61591,7 @@ if ($EOF) {
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
@@ -61437,11 +61618,13 @@ if ($EOF) {
         $Temp = chr $code;
       
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -61466,6 +61649,7 @@ $Temp .= $1;
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
@@ -61492,11 +61676,13 @@ $Temp .= $1;
         $Temp = chr $code;
       
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
@@ -61510,6 +61696,7 @@ $State = DATA_STATE;
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
@@ -61536,11 +61723,13 @@ $State = DATA_STATE;
         $Temp = chr $code;
       
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
@@ -61563,6 +61752,7 @@ $State = DATA_STATE;
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
@@ -61589,11 +61779,13 @@ $State = DATA_STATE;
         $Temp = chr $code;
       
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
@@ -61613,6 +61805,7 @@ $State = DATA_STATE_CR;
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
@@ -61639,11 +61832,13 @@ $State = DATA_STATE_CR;
         $Temp = chr $code;
       
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = CHARREF_IN_DATA_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
@@ -61657,6 +61852,7 @@ $State = CHARREF_IN_DATA_STATE;
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
@@ -61683,11 +61879,13 @@ $State = CHARREF_IN_DATA_STATE;
         $Temp = chr $code;
       
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = TAG_OPEN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\]])/gcs) {
@@ -61702,6 +61900,7 @@ $AnchoredIndex = $Offset + (pos $Input) - 1;
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
@@ -61728,11 +61927,13 @@ $AnchoredIndex = $Offset + (pos $Input) - 1;
         $Temp = chr $code;
       
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = IN_MSC_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -61751,6 +61952,7 @@ $State = IN_MSC_STATE;
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
@@ -61777,11 +61979,13 @@ $State = IN_MSC_STATE;
         $Temp = chr $code;
       
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -61801,6 +62005,7 @@ if ($EOF) {
                           value => $Temp.';',
                           di => $DI, index => $TempIndex};
         }
+        $TempRef = {value => $Temp.';', di => $DI, index => $TempIndex};
       
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
@@ -61827,11 +62032,13 @@ if ($EOF) {
         $Temp = chr $code;
       
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -61981,11 +62188,13 @@ $Temp .= $1;
           } # REF
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 return 1 if $return;
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -62129,11 +62338,13 @@ $Temp .= q@�@;
           } # REF
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -62275,11 +62486,13 @@ return 1 if $return;
           } # REF
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
@@ -62422,11 +62635,13 @@ return 1 if $return;
           } # REF
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -62568,11 +62783,13 @@ return 1 if $return;
           } # REF
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -62714,11 +62931,13 @@ return 1 if $return;
           } # REF
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -62860,11 +63079,13 @@ return 1 if $return;
           } # REF
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = CHARREF_IN_DATA_STATE;
 return 1 if $return;
 } elsif ($Input =~ /\G([\'])/gcs) {
@@ -63001,11 +63222,13 @@ return 1 if $return;
           } # REF
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -63147,11 +63370,13 @@ return 1 if $return;
           } # REF
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = TAG_OPEN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 return 1 if $return;
@@ -63289,11 +63514,13 @@ return 1 if $return;
           } # REF
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -63435,11 +63662,13 @@ return 1 if $return;
           } # REF
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -63581,11 +63810,13 @@ return 1 if $return;
           } # REF
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -63728,11 +63959,13 @@ if ($EOF) {
           } # REF
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -63759,11 +63992,13 @@ $State = DATA_STATE___CHARREF_BEFORE_HEX_NUM_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
@@ -63780,11 +64015,13 @@ $State = DATA_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
@@ -63798,11 +64035,13 @@ $State = DATA_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = CHARREF_IN_DATA_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
@@ -63810,11 +64049,13 @@ $State = CHARREF_IN_DATA_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = TAG_OPEN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([X])/gcs) {
@@ -63830,11 +64071,13 @@ $State = DATA_STATE___CHARREF_BEFORE_HEX_NUM_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = IN_MSC_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -63847,11 +64090,13 @@ $State = IN_MSC_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -63865,11 +64110,13 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -63901,11 +64148,13 @@ $State = DATA_STATE___CHARREF_NAME_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -63918,11 +64167,13 @@ $State = DATA_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
@@ -63936,11 +64187,13 @@ $State = DATA_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -63953,11 +64206,13 @@ $State = DATA_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -63970,11 +64225,13 @@ $State = DATA_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = CHARREF_IN_DATA_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
@@ -63982,11 +64239,13 @@ $State = CHARREF_IN_DATA_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -63999,11 +64258,13 @@ $State = DATA_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = TAG_OPEN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\=])/gcs) {
@@ -64012,11 +64273,13 @@ $AnchoredIndex = $Offset + (pos $Input) - 1;
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -64029,11 +64292,13 @@ $State = DATA_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -64046,11 +64311,13 @@ $State = DATA_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -64067,11 +64334,13 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -64106,11 +64375,13 @@ $State = DATA_STATE___CHARREF_NAME_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -64123,11 +64394,13 @@ $State = DATA_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
@@ -64141,11 +64414,13 @@ $State = DATA_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -64158,11 +64433,13 @@ $State = DATA_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -64175,11 +64452,13 @@ $State = DATA_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = CHARREF_IN_DATA_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
@@ -64187,11 +64466,13 @@ $State = CHARREF_IN_DATA_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -64204,11 +64485,13 @@ $State = DATA_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = TAG_OPEN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\=])/gcs) {
@@ -64217,11 +64500,13 @@ $AnchoredIndex = $Offset + (pos $Input) - 1;
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -64234,11 +64519,13 @@ $State = DATA_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -64251,11 +64538,13 @@ $State = DATA_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1 - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -64272,11 +64561,13 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          TempRef => $TempRef,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+          undef $TempRef;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -74662,6 +74953,9 @@ $StateActions->[MDO_STATE__5BCDA] = sub {
 if ($Input =~ /\G([T])/gcs) {
 $Temp .= $1;
 $State = MDO_STATE__5BCDAT;
+
+          return 1;
+        
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -74745,6 +75039,15 @@ $StateActions->[MDO_STATE__5BCDAT] = sub {
 if ($Input =~ /\G([A])/gcs) {
 $Temp .= $1;
 $State = MDO_STATE__5BCDATA;
+
+          if (@$OE and defined $OE->[-1]->{cm_type} and
+              ($OE->[-1]->{cm_type} eq 'element' or
+               $OE->[-1]->{cm_type} eq 'EMPTY')) {
+            push @$Errors, {level => 'm',
+                            type => 'xml:CDATA section not allowed by cm',
+                            di => $DI, index => $Offset + (pos $Input) - 8};
+          }
+        
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -77866,7 +78169,7 @@ sub dom_tree ($$) {
           $self->_construct_tree;
 
           if (@$Callbacks or @$Errors or $self->{is_sub_parser}) {
-            $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, InLiteral => $InLiteral, InitialCMGroupDepth => $InitialCMGroupDepth, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
+            $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, InLiteral => $InLiteral, InitialCMGroupDepth => $InitialCMGroupDepth, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, TempRef => $TempRef, Token => $Token};
             {
               my $Errors = $Errors;
               my $Callbacks = $Callbacks;
@@ -77891,7 +78194,7 @@ sub dom_tree ($$) {
                 return 1;
               }
             }
-            ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $InLiteral, $InitialCMGroupDepth, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM InLiteral InitialCMGroupDepth LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State Temp TempIndex Token)};
+            ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $InLiteral, $InitialCMGroupDepth, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $Temp, $TempIndex, $TempRef, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM InLiteral InitialCMGroupDepth LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State Temp TempIndex TempRef Token)};
 ($AFE, $Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP OpenCMGroups OpenMarkedSections TABLE_CHARS TEMPLATE_IMS Tokens)};
 ($DTDDefs) = @{$self->{saved_maps}}{qw(DTDDefs)};
           }
@@ -77980,7 +78283,7 @@ sub dom_tree ($$) {
       $doc->manakai_compat_mode ('no quirks');
       $doc->remove_child ($_) for $doc->child_nodes->to_list;
       $self->{nodes} = [$doc];
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
       $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
 $InitialCMGroupDepth = 0;
@@ -78028,7 +78331,7 @@ $Scripting = $self->{Scripting};
       my $nodes = $self->{nodes} = [$doc];
       ## 
 
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
       $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
 $InitialCMGroupDepth = 0;
@@ -78166,7 +78469,7 @@ $Scripting = $self->{Scripting};
       $doc->remove_child ($_) for $doc->child_nodes->to_list;
       $self->{nodes} = [$doc];
 
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
       $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
 $InitialCMGroupDepth = 0;
@@ -78192,7 +78495,7 @@ $Scripting = $self->{Scripting};
       ## Note that $DI != $source_di to support document.write()'s
       ## insertion.
 
-      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, InLiteral => $InLiteral, InitialCMGroupDepth => $InitialCMGroupDepth, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
+      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, InLiteral => $InLiteral, InitialCMGroupDepth => $InitialCMGroupDepth, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, TempRef => $TempRef, Token => $Token};
       return;
     } # parse_chars_start
   
@@ -78201,29 +78504,29 @@ $Scripting = $self->{Scripting};
       my $self = $_[0];
       my $input = [$_[1]]; # string copy
 
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
       $IframeSrcdoc = $self->{IframeSrcdoc};
 $InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
-      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $InLiteral, $InitialCMGroupDepth, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM InLiteral InitialCMGroupDepth LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State Temp TempIndex Token)};
+      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $InLiteral, $InitialCMGroupDepth, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $Temp, $TempIndex, $TempRef, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM InLiteral InitialCMGroupDepth LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State Temp TempIndex TempRef Token)};
 ($AFE, $Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP OpenCMGroups OpenMarkedSections TABLE_CHARS TEMPLATE_IMS Tokens)};
 ($DTDDefs) = @{$self->{saved_maps}}{qw(DTDDefs)};
 
       $self->_feed_chars ($input) or die "Can't restart";
 
-      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, InLiteral => $InLiteral, InitialCMGroupDepth => $InitialCMGroupDepth, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
+      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, InLiteral => $InLiteral, InitialCMGroupDepth => $InitialCMGroupDepth, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, TempRef => $TempRef, Token => $Token};
       return;
     } # parse_chars_feed
 
     sub parse_chars_end ($) {
       my $self = $_[0];
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
       $IframeSrcdoc = $self->{IframeSrcdoc};
 $InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
-      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $InLiteral, $InitialCMGroupDepth, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM InLiteral InitialCMGroupDepth LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State Temp TempIndex Token)};
+      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $InLiteral, $InitialCMGroupDepth, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $Temp, $TempIndex, $TempRef, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM InLiteral InitialCMGroupDepth LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State Temp TempIndex TempRef Token)};
 ($AFE, $Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP OpenCMGroups OpenMarkedSections TABLE_CHARS TEMPLATE_IMS Tokens)};
 ($DTDDefs) = @{$self->{saved_maps}}{qw(DTDDefs)};
 
@@ -78260,7 +78563,7 @@ $Scripting = $self->{Scripting};
         $self->{nodes} = [$doc];
         $doc->remove_child ($_) for $doc->child_nodes->to_list;
 
-        local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+        local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
         $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
 $InitialCMGroupDepth = 0;
@@ -78371,7 +78674,7 @@ $Scripting = $self->{Scripting};
       $doc->manakai_is_html (0);
       $self->{can_restart} = 1;
 
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
       PARSER: {
         $self->_parse_bytes_init;
         $self->_parse_bytes_start_parsing (no_body_data_yet => 1) or do {
@@ -78380,7 +78683,7 @@ $Scripting = $self->{Scripting};
         };
       } # PARSER
 
-      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, InLiteral => $InLiteral, InitialCMGroupDepth => $InitialCMGroupDepth, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
+      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, InLiteral => $InLiteral, InitialCMGroupDepth => $InitialCMGroupDepth, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, TempRef => $TempRef, Token => $Token};
       return;
     } # parse_bytes_start
   
@@ -78391,12 +78694,12 @@ $Scripting = $self->{Scripting};
     sub parse_bytes_feed ($$;%) {
       my ($self, undef, %args) = @_;
 
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
       $IframeSrcdoc = $self->{IframeSrcdoc};
 $InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
-      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $InLiteral, $InitialCMGroupDepth, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM InLiteral InitialCMGroupDepth LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State Temp TempIndex Token)};
+      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $InLiteral, $InitialCMGroupDepth, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $Temp, $TempIndex, $TempRef, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM InLiteral InitialCMGroupDepth LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State Temp TempIndex TempRef Token)};
 ($AFE, $Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP OpenCMGroups OpenMarkedSections TABLE_CHARS TEMPLATE_IMS Tokens)};
 ($DTDDefs) = @{$self->{saved_maps}}{qw(DTDDefs)};
 
@@ -78426,18 +78729,18 @@ $Scripting = $self->{Scripting};
         }
       } # PARSER
 
-      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, InLiteral => $InLiteral, InitialCMGroupDepth => $InitialCMGroupDepth, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
+      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, InLiteral => $InLiteral, InitialCMGroupDepth => $InitialCMGroupDepth, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, TempRef => $TempRef, Token => $Token};
       return;
     } # parse_bytes_feed
 
     sub parse_bytes_end ($) {
       my $self = $_[0];
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
       $IframeSrcdoc = $self->{IframeSrcdoc};
 $InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
-      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $InLiteral, $InitialCMGroupDepth, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM InLiteral InitialCMGroupDepth LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State Temp TempIndex Token)};
+      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $InLiteral, $InitialCMGroupDepth, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $Temp, $TempIndex, $TempRef, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM InLiteral InitialCMGroupDepth LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State Temp TempIndex TempRef Token)};
 ($AFE, $Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP OpenCMGroups OpenMarkedSections TABLE_CHARS TEMPLATE_IMS Tokens)};
 ($DTDDefs) = @{$self->{saved_maps}}{qw(DTDDefs)};
 
@@ -78478,7 +78781,7 @@ $Scripting = $self->{Scripting};
   sub parse ($$$) {
     my ($self, $main, $in) = @_;
 
-    local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+    local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
     $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
 $InitialCMGroupDepth = 0;
@@ -78545,7 +78848,7 @@ $Scripting = $self->{Scripting};
   sub parse ($$$) {
     my ($self, $main, $in) = @_;
 
-    local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+    local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
     $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
 $InitialCMGroupDepth = 0;
@@ -78599,6 +78902,7 @@ $Scripting = $self->{Scripting};
              local_name => 'dummy',
              attr_list => {},
              nsmap => $main->{saved_lists}->{OE}->[-1]->{nsmap},
+             cm_type => $main->{saved_lists}->{OE}->[-1]->{cm_type},
              et => 0,
              aet => 0});
     $self->{nodes}->[$CONTEXT = $OE->[-1]->{id}] = $root;
@@ -78617,7 +78921,7 @@ $Scripting = $self->{Scripting};
       $self->{main_parser} = $_[2];
       $self->{can_restart} = 1;
 
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
       PARSER: {
         $self->_parse_bytes_init;
         $self->_parse_bytes_start_parsing (no_body_data_yet => 1) or do {
@@ -78626,7 +78930,7 @@ $Scripting = $self->{Scripting};
         };
       } # PARSER
 
-      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, InLiteral => $InLiteral, InitialCMGroupDepth => $InitialCMGroupDepth, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
+      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, InLiteral => $InLiteral, InitialCMGroupDepth => $InitialCMGroupDepth, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, TempRef => $TempRef, Token => $Token};
       return;
     } # parse_bytes_start
 
@@ -78697,7 +79001,7 @@ $Scripting = $self->{Scripting};
   sub parse ($$$) {
     my ($self, $main, $in) = @_;
 
-    local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+    local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
     $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
 $InitialCMGroupDepth = 0;
@@ -78766,7 +79070,7 @@ $Scripting = $self->{Scripting};
       $self->{main_parser} = $_[2];
       $self->{can_restart} = 1;
 
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
       PARSER: {
         $self->_parse_bytes_init;
         $self->_parse_bytes_start_parsing (no_body_data_yet => 1) or do {
@@ -78775,7 +79079,7 @@ $Scripting = $self->{Scripting};
         };
       } # PARSER
 
-      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, InLiteral => $InLiteral, InitialCMGroupDepth => $InitialCMGroupDepth, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
+      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, InLiteral => $InLiteral, InitialCMGroupDepth => $InitialCMGroupDepth, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, TempRef => $TempRef, Token => $Token};
       return;
     } # parse_bytes_start
 
@@ -78838,7 +79142,7 @@ $Scripting = $self->{Scripting};
   sub parse ($$$) {
     my ($self, $main, $in) = @_;
 
-    local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+    local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
     $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
 $InitialCMGroupDepth = 0;
@@ -78908,7 +79212,7 @@ $Scripting = $self->{Scripting};
       $self->{main_parser} = $_[2];
       $self->{can_restart} = 1;
 
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
       PARSER: {
         $self->_parse_bytes_init;
         $self->_parse_bytes_start_parsing (no_body_data_yet => 1) or do {
@@ -78917,7 +79221,7 @@ $Scripting = $self->{Scripting};
         };
       } # PARSER
 
-      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, InLiteral => $InLiteral, InitialCMGroupDepth => $InitialCMGroupDepth, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
+      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, InLiteral => $InLiteral, InitialCMGroupDepth => $InitialCMGroupDepth, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, TempRef => $TempRef, Token => $Token};
       return;
     } # parse_bytes_start
 
@@ -78982,7 +79286,7 @@ $Scripting = $self->{Scripting};
     my ($self, $main, $in) = @_;
 
     $self->{InMDEntity} = 1;
-    local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+    local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
     $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
 $InitialCMGroupDepth = 0;
@@ -79060,7 +79364,7 @@ $Scripting = $self->{Scripting};
 
       $self->{InMDEntity} = 1;
 
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
       PARSER: {
         $self->_parse_bytes_init;
         $self->_parse_bytes_start_parsing (no_body_data_yet => 1) or do {
@@ -79069,7 +79373,7 @@ $Scripting = $self->{Scripting};
         };
       } # PARSER
 
-      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, InLiteral => $InLiteral, InitialCMGroupDepth => $InitialCMGroupDepth, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
+      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, InLiteral => $InLiteral, InitialCMGroupDepth => $InitialCMGroupDepth, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, TempRef => $TempRef, Token => $Token};
       return;
     } # parse_bytes_start
 
@@ -79135,12 +79439,12 @@ $Scripting = $self->{Scripting};
 
     sub _parse_sub_done ($) {
       my $self = $_[0];
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
       $IframeSrcdoc = $self->{IframeSrcdoc};
 $InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
-      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $InLiteral, $InitialCMGroupDepth, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM InLiteral InitialCMGroupDepth LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State Temp TempIndex Token)};
+      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $InLiteral, $InitialCMGroupDepth, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $Temp, $TempIndex, $TempRef, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM InLiteral InitialCMGroupDepth LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State Temp TempIndex TempRef Token)};
 ($AFE, $Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP OpenCMGroups OpenMarkedSections TABLE_CHARS TEMPLATE_IMS Tokens)};
 ($DTDDefs) = @{$self->{saved_maps}}{qw(DTDDefs)};
 

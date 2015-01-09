@@ -846,6 +846,7 @@ test {
     push @error, \%args unless $args{type} =~ /^attribute/;
   });
   $validator->check_node ($doc);
+  @error = grep { not $_->{type} =~ /xml:no DTD validation/ } @error;
   eq_or_diff \@error, [{type => 'element not allowed:root',
                         node => $el, level => 'm'},
                        {type => 'in XML:charset',
@@ -867,6 +868,7 @@ test {
     push @error, \%args unless $args{type} =~ /^attribute/;
   });
   $validator->check_node ($doc);
+  @error = grep { not $_->{type} =~ /xml:no DTD validation/ } @error;
   eq_or_diff \@error, [{type => 'element not allowed:root',
                         node => $el, level => 'm'},
                        {type => 'in XML:charset',
@@ -991,7 +993,9 @@ for my $test (
       push @error, \%args;
     });
     $validator->check_node ($doc);
-    eq_or_diff [sort { $a->{type} cmp $b->{type} } @error],
+    eq_or_diff [sort { $a->{type} cmp $b->{type} }
+                grep { not $_->{type} =~ /xml:no DTD validation|Element Valid/ }
+                @error],
         [sort { $a->{type} cmp $b->{type} }
          map { {%$_, node => $map->{$_->{node}}} } @{$test->[1]}];
     done $c;

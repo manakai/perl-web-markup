@@ -1396,6 +1396,35 @@ $CheckerByType->{'idref or hash-ID reference'} = sub {
 
 ## ------ XML and XML Namespaces ------
 
+## XML DTD
+
+sub force_dtd_validation ($;$) {
+  if (@_ > 1) {
+    $_[0]->{force_dtd_validation} = $_[1];
+  }
+  return $_[0]->{force_dtd_validation};
+} # force_dtd_validation
+
+sub _dtd ($$) {
+  my ($self, $doc) = @_;
+  if ($self->force_dtd_validation) {
+    #
+  } elsif ($doc->manakai_is_html) {
+    return;
+  } elsif (defined $doc->doctype) {
+    #
+  } else {
+    $self->onerror->(level => 'i',
+                     type => 'xml:no DTD validation',
+                     node => $doc);
+    return;
+  }
+  require Web::XML::DTDValidator;
+  my $validator = Web::XML::DTDValidator->new;
+  $validator->onerror ($self->onerror);
+  $validator->validate_document ($doc);
+} # _dtd
+
 ## XML Namespaces
 ##
 ## These requirements from XML Namespaces specification are only
@@ -9941,6 +9970,8 @@ sub _check_node ($$) {
                          type => 'no document element',
                          level => 'w')
           unless $has_element;
+
+      $self->_dtd ($item->{node});
 
       push @item, {type => '_check_doc_charset', node => $item->{node}};
       unshift @item, @new_item;
