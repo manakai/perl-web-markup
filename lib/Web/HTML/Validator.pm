@@ -1407,11 +1407,16 @@ sub force_dtd_validation ($;$) {
 
 sub _dtd ($$) {
   my ($self, $doc) = @_;
-  unless ($self->force_dtd_validation or defined $doc->doctype) {
+  if ($self->force_dtd_validation) {
+    #
+  } elsif ($doc->manakai_is_html) {
+    return;
+  } elsif (defined $doc->doctype) {
+    #
+  } else {
     $self->onerror->(level => 'i',
                      type => 'xml:no DTD validation',
-                     node => $doc)
-        unless $doc->manakai_is_html;
+                     node => $doc);
     return;
   }
   require Web::XML::DTDValidator;
