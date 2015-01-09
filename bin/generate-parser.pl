@@ -1813,6 +1813,14 @@ my $OnContentEntityReference = sub {
   } else {
     my $sub = Web::XML::Parser::ContentEntityParser->new;
     my $ops = $data->{ops};
+    my $parent_cm_type = $main->{saved_lists}->{OE}->[-1]->{cm_type};
+    if (defined $parent_cm_type and $parent_cm_type eq 'EMPTY') {
+      $main->onerrors->($main, [{level => 'm',
+                                 type => 'entity:in EMPTY',
+                                 value => '&'.$data->{entity}->{name}.';',
+                                 di => $data->{ref}->{di},
+                                 index => $data->{ref}->{index}}]);
+    }
     my $parent_id = $main->{saved_lists}->{OE}->[-1]->{id};
     my $main2 = $main;
     $sub->onparsed (sub {
@@ -3870,7 +3878,10 @@ sub actions_to_code ($;%) {
 
               $DTDDefs->{ge}->{'&'.$token->{name}.';'} = $token;
               if (defined $token->{value} and # IndexedString
-                  not join ('', map { $_->[0] } @{$token->{value}}) =~ /[&<]/) {
+                  do {
+                    my $s = join ('', map { $_->[0] } @{$token->{value}});
+                    length ($s) && not ($s =~ /[&<]/);
+                  }) {
                 $token->{only_text} = 1;
               }
               $token->{external} = {} if $is_external;
