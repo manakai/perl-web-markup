@@ -49,6 +49,7 @@ my $parser = Web::XML::Parser->new;
 $parser->scripting (1);
 $parser->di_data_set ($dids);
 $parser->locale_tag (lc $ENV{LANG}) if $ENV{LANG};
+#$parser->strict_checker ('Web::XML::Parser::ForValidatorChecker');
 $parser->onerror ($onerror);
 
 local $/ = undef;
@@ -58,12 +59,6 @@ $dids->[@$dids]->{lc_map} = create_index_lc_mapping $input;
 $parser->di ($#$dids);
 warn "Parsing...\n";
 $parser->parse_byte_string (undef, $input => $doc);
-
-use Web::XML::DTDValidator;
-my $validator = Web::XML::DTDValidator->new;
-$validator->onerror ($onerror);
-warn "DTD validating...\n";
-$validator->validate_document ($doc);
 
 my $checker = new Web::HTML::Validator;
 $checker->onerror ($onerror);

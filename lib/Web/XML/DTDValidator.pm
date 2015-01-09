@@ -2,7 +2,8 @@ package Web::XML::DTDValidator;
 use strict;
 use warnings;
 our $VERSION = '8.0';
-use Char::Class::XML qw!InXMLNameStartChar InXMLNameChar!;
+use Char::Class::XML qw(InXMLNameStartChar InXMLNameChar
+                        InXMLNCNameStartChar InXMLNCNameChar);
 
 sub new ($) {
   return bless {}, $_[0];
@@ -63,6 +64,7 @@ sub validate_document ($$) {
         unless $root_el_name eq $dt->node_name;
   }
 
+  ## PIs in document or in doctype
   for my $child (@pi) {
     my $target = $child->target;
     if (not defined $dt or not defined $dt->notations->{$target}) {
@@ -91,7 +93,7 @@ sub _validate_doctype ($$) {
   ## Element type definitions (created from <!ELEMENT> and/or <!ATTLIST>)
   for my $et ($dt->element_types->to_list) {
     my $et_name = $et->node_name;
-    if (not defined $et_name =~ /\A$XMLName\z/o) {
+    if (not $et_name =~ /\A$XMLName\z/o) {
       $self->onerror->(level => 'm',
                        type => 'xml:name syntax',
                        node => $et, value => $et_name);
@@ -103,11 +105,13 @@ sub _validate_doctype ($$) {
     }
 
     my $cm = $et->content_model_text;
+    my @at = $et->attribute_definitions->to_list;
+
     if (defined $cm) {
       if ($cm eq 'ANY' or $cm eq 'EMPTY') {
         $self->{cm}->{$et_name} = [$cm];
       } else {
-        if ($cm =~ s/^\($XMLS*\#PCDATA$XMLS*[|)]$XMLS*//o) {
+        if ($cm =~ s/^\($XMLS*\#PCDATA$XMLS*(?>\|$XMLS*|(?=\)))//o) {
           $self->{cm}->{$et_name} = ['mixed', {}];
           $cm =~ s/$XMLS*\)\*?\z//o;
           for (grep { length } split /$XMLS*\|$XMLS*/o, $cm) {
@@ -118,7 +122,7 @@ sub _validate_doctype ($$) {
             } else {
               $self->{cm}->{$et_name}->[1]->{$_} = 1;
               if (not defined $dt->element_types->{$_}) {
-                if (not defined $_ =~ /\A$XMLName\z/o) {
+                if (not $_ =~ /\A$XMLName\z/o) {
                   $self->onerror->(level => 'm',
                                    type => 'xml:name syntax',
                                    node => $et, value => $_);
@@ -138,6 +142,7 @@ sub _validate_doctype ($$) {
           } # $cm
         } else {
           my $group = ['group', $cm, '', '|'];
+          $group->[2] = $1 if $group->[1] =~ s/([+*?]|)\z//;
           my @todo = ($group);
           while (@todo) {
             my $todo = shift @todo;
@@ -188,19 +193,20 @@ sub _validate_doctype ($$) {
                 }
               }
               unless (defined $dt->element_types->{$item->[1]}) {
-                if (not defined $item->[1] =~ /\A$XMLName\z/o) {
+                if (not $item->[1] =~ /\A$XMLName\z/o) {
                   $self->onerror->(level => 'm',
                                    type => 'xml:name syntax',
                                    node => $et, value => $item->[1]);
                 } else {
-                  if ($item->[1] =~ /:/ and not $_ =~ /\A$XMLNCName:$XMLNCName\z/o) {
+                  if ($item->[1] =~ /:/ and
+                      not $item->[1] =~ /\A$XMLNCName:$XMLNCName\z/o) {
                     $self->onerror->(level => 'm',
                                      type => 'xml:qname syntax',
                                      node => $et, value => $item->[1]);
                   } else {
                     $self->onerror->(level => 'w',
                                      type => 'xml:dtd:element not declared',
-                                     nodde => $et, value => $item->[1]);
+                                     node => $et, value => $item->[1]);
                   }
                 }
               }
@@ -248,9 +254,13 @@ sub _validate_doctype ($$) {
           undef $g2s;
         }
       }
+    } else { # no $cm
+      $self->onerror->(level => 'w',
+                       type => 'xml:dtd:element:no content model',
+                       node => $et)
+          unless @at;
     } # $cm
 
-    my @at = $et->attribute_definitions->to_list;
     if (@at and not defined $cm) {
       $self->onerror->(level => 'w',
                        type => 'xml:dtd:attlist element declared',
@@ -305,7 +315,7 @@ sub _validate_doctype ($$) {
                                  type => 'xml:ncname syntax',
                                  node => $at, value => $_);
               } else {
-                $self->onerror->(level => 'w',
+                $self->onerror->(level => 'm',
                                  type => 'VC:Notation Attributes:declared',
                                  node => $at, value => $_);
               }
@@ -352,7 +362,7 @@ sub _validate_doctype ($$) {
         if ($default_type == $at->EXPLICIT_DEFAULT or
             $default_type == $at->FIXED_DEFAULT) {
           ## VC:Attribute Default Value Syntactically Correct
-          if (not $dv =~ /\A$XMLName\x20$XMLName)*\z/o) {
+          if (not $dv =~ /\A$XMLName\x20$XMLName*\z/o) {
             $self->onerror->(level => 'm',
                              type => 'xml:names syntax',
                              node => $at, value => $dv);
@@ -452,7 +462,7 @@ sub _validate_element ($$) {
   my ($self, $node) = @_;
 
   my $dt = $node->owner_document->doctype ||
-           $node->owner_document->create_document_type;
+           $node->owner_document->create_document_type_definition ($node->node_name);
 
   my $ids = {};
   my $idrefs = {};
@@ -500,9 +510,14 @@ sub _validate_element ($$) {
           } elsif ($declared_type == $at->IDREF_ATTR) {
             push @{$idrefs->{$value} ||= []}, $attr;
           } elsif ($declared_type == $at->IDREFS_ATTR) {
-            for (split /\x20/, $value, -1) {
+            my @refs = split /\x20/, $value, -1;
+            for (@refs) {
               push @{$idrefs->{$_} ||= []}, $attr;
             }
+            $self->onerror->(level => 'm',
+                             type => 'xml:names syntax',
+                             node => $attr, value => $value)
+                unless @refs;
           } elsif ($declared_type == $at->ENUMERATION_ATTR) {
             CHK: {
               for (@{$at->allowed_tokens}) {
@@ -531,6 +546,39 @@ sub _validate_element ($$) {
                              type => 'xml:nmtokens syntax',
                              node => $attr, value => $value)
                 unless $value =~ /\A\p{InXMLNameChar}+(?>\x20\p{InXMLNameChar}+)*\z/o;
+          } elsif ($declared_type == $at->ENTITY_ATTR) {
+            my $ent = $dt->entities->{$value};
+            if (defined $ent) {
+              unless (defined $ent->notation_name) {
+                $self->onerror->(level => 'm',
+                                 type => 'VC:Entity Name:unparsed',
+                                 node => $attr, value => $value);
+              }
+            } else {
+              $self->onerror->(level => 'm',
+                               type => 'VC:Entity Name:declared',
+                               node => $attr, value => $value);
+            }
+          } elsif ($declared_type == $at->ENTITIES_ATTR) {
+            my @refs = split /\x20/, $value, -1;
+            for (@refs) {
+              my $ent = $dt->entities->{$_};
+              if (defined $ent) {
+                unless (defined $ent->notation_name) {
+                  $self->onerror->(level => 'm',
+                                   type => 'VC:Entity Name:unparsed',
+                                   node => $attr, value => $_);
+                }
+              } else {
+                $self->onerror->(level => 'm',
+                                 type => 'VC:Entity Name:declared',
+                                 node => $attr, value => $_);
+              }
+            }
+            $self->onerror->(level => 'm',
+                             type => 'xml:names syntax',
+                             node => $attr, value => $value)
+                unless @refs;
           } # $declared_type
           
           my $default_type = $at->default_type;
@@ -618,8 +666,8 @@ sub _validate_element ($$) {
         my $next_id = $states->[$state]->{$_->node_name};
         if (not defined $next_id) {
           $self->onerror->(level => 'm',
-                           type => 'VC:Element Valid:mixed child:element',
-                           text => (join '|', sort { $a cmp $b } keys %{$states->[$state]}),
+                           type => 'VC:Element Valid:element child:element',
+                           text => (join '|', sort { $a cmp $b } grep { length } keys %{$states->[$state]}),
                            node => $_);
           undef $state;
           last;
@@ -629,7 +677,7 @@ sub _validate_element ($$) {
       if (defined $state) {
         unless (($states->[$state]->{''} || 0) == -1) {
           $self->onerror->(level => 'm',
-                           type => 'VC:Element Valid:mixed child:required element',
+                           type => 'VC:Element Valid:element child:required element',
                            text => (join '|', sort { $a cmp $b } keys %{$states->[$state]}),
                            node => $node);
         }
