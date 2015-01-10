@@ -322,6 +322,7 @@ test {
     test {
       is $doc->inner_html,
           q{<!DOCTYPE a><a xmlns="http://hoge/." xmlns:a="http://a/">cf&amp;x;jv</a>};
+      @error = grep { not $_->{type} eq 'external entref' } @error;
       eq_or_diff \@error, [{type => 'no XML decl',
                             level => 's', di => 1, index => 0},
                            {type => 'WFC:No Recursion',
@@ -364,6 +365,7 @@ test {
   $parser->onparsed (sub {
     test {
       is $doc->inner_html, q{<!DOCTYPE a><a xmlns="http://hoge/." xmlns:a="http://a/">cdf&amp;x;jxv</a>};
+      @error = grep { not $_->{type} eq 'external entref' } @error;
       eq_or_diff \@error, [{type => 'no XML decl',
                             level => 's', di => 1, index => 0},
                            {type => 'no XML decl',
@@ -422,6 +424,7 @@ test {
     test {
       is $doc->inner_html, q{<!DOCTYPE a><a xmlns=""></a>};
       @error = grep { not $_->{type} eq 'xml:dtd:ext decl' } @error;
+      @error = grep { not $_->{type} eq 'external entref' } @error;
       eq_or_diff \@error, [{type => 'no XML decl',
                             level => 's', di => 1, index => 0},
                            {type => 'no XML decl',
@@ -486,6 +489,7 @@ test {
     test {
       is $doc->inner_html, q{<!DOCTYPE a><a xmlns=""> yx</a>};
       @error = grep { not $_->{type} eq 'xml:dtd:ext decl' } @error;
+      @error = grep { not $_->{type} eq 'external entref' } @error;
       eq_or_diff \@error, [{type => 'no XML decl',
                             level => 's', di => 1, index => 0},
                            {type => 'no XML decl',
@@ -550,6 +554,7 @@ test {
     test {
       is $doc->inner_html, q{<!DOCTYPE a><a xmlns=""></a>};
       @error = grep { not $_->{type} eq 'xml:dtd:ext decl' } @error;
+      @error = grep { not $_->{type} eq 'external entref' } @error;
       eq_or_diff \@error, [{type => 'no XML decl',
                             level => 's', di => 1, index => 0},
                            {type => 'no XML decl',
@@ -625,6 +630,7 @@ test {
     test {
       is $doc->inner_html, q{<!DOCTYPE a><a xmlns=""> yx</a>};
       @error = grep { not $_->{type} eq 'xml:dtd:ext decl' } @error;
+      @error = grep { not $_->{type} eq 'external entref' } @error;
       eq_or_diff \@error, [{type => 'no XML decl',
                             level => 's', di => 1, index => 0},
                            {type => 'no XML decl',
