@@ -79,7 +79,9 @@ test {
   eq_or_diff \@error, [{type => 'no XML decl',
                         level => 's', di => 1, index => 0},
                        {type => 'external entref',
-                        level => 'i', value => '&x;', di => 1, index => 39}];
+                        level => 'i', value => '&x;', di => 1, index => 39},
+                       {type => 'external entref not expanded',
+                        level => 'w', value => '&x;', di => 1, index => 39}];
   done $c;
 } n => 2, name => 'parse_char_string - external entity';
 
@@ -99,8 +101,12 @@ test {
                         level => 's', di => 1, index => 0},
                        {type => 'external entref',
                         level => 'i', value => '&x;', di => 1, index => 39},
+                       {type => 'external entref not expanded',
+                        level => 'w', value => '&x;', di => 1, index => 39},
                        {type => 'external entref',
-                        level => 'i', value => '&x;', di => 1, index => 43}];
+                        level => 'i', value => '&x;', di => 1, index => 43},
+                       {type => 'external entref not expanded',
+                        level => 'w', value => '&x;', di => 1, index => 43}];
   done $c;
 } n => 2, name => 'parse_char_string - external entity';
 
@@ -334,7 +340,9 @@ test {
   eq_or_diff \@error, [{type => 'no XML decl',
                         level => 's', di => 1, index => 0},
                        {type => 'external entref',
-                        level => 'i', value => '&x;', di => 1, index => 39}];
+                        level => 'i', value => '&x;', di => 1, index => 39},
+                       {type => 'external entref not expanded',
+                        level => 'w', value => '&x;', di => 1, index => 39}];
   done $c;
 } n => 2, name => 'parse_char_string_with_context - external entity';
 
@@ -354,8 +362,12 @@ test {
                         level => 's', di => 1, index => 0},
                        {type => 'external entref',
                         level => 'i', value => '&x;', di => 1, index => 39},
+                       {type => 'external entref not expanded',
+                        level => 'w', value => '&x;', di => 1, index => 39},
                        {type => 'external entref',
-                        level => 'i', value => '&x;', di => 1, index => 43}];
+                        level => 'i', value => '&x;', di => 1, index => 43},
+                       {type => 'external entref not expanded',
+                        level => 'w', value => '&x;', di => 1, index => 43}];
   done $c;
 } n => 2, name => 'parse_char_string_with_context - external entity';
 

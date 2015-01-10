@@ -50,6 +50,8 @@ $parser->onextentref (sub {
       $sub->parse_bytes_feed ($input[$id]);
       $sub->parse_bytes_end;
       return;
+    } else {
+      return $self->cant_expand_extentref ($data, $sub);
     }
   }
 
