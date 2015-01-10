@@ -417,6 +417,20 @@ sub _validate_doctype ($$) {
                          type => 'xml:dtd:id non-ID',
                          node => $at);
       }
+
+      if ($at_name eq 'xml:space') {
+        if ($declared_type == $at->ENUMERATION_ATTR and
+            ((@$tokens == 2 and $tokens->[0] eq 'default' and $tokens->[1] eq 'preserve') or
+             (@$tokens == 2 and $tokens->[0] eq 'preserve' and $tokens->[1] eq 'default') or
+             (@$tokens == 1 and $tokens->[0] eq 'default') or
+             (@$tokens == 1 and $tokens->[0] eq 'preserve'))) {
+          #
+        } else {
+          $self->onerror->(level => 'm',
+                           type => 'xml:space:bad type',
+                           node => $at);
+        }
+      }
     } # $at
   } # $et
 
@@ -461,6 +475,7 @@ sub _validate_doctype ($$) {
 sub _validate_element ($$) {
   my ($self, $node) = @_;
 
+  my $standalone = $node->owner_document->xml_standalone;
   my $dt = $node->owner_document->doctype ||
            $node->owner_document->create_document_type_definition ($node->node_name);
 
@@ -618,10 +633,17 @@ sub _validate_element ($$) {
         push @node, $child;
         push @child_el, $child;
       } elsif ($child_nt == 3) { # TEXT_NODE
-        if ($cm->[0] eq 'element' and $child->data =~ /[^\x09\x0A\x0D\x20]/) {
-          $self->onerror->(level => 'm',
-                           type => 'VC:Element Valid:element children:text',
-                           node => $child);
+        if ($cm->[0] eq 'element') {
+          if ($child->data =~ /[^\x09\x0A\x0D\x20]/) {
+            $self->onerror->(level => 'm',
+                             type => 'VC:Element Valid:element children:text',
+                             node => $child);
+          }
+          if ($standalone and $child->data =~ /[\x09\x0A\x0D\x20]/) {
+            $self->onerror->(level => 'm',
+                             type => 'VC:Standalone Document Declaration:ws',
+                             node => $child);
+          }
         }
       } elsif ($child_nt == $child->PROCESSING_INSTRUCTION_NODE) {
         my $target = $child->target;

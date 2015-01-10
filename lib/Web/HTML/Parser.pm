@@ -13120,11 +13120,11 @@ return 0;
 $StateActions->[CDATA_SECTION_STATE__5D] = sub {
 if ($Input =~ /\G([\])/gcs) {
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
@@ -13137,11 +13137,11 @@ $Temp .= $1;
 $State = CDATA_SECTION_STATE__5D_5D;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = CDATA_SECTION_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -13151,11 +13151,11 @@ $State = CDATA_SECTION_STATE;
 } else {
 if ($EOF) {
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -13172,11 +13172,11 @@ return 0;
 $StateActions->[CDATA_SECTION_STATE__5D_5D] = sub {
 if ($Input =~ /\G([\])/gcs) {
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
@@ -13194,11 +13194,11 @@ $State = DATA_STATE;
         
 } elsif ($Input =~ /\G(.)/gcs) {
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = CDATA_SECTION_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -13208,11 +13208,11 @@ $State = CDATA_SECTION_STATE;
 } else {
 if ($EOF) {
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -13864,11 +13864,11 @@ $State = RAWTEXT_STATE;
                           di => $DI, index => $AnchoredIndex};
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
@@ -13888,11 +13888,11 @@ $State = RAWTEXT_STATE;
                           di => $DI, index => $AnchoredIndex};
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
@@ -13915,11 +13915,11 @@ $State = RAWTEXT_STATE;
                           di => $DI, index => $AnchoredIndex};
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
@@ -13932,11 +13932,11 @@ $State = RAWTEXT_STATE;
                           di => $DI, index => $AnchoredIndex};
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = RAWTEXT_LESS_THAN_SIGN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\>])/gcs) {
@@ -13956,11 +13956,11 @@ $State = RAWTEXT_STATE;
                           di => $DI, index => $AnchoredIndex};
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
@@ -13980,11 +13980,11 @@ $State = RAWTEXT_STATE;
                           di => $DI, index => $AnchoredIndex};
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -14002,11 +14002,11 @@ $State = RAWTEXT_STATE;
                           di => $DI, index => $AnchoredIndex};
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
@@ -14021,11 +14021,11 @@ $State = RAWTEXT_STATE;
                           di => $DI, index => $AnchoredIndex};
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -14308,11 +14308,11 @@ $State = RCDATA_STATE;
                           di => $DI, index => $AnchoredIndex};
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
@@ -14332,11 +14332,11 @@ $State = RCDATA_STATE;
                           di => $DI, index => $AnchoredIndex};
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
@@ -14351,11 +14351,11 @@ $State = RCDATA_STATE_CR;
                           di => $DI, index => $AnchoredIndex};
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = CHARREF_IN_RCDATA_STATE;
 } elsif ($Input =~ /\G([\/])/gcs) {
 
@@ -14372,11 +14372,11 @@ $State = RCDATA_STATE;
                           di => $DI, index => $AnchoredIndex};
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
@@ -14389,11 +14389,11 @@ $State = RCDATA_STATE;
                           di => $DI, index => $AnchoredIndex};
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = RCDATA_LESS_THAN_SIGN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\>])/gcs) {
@@ -14413,11 +14413,11 @@ $State = RCDATA_STATE;
                           di => $DI, index => $AnchoredIndex};
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
@@ -14437,11 +14437,11 @@ $State = RCDATA_STATE;
                           di => $DI, index => $AnchoredIndex};
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -14459,11 +14459,11 @@ $State = RCDATA_STATE;
                           di => $DI, index => $AnchoredIndex};
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
@@ -14478,11 +14478,11 @@ $State = RCDATA_STATE;
                           di => $DI, index => $AnchoredIndex};
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -14726,11 +14726,11 @@ $State = RCDATA_STATE___CHARREF_HEX_NUM_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = RCDATA_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
@@ -14747,11 +14747,11 @@ $State = RCDATA_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
@@ -14765,11 +14765,11 @@ $State = RCDATA_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = CHARREF_IN_RCDATA_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
@@ -14777,11 +14777,11 @@ $State = CHARREF_IN_RCDATA_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = RCDATA_LESS_THAN_SIGN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -14790,11 +14790,11 @@ $AnchoredIndex = $Offset + (pos $Input) - 1;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -14808,11 +14808,11 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = RCDATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -14849,11 +14849,11 @@ $Temp .= $1;
         $Temp = chr $code;
       
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = RCDATA_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
@@ -14879,11 +14879,11 @@ $State = RCDATA_STATE;
         $Temp = chr $code;
       
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = RCDATA_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
@@ -14918,11 +14918,11 @@ $State = RCDATA_STATE;
         $Temp = chr $code;
       
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
@@ -14954,11 +14954,11 @@ $State = RCDATA_STATE_CR;
         $Temp = chr $code;
       
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = CHARREF_IN_RCDATA_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
@@ -14984,11 +14984,11 @@ $State = CHARREF_IN_RCDATA_STATE;
         $Temp = chr $code;
       
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = RCDATA_LESS_THAN_SIGN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -15015,11 +15015,11 @@ $AnchoredIndex = $Offset + (pos $Input) - 1;
         $Temp = chr $code;
       
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -15051,11 +15051,11 @@ if ($EOF) {
         $Temp = chr $code;
       
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = RCDATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -15092,11 +15092,11 @@ $Temp .= $1;
         $Temp = chr $code;
       
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = RCDATA_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
@@ -15122,11 +15122,11 @@ $State = RCDATA_STATE;
         $Temp = chr $code;
       
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = RCDATA_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
@@ -15161,11 +15161,11 @@ $State = RCDATA_STATE;
         $Temp = chr $code;
       
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
@@ -15197,11 +15197,11 @@ $State = RCDATA_STATE_CR;
         $Temp = chr $code;
       
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = CHARREF_IN_RCDATA_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
@@ -15227,11 +15227,11 @@ $State = CHARREF_IN_RCDATA_STATE;
         $Temp = chr $code;
       
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = RCDATA_LESS_THAN_SIGN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -15258,11 +15258,11 @@ $AnchoredIndex = $Offset + (pos $Input) - 1;
         $Temp = chr $code;
       
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -15294,11 +15294,11 @@ if ($EOF) {
         $Temp = chr $code;
       
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = RCDATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -15356,11 +15356,11 @@ if ($Input =~ /\G([\])/gcs) {
           } # REF
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
@@ -15412,11 +15412,11 @@ return 1 if $return;
           } # REF
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = CHARREF_IN_RCDATA_STATE;
 return 1 if $return;
 } elsif ($Input =~ /\G([0123456789]+)/gcs) {
@@ -15465,11 +15465,11 @@ $Temp .= $1;
           } # REF
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = RCDATA_STATE;
 return 1 if $return;
 } elsif ($Input =~ /\G([\<])/gcs) {
@@ -15515,11 +15515,11 @@ return 1 if $return;
           } # REF
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = RCDATA_LESS_THAN_SIGN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 return 1 if $return;
@@ -15566,11 +15566,11 @@ return 1 if $return;
           } # REF
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -15625,11 +15625,11 @@ $Temp .= $1;
           } # REF
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = RCDATA_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
@@ -15684,11 +15684,11 @@ return 1 if $return;
           } # REF
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -15740,11 +15740,11 @@ if ($EOF) {
           } # REF
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = RCDATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -15774,11 +15774,11 @@ $State = RCDATA_STATE___CHARREF_BEFORE_HEX_NUM_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = RCDATA_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
@@ -15795,11 +15795,11 @@ $State = RCDATA_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
@@ -15813,11 +15813,11 @@ $State = RCDATA_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = CHARREF_IN_RCDATA_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
@@ -15825,11 +15825,11 @@ $State = CHARREF_IN_RCDATA_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = RCDATA_LESS_THAN_SIGN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -15838,11 +15838,11 @@ $AnchoredIndex = $Offset + (pos $Input) - 1;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -15856,11 +15856,11 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = RCDATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -15878,11 +15878,11 @@ $StateActions->[RCDATA_STATE___CHARREF_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 ])/gcs) {
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -15891,11 +15891,11 @@ $State = RCDATA_STATE;
         
 } elsif ($Input =~ /\G([\])/gcs) {
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
@@ -15908,22 +15908,22 @@ $Temp .= $1;
 $State = RCDATA_STATE___CHARREF_NUM_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = CHARREF_IN_RCDATA_STATE;
 } elsif ($Input =~ /\G([0123456789])/gcs) {
 $Temp .= $1;
 $State = RCDATA_STATE___CHARREF_NAME_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = RCDATA_LESS_THAN_SIGN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([ABCDEFGHJKNQRVWZILMOPSTUXY])/gcs) {
@@ -15934,11 +15934,11 @@ $Temp .= $1;
 $State = RCDATA_STATE___CHARREF_NAME_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = RCDATA_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
@@ -15951,11 +15951,11 @@ $State = RCDATA_STATE;
         
 } elsif ($Input =~ /\G(.)/gcs) {
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -15965,11 +15965,11 @@ $State = RCDATA_STATE;
 } else {
 if ($EOF) {
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = RCDATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -15987,11 +15987,11 @@ $StateActions->[RCDATA_STATE___CHARREF_STATE_CR] = sub {
 if ($Input =~ /\G([\	\\ \
 ])/gcs) {
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -16003,11 +16003,11 @@ $State = RCDATA_STATE;
 $State = RCDATA_STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
@@ -16020,22 +16020,22 @@ $Temp .= $1;
 $State = RCDATA_STATE___CHARREF_NUM_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = CHARREF_IN_RCDATA_STATE;
 } elsif ($Input =~ /\G([0123456789])/gcs) {
 $Temp .= $1;
 $State = RCDATA_STATE___CHARREF_NAME_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = RCDATA_LESS_THAN_SIGN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([ABCDEFGHJKNQRVWZILMOPSTUXY])/gcs) {
@@ -16046,11 +16046,11 @@ $Temp .= $1;
 $State = RCDATA_STATE___CHARREF_NAME_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = RCDATA_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
@@ -16063,11 +16063,11 @@ $State = RCDATA_STATE;
         
 } elsif ($Input =~ /\G(.)/gcs) {
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -16077,11 +16077,11 @@ $State = RCDATA_STATE;
 } else {
 if ($EOF) {
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = RCDATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -25052,11 +25052,11 @@ if ($Input =~ /\G([\	\\ \
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -25067,11 +25067,11 @@ $State = RCDATA_STATE;
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
@@ -25088,11 +25088,11 @@ $State = RCDATA_STATE___CHARREF_NUM_STATE;
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = CHARREF_IN_RCDATA_STATE;
 } elsif ($Input =~ /\G([0123456789])/gcs) {
 $Temp = q@&@;
@@ -25103,11 +25103,11 @@ $State = RCDATA_STATE___CHARREF_NAME_STATE;
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = RCDATA_LESS_THAN_SIGN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([ABCDEFGHJKNQRVWZILMOPSTUXY])/gcs) {
@@ -25124,11 +25124,11 @@ $State = RCDATA_STATE___CHARREF_NAME_STATE;
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = RCDATA_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
@@ -25143,11 +25143,11 @@ $State = RCDATA_STATE;
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -25159,11 +25159,11 @@ if ($EOF) {
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - 1;
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = RCDATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -25183,11 +25183,11 @@ if ($Input =~ /\G([\	\\ \
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -25198,11 +25198,11 @@ $State = DATA_STATE;
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
@@ -25219,11 +25219,11 @@ $State = DATA_STATE___CHARREF_NUM_STATE;
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = CHARREF_IN_DATA_STATE;
 } elsif ($Input =~ /\G([0123456789])/gcs) {
 $Temp = q@&@;
@@ -25234,11 +25234,11 @@ $State = DATA_STATE___CHARREF_NAME_STATE;
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = TAG_OPEN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([ABCDEFGHJKNQRVWZILMOPSTUXY])/gcs) {
@@ -25255,11 +25255,11 @@ $State = DATA_STATE___CHARREF_NAME_STATE;
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = DATA_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
@@ -25274,11 +25274,11 @@ $State = DATA_STATE;
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -25290,11 +25290,11 @@ if ($EOF) {
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - 1;
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -25671,11 +25671,11 @@ $State = DATA_STATE___CHARREF_HEX_NUM_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = DATA_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
@@ -25692,11 +25692,11 @@ $State = DATA_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
@@ -25710,11 +25710,11 @@ $State = DATA_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = CHARREF_IN_DATA_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
@@ -25722,11 +25722,11 @@ $State = CHARREF_IN_DATA_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = TAG_OPEN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -25735,11 +25735,11 @@ $AnchoredIndex = $Offset + (pos $Input) - 1;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -25753,11 +25753,11 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -25794,11 +25794,11 @@ $Temp .= $1;
         $Temp = chr $code;
       
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = DATA_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
@@ -25824,11 +25824,11 @@ $State = DATA_STATE;
         $Temp = chr $code;
       
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = DATA_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
@@ -25863,11 +25863,11 @@ $State = DATA_STATE;
         $Temp = chr $code;
       
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
@@ -25899,11 +25899,11 @@ $State = DATA_STATE_CR;
         $Temp = chr $code;
       
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = CHARREF_IN_DATA_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
@@ -25929,11 +25929,11 @@ $State = CHARREF_IN_DATA_STATE;
         $Temp = chr $code;
       
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = TAG_OPEN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -25960,11 +25960,11 @@ $AnchoredIndex = $Offset + (pos $Input) - 1;
         $Temp = chr $code;
       
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -25996,11 +25996,11 @@ if ($EOF) {
         $Temp = chr $code;
       
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -26037,11 +26037,11 @@ $Temp .= $1;
         $Temp = chr $code;
       
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = DATA_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
@@ -26067,11 +26067,11 @@ $State = DATA_STATE;
         $Temp = chr $code;
       
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = DATA_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
@@ -26106,11 +26106,11 @@ $State = DATA_STATE;
         $Temp = chr $code;
       
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
@@ -26142,11 +26142,11 @@ $State = DATA_STATE_CR;
         $Temp = chr $code;
       
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = CHARREF_IN_DATA_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
@@ -26172,11 +26172,11 @@ $State = CHARREF_IN_DATA_STATE;
         $Temp = chr $code;
       
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = TAG_OPEN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -26203,11 +26203,11 @@ $AnchoredIndex = $Offset + (pos $Input) - 1;
         $Temp = chr $code;
       
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -26239,11 +26239,11 @@ if ($EOF) {
         $Temp = chr $code;
       
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -26301,11 +26301,11 @@ if ($Input =~ /\G([\])/gcs) {
           } # REF
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
@@ -26357,11 +26357,11 @@ return 1 if $return;
           } # REF
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = CHARREF_IN_DATA_STATE;
 return 1 if $return;
 } elsif ($Input =~ /\G([0123456789]+)/gcs) {
@@ -26410,11 +26410,11 @@ $Temp .= $1;
           } # REF
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = DATA_STATE;
 return 1 if $return;
 } elsif ($Input =~ /\G([\<])/gcs) {
@@ -26460,11 +26460,11 @@ return 1 if $return;
           } # REF
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = TAG_OPEN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 return 1 if $return;
@@ -26511,11 +26511,11 @@ return 1 if $return;
           } # REF
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -26570,11 +26570,11 @@ $Temp .= $1;
           } # REF
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = DATA_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
@@ -26629,11 +26629,11 @@ return 1 if $return;
           } # REF
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -26685,11 +26685,11 @@ if ($EOF) {
           } # REF
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -26719,11 +26719,11 @@ $State = DATA_STATE___CHARREF_BEFORE_HEX_NUM_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = DATA_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
@@ -26740,11 +26740,11 @@ $State = DATA_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
@@ -26758,11 +26758,11 @@ $State = DATA_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = CHARREF_IN_DATA_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
@@ -26770,11 +26770,11 @@ $State = CHARREF_IN_DATA_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = TAG_OPEN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -26783,11 +26783,11 @@ $AnchoredIndex = $Offset + (pos $Input) - 1;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -26801,11 +26801,11 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -26823,11 +26823,11 @@ $StateActions->[DATA_STATE___CHARREF_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 ])/gcs) {
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -26836,11 +26836,11 @@ $State = DATA_STATE;
         
 } elsif ($Input =~ /\G([\])/gcs) {
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
@@ -26853,22 +26853,22 @@ $Temp .= $1;
 $State = DATA_STATE___CHARREF_NUM_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = CHARREF_IN_DATA_STATE;
 } elsif ($Input =~ /\G([0123456789])/gcs) {
 $Temp .= $1;
 $State = DATA_STATE___CHARREF_NAME_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = TAG_OPEN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([ABCDEFGHJKNQRVWZILMOPSTUXY])/gcs) {
@@ -26879,11 +26879,11 @@ $Temp .= $1;
 $State = DATA_STATE___CHARREF_NAME_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = DATA_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
@@ -26896,11 +26896,11 @@ $State = DATA_STATE;
         
 } elsif ($Input =~ /\G(.)/gcs) {
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -26910,11 +26910,11 @@ $State = DATA_STATE;
 } else {
 if ($EOF) {
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -26932,11 +26932,11 @@ $StateActions->[DATA_STATE___CHARREF_STATE_CR] = sub {
 if ($Input =~ /\G([\	\\ \
 ])/gcs) {
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -26948,11 +26948,11 @@ $State = DATA_STATE;
 $State = DATA_STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
@@ -26965,22 +26965,22 @@ $Temp .= $1;
 $State = DATA_STATE___CHARREF_NUM_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = CHARREF_IN_DATA_STATE;
 } elsif ($Input =~ /\G([0123456789])/gcs) {
 $Temp .= $1;
 $State = DATA_STATE___CHARREF_NAME_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = TAG_OPEN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([ABCDEFGHJKNQRVWZILMOPSTUXY])/gcs) {
@@ -26991,11 +26991,11 @@ $Temp .= $1;
 $State = DATA_STATE___CHARREF_NAME_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = DATA_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
@@ -27008,11 +27008,11 @@ $State = DATA_STATE;
         
 } elsif ($Input =~ /\G(.)/gcs) {
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -27022,11 +27022,11 @@ $State = DATA_STATE;
 } else {
 if ($EOF) {
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -29221,11 +29221,11 @@ $State = SCRIPT_DATA_STATE;
                           di => $DI, index => $AnchoredIndex};
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
@@ -29245,11 +29245,11 @@ $State = SCRIPT_DATA_STATE;
                           di => $DI, index => $AnchoredIndex};
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
@@ -29272,11 +29272,11 @@ $State = SCRIPT_DATA_STATE;
                           di => $DI, index => $AnchoredIndex};
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
@@ -29289,11 +29289,11 @@ $State = SCRIPT_DATA_STATE;
                           di => $DI, index => $AnchoredIndex};
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = SCRIPT_DATA_LESS_THAN_SIGN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\>])/gcs) {
@@ -29313,11 +29313,11 @@ $State = SCRIPT_DATA_STATE;
                           di => $DI, index => $AnchoredIndex};
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
@@ -29337,11 +29337,11 @@ $State = SCRIPT_DATA_STATE;
                           di => $DI, index => $AnchoredIndex};
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -29359,11 +29359,11 @@ $State = SCRIPT_DATA_STATE;
                           di => $DI, index => $AnchoredIndex};
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
@@ -29378,11 +29378,11 @@ $State = SCRIPT_DATA_STATE;
                           di => $DI, index => $AnchoredIndex};
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -29720,11 +29720,11 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
                           di => $DI, index => $AnchoredIndex};
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
@@ -29744,11 +29744,11 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
                           di => $DI, index => $AnchoredIndex};
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
@@ -29763,11 +29763,11 @@ $State = SCRIPT_DATA_ESCAPED_STATE_CR;
                           di => $DI, index => $AnchoredIndex};
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = SCRIPT_DATA_ESCAPED_DASH_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -29789,11 +29789,11 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
                           di => $DI, index => $AnchoredIndex};
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
@@ -29806,11 +29806,11 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
                           di => $DI, index => $AnchoredIndex};
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = SCRIPT_DATA_ESCAPED_LESS_THAN_SIGN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\>])/gcs) {
@@ -29830,11 +29830,11 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
                           di => $DI, index => $AnchoredIndex};
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
@@ -29854,11 +29854,11 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
                           di => $DI, index => $AnchoredIndex};
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -29876,11 +29876,11 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
                           di => $DI, index => $AnchoredIndex};
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
@@ -29894,11 +29894,11 @@ if ($EOF) {
                           di => $DI, index => $AnchoredIndex};
         
 
-        push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                        value => $Temp,
-                        di => $DI,
-                        index => $TempIndex} if length $Temp;
-      
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
 $State = DATA_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
@@ -31547,8 +31547,10 @@ sub dom_tree ($$) {
       $pi->manakai_set_source_location
           (['', $op->[1]->{di}, $op->[1]->{index}]);
       if ($op->[2] == 1) { # DOCTYPE
-        local $nodes->[$op->[2]]->owner_document->dom_config->{manakai_allow_doctype_children} = 1;
-        $nodes->[$op->[2]]->append_child ($pi);
+        unless ($self->ignore_doctype_pis) {
+          local $nodes->[$op->[2]]->owner_document->dom_config->{manakai_allow_doctype_children} = 1;
+          $nodes->[$op->[2]]->append_child ($pi);
+        }
       } else {
         $nodes->[$op->[2]]->append_child ($pi);
       }
@@ -31622,6 +31624,13 @@ sub dom_tree ($$) {
 
   $doc->strict_error_checking ($strict);
 } # dom_tree
+
+    sub ignore_doctype_pis ($;$) {
+      if (@_ > 1) {
+        $_[0]->{ignore_doctype_pis} = $_[1];
+      }
+      return $_[0]->{ignore_doctype_pis};
+    } # ignore_doctype_pis
 
   
     ## ------ API ------

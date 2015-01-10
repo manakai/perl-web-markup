@@ -149,7 +149,7 @@ the unexpected termination.
 
 The module also has following methods for API compatibility with
 L<Web::XML::Parser> but they have no effect: C<max_entity_depth>,
-C<max_entity_expansions>.
+C<max_entity_expansions>, C<ignore_doctype_pis>.
 
 =begin comment
 

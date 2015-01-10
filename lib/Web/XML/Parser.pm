@@ -646,6 +646,7 @@ my $OnAttrEntityReference = sub {
                                index => $data->{ref}->{index}}]);
   } else {
     my $sub = Web::XML::Parser::AttrEntityParser->new;
+    $sub->{_sc} = $main->_sc;
     local $data->{entity}->{open} = 1;
     $sub->parse ($main, $data);
   }
@@ -669,6 +670,7 @@ my $OnContentEntityReference = sub {
                                index => $data->{ref}->{index}}]);
   } else {
     my $sub = Web::XML::Parser::ContentEntityParser->new;
+    $sub->{_sc} = $main->_sc;
     my $ops = $data->{ops};
     my $parent_cm_type = $main->{saved_lists}->{OE}->[-1]->{cm_type};
     if (defined $parent_cm_type and $parent_cm_type eq 'EMPTY') {
@@ -726,6 +728,7 @@ my $OnDTDEntityReference = sub {
                                index => $data->{ref}->{index}}]);
   } else {
     my $sub = Web::XML::Parser::DTDEntityParser->new;
+    $sub->{_sc} = $main->_sc;
     my $main2 = $main;
     $sub->onparsed (sub {
       my $sub = $_[0];
@@ -769,6 +772,7 @@ my $OnEntityValueEntityReference = sub {
                                index => $data->{ref}->{index}}]);
   } else {
     my $sub = Web::XML::Parser::EntityValueEntityParser->new;
+    $sub->{_sc} = $main->_sc;
     my $main2 = $main;
     $sub->onparsed (sub {
       my $sub = $_[0];
@@ -812,6 +816,7 @@ my $OnMDEntityReference = sub {
                                index => $data->{ref}->{index}}]);
   } else {
     my $sub = Web::XML::Parser::MDEntityParser->new;
+    $sub->{_sc} = $main->_sc;
     my $main2 = $main;
     $sub->onparsed (sub {
       my $sub = $_[0];
@@ -1441,6 +1446,15 @@ return;
           $DTDDefs->{is_charref_declarations_entity} = 1;
         } else {
           $DTDDefs->{need_predefined_decls} = 1;
+
+          if (defined $token->{public_identifier}) {
+            $SC->check_hidden_pubid
+                (name => $token->{public_identifier},
+                 onerror => sub {
+                   push @$Errors, {@_,
+                                   di => $token->{di}, index => $token->{index}};
+                 });
+          }
         }
       
 
@@ -3433,7 +3447,7 @@ return;
               if (defined $token->{value} and # IndexedString
                   do {
                     my $s = join ('', map { $_->[0] } @{$token->{value}});
-                    length ($s) && not ($s =~ /[&<]/);
+                    length ($s) && not ($s =~ /[&<\x0D]/);
                   }) {
                 $token->{only_text} = 1;
               }
@@ -78156,8 +78170,10 @@ sub dom_tree ($$) {
       $pi->manakai_set_source_location
           (['', $op->[1]->{di}, $op->[1]->{index}]);
       if ($op->[2] == 1) { # DOCTYPE
-        local $nodes->[$op->[2]]->owner_document->dom_config->{manakai_allow_doctype_children} = 1;
-        $nodes->[$op->[2]]->append_child ($pi);
+        unless ($self->ignore_doctype_pis) {
+          local $nodes->[$op->[2]]->owner_document->dom_config->{manakai_allow_doctype_children} = 1;
+          $nodes->[$op->[2]]->append_child ($pi);
+        }
       } else {
         $nodes->[$op->[2]]->append_child ($pi);
       }
@@ -78294,6 +78310,13 @@ sub dom_tree ($$) {
 
   $doc->strict_error_checking ($strict);
 } # dom_tree
+
+    sub ignore_doctype_pis ($;$) {
+      if (@_ > 1) {
+        $_[0]->{ignore_doctype_pis} = $_[1];
+      }
+      return $_[0]->{ignore_doctype_pis};
+    } # ignore_doctype_pis
 
   
     ## ------ API ------

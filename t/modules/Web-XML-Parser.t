@@ -371,11 +371,42 @@ test {
   done $c;
 } n => 2, name => 'parse_char_string_with_context - external entity';
 
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $parser = new Web::XML::Parser;
+  is !!$parser->ignore_doctype_pis, !!0;
+  $parser->ignore_doctype_pis (0);
+  is !!$parser->ignore_doctype_pis, !!0;
+  $parser->parse_char_string (q{<!DOCTYPE a[
+    <?hoge fuga?>
+  ]><a/>} => $doc);
+  is $doc->doctype->child_nodes->length, 1;
+  my $pi = $doc->doctype->child_nodes->[0];
+  is $pi->node_type, $pi->PROCESSING_INSTRUCTION_NODE;
+  is $pi->target, 'hoge';
+  is $pi->data, 'fuga';
+  done $c;
+} n => 6, name => 'expose doctype PIs';
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $parser = new Web::XML::Parser;
+  $parser->ignore_doctype_pis (1);
+  is !!$parser->ignore_doctype_pis, !!1;
+  $parser->parse_char_string (q{<!DOCTYPE a[
+    <?hoge fuga?>
+  ]><a/>} => $doc);
+  is $doc->doctype->child_nodes->length, 0;
+  done $c;
+} n => 2, name => 'ignore doctype PIs';
+
 run_tests;
 
 =head1 LICENSE
 
-Copyright 2009-2014 Wakaba <wakaba@suikawiki.org>.
+Copyright 2009-2015 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
