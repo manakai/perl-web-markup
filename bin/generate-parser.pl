@@ -1587,7 +1587,7 @@ sub serialize_actions ($;%) {
     } elsif ($type eq 'insert-allowed-token') {
       push @result, q{push @{$Attr->{allowed_tokens} ||= []}, '';};
     } elsif ($type eq 'create-cmgroup') {
-      push @result, q{my $cmgroup = {items => [], separators => [], di => $DI, index => $Offset + pos $Input};};
+      push @result, q{my $cmgroup = {items => [], separators => [], di => $DI, index => $Offset + (pos $Input) - 1};};
     } elsif ($type eq 'set-cmgroup') {
       push @result, q{$Token->{cmgroup} = $cmgroup;};
     } elsif ($type eq 'push-cmgroup') {
@@ -1615,7 +1615,7 @@ sub serialize_actions ($;%) {
     } elsif ($type eq 'append-separator-to-cmgroup') {
       push @result, sprintf q{
         push @{$OpenCMGroups->[-1]->{separators}},
-            {di => $DI, index => $Offset + pos $Input, type => $%d};
+            {di => $DI, index => $Offset + (pos $Input) - 1, type => $%d};
       }, $_->{capture_index} || 1;
     } elsif ($type eq 'if-empty') {
       my $list = $_->{list};
@@ -3658,16 +3658,86 @@ sub actions_to_code ($;%) {
             }
           }
           if (defined $token->{cmgroup}) {
-            $def->{cmgroup} = $token->{cmgroup};
-            if (@{$def->{cmgroup}->{items}} and
-                defined $def->{cmgroup}->{items}->[0]->{name} and
-                $def->{cmgroup}->{items}->[0]->{name} eq '#PCDATA') {
-              $def->{cm_type} = 'mixed';
-            } else {
-              $def->{cm_type} = 'element';
-            }
-
-            # XXX
+            CM: {
+              my $root_group = $token->{cmgroup};
+              if (@{$root_group->{items}} and
+                  defined $root_group->{items}->[0]->{name} and
+                  $root_group->{items}->[0]->{name} eq '#PCDATA') {
+                my $rep = $root_group->{repetition} || '';
+                if ($rep eq '+' or
+                    $rep eq '?' or
+                    ($rep eq '' and @{$root_group->{items}} > 1)) {
+                  push @$Errors, {level => 'm',
+                                  type => 'xml:dtd:cm:bad mixed repetition',
+                                  value => $root_group->{repetition},
+                                  di => $root_group->{di},
+                                  index => $root_group->{index}};
+                  $root_group->{repetition} = '*';
+                }
+                for (@{$root_group->{separators}}) {
+                  unless ($_->{type} eq '|') {
+                    push @$Errors, {level => 'm',
+                                    type => 'xml:dtd:cm:bad mixed separator',
+                                    value => $_->{type},
+                                    di => $_->{di}, index => $_->{index}};
+                    last CM;
+                  }
+                }
+                for (0..$#{$root_group->{items}}) {
+                  my $item = $root_group->{items}->[$_];
+                  if (defined $item->{items}) {
+                    push @$Errors, {level => 'm',
+                                    type => 'xml:dtd:cm:nested mixed group',
+                                    di => $item->{di}, index => $item->{index}};
+                    last CM;
+                  }
+                  if (defined $item->{repetition}) {
+                    push @$Errors, {level => 'm',
+                                    type => 'xml:dtd:cm:mixed element with repetition',
+                                    value => $item->{repetition},
+                                    di => $item->{di}, index => $item->{index}};
+                    last CM;
+                  }
+                  $SC->check_hidden_qname
+                      (name => $item->{name},
+                       onerror => sub {
+                         push @$Errors, {@_, di => $item->{di}, index => $item->{index}};
+                       })
+                      unless $_ == 0;
+                } # items
+                $def->{cm_type} = 'mixed';
+              } else {
+                my @group = ($root_group);
+                while (@group) {
+                  my $group = shift @group;
+                  for my $item (@{$group->{items}}) {
+                    if (defined $item->{items}) {
+                      push @group, $item;
+                    } else {
+                      $SC->check_hidden_qname
+                          (name => $item->{name},
+                           onerror => sub {
+                             push @$Errors, {@_, di => $item->{di}, index => $item->{index}};
+                           });
+                    }
+                  }
+                  if (@{$group->{separators}} > 1) {
+                    my $sep = $group->{separators}->[0]->{type};
+                    for (@{$group->{separators}}) {
+                      unless ($_->{type} eq $sep) {
+                        push @$Errors, {level => 'm',
+                                        type => 'xml:dtd:cm:bad element separator',
+                                        text => $sep,
+                                        value => $_->{type},
+                                        di => $_->{di}, index => $_->{index}};
+                      }
+                    }
+                  }
+                }
+                $def->{cm_type} = 'element';
+              }
+              $def->{cmgroup} = $root_group;
+            } # CM
           }
           $def->{has_element_decl} = 1;
         } else {

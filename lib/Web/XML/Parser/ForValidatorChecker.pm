@@ -11,6 +11,11 @@ sub check_hidden_name ($%) {
   return $class->check_name (@_);
 } # check_hidden_name
 
+sub check_hidden_qname ($%) {
+  my $class = shift;
+  return $class->check_qname (@_);
+} # check_hidden_qname
+
 sub check_hidden_nmtoken ($%) {
   my $class = shift;
   return $class->check_nmtoken (@_);
