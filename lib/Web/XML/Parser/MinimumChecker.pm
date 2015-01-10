@@ -2,7 +2,8 @@ package Web::XML::Parser::MinimumChecker;
 use strict;
 use warnings;
 our $VERSION = '1.0';
-use Char::Class::XML qw(InXMLNameChar InXMLNameStartChar);
+use Char::Class::XML qw(InXMLNameChar InXMLNameStartChar
+                        InXMLNCNameChar InXMLNCNameStartChar);
 
 sub check_name ($%) {
   my ($class, %args) = @_;
@@ -12,6 +13,20 @@ sub check_name ($%) {
                      level => 'm');
   }
 } # check_name
+
+sub check_qname ($%) {
+  my ($class, %args) = @_;
+  if (not $args{name} =~ /\A\p{InXMLNameStartChar}\p{InXMLNameChar}*\z/) {
+    $args{onerror}->(type => 'xml:not name',
+                     value => $args{name},
+                     level => 'm');
+  } elsif ($args{name} =~ /:/ and
+           not $args{name} =~ /\A\p{InXMLNCNameStartChar}\p{InXMLNCNameChar}*:\p{InXMLNCNameStartChar}\p{InXMLNCNameChar}*\z/) {
+    $args{onerror}->(type => 'xml:not qname',
+                     value => $args{name},
+                     level => 'm');
+  }
+} # check_qname
 
 sub check_nmtoken ($%) {
   my ($class, %args) = @_;
@@ -25,6 +40,10 @@ sub check_nmtoken ($%) {
 sub check_hidden_name ($%) {
   # skip
 } # check_hidden_name
+
+sub check_hidden_qname ($%) {
+  # skip
+} # check_hidden_qname
 
 sub check_hidden_nmtoken ($%) {
   # skip

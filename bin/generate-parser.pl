@@ -90,6 +90,7 @@ if ($LANG eq 'XML') {
   $Vars->{InMDEntity} = {input => 1, unchanged => 1, type => 'boolean'};
   $Vars->{InLiteral} = {save => 1, type => 'boolean'};
   $Vars->{TempRef} = {save => 1, type => 'object'};
+  $Vars->{LastCMItem} = {save => 1, type => 'enum?'};
 }
 
 ## ------ Input byte stream ------
@@ -936,6 +937,7 @@ sub serialize_actions ($;%) {
       } elsif ($type eq 'set-to-cmelement') {
         push @result, sprintf q[$OpenCMGroups->[-1]->{items}->[-1]->{q<%s>} = %s;],
             $field, $value;
+        push @result, q{$LastCMItem = 'element';};
       } elsif ($type eq 'emit-char') {
         my $index_delta = q{$Offset + (pos $Input) - (length $1)};
         if (defined $_->{value}) {
@@ -1464,6 +1466,7 @@ sub serialize_actions ($;%) {
       $return = '1 if $return';
     } elsif ($type eq 'process-temp-as-peref-md') { # XML only
       push @result, sprintf q{
+        $LastCMItem = 'peref';
         my $return;
         REF: {
           if ($DTDDefs->{StopProcessing}) {
@@ -1587,7 +1590,7 @@ sub serialize_actions ($;%) {
     } elsif ($type eq 'insert-allowed-token') {
       push @result, q{push @{$Attr->{allowed_tokens} ||= []}, '';};
     } elsif ($type eq 'create-cmgroup') {
-      push @result, q{my $cmgroup = {items => [], separators => [], di => $DI, index => $Offset + pos $Input};};
+      push @result, q{my $cmgroup = {items => [], separators => [], di => $DI, index => $Offset + (pos $Input) - 1};};
     } elsif ($type eq 'set-cmgroup') {
       push @result, q{$Token->{cmgroup} = $cmgroup;};
     } elsif ($type eq 'push-cmgroup') {
@@ -1615,7 +1618,13 @@ sub serialize_actions ($;%) {
     } elsif ($type eq 'append-separator-to-cmgroup') {
       push @result, sprintf q{
         push @{$OpenCMGroups->[-1]->{separators}},
-            {di => $DI, index => $Offset + pos $Input, type => $%d};
+            {di => $DI, index => $Offset + (pos $Input) - 1, type => $%d};
+        if (not defined $LastCMItem) {
+          push @$Errors, {level => 's',
+                          type => 'xml:dtd:cm:entity begins with connector',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        }
+        $LastCMItem = 'separator';
       }, $_->{capture_index} || 1;
     } elsif ($type eq 'if-empty') {
       my $list = $_->{list};
@@ -1953,22 +1962,38 @@ my $OnMDEntityReference = sub {
       } else {
         $main2->{saved_states}->{State} = $sub->{saved_states}->{State};
       }
-      if ($sub->{saved_states}->{InitialCMGroupDepth} < @{$sub->{saved_lists}->{OpenCMGroups}}) {
-        $main2->onerrors->($main2, [{level => 'm',
-                                     type => 'unclosed cmgroup',
-                                     di => $sub->{saved_states}->{Token}->{di},
-                                     index => $sub->{saved_states}->{Token}->{index}}]);
-        $#{$sub->{saved_lists}->{OpenCMGroups}} = $sub->{saved_states}->{InitialCMGroupDepth}-1;
-      }
       $main2->{saved_states}->{Attr} = $sub->{saved_states}->{Attr};
 
       my $sub2 = Web::XML::Parser::MDEntityParser->new;
       $sub2->onparsed (sub {
         $main2->{saved_states}->{State} = $_[0]->{saved_states}->{State};
         $main2->{saved_states}->{Attr} = $_[0]->{saved_states}->{Attr};
+        if ($main2->{saved_states}->{State} == STATE ("bogus markup declaration state")) {
+          #
+        } elsif ($sub->{saved_states}->{InitialCMGroupDepth} < @{$sub2->{saved_lists}->{OpenCMGroups}}) {
+          $main2->onerrors->($main2, [{level => 'm',
+                                       type => 'unclosed cmgroup',
+                                       di => $sub->{saved_states}->{Token}->{di},
+                                       index => $sub->{saved_states}->{Token}->{index}}]);
+          $#{$main2->{saved_lists}->{OpenCMGroups}} = $sub->{saved_states}->{InitialCMGroupDepth}-1;
+        } elsif (@{$main2->{saved_lists}->{OpenCMGroups}}) {
+          my $last = $sub->{saved_states}->{LastCMItem};
+          if (not defined $last) {
+            $main2->onerrors->($main2, [{level => 's',
+                                         type => 'xml:dtd:cm:empty entity',
+                                         di => $data->{ref}->{di},
+                                         index => $data->{ref}->{index}}]);
+          } elsif ($last eq 'separator') {
+            $main2->onerrors->($main2, [{level => 's',
+                                         type => 'xml:dtd:cm:entity ends with connector',
+                                         di => $data->{ref}->{di},
+                                         index => $data->{ref}->{index}}]);
+          }
+        }
       });
       {
         local $main2->{saved_states}->{OriginalState} = [$main2->{saved_states}->{State}];
+        $sub2->{InitialCMGroupDepth} = $sub->{saved_states}->{InitialCMGroupDepth};
         $sub2->parse ($main2, {entity => {value => [[' ', -1, 0]], name => ''}});
       }
 
@@ -1980,7 +2005,6 @@ my $OnMDEntityReference = sub {
     $data->{entity}->{open}++;
     $main->{pause}++;
     $main->{pause}++;
-    $sub->{saved_states}->{InitialCMGroupDepth} = $main->{saved_lists}->{OpenCMGroups};
     if (defined $data->{entity}->{value}) { # internal
       $sub->parse ($main, $data);
     } else { # external
@@ -3658,16 +3682,86 @@ sub actions_to_code ($;%) {
             }
           }
           if (defined $token->{cmgroup}) {
-            $def->{cmgroup} = $token->{cmgroup};
-            if (@{$def->{cmgroup}->{items}} and
-                defined $def->{cmgroup}->{items}->[0]->{name} and
-                $def->{cmgroup}->{items}->[0]->{name} eq '#PCDATA') {
-              $def->{cm_type} = 'mixed';
-            } else {
-              $def->{cm_type} = 'element';
-            }
-
-            # XXX
+            CM: {
+              my $root_group = $token->{cmgroup};
+              if (@{$root_group->{items}} and
+                  defined $root_group->{items}->[0]->{name} and
+                  $root_group->{items}->[0]->{name} eq '#PCDATA') {
+                my $rep = $root_group->{repetition} || '';
+                if ($rep eq '+' or
+                    $rep eq '?' or
+                    ($rep eq '' and @{$root_group->{items}} > 1)) {
+                  push @$Errors, {level => 'm',
+                                  type => 'xml:dtd:cm:bad mixed repetition',
+                                  value => $root_group->{repetition},
+                                  di => $root_group->{di},
+                                  index => $root_group->{index}};
+                  $root_group->{repetition} = '*';
+                }
+                for (@{$root_group->{separators}}) {
+                  unless ($_->{type} eq '|') {
+                    push @$Errors, {level => 'm',
+                                    type => 'xml:dtd:cm:bad mixed separator',
+                                    value => $_->{type},
+                                    di => $_->{di}, index => $_->{index}};
+                    last CM;
+                  }
+                }
+                for (0..$#{$root_group->{items}}) {
+                  my $item = $root_group->{items}->[$_];
+                  if (defined $item->{items}) {
+                    push @$Errors, {level => 'm',
+                                    type => 'xml:dtd:cm:nested mixed group',
+                                    di => $item->{di}, index => $item->{index}};
+                    last CM;
+                  }
+                  if (defined $item->{repetition}) {
+                    push @$Errors, {level => 'm',
+                                    type => 'xml:dtd:cm:mixed element with repetition',
+                                    value => $item->{repetition},
+                                    di => $item->{di}, index => $item->{index}};
+                    last CM;
+                  }
+                  $SC->check_hidden_qname
+                      (name => $item->{name},
+                       onerror => sub {
+                         push @$Errors, {@_, di => $item->{di}, index => $item->{index}};
+                       })
+                      unless $_ == 0;
+                } # items
+                $def->{cm_type} = 'mixed';
+              } else {
+                my @group = ($root_group);
+                while (@group) {
+                  my $group = shift @group;
+                  for my $item (@{$group->{items}}) {
+                    if (defined $item->{items}) {
+                      push @group, $item;
+                    } else {
+                      $SC->check_hidden_qname
+                          (name => $item->{name},
+                           onerror => sub {
+                             push @$Errors, {@_, di => $item->{di}, index => $item->{index}};
+                           });
+                    }
+                  }
+                  if (@{$group->{separators}} > 1) {
+                    my $sep = $group->{separators}->[0]->{type};
+                    for (@{$group->{separators}}) {
+                      unless ($_->{type} eq $sep) {
+                        push @$Errors, {level => 'm',
+                                        type => 'xml:dtd:cm:bad element separator',
+                                        text => $sep,
+                                        value => $_->{type},
+                                        di => $_->{di}, index => $_->{index}};
+                      }
+                    }
+                  }
+                }
+                $def->{cm_type} = 'element';
+              }
+              $def->{cmgroup} = $root_group;
+            } # CM
           }
           $def->{has_element_decl} = 1;
         } else {
@@ -6201,7 +6295,9 @@ sub generate_api ($) {
 
     $Token = $main->{saved_states}->{Token};
     $Attr = $main->{saved_states}->{Attr};
-    $OpenCMGroups = $main->{saved_lists}->{OpenCMGroups};
+    $self->{saved_lists}->{OpenCMGroups} = $OpenCMGroups
+        = $main->{saved_lists}->{OpenCMGroups};
+    $InitialCMGroupDepth = $self->{InitialCMGroupDepth} || @{$main->{saved_lists}->{OpenCMGroups}};
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
     $self->{is_sub_parser} = 1;
     if ($main->{saved_states}->{DTDMode} eq 'internal subset' or
@@ -6282,7 +6378,9 @@ sub generate_api ($) {
 
     $Token = $main->{saved_states}->{Token};
     $Attr = $main->{saved_states}->{Attr};
-    $OpenCMGroups = $main->{saved_lists}->{OpenCMGroups};
+    $self->{saved_lists}->{OpenCMGroups} = $OpenCMGroups
+        = $main->{saved_lists}->{OpenCMGroups};
+    $InitialCMGroupDepth = $self->{InitialCMGroupDepth} || @{$main->{saved_lists}->{OpenCMGroups}};
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
     $self->{is_sub_parser} = 1;
     $DTDMode = 'parameter entity';
