@@ -695,6 +695,11 @@ my $OnContentEntityReference = sub {
     if (defined $data->{entity}->{value}) { # internal
       $sub->parse ($main, $data);
     } else { # external
+      $main->onerrors->($main, [{level => 'i',
+                                 type => 'external entref',
+                                 value => '&'.$data->{entity}->{name}.';',
+                                 di => $data->{ref}->{di},
+                                 index => $data->{ref}->{index}}]);
       $main->onextentref->($main, $data, $sub);
     }
     $main->{pause}--;
@@ -735,6 +740,11 @@ my $OnDTDEntityReference = sub {
     if (defined $data->{entity}->{value}) { # internal
       $sub->parse ($main, $data);
     } else { # external
+      $main->onerrors->($main, [{level => 'i',
+                                 type => 'external entref',
+                                 value => (defined $data->{entity}->{name} ? '%'.$data->{entity}->{name}.';' : undef),
+                                 di => $data->{ref}->{di},
+                                 index => $data->{ref}->{index}}]);
       $main->onextentref->($main, $data, $sub);
     }
     $main->{pause}--;
@@ -773,6 +783,11 @@ my $OnEntityValueEntityReference = sub {
     if (defined $data->{entity}->{value}) { # internal
       $sub->parse ($main, $data);
     } else { # external
+      $main->onerrors->($main, [{level => 'i',
+                                 type => 'external entref',
+                                 value => '%'.$data->{entity}->{name}.';',
+                                 di => $data->{ref}->{di},
+                                 index => $data->{ref}->{index}}]);
       $main->onextentref->($main, $data, $sub);
     }
     $main->{pause}--;
@@ -856,6 +871,11 @@ my $OnMDEntityReference = sub {
     if (defined $data->{entity}->{value}) { # internal
       $sub->parse ($main, $data);
     } else { # external
+      $main->onerrors->($main, [{level => 'i',
+                                 type => 'external entref',
+                                 value => '%'.$data->{entity}->{name}.';',
+                                 di => $data->{ref}->{di},
+                                 index => $data->{ref}->{index}}]);
       $main->onextentref->($main, $data, $sub);
     }
     $main->{pause}--;
@@ -865,8 +885,8 @@ my $OnMDEntityReference = sub {
 
       sub cant_expand_extentref ($$$) {
         my ($self, $data, $sub) = @_;
-        $self->onerrors->($self, [{level => 'i',
-                                   type => 'external entref',
+        $self->onerrors->($self, [{level => 'w',
+                                   type => 'external entref not expanded',
                                    value => (defined $data->{entity}->{name} ? ($data->{entity}->{is_parameter_entity_flag} ? '%' : '&').$data->{entity}->{name}.';' : undef),
                                    di => $data->{ref}->{di},
                                    index => $data->{ref}->{index}}]);
@@ -1442,7 +1462,8 @@ return;
                            {entity => {system_identifier => $DTDDefs->{system_identifier}},
                             ref => {di => $DTDDefs->{di},
                                     index => $DTDDefs->{index}}}]
-            unless $DTDDefs->{is_charref_declarations_entity};
+            if not $DTDDefs->{is_charref_declarations_entity} and
+               not $DTDDefs->{StopProcessing};
       
 
           $IM = AFTER_DOCTYPE_IM;
@@ -3469,7 +3490,8 @@ return;
                            {entity => {system_identifier => $DTDDefs->{system_identifier}},
                             ref => {di => $DTDDefs->{di},
                                     index => $DTDDefs->{index}}}]
-            unless $DTDDefs->{is_charref_declarations_entity};
+            if not $DTDDefs->{is_charref_declarations_entity} and
+               not $DTDDefs->{StopProcessing};
       
           }
         

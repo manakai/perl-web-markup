@@ -93,6 +93,7 @@ sub _test ($$) {
   my @errors;
   $p->onerror (sub {
     my %opt = @_;
+    return if $opt{type} eq 'external entref' and $opt{level} eq 'i';
     my ($di, $index) = resolve_index_pair $ip, $opt{di}, $opt{index};
     my ($l, $c) = index_pair_to_lc_pair $ip, $di, $index;
     push @errors, join ';',
@@ -175,10 +176,7 @@ sub _test ($$) {
         $subparser->parse_bytes_feed (encode 'utf-8', $ip->[$di]->{data});
         $subparser->parse_bytes_end;
       } else {
-        # XXX
-        $subparser->parse_bytes_start ('utf-8', $parser);
-        $subparser->parse_bytes_feed ('<?xml encoding="utf-8"?>');
-        $subparser->parse_bytes_end;
+        $parser->cant_expand_extentref ($data, $subparser);
       }
     });
     $p->onparsed (sub {
