@@ -90,6 +90,7 @@ if ($LANG eq 'XML') {
   $Vars->{InMDEntity} = {input => 1, unchanged => 1, type => 'boolean'};
   $Vars->{InLiteral} = {save => 1, type => 'boolean'};
   $Vars->{TempRef} = {save => 1, type => 'object'};
+  $Vars->{LastCMItem} = {save => 1, type => 'enum?'};
 }
 
 ## ------ Input byte stream ------
@@ -936,6 +937,7 @@ sub serialize_actions ($;%) {
       } elsif ($type eq 'set-to-cmelement') {
         push @result, sprintf q[$OpenCMGroups->[-1]->{items}->[-1]->{q<%s>} = %s;],
             $field, $value;
+        push @result, q{$LastCMItem = 'element';};
       } elsif ($type eq 'emit-char') {
         my $index_delta = q{$Offset + (pos $Input) - (length $1)};
         if (defined $_->{value}) {
@@ -1464,6 +1466,7 @@ sub serialize_actions ($;%) {
       $return = '1 if $return';
     } elsif ($type eq 'process-temp-as-peref-md') { # XML only
       push @result, sprintf q{
+        $LastCMItem = 'peref';
         my $return;
         REF: {
           if ($DTDDefs->{StopProcessing}) {
@@ -1616,6 +1619,12 @@ sub serialize_actions ($;%) {
       push @result, sprintf q{
         push @{$OpenCMGroups->[-1]->{separators}},
             {di => $DI, index => $Offset + (pos $Input) - 1, type => $%d};
+        if (not defined $LastCMItem) {
+          push @$Errors, {level => 's',
+                          type => 'xml:dtd:cm:entity begins with connector',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        }
+        $LastCMItem = 'separator';
       }, $_->{capture_index} || 1;
     } elsif ($type eq 'if-empty') {
       my $list = $_->{list};
@@ -1953,22 +1962,38 @@ my $OnMDEntityReference = sub {
       } else {
         $main2->{saved_states}->{State} = $sub->{saved_states}->{State};
       }
-      if ($sub->{saved_states}->{InitialCMGroupDepth} < @{$sub->{saved_lists}->{OpenCMGroups}}) {
-        $main2->onerrors->($main2, [{level => 'm',
-                                     type => 'unclosed cmgroup',
-                                     di => $sub->{saved_states}->{Token}->{di},
-                                     index => $sub->{saved_states}->{Token}->{index}}]);
-        $#{$sub->{saved_lists}->{OpenCMGroups}} = $sub->{saved_states}->{InitialCMGroupDepth}-1;
-      }
       $main2->{saved_states}->{Attr} = $sub->{saved_states}->{Attr};
 
       my $sub2 = Web::XML::Parser::MDEntityParser->new;
       $sub2->onparsed (sub {
         $main2->{saved_states}->{State} = $_[0]->{saved_states}->{State};
         $main2->{saved_states}->{Attr} = $_[0]->{saved_states}->{Attr};
+        if ($main2->{saved_states}->{State} == STATE ("bogus markup declaration state")) {
+          #
+        } elsif ($sub->{saved_states}->{InitialCMGroupDepth} < @{$sub2->{saved_lists}->{OpenCMGroups}}) {
+          $main2->onerrors->($main2, [{level => 'm',
+                                       type => 'unclosed cmgroup',
+                                       di => $sub->{saved_states}->{Token}->{di},
+                                       index => $sub->{saved_states}->{Token}->{index}}]);
+          $#{$main2->{saved_lists}->{OpenCMGroups}} = $sub->{saved_states}->{InitialCMGroupDepth}-1;
+        } elsif (@{$main2->{saved_lists}->{OpenCMGroups}}) {
+          my $last = $sub->{saved_states}->{LastCMItem};
+          if (not defined $last) {
+            $main2->onerrors->($main2, [{level => 's',
+                                         type => 'xml:dtd:cm:empty entity',
+                                         di => $data->{ref}->{di},
+                                         index => $data->{ref}->{index}}]);
+          } elsif ($last eq 'separator') {
+            $main2->onerrors->($main2, [{level => 's',
+                                         type => 'xml:dtd:cm:entity ends with connector',
+                                         di => $data->{ref}->{di},
+                                         index => $data->{ref}->{index}}]);
+          }
+        }
       });
       {
         local $main2->{saved_states}->{OriginalState} = [$main2->{saved_states}->{State}];
+        $sub2->{InitialCMGroupDepth} = $sub->{saved_states}->{InitialCMGroupDepth};
         $sub2->parse ($main2, {entity => {value => [[' ', -1, 0]], name => ''}});
       }
 
@@ -1980,7 +2005,6 @@ my $OnMDEntityReference = sub {
     $data->{entity}->{open}++;
     $main->{pause}++;
     $main->{pause}++;
-    $sub->{saved_states}->{InitialCMGroupDepth} = $main->{saved_lists}->{OpenCMGroups};
     if (defined $data->{entity}->{value}) { # internal
       $sub->parse ($main, $data);
     } else { # external
@@ -6271,7 +6295,9 @@ sub generate_api ($) {
 
     $Token = $main->{saved_states}->{Token};
     $Attr = $main->{saved_states}->{Attr};
-    $OpenCMGroups = $main->{saved_lists}->{OpenCMGroups};
+    $self->{saved_lists}->{OpenCMGroups} = $OpenCMGroups
+        = $main->{saved_lists}->{OpenCMGroups};
+    $InitialCMGroupDepth = $self->{InitialCMGroupDepth} || @{$main->{saved_lists}->{OpenCMGroups}};
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
     $self->{is_sub_parser} = 1;
     if ($main->{saved_states}->{DTDMode} eq 'internal subset' or
@@ -6352,7 +6378,9 @@ sub generate_api ($) {
 
     $Token = $main->{saved_states}->{Token};
     $Attr = $main->{saved_states}->{Attr};
-    $OpenCMGroups = $main->{saved_lists}->{OpenCMGroups};
+    $self->{saved_lists}->{OpenCMGroups} = $OpenCMGroups
+        = $main->{saved_lists}->{OpenCMGroups};
+    $InitialCMGroupDepth = $self->{InitialCMGroupDepth} || @{$main->{saved_lists}->{OpenCMGroups}};
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
     $self->{is_sub_parser} = 1;
     $DTDMode = 'parameter entity';
