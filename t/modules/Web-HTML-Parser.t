@@ -627,9 +627,24 @@ sub _parse_bytes_stream_with_a_known_definite_encoding : Test(1) {
   is $doc->input_encoding, 'Shift_JIS';
 } # _parse_bytes_stream_with_a_known_definite_encoding
 
-__PACKAGE__->runtests;
+sub _ignore_doctype_pis_1 : Test(1) {
+  my $doc = new Web::DOM::Document;
+  my $parser = new Web::HTML::Parser;
+  $parser->ignore_doctype_pis (1);
+  is !!$parser->ignore_doctype_pis, !!1;
+  $parser->parse_char_string (q{<!DOCTYPE html><p>} => $doc);
+} # _ignore_doctype_pis_1
 
-1;
+sub _ignore_doctype_pis_0 : Test(2) {
+  my $doc = new Web::DOM::Document;
+  my $parser = new Web::HTML::Parser;
+  is !!$parser->ignore_doctype_pis, !!0;
+  $parser->ignore_doctype_pis (0);
+  is !!$parser->ignore_doctype_pis, !!0;
+  $parser->parse_char_string (q{<!DOCTYPE html><p>} => $doc);
+} # _ignore_doctype_pis_0
+
+__PACKAGE__->runtests;
 
 =head1 LICENSE
 

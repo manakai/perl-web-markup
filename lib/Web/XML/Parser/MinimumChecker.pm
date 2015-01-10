@@ -58,6 +58,20 @@ sub check_hidden_pi_target ($%) {
   # skip
 } # check_hidden_pi_target
 
+sub check_pubid ($%) {
+  my ($class, %args) = @_;
+  if (not $args{name} =~ /\A[\x0A\x0D\x20a-zA-Z0-9\-'()+,.\/:=?;!*#\@\$_%]*\z/) {
+    $args{onerror}->(type => 'xml:pubid:bad char',
+                     value => $args{name},
+                     level => 'm');
+  } elsif ($args{name} =~ /[\x0A\x0D]/ or $args{name} =~ /\x20\x20/ or
+           $args{name} =~ /\A\x20/ or $args{name} =~ /\x20\z/) {
+    $args{onerror}->(type => 'xml:pubid:not normalized',
+                     value => $args{name},
+                     level => 'w');
+  }
+} # check_pubid
+
 sub check_hidden_pubid ($%) {
   # skip
 } # check_hidden_pubid

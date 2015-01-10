@@ -34,13 +34,8 @@ sub check_hidden_pi_target ($%) {
 } # check_hidden_pi_target
 
 sub check_hidden_pubid ($%) {
-  my ($class, %args) = @_;
-  unless ($args{name} =~ m{\A[\x20\x0D\x0Aa-zA-Z0-9'()+,./:=?;!*#\@\$_%-]*\z}) {
-    $args{onerror}->(type => 'xml:pubid:bad char',
-                     level => 'm',
-                     value => $args{name});
-  }
-  # XXX normalization warning
+  my $class = shift;
+  return $class->check_pubid (@_);
 } # check_hidden_pubid
 
 # XXX validate system ID

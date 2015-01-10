@@ -132,6 +132,15 @@ The value must be a non-negative integer.  Note that predefined
 entities and HTML character entities are always expanded and not taken
 into account for the number of entity expansions.
 
+=item $parser->ignore_doctype_pis ($boolean)
+
+=item $boolean = $parser->ignore_doctype_pis
+
+Get or set whether processing instructions in the DTD should be
+exposed to the DOM or not.  If true, the C<DocumentType> object, if
+any, contains no child node even when there are processing
+instructions in the DTD.
+
 =back
 
 The module also has following methods for API compatibility with
