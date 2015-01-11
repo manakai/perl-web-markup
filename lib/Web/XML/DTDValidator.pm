@@ -32,7 +32,7 @@ my $XMLName = qr/\p{InXMLNameStartChar}\p{InXMLNameChar}*/;
 my $XMLNCName = qr/\p{InXMLNCNameStartChar}\p{InXMLNCNameChar}*/;
 my $GITEM; {
   use re 'eval';
-  $GITEM = qr/(?>[^()*+?|,\x09\x0A\x0D\x20]+|\($XMLS*(??{$GITEM})$XMLS*(?>[|,]$XMLS(??{$GITEM})$XMLS*)*\))(?>[*+?]|)/;
+  $GITEM = qr/(?>[^()*+?|,\x09\x0A\x0D\x20]+|\($XMLS*(??{$GITEM})$XMLS*(?>[|,]$XMLS*(??{$GITEM})$XMLS*)*\))(?>[*+?]|)/;
 }
 
 sub validate_document ($$) {
