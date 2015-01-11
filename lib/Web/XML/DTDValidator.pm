@@ -58,7 +58,7 @@ sub validate_document ($$) {
 
   if (defined $root_el_name and defined $dt) {
     $self->onerror->(level => 'm',
-                     type => 'VC:Root Element Type',
+                     type => 'bad doctype name',
                      text => $root_el_name,
                      node => $dt, value => $dt->node_name)
         unless $root_el_name eq $dt->node_name;
