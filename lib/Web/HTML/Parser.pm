@@ -31777,6 +31777,7 @@ $Scripting = $self->{Scripting};
       my $dids = $self->di_data_set;
       $self->{di} = $DI = defined $self->{di} ? $self->{di} : @$dids || 1;
       $dids->[$DI] ||= {} if $DI >= 0;
+      ## 
       $doc->manakai_set_source_location (['', $DI, 0]);
 
       local $self->{onextentref};
@@ -31831,6 +31832,7 @@ $Scripting = $self->{Scripting};
       my $dids = $self->di_data_set;
       $self->{di} = $DI = defined $self->{di} ? $self->{di} : @$dids || 1;
       $dids->[$DI] ||= {} if $DI >= 0;
+      ## 
 
       ## HTML 4. / XML 3. (cnt.)
       my $root;
@@ -32011,6 +32013,7 @@ $Scripting = $self->{Scripting};
       $doc->manakai_set_source_location (['', $DI, 0]);
       ## Note that $DI != $source_di to support document.write()'s
       ## insertion.
+      ## 
 
       $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
       return;
@@ -32099,6 +32102,7 @@ $Scripting = $self->{Scripting};
         $self->{di} = $DI = defined $self->{di} ? $self->{di} : @$dids || 1;
         $dids->[$DI] ||= {} if $DI >= 0;
         $doc->manakai_set_source_location (['', $DI, 0]);
+        ## 
 
         $State = DATA_STATE;;
         $IM = INITIAL_IM;
@@ -32141,6 +32145,7 @@ $Scripting = $self->{Scripting};
       $doc->manakai_set_source_location (['', $DI, 0]);
       ## Note that $DI != $source_di to support document.write()'s
       ## insertion.
+      ## 
     } # _parse_bytes_init
   
 
