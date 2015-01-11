@@ -143,6 +143,16 @@ instructions in the DTD.
 
 =back
 
+=begin comment
+
+See also L<Web::HTML::Parser>'s comment section.
+
+Also, $parser->di_data_set->[$parser->di]->{url} is expected to
+contain the absolute URL of the input, possibly after applying any
+redirect.  It is also used as base URL.
+
+=end comment
+
 The module also has following methods for API compatibility with
 L<Web::HTML::Parser> but they have no effect: C<locale_tag>,
 C<scripting>.
@@ -180,7 +190,7 @@ package.
 
 L<Web::XML::Serializer>.
 
-L<Web::HTML::Validator>.
+L<Web::HTML::Validator>, L<Web::XML::DTDValidator>.
 
 L<Web::HTML::Parser>.
 
@@ -236,6 +246,8 @@ Note that there is no single specification that completely defines XML
 parsing.
 
 XML 1.1 is no longer supported.
+
+See also L<Web::XML::DTDValidator>.
 
 =head1 AUTHOR
 

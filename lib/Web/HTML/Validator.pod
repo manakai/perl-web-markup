@@ -94,10 +94,7 @@ Since the input to the validator is a DOM, not a string, syntax-level
 conformance errors can't be checked.  For detecting any conformance
 error, you have to parse the string using appropriate parser
 (L<Web::HTML::Parser> for HTML, or L<Web::XML::Parser> for XML), and
-then invoke the validator with the result DOM as the input.  For XML,
-you might also want to invoke DTD validator between invocations of
-parser and validator, as this validator does not perform any DTD-based
-validation.
+then invoke the validator with the result DOM as the input.
 
 =head1 DEPENDENCY
 
@@ -393,15 +390,16 @@ Handling of unknown namespaces in conformance checking
 
 The validator also supports much more Web standards (indirectly via
 required modules), including but not limited to CSS, IETF BCP 47
-language tags, and Encoding Standard.
+language tags, Encoding Standard, and XML 1.0 DTD.
 
-Note that HTML 3.2, HTML4, XML 1.1, Namespaces in XML 1.1, C<xml:id>,
-XLink, XInclude, XHTML1, XHTML Modularization, Ruby Annotations, RDFa,
-XForms, and XHTML2 are not considered as applicable specifications.
-The module does not support ARIA attributes in its own namespace.
-Also, the module does not support historical HTML features no longer
-part of the language, except for those explicitly listed in the
-OBSVOCAB specification.  See the specification for details.
+Note that HTML2, HTML3, HTML4, HTML 5.0, XML 1.1, Namespaces in XML
+1.1, C<xml:id>, XLink, XInclude, XHTML1, XHTML Modularization, Ruby
+Annotations, RSS 0.9, RDFa, XForms, XHTML2, HLink, XML Events, and
+XFrames are not considered as applicable specifications.  The module
+does not support ARIA attributes in its own namespace.  Also, the
+module does not support historical HTML features no longer part of the
+language, except for those explicitly listed in the OBSVOCAB
+specification.  See the specification for details.
 
 =head1 AUTHOR
 
