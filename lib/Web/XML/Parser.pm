@@ -180,7 +180,7 @@ sub onrestartwithencoding ($;$) {
     } # _cleanup_states
 
     ## ------ Common defs ------
-    our $AFE;our $AnchoredIndex;our $Attr;our $CONTEXT;our $Callbacks;our $Confident;our $DI;our $DTDDefs;our $DTDMode;our $EOF;our $Errors;our $FORM_ELEMENT;our $FRAMESET_OK;our $HEAD_ELEMENT;our $IM;our $IframeSrcdoc;our $InForeign;our $InLiteral;our $InMDEntity;our $InitialCMGroupDepth;our $Input;our $LastCMItem;our $LastStartTagName;our $NEXT_ID;our $OE;our $OP;our $ORIGINAL_IM;our $Offset;our $OpenCMGroups;our $OpenMarkedSections;our $OriginalState;our $QUIRKS;our $SC;our $Scripting;our $State;our $TABLE_CHARS;our $TEMPLATE_IMS;our $Temp;our $TempIndex;our $TempRef;our $Token;our $Tokens;
+    our $AFE;our $AnchoredIndex;our $Attr;our $BaseURLDI;our $CONTEXT;our $Callbacks;our $Confident;our $DI;our $DTDDefs;our $DTDMode;our $EOF;our $Errors;our $FORM_ELEMENT;our $FRAMESET_OK;our $HEAD_ELEMENT;our $IM;our $IframeSrcdoc;our $InForeign;our $InLiteral;our $InMDEntity;our $InitialCMGroupDepth;our $Input;our $LastCMItem;our $LastStartTagName;our $NEXT_ID;our $OE;our $OP;our $ORIGINAL_IM;our $Offset;our $OpenCMGroups;our $OpenMarkedSections;our $OriginalState;our $QUIRKS;our $SC;our $Scripting;our $State;our $TABLE_CHARS;our $TEMPLATE_IMS;our $Temp;our $TempIndex;our $TempRef;our $Token;our $Tokens;
     ## ------ Tokenizer defs ------
     my $InvalidCharRefs = $Web::HTML::_SyntaxDefs->{xml_charref_invalid};
 sub ATTLIST_TOKEN () { 1 }
@@ -1473,7 +1473,8 @@ return;
           if (defined $DTDDefs->{system_identifier} and length $DTDDefs->{system_identifier}) {
             
         push @$Callbacks, [$OnDTDEntityReference,
-                           {entity => {system_identifier => $DTDDefs->{system_identifier}},
+                           {entity => {system_identifier => $DTDDefs->{system_identifier},
+                                       base_url_di => $BaseURLDI},
                             ref => {di => $DTDDefs->{di},
                                     index => $DTDDefs->{index}}}]
             if not $DTDDefs->{is_charref_declarations_entity} and
@@ -3395,6 +3396,7 @@ return;
                                      di => $token->{di}, index => $token->{index}};
                    });
               $DTDDefs->{pe}->{'%'.$token->{name} . ';'} = $token;
+              $token->{base_url_di} = $BaseURLDI;
             } else {
               push @$Errors, {level => 'w',
                               type => 'duplicate entity decl',
@@ -3452,6 +3454,7 @@ return;
                 $token->{only_text} = 1;
               }
               $token->{external} = {} if $is_external;
+              $token->{base_url_di} = $BaseURLDI;
             } else {
               push @$Errors, {level => 'w',
                               type => 'duplicate entity decl',
@@ -3501,7 +3504,8 @@ return;
           if (defined $DTDDefs->{system_identifier} and length $DTDDefs->{system_identifier}) {
             
         push @$Callbacks, [$OnDTDEntityReference,
-                           {entity => {system_identifier => $DTDDefs->{system_identifier}},
+                           {entity => {system_identifier => $DTDDefs->{system_identifier},
+                                       base_url_di => $BaseURLDI},
                             ref => {di => $DTDDefs->{di},
                                     index => $DTDDefs->{index}}}]
             if not $DTDDefs->{is_charref_declarations_entity} and
@@ -3541,7 +3545,7 @@ return;
                    push @$Errors, {@_,
                                    di => $token->{di}, index => $token->{index}};
                  });
-            # XXX $token->{base_url}
+            $token->{base_url_di} = $BaseURLDI;
             $DTDDefs->{notations}->{$token->{name}} = $token;
           }
           if (defined $token->{public_identifier}) {
@@ -16060,8 +16064,10 @@ $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + (pos $Input) - length $1;
 } else {
 if ($EOF) {
-$Temp = $1;
-$TempIndex = $Offset + (pos $Input);
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
           my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
@@ -16782,8 +16788,10 @@ $State = ATTLIST_ATTR_TYPE_STATE;
 $Attr->{q<declared_type>} = $1;
 } else {
 if ($EOF) {
-$Temp = $1;
-$TempIndex = $Offset + (pos $Input);
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
           my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
@@ -17581,8 +17589,10 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
-$Temp = $1;
-$TempIndex = $Offset + (pos $Input);
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
           my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
@@ -19209,8 +19219,10 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
-$Temp = $1;
-$TempIndex = $Offset + (pos $Input);
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
           my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
@@ -20068,8 +20080,10 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
-$Temp = $1;
-$TempIndex = $Offset + (pos $Input);
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
           my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
@@ -21387,8 +21401,10 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
-$Temp = $1;
-$TempIndex = $Offset + (pos $Input);
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
           my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
@@ -22607,8 +22623,10 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = BOGUS_STATUS_KWD_STATE;
 } else {
 if ($EOF) {
-$Temp = $1;
-$TempIndex = $Offset + (pos $Input);
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
           my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
@@ -23461,8 +23479,10 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = BOGUS_STATUS_KWD_STATE;
 } else {
 if ($EOF) {
-$Temp = $1;
-$TempIndex = $Offset + (pos $Input);
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
           my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
@@ -24357,8 +24377,10 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
-$Temp = $1;
-$TempIndex = $Offset + (pos $Input);
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
           my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
@@ -25850,8 +25872,10 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
-$Temp = $1;
-$TempIndex = $Offset + (pos $Input);
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
           my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
@@ -26799,8 +26823,10 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
-$Temp = $1;
-$TempIndex = $Offset + (pos $Input);
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
           my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
@@ -27650,8 +27676,10 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
-$Temp = $1;
-$TempIndex = $Offset + (pos $Input);
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
           my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
@@ -29244,8 +29272,10 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
-$Temp = $1;
-$TempIndex = $Offset + (pos $Input);
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
           my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
@@ -30306,8 +30336,10 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = BOGUS_STATUS_KWD_STATE;
 } else {
 if ($EOF) {
-$Temp = $1;
-$TempIndex = $Offset + (pos $Input);
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
           my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
@@ -44960,8 +44992,10 @@ $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + (pos $Input) - length $1;
 } else {
 if ($EOF) {
-$Temp = $1;
-$TempIndex = $Offset + (pos $Input);
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
           my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
@@ -45688,8 +45722,10 @@ $Token->{q<name>} = $1;
 $State = ATTLIST_NAME_STATE;
 } else {
 if ($EOF) {
-$Temp = $1;
-$TempIndex = $Offset + (pos $Input);
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
           my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
@@ -46783,8 +46819,10 @@ $Token->{q<content_keyword>} = $1;
 $State = ELEMENT_CONTENT_KWD_STATE;
 } else {
 if ($EOF) {
-$Temp = $1;
-$TempIndex = $Offset + (pos $Input);
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
           my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
@@ -47511,8 +47549,10 @@ $Token->{q<name>} = $1;
 $State = ELEMENT_NAME_STATE;
 } else {
 if ($EOF) {
-$Temp = $1;
-$TempIndex = $Offset + (pos $Input);
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
           my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
@@ -48231,8 +48271,10 @@ $Token->{q<name>} = $1;
 $State = ENT_NAME_STATE;
 } else {
 if ($EOF) {
-$Temp = $1;
-$TempIndex = $Offset + (pos $Input);
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
           my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
@@ -48986,8 +49028,10 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
-$Temp = $1;
-$TempIndex = $Offset + (pos $Input);
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
           my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
@@ -49741,8 +49785,10 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
-$Temp = $1;
-$TempIndex = $Offset + (pos $Input);
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
           my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
@@ -50456,8 +50502,10 @@ $Token->{q<name>} = $1;
 $State = ENT_NAME_STATE;
 } else {
 if ($EOF) {
-$Temp = $1;
-$TempIndex = $Offset + (pos $Input);
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
           my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
@@ -51373,8 +51421,10 @@ $Token->{q<notation_name>} = $1;
 $State = NDATA_ID_STATE;
 } else {
 if ($EOF) {
-$Temp = $1;
-$TempIndex = $Offset + (pos $Input);
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
           my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
@@ -52124,8 +52174,10 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
-$Temp = $1;
-$TempIndex = $Offset + (pos $Input);
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
           my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
@@ -53102,8 +53154,10 @@ $Token->{q<name>} = $1;
 $State = NOTATION_NAME_STATE;
 } else {
 if ($EOF) {
-$Temp = $1;
-$TempIndex = $Offset + (pos $Input);
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
           my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
@@ -53855,8 +53909,10 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
-$Temp = $1;
-$TempIndex = $Offset + (pos $Input);
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
           my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
@@ -54608,8 +54664,10 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
-$Temp = $1;
-$TempIndex = $Offset + (pos $Input);
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
           my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
@@ -55401,8 +55459,10 @@ $Attr->{allowed_tokens}->[-1] = $1;
 $State = ALLOWED_TOKEN_STATE;
 } else {
 if ($EOF) {
-$Temp = $1;
-$TempIndex = $Offset + (pos $Input);
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
           my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
@@ -58094,8 +58154,10 @@ $LastCMItem = 'element';
 $State = CM_ELEMENT_STATE;
 } else {
 if ($EOF) {
-$Temp = $1;
-$TempIndex = $Offset + (pos $Input);
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
           my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
@@ -58904,8 +58966,10 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
-$Temp = $1;
-$TempIndex = $Offset + (pos $Input);
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
           my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
@@ -59649,8 +59713,10 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
-$Temp = $1;
-$TempIndex = $Offset + (pos $Input);
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
 
         if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
           my $text_decl = {data => [[$1, $DI, $TempIndex + 5]], # IndexedString
@@ -78282,22 +78348,24 @@ sub dom_tree ($$) {
               (['', $data->{di}, $data->{index}]);
         }
       }
+      my $dids = $self->di_data_set;
       for my $data (values %{$DTDDefs->{notations} or {}}) {
         my $node = $doc->create_notation ($data->{name});
         $node->public_id ($data->{public_identifier}); # or undef
         $node->system_id ($data->{system_identifier}); # or undef
-        # XXX base URL
+        my $base = $dids->[$data->{base_url_di}]->{url};
+        $node->declaration_base_uri ($base); # or undef
         $node->manakai_set_source_location (['', $data->{di}, $data->{index}]);
         $doctype->set_notation_node ($node);
       }
       for my $data (values %{$DTDDefs->{ge} or {}}) {
-
         next unless defined $data->{notation_name};
         my $node = $doc->create_general_entity ($data->{name});
         $node->public_id ($data->{public_identifier}); # or undef
         $node->system_id ($data->{system_identifier}); # or undef
         $node->notation_name ($data->{notation_name}); # or undef
-        # XXX base URL
+        my $base = $dids->[$data->{base_url_di}]->{url};
+        $node->declaration_base_uri ($base); # or undef
         $node->manakai_set_source_location (['', $data->{di}, $data->{index}]);
         $doctype->set_general_entity_node ($node);
       }
@@ -78472,7 +78540,7 @@ sub dom_tree ($$) {
       $doc->manakai_compat_mode ('no quirks');
       $doc->remove_child ($_) for $doc->child_nodes->to_list;
       $self->{nodes} = [$doc];
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
+      local ($AFE, $AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
       $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
 $InitialCMGroupDepth = 0;
@@ -78481,7 +78549,8 @@ $Offset = 0;
 $DTDMode = q{N/A};
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
-      $IframeSrcdoc = $self->{IframeSrcdoc};
+      $BaseURLDI = $self->{BaseURLDI};
+$IframeSrcdoc = $self->{IframeSrcdoc};
 $InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
@@ -78493,6 +78562,9 @@ $Scripting = $self->{Scripting};
       my $dids = $self->di_data_set;
       $self->{di} = $DI = defined $self->{di} ? $self->{di} : @$dids || 1;
       $dids->[$DI] ||= {} if $DI >= 0;
+      ## <XML>
+      $self->{BaseURLDI} = $BaseURLDI = $DI;
+      ## </XML>
       $doc->manakai_set_source_location (['', $DI, 0]);
 
       local $self->{onextentref};
@@ -78520,7 +78592,7 @@ $Scripting = $self->{Scripting};
       my $nodes = $self->{nodes} = [$doc];
       ## 
 
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
+      local ($AFE, $AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
       $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
 $InitialCMGroupDepth = 0;
@@ -78529,7 +78601,8 @@ $Offset = 0;
 $DTDMode = q{N/A};
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
-      $IframeSrcdoc = $self->{IframeSrcdoc};
+      $BaseURLDI = $self->{BaseURLDI};
+$IframeSrcdoc = $self->{IframeSrcdoc};
 $InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
@@ -78541,6 +78614,9 @@ $Scripting = $self->{Scripting};
       my $dids = $self->di_data_set;
       $self->{di} = $DI = defined $self->{di} ? $self->{di} : @$dids || 1;
       $dids->[$DI] ||= {} if $DI >= 0;
+      ## <XML>
+      $self->{BaseURLDI} = $BaseURLDI = $DI;
+      ## </XML>
 
       ## HTML 4. / XML 3. (cnt.)
       my $root;
@@ -78658,7 +78734,7 @@ $Scripting = $self->{Scripting};
       $doc->remove_child ($_) for $doc->child_nodes->to_list;
       $self->{nodes} = [$doc];
 
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
+      local ($AFE, $AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
       $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
 $InitialCMGroupDepth = 0;
@@ -78667,7 +78743,8 @@ $Offset = 0;
 $DTDMode = q{N/A};
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
-      $IframeSrcdoc = $self->{IframeSrcdoc};
+      $BaseURLDI = $self->{BaseURLDI};
+$IframeSrcdoc = $self->{IframeSrcdoc};
 $InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
@@ -78683,6 +78760,9 @@ $Scripting = $self->{Scripting};
       $doc->manakai_set_source_location (['', $DI, 0]);
       ## Note that $DI != $source_di to support document.write()'s
       ## insertion.
+      ## <XML>
+      $self->{BaseURLDI} = $BaseURLDI = $source_di;
+      ## </XML>
 
       $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, InLiteral => $InLiteral, InitialCMGroupDepth => $InitialCMGroupDepth, LastCMItem => $LastCMItem, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, TempRef => $TempRef, Token => $Token};
       return;
@@ -78693,8 +78773,9 @@ $Scripting = $self->{Scripting};
       my $self = $_[0];
       my $input = [$_[1]]; # string copy
 
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
-      $IframeSrcdoc = $self->{IframeSrcdoc};
+      local ($AFE, $AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
+      $BaseURLDI = $self->{BaseURLDI};
+$IframeSrcdoc = $self->{IframeSrcdoc};
 $InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
@@ -78710,8 +78791,9 @@ $Scripting = $self->{Scripting};
 
     sub parse_chars_end ($) {
       my $self = $_[0];
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
-      $IframeSrcdoc = $self->{IframeSrcdoc};
+      local ($AFE, $AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
+      $BaseURLDI = $self->{BaseURLDI};
+$IframeSrcdoc = $self->{IframeSrcdoc};
 $InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
@@ -78752,7 +78834,7 @@ $Scripting = $self->{Scripting};
         $self->{nodes} = [$doc];
         $doc->remove_child ($_) for $doc->child_nodes->to_list;
 
-        local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
+        local ($AFE, $AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
         $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
 $InitialCMGroupDepth = 0;
@@ -78761,7 +78843,8 @@ $Offset = 0;
 $DTDMode = q{N/A};
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
-        $IframeSrcdoc = $self->{IframeSrcdoc};
+        $BaseURLDI = $self->{BaseURLDI};
+$IframeSrcdoc = $self->{IframeSrcdoc};
 $InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
@@ -78779,6 +78862,9 @@ $Scripting = $self->{Scripting};
         $self->{di} = $DI = defined $self->{di} ? $self->{di} : @$dids || 1;
         $dids->[$DI] ||= {} if $DI >= 0;
         $doc->manakai_set_source_location (['', $DI, 0]);
+        ## <XML>
+        $self->{BaseURLDI} = $BaseURLDI = $DI;
+        ## </XML>
 
         $State = DATA_STATE;;
         $IM = BEFORE_XML_DECLARATION_IM;
@@ -78810,7 +78896,8 @@ $Offset = 0;
 $DTDMode = q{N/A};
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
-      $IframeSrcdoc = $self->{IframeSrcdoc};
+      $BaseURLDI = $self->{BaseURLDI};
+$IframeSrcdoc = $self->{IframeSrcdoc};
 $InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
@@ -78825,6 +78912,9 @@ $Scripting = $self->{Scripting};
       $doc->manakai_set_source_location (['', $DI, 0]);
       ## Note that $DI != $source_di to support document.write()'s
       ## insertion.
+      ## <XML>
+      $self->{BaseURLDI} = $BaseURLDI = $source_di;
+      ## </XML>
     } # _parse_bytes_init
   
 
@@ -78863,7 +78953,7 @@ $Scripting = $self->{Scripting};
       $doc->manakai_is_html (0);
       $self->{can_restart} = 1;
 
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
+      local ($AFE, $AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
       PARSER: {
         $self->_parse_bytes_init;
         $self->_parse_bytes_start_parsing (no_body_data_yet => 1) or do {
@@ -78883,8 +78973,9 @@ $Scripting = $self->{Scripting};
     sub parse_bytes_feed ($$;%) {
       my ($self, undef, %args) = @_;
 
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
-      $IframeSrcdoc = $self->{IframeSrcdoc};
+      local ($AFE, $AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
+      $BaseURLDI = $self->{BaseURLDI};
+$IframeSrcdoc = $self->{IframeSrcdoc};
 $InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
@@ -78924,8 +79015,9 @@ $Scripting = $self->{Scripting};
 
     sub parse_bytes_end ($) {
       my $self = $_[0];
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
-      $IframeSrcdoc = $self->{IframeSrcdoc};
+      local ($AFE, $AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
+      $BaseURLDI = $self->{BaseURLDI};
+$IframeSrcdoc = $self->{IframeSrcdoc};
 $InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
@@ -78970,7 +79062,7 @@ $Scripting = $self->{Scripting};
   sub parse ($$$) {
     my ($self, $main, $in) = @_;
 
-    local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
+    local ($AFE, $AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
     $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
 $InitialCMGroupDepth = 0;
@@ -78979,7 +79071,8 @@ $Offset = 0;
 $DTDMode = q{N/A};
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
-    $IframeSrcdoc = $self->{IframeSrcdoc};
+    $BaseURLDI = $self->{BaseURLDI};
+$IframeSrcdoc = $self->{IframeSrcdoc};
 $InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
@@ -79011,6 +79104,7 @@ $Scripting = $self->{Scripting};
     $self->{input_stream} = [@{$in->{entity}->{value}}];
     $self->{di_data_set} = my $dids = $main->di_data_set;
     $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
+    $BaseURLDI = $self->{BaseURLDI} = defined $main->{BaseURLDI} ? $main->{BaseURLDI} : $main->di;
     require Web::HTML::SourceMap;
     $dids->[$DI] ||= {
       name => '&'.$in->{entity}->{name}.';',
@@ -79037,7 +79131,7 @@ $Scripting = $self->{Scripting};
   sub parse ($$$) {
     my ($self, $main, $in) = @_;
 
-    local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
+    local ($AFE, $AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
     $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
 $InitialCMGroupDepth = 0;
@@ -79046,7 +79140,8 @@ $Offset = 0;
 $DTDMode = q{N/A};
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
-    $IframeSrcdoc = $self->{IframeSrcdoc};
+    $BaseURLDI = $self->{BaseURLDI};
+$IframeSrcdoc = $self->{IframeSrcdoc};
 $InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
@@ -79074,6 +79169,7 @@ $Scripting = $self->{Scripting};
     $self->{input_stream} = [@{$in->{entity}->{value}}];
     $self->{di_data_set} = my $dids = $main->di_data_set;
     $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
+    $BaseURLDI = $self->{BaseURLDI} = defined $main->{BaseURLDI} ? $main->{BaseURLDI} : $main->di;
     require Web::HTML::SourceMap;
     $dids->[$DI] ||= {
       name => '&'.$in->{entity}->{name}.';',
@@ -79110,7 +79206,7 @@ $Scripting = $self->{Scripting};
       $self->{main_parser} = $_[2];
       $self->{can_restart} = 1;
 
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
+      local ($AFE, $AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
       PARSER: {
         $self->_parse_bytes_init;
         $self->_parse_bytes_start_parsing (no_body_data_yet => 1) or do {
@@ -79137,7 +79233,8 @@ $Offset = 0;
 $DTDMode = q{N/A};
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
-    $IframeSrcdoc = $self->{IframeSrcdoc};
+    $BaseURLDI = $self->{BaseURLDI};
+$IframeSrcdoc = $self->{IframeSrcdoc};
 $InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
@@ -79163,7 +79260,7 @@ $Scripting = $self->{Scripting};
 
     $self->{input_stream} = [];
     $self->{di_data_set} = my $dids = $main->di_data_set;
-    $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
+    $self->{BaseURLDI} = $BaseURLDI = $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
     $dids->[$DI] ||= {} if $DI >= 0;
 
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
@@ -79190,7 +79287,7 @@ $Scripting = $self->{Scripting};
   sub parse ($$$) {
     my ($self, $main, $in) = @_;
 
-    local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
+    local ($AFE, $AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
     $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
 $InitialCMGroupDepth = 0;
@@ -79199,7 +79296,8 @@ $Offset = 0;
 $DTDMode = q{N/A};
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
-    $IframeSrcdoc = $self->{IframeSrcdoc};
+    $BaseURLDI = $self->{BaseURLDI};
+$IframeSrcdoc = $self->{IframeSrcdoc};
 $InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
@@ -79227,6 +79325,7 @@ $Scripting = $self->{Scripting};
     $self->{input_stream} = [@{$in->{entity}->{value}}];
     $self->{di_data_set} = my $dids = $main->di_data_set;
     $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
+    $BaseURLDI = $self->{BaseURLDI} = defined $main->{BaseURLDI} ? $main->{BaseURLDI} : $main->di;
     require Web::HTML::SourceMap;
     $dids->[$DI] ||= {
       name => '%'.$in->{entity}->{name}.';',
@@ -79259,7 +79358,7 @@ $Scripting = $self->{Scripting};
       $self->{main_parser} = $_[2];
       $self->{can_restart} = 1;
 
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
+      local ($AFE, $AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
       PARSER: {
         $self->_parse_bytes_init;
         $self->_parse_bytes_start_parsing (no_body_data_yet => 1) or do {
@@ -79286,7 +79385,8 @@ $Offset = 0;
 $DTDMode = q{N/A};
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
-    $IframeSrcdoc = $self->{IframeSrcdoc};
+    $BaseURLDI = $self->{BaseURLDI};
+$IframeSrcdoc = $self->{IframeSrcdoc};
 $InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
@@ -79312,7 +79412,7 @@ $Scripting = $self->{Scripting};
 
     $self->{input_stream} = [];
     $self->{di_data_set} = my $dids = $main->di_data_set;
-    $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
+    $self->{BaseURLDI} = $BaseURLDI = $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
     $dids->[$DI] ||= {} if $DI >= 0;
 
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
@@ -79331,7 +79431,7 @@ $Scripting = $self->{Scripting};
   sub parse ($$$) {
     my ($self, $main, $in) = @_;
 
-    local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
+    local ($AFE, $AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
     $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
 $InitialCMGroupDepth = 0;
@@ -79340,7 +79440,8 @@ $Offset = 0;
 $DTDMode = q{N/A};
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
-    $IframeSrcdoc = $self->{IframeSrcdoc};
+    $BaseURLDI = $self->{BaseURLDI};
+$IframeSrcdoc = $self->{IframeSrcdoc};
 $InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
@@ -79368,6 +79469,7 @@ $Scripting = $self->{Scripting};
     $self->{input_stream} = [@{$in->{entity}->{value}}];
     $self->{di_data_set} = my $dids = $main->di_data_set;
     $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
+    $BaseURLDI = $self->{BaseURLDI} = defined $main->{BaseURLDI} ? $main->{BaseURLDI} : $main->di;
     require Web::HTML::SourceMap;
     $dids->[$DI] ||= {
       name => '%'.$in->{entity}->{name}.';',
@@ -79401,7 +79503,7 @@ $Scripting = $self->{Scripting};
       $self->{main_parser} = $_[2];
       $self->{can_restart} = 1;
 
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
+      local ($AFE, $AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
       PARSER: {
         $self->_parse_bytes_init;
         $self->_parse_bytes_start_parsing (no_body_data_yet => 1) or do {
@@ -79428,7 +79530,8 @@ $Offset = 0;
 $DTDMode = q{N/A};
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
-    $IframeSrcdoc = $self->{IframeSrcdoc};
+    $BaseURLDI = $self->{BaseURLDI};
+$IframeSrcdoc = $self->{IframeSrcdoc};
 $InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
@@ -79454,7 +79557,7 @@ $Scripting = $self->{Scripting};
 
     $self->{input_stream} = [];
     $self->{di_data_set} = my $dids = $main->di_data_set;
-    $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
+    $self->{BaseURLDI} = $BaseURLDI = $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
     $dids->[$DI] ||= {} if $DI >= 0;
 
     $Token = $main->{saved_states}->{Token};
@@ -79475,7 +79578,7 @@ $Scripting = $self->{Scripting};
     my ($self, $main, $in) = @_;
 
     $self->{InMDEntity} = 1;
-    local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
+    local ($AFE, $AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
     $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
 $InitialCMGroupDepth = 0;
@@ -79484,7 +79587,8 @@ $Offset = 0;
 $DTDMode = q{N/A};
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
-    $IframeSrcdoc = $self->{IframeSrcdoc};
+    $BaseURLDI = $self->{BaseURLDI};
+$IframeSrcdoc = $self->{IframeSrcdoc};
 $InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
@@ -79516,6 +79620,7 @@ $Scripting = $self->{Scripting};
     $self->{input_stream} = [@{$in->{entity}->{value}}];
     $self->{di_data_set} = my $dids = $main->di_data_set;
     $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
+    $BaseURLDI = $self->{BaseURLDI} = defined $main->{BaseURLDI} ? $main->{BaseURLDI} : $main->di;
     require Web::HTML::SourceMap;
     $dids->[$DI] ||= {
       name => '%'.$in->{entity}->{name}.';',
@@ -79555,7 +79660,7 @@ $Scripting = $self->{Scripting};
 
       $self->{InMDEntity} = 1;
 
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
+      local ($AFE, $AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
       PARSER: {
         $self->_parse_bytes_init;
         $self->_parse_bytes_start_parsing (no_body_data_yet => 1) or do {
@@ -79582,7 +79687,8 @@ $Offset = 0;
 $DTDMode = q{N/A};
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
-    $IframeSrcdoc = $self->{IframeSrcdoc};
+    $BaseURLDI = $self->{BaseURLDI};
+$IframeSrcdoc = $self->{IframeSrcdoc};
 $InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
@@ -79612,7 +79718,7 @@ $Scripting = $self->{Scripting};
 
     $self->{input_stream} = [];
     $self->{di_data_set} = my $dids = $main->di_data_set;
-    $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
+    $self->{BaseURLDI} = $BaseURLDI = $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
     $dids->[$DI] ||= {} if $DI >= 0;
 
     $Token = $main->{saved_states}->{Token};
@@ -79632,8 +79738,9 @@ $Scripting = $self->{Scripting};
 
     sub _parse_sub_done ($) {
       my $self = $_[0];
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
-      $IframeSrcdoc = $self->{IframeSrcdoc};
+      local ($AFE, $AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
+      $BaseURLDI = $self->{BaseURLDI};
+$IframeSrcdoc = $self->{IframeSrcdoc};
 $InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};

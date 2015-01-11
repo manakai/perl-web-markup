@@ -91,6 +91,7 @@ if ($LANG eq 'XML') {
   $Vars->{InLiteral} = {save => 1, type => 'boolean'};
   $Vars->{TempRef} = {save => 1, type => 'object'};
   $Vars->{LastCMItem} = {save => 1, type => 'enum?'};
+  $Vars->{BaseURLDI} = {input => 1, unchanged => 1, type => 'index'};
 }
 
 ## ------ Input byte stream ------
@@ -3956,6 +3957,7 @@ sub actions_to_code ($;%) {
                                      di => $token->{di}, index => $token->{index}};
                    });
               $DTDDefs->{pe}->{'%'.$token->{name} . ';'} = $token;
+              $token->{base_url_di} = $BaseURLDI;
             } else {
               push @$Errors, {level => 'w',
                               type => 'duplicate entity decl',
@@ -4013,6 +4015,7 @@ sub actions_to_code ($;%) {
                 $token->{only_text} = 1;
               }
               $token->{external} = {} if $is_external;
+              $token->{base_url_di} = $BaseURLDI;
             } else {
               push @$Errors, {level => 'w',
                               type => 'duplicate entity decl',
@@ -4073,7 +4076,7 @@ sub actions_to_code ($;%) {
                    push @$Errors, {@_,
                                    di => $token->{di}, index => $token->{index}};
                  });
-            # XXX $token->{base_url}
+            $token->{base_url_di} = $BaseURLDI;
             $DTDDefs->{notations}->{$token->{name}} = $token;
           }
           if (defined $token->{public_identifier}) {
@@ -4098,7 +4101,8 @@ sub actions_to_code ($;%) {
     } elsif ($act->{type} eq 'process the external subset') { # XML
       push @code, q{
         push @$Callbacks, [$OnDTDEntityReference,
-                           {entity => {system_identifier => $DTDDefs->{system_identifier}},
+                           {entity => {system_identifier => $DTDDefs->{system_identifier},
+                                       base_url_di => $BaseURLDI},
                             ref => {di => $DTDDefs->{di},
                                     index => $DTDDefs->{index}}}]
             if not $DTDDefs->{is_charref_declarations_entity} and
@@ -5031,22 +5035,24 @@ sub dom_tree ($$) {
               (['', $data->{di}, $data->{index}]);
         }
       }
+      my $dids = $self->di_data_set;
       for my $data (values %%{$DTDDefs->{notations} or {}}) {
         my $node = $doc->create_notation ($data->{name});
         $node->public_id ($data->{public_identifier}); # or undef
         $node->system_id ($data->{system_identifier}); # or undef
-        # XXX base URL
+        my $base = $dids->[$data->{base_url_di}]->{url};
+        $node->declaration_base_uri ($base); # or undef
         $node->manakai_set_source_location (['', $data->{di}, $data->{index}]);
         $doctype->set_notation_node ($node);
       }
       for my $data (values %%{$DTDDefs->{ge} or {}}) {
-
         next unless defined $data->{notation_name};
         my $node = $doc->create_general_entity ($data->{name});
         $node->public_id ($data->{public_identifier}); # or undef
         $node->system_id ($data->{system_identifier}); # or undef
         $node->notation_name ($data->{notation_name}); # or undef
-        # XXX base URL
+        my $base = $dids->[$data->{base_url_di}]->{url};
+        $node->declaration_base_uri ($base); # or undef
         $node->manakai_set_source_location (['', $data->{di}, $data->{index}]);
         $doctype->set_general_entity_node ($node);
       }
@@ -5346,6 +5352,9 @@ sub generate_api ($) {
       my $dids = $self->di_data_set;
       $self->{di} = $DI = defined $self->{di} ? $self->{di} : @$dids || 1;
       $dids->[$DI] ||= {} if $DI >= 0;
+      ## <XML>
+      $self->{BaseURLDI} = $BaseURLDI = $DI;
+      ## </XML>
       $doc->manakai_set_source_location (['', $DI, 0]);
 
       local $self->{onextentref};
@@ -5395,6 +5404,9 @@ sub generate_api ($) {
       my $dids = $self->di_data_set;
       $self->{di} = $DI = defined $self->{di} ? $self->{di} : @$dids || 1;
       $dids->[$DI] ||= {} if $DI >= 0;
+      ## <XML>
+      $self->{BaseURLDI} = $BaseURLDI = $DI;
+      ## </XML>
 
       ## HTML 4. / XML 3. (cnt.)
       my $root;
@@ -5611,6 +5623,9 @@ sub generate_api ($) {
       $doc->manakai_set_source_location (['', $DI, 0]);
       ## Note that $DI != $source_di to support document.write()'s
       ## insertion.
+      ## <XML>
+      $self->{BaseURLDI} = $BaseURLDI = $source_di;
+      ## </XML>
 
       VARS::SAVE;
       return;
@@ -5689,6 +5704,9 @@ sub generate_api ($) {
         $self->{di} = $DI = defined $self->{di} ? $self->{di} : @$dids || 1;
         $dids->[$DI] ||= {} if $DI >= 0;
         $doc->manakai_set_source_location (['', $DI, 0]);
+        ## <XML>
+        $self->{BaseURLDI} = $BaseURLDI = $DI;
+        ## </XML>
 
         SWITCH_STATE ("data state");
         $IM = IM (HTML => "initial", XML => "before XML declaration");
@@ -5726,6 +5744,9 @@ sub generate_api ($) {
       $doc->manakai_set_source_location (['', $DI, 0]);
       ## Note that $DI != $source_di to support document.write()'s
       ## insertion.
+      ## <XML>
+      $self->{BaseURLDI} = $BaseURLDI = $source_di;
+      ## </XML>
     } # _parse_bytes_init
   };
 
@@ -5896,6 +5917,7 @@ sub generate_api ($) {
     $self->{input_stream} = [@{$in->{entity}->{value}}];
     $self->{di_data_set} = my $dids = $main->di_data_set;
     $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
+    $BaseURLDI = $self->{BaseURLDI} = defined $main->{BaseURLDI} ? $main->{BaseURLDI} : $main->di;
     require Web::HTML::SourceMap;
     $dids->[$DI] ||= {
       name => '&'.$in->{entity}->{name}.';',
@@ -5949,6 +5971,7 @@ sub generate_api ($) {
     $self->{input_stream} = [@{$in->{entity}->{value}}];
     $self->{di_data_set} = my $dids = $main->di_data_set;
     $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
+    $BaseURLDI = $self->{BaseURLDI} = defined $main->{BaseURLDI} ? $main->{BaseURLDI} : $main->di;
     require Web::HTML::SourceMap;
     $dids->[$DI] ||= {
       name => '&'.$in->{entity}->{name}.';',
@@ -6028,7 +6051,7 @@ sub generate_api ($) {
 
     $self->{input_stream} = [];
     $self->{di_data_set} = my $dids = $main->di_data_set;
-    $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
+    $self->{BaseURLDI} = $BaseURLDI = $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
     $dids->[$DI] ||= {} if $DI >= 0;
 
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
@@ -6082,6 +6105,7 @@ sub generate_api ($) {
     $self->{input_stream} = [@{$in->{entity}->{value}}];
     $self->{di_data_set} = my $dids = $main->di_data_set;
     $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
+    $BaseURLDI = $self->{BaseURLDI} = defined $main->{BaseURLDI} ? $main->{BaseURLDI} : $main->di;
     require Web::HTML::SourceMap;
     $dids->[$DI] ||= {
       name => '%'.$in->{entity}->{name}.';',
@@ -6157,7 +6181,7 @@ sub generate_api ($) {
 
     $self->{input_stream} = [];
     $self->{di_data_set} = my $dids = $main->di_data_set;
-    $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
+    $self->{BaseURLDI} = $BaseURLDI = $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
     $dids->[$DI] ||= {} if $DI >= 0;
 
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
@@ -6203,6 +6227,7 @@ sub generate_api ($) {
     $self->{input_stream} = [@{$in->{entity}->{value}}];
     $self->{di_data_set} = my $dids = $main->di_data_set;
     $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
+    $BaseURLDI = $self->{BaseURLDI} = defined $main->{BaseURLDI} ? $main->{BaseURLDI} : $main->di;
     require Web::HTML::SourceMap;
     $dids->[$DI] ||= {
       name => '%'.$in->{entity}->{name}.';',
@@ -6279,7 +6304,7 @@ sub generate_api ($) {
 
     $self->{input_stream} = [];
     $self->{di_data_set} = my $dids = $main->di_data_set;
-    $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
+    $self->{BaseURLDI} = $BaseURLDI = $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
     $dids->[$DI] ||= {} if $DI >= 0;
 
     $Token = $main->{saved_states}->{Token};
@@ -6331,6 +6356,7 @@ sub generate_api ($) {
     $self->{input_stream} = [@{$in->{entity}->{value}}];
     $self->{di_data_set} = my $dids = $main->di_data_set;
     $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
+    $BaseURLDI = $self->{BaseURLDI} = defined $main->{BaseURLDI} ? $main->{BaseURLDI} : $main->di;
     require Web::HTML::SourceMap;
     $dids->[$DI] ||= {
       name => '%'.$in->{entity}->{name}.';',
@@ -6417,7 +6443,7 @@ sub generate_api ($) {
 
     $self->{input_stream} = [];
     $self->{di_data_set} = my $dids = $main->di_data_set;
-    $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
+    $self->{BaseURLDI} = $BaseURLDI = $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
     $dids->[$DI] ||= {} if $DI >= 0;
 
     $Token = $main->{saved_states}->{Token};
@@ -6452,6 +6478,8 @@ sub generate_api ($) {
     }ge;
     s/\bIM\s*\("([^"]+)"\)/im_const $1/ge;
     s/\bVARS::(\w+);/$vars_codes->{$1}/ge;
+    s{<XML>.*?</XML>}{}gs unless $LANG eq 'XML';
+    s{<HTML>.*?</HTML>}{}gs unless $LANG eq 'HTML';
   }
   push @code, @sub_code;
 
