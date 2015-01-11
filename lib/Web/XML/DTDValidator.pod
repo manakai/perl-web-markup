@@ -2,11 +2,116 @@
 
 Web::XML::DTDValidator - An XML DTD validator
 
+=head1 SYNOPSIS
+
+  use Web::XML::DTDValidator;
+  $validator = Web::XML::DTDValidator->new;
+  $validator->onerror (sub {
+    my %error = @_;
+    ...
+  });
+  $validator->validate_document ($doc);
+
 =head1 DESCRIPTION
 
-The C<Web::XML::DTDValidator> module is an XML DTD validator.
+The C<Web::XML::DTDValidator> module is an XML DTD validator, which
+can be used in combination with L<Web::XML::Parser>.
 
-XXX
+This module implements validation of DOM C<Document> against its DTD.
+For example, it checks whether elements in the document conform to the
+content models in the DTD, and whether the attribute values in the
+document conform to the attribute definitions in the DTD.  It can't
+check syntactical or physical constraints of XML (e.g. how XML
+entities are used in the document) as the C<Document> does not
+preserve physical structures of the document.
+
+To validate an XML document, including both physical and logical
+constraints, streaming API of the parser module L<Web::XML::Parser>,
+the strict-checker module L<Web::XML::Parser::XML1Checker> for the
+parser, and an entity resolution implementation C<onextentref> handler
+for the parser, must be used to create a C<Document> input to this
+module.
+
+This module is also invoked as part of L<Web::HTML::Validator>
+validation process.
+
+=head1 METHODS
+
+Following methods are available:
+
+=over 4
+
+=item $validator = Web::XML::DTDValidator->new
+
+Create a new validator.
+
+=item $code = $validator->onerror
+
+=item $validator->onerror ($new_code)
+
+Get or set the error handler for the validator.  Any parse error, as
+well as warning and additional processing information, is reported to
+the handler.  See
+<https://github.com/manakai/data-errors/blob/master/doc/onerror.txt>
+for details of error handling.
+
+The code is not expected to throw any exception.
+
+The value should not be set while the validator is running.  If the
+value is changed, the result is undefined.
+
+=item $validator->validate_document ($doc)
+
+Validate the document.
+
+The input must be a DOM C<Document> object.  See
+<https://github.com/manakai/perl-web-markup#dependency> for the
+requirements on the C<Document> object.
+
+Any validity or other error is reported through the C<onerror>
+handler.  If no error with level C<m> has been reported, the document
+has no violation to the validity constraints supported by this module.
+(However, not all errors with level C<m> are violation to the validity
+constraints.  There are other kinds of errors specified in relevant
+specifications.)
+
+=back
+
+=head1 SPECIFICATIONS
+
+=over 4
+
+=item XML
+
+Extensible Markup Language (XML) 1.0 (Fifth Edition)
+<http://www.w3.org/TR/xml/>.
+
+=item XMLNS
+
+Namespaces in XML 1.0 (Third Edition)
+<http://www.w3.org/TR/xml-names/>.
+
+=item DOMDTDEF
+
+XML processing and DOM Document Type Definitions
+<http://suika.suikawiki.org/www/markup/xml/domdtdef/domdtdef-work>.
+
+=back
+
+XML 1.1 is not supported.
+
+Unless otherwise specified, a document MUST NOT be in error.
+
+A conformance checker MUST validate an XML document against its DTD
+when the document contains the DOCTYPE declaration.  Otherwise, it MAY
+validate the document (but a document without the DOCTYPE declaration
+is always invalid by definition).
+
+=head1 SEE ALSO
+
+L<Web::XML::Parser>, L<Web::XML::Parser::XML1Checker>.
+
+L<Web::HTML::Validator>.
 
 =head1 AUTHOR
 
