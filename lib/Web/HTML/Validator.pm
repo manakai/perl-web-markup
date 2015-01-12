@@ -9117,7 +9117,6 @@ sub _check_fallback_html ($$$$) {
   my ($self, $context, $disallowed, $container_ln) = @_;
   my $container = $context->owner_document->create_element ($container_ln);
 
-  my (undef, $value, undef, $sps) = node_to_text_and_tc_and_sps $context;
   my $onerror = $GetNestedOnError->($self->onerror, $context);
 
   require Web::DOM::Document;
@@ -9126,15 +9125,19 @@ sub _check_fallback_html ($$$$) {
 
   require Web::HTML::Parser;
   my $parser = Web::HTML::Parser->new;
-  $parser->di_data_set ($self->di_data_set);
+  my $dids = $self->di_data_set;
+  my $is = $context->manakai_get_indexed_string;
+  $dids->[@$dids]->{map} = indexed_string_to_mapping $is;
+  $parser->di_data_set ($dids);
+  $parser->di ($#$dids);
   $parser->onerror ($onerror);
   $parser->scripting ($self->scripting);
   my $children = $parser->parse_char_string_with_context
-      ($value, $container => $doc);
+      ((join '', map { $_->[0] } @$is), $container => $doc);
   
   my $checker = Web::HTML::Validator->new;
   $checker->_init;
-  $checker->di_data_set ($self->di_data_set);
+  $checker->di_data_set ($dids);
   $checker->scripting ($self->scripting);
   $checker->onerror ($onerror);
   $checker->{flag}->{in_media} = $self->{flag}->{in_media};
