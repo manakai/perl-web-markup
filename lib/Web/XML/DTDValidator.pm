@@ -184,10 +184,12 @@ sub _validate_doctype ($$) {
               push @$next_ids, $next_id;
               for (@$prev_ids) {
                 if (defined $state[$_]->{$item->[1]}) {
-                  $self->onerror->(level => 'm',
-                                   type => 'Deterministic Content Models',
-                                   node => $et, value => $item->[1])
-                      unless $deterministic_error++;
+                  unless ($state[$_]->{$item->[1]} == $next_id) {
+                    $self->onerror->(level => 'm',
+                                     type => 'Deterministic Content Models',
+                                     node => $et, value => $item->[1])
+                        unless $deterministic_error++;
+                  }
                 } else {
                   $state[$_]->{$item->[1]} = $next_id;
                 }
