@@ -571,14 +571,14 @@ test {
                             level => 's',
                             di => 100, index => 0},
                            {type => 'entity:too many refs',
-                            di => 99, index => 0, value => '%d;',
+                            di => 99, index => 3, value => '%d;',
                             text => 2,
                             level => 'm'},
                            {type => 'no XML decl',
                             level => 's',
                             di => 99, index => 0},
                            {type => 'entity:too many refs',
-                            di => 98, index => 0, value => '%c;',
+                            di => 98, index => 3, value => '%c;',
                             text => 2,
                             level => 'm'},
                            {type => 'no XML decl',
@@ -648,14 +648,14 @@ test {
                             text => 3,
                             level => 'm'},
                            {type => 'entity:too many refs',
-                            di => 99, index => 0, value => '&d;',
+                            di => 99, index => 3, value => '&d;',
                             text => 3,
                             level => 'm'},
                            {type => 'no XML decl',
                             level => 's',
                             di => 99, index => 0},
                            {type => 'entity:too many refs',
-                            di => 98, index => 0, value => '&c;',
+                            di => 98, index => 3, value => '&c;',
                             text => 3,
                             level => 'm'},
                            {type => 'no XML decl',
@@ -666,6 +666,50 @@ test {
     } $c;
   });
 } n => 2, name => 'general entity count';
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $parser = new Web::XML::Parser;
+  my @error;
+  $parser->onerror (sub {
+    my %error = @_;
+    if ($error{level} eq 'm') {
+      push @error, \%error;
+    }
+  });
+  my $sub1;
+  my $sub2;
+  $parser->onextentref (sub {
+    my ($parser, $data, $subparser) = @_;
+    if (defined $data->{entity}->{name}) {
+      $sub2 = $subparser;
+      $sub2->parse_bytes_start (undef, $parser);
+    } else {
+      $sub1 = $subparser;
+      $sub1->parse_bytes_start (undef, $parser);
+    }
+  });
+  $parser->parse_chars_start ($doc);
+  $parser->parse_chars_feed ('<?xml version="1.0"?><!DOCTYPE a SYSTEM "x"><a/>');
+  $parser->parse_chars_end;
+
+  $sub1->parse_bytes_feed ('
+    <!ENTITY % hoge SYSTEM "">
+    %hoge;
+    &
+  ');
+  $sub1->parse_bytes_end;
+
+  $sub2->parse_bytes_feed ('<?xml encoding="utf-8"?>');
+  $sub2->parse_bytes_end;
+
+  is 0+@error, 1;
+  is $error[0]->{di}, 3;
+  is $error[0]->{index}, 47;
+
+  done $c;
+} n => 3, name => 'error after extentref';
 
 run_tests;
 
