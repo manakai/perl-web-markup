@@ -6369,7 +6369,8 @@ sub generate_api ($) {
     $Attr = $main->{saved_states}->{Attr};
     $self->{saved_lists}->{OpenCMGroups} = $OpenCMGroups
         = $main->{saved_lists}->{OpenCMGroups};
-    $InitialCMGroupDepth = $self->{InitialCMGroupDepth} || @{$main->{saved_lists}->{OpenCMGroups}};
+    $InitialCMGroupDepth = defined $self->{InitialCMGroupDepth}
+        ? $self->{InitialCMGroupDepth} : @{$main->{saved_lists}->{OpenCMGroups}};
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
     $self->{is_sub_parser} = 1;
     if ($main->{saved_states}->{DTDMode} eq 'internal subset' or
