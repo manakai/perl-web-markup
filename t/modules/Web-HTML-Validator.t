@@ -1091,7 +1091,7 @@ for my $test (
   ['<base href="http://a/">', 'element not allowed:head noscript'],
   ['<title>abc</title>', 'element not allowed:head noscript'],
   ['<noscript><link href="a" rel=next></noscript>', 'element not allowed:minus'],
-  ['<noscript><base href="a"></noscript>', 'element not allowed:minus', 'element not allowed:head noscript'],
+  ['<noscript><base href="a"></noscript>', 'element not allowed:minus', 'element not allowed:head noscript', [31, 10]],
 ) {
   test {
     my $c = shift;
@@ -1100,10 +1100,11 @@ for my $test (
     my $el1 = $doc->create_element ('head');
     $el1->inner_html (q{<title>aa</title>});
     my $el2 = $doc->create_element ('noscript');
-    $el2->text_content ($test->[0]);
+    $el2->manakai_append_indexed_string ([[$test->[0], 31, 0]]);
     $el1->append_child ($el2);
     my $validator = Web::HTML::Validator->new;
     my @error;
+    $validator->di_data_set->[31] = {};
     $validator->onerror (sub {
       my %args = @_;
       push @error, \%args;
@@ -1114,13 +1115,16 @@ for my $test (
         [{type => $test->[1],
           level => 'm',
           node => $el2,
-          di => 1, index => 0},
+          di => 32, index => 0},
          ($test->[2] ? ({type => $test->[2],
-                         di => 1, index => 0,
+                         di => 33, index => 0,
                          level => 'm',
                          node => $el2}) : ())];
+    if (defined $test->[3]) {
+      eq_or_diff [resolve_index_pair $validator->di_data_set, 33, 0], $test->[3];
+    }
     done $c;
-  } n => 1, name => ['noscript scripting enabled', $test->[0]];
+  } n => 1 + (defined $test->[3] ? 1 : 0), name => ['noscript scripting enabled', $test->[0]];
 }
 
 test {
@@ -1203,7 +1207,7 @@ run_tests;
 
 =head1 LICENSE
 
-Copyright 2013-2014 Wakaba <wakaba@suikawiki.org>.
+Copyright 2013-2015 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

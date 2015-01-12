@@ -11756,6 +11756,7 @@ push @$OP, ['doctype', $token => 0]; $NEXT_ID++;
         if (not defined $token->{name} or not $token->{name} eq 'html') {
           push @$Errors, {level => 'm',
                           type => 'bad DOCTYPE name',
+                          text => 'html',
                           value => $token->{name},
                           di => $token->{di}, index => $token->{index}};
           unless ($IframeSrcdoc) {
