@@ -5221,6 +5221,7 @@ sub generate_api ($) {
                 $is->[0] = [substr $is->[0]->[0], $in_offset + $pos]
                     if defined $is->[0]->[0];
                 $Offset += $pos;
+                $self->{saved_states}->{Offset} = $Offset;
                 return 1;
               }
             }
