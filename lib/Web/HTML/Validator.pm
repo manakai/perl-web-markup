@@ -222,6 +222,10 @@ sub _terminate ($) {
 ## notation name, element type name, attribute name in attribute
 ## definition, element names in element content model, and PI target
 ## MUST be NCName [XMLNS].
+## XXX prefix SHOULD NOT begin with "xml" in upper or lower case [XMLNS]
+## XXX warn if element and attribute names starts with "xml:" [XML]
+## XXX warn if PI target starts with "xml-" [XML]
+## XXX warn if attribute definition is not serializable
 
 ## XXX In HTML documents
 ##   warning doctype name, pubid, sysid
@@ -9122,6 +9126,7 @@ sub _check_fallback_html ($$$$) {
 
   require Web::HTML::Parser;
   my $parser = Web::HTML::Parser->new;
+  $parser->di_data_set ($self->di_data_set);
   $parser->onerror ($onerror);
   $parser->scripting ($self->scripting);
   my $children = $parser->parse_char_string_with_context
@@ -9129,6 +9134,7 @@ sub _check_fallback_html ($$$$) {
   
   my $checker = Web::HTML::Validator->new;
   $checker->_init;
+  $checker->di_data_set ($self->di_data_set);
   $checker->scripting ($self->scripting);
   $checker->onerror ($onerror);
   $checker->{flag}->{in_media} = $self->{flag}->{in_media};
@@ -9312,6 +9318,7 @@ $Element->{+HTML_NS}->{template} = {
 
     my $checker = Web::HTML::Validator->new;
     $checker->_init;
+    $checker->di_data_set ($self->di_data_set);
     $checker->scripting ($self->scripting);
     $checker->{flag}->{is_template} = 1;
     my $onerror = $self->onerror;
@@ -9641,6 +9648,7 @@ sub _check_node ($$) {
             }
           } else { ## Different document
             my $checker = Web::HTML::Validator->new;
+            $checker->di_data_set ($self->di_data_set);
             $checker->onerror (sub {
               $self->{onerror}->(@_, di => -1, node => $context);
             });
