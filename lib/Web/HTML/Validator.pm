@@ -471,8 +471,9 @@ sub _check_element_attrs ($$$;%) {
       } else {
         ## The attribute is conforming, but is in earlier stage such
         ## that it should not be used without caution.
-        $self->{onerror}->(node => $attr,
-                           type => 'status:wd:attr', level => 'i')
+        # XXX
+        #$self->{onerror}->(node => $attr,
+        #                   type => 'status:wd:attr', level => 'i')
       }
     } else {
       if ($_Defs->{namespaces}->{$el_ns}->{supported} or
@@ -9691,9 +9692,10 @@ sub _check_node ($$) {
           } else {
             ## The element is conforming, but is in earlier stage such
             ## that it should not be used without caution.
-            $self->{onerror}->(node => $el,
-                               type => 'status:wd:element',
-                               level => 'i')
+            # XXX
+            #$self->{onerror}->(node => $el,
+            #                   type => 'status:wd:element',
+            #                   level => 'i')
           }
         } elsif ($_Defs->{namespaces}->{$el_nsuri}->{supported}) {
           ## "Authors must not use elements, attributes, or attribute
