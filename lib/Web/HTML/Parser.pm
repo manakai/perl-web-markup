@@ -15876,21 +15876,7 @@ return 1;
 return 0;
 };
 $StateActions->[RCDATA_STATE___CHARREF_STATE] = sub {
-if ($Input =~ /\G([\	\\ \
-])/gcs) {
-
-          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                          value => $Temp,
-                          di => $DI,
-                          index => $TempIndex} if length $Temp;
-        
-$State = RCDATA_STATE;
-
-          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                          value => $1,
-                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
-        
-} elsif ($Input =~ /\G([\])/gcs) {
+if ($Input =~ /\G([\])/gcs) {
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $Temp,
@@ -15985,21 +15971,7 @@ return 1;
 return 0;
 };
 $StateActions->[RCDATA_STATE___CHARREF_STATE_CR] = sub {
-if ($Input =~ /\G([\	\\ \
-])/gcs) {
-
-          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                          value => $Temp,
-                          di => $DI,
-                          index => $TempIndex} if length $Temp;
-        
-$State = RCDATA_STATE;
-
-          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                          value => $1,
-                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
-        
-} elsif ($Input =~ /\G([\
+if ($Input =~ /\G([\
 ])/gcs) {
 $State = RCDATA_STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
@@ -18272,12 +18244,7 @@ return 1;
 return 0;
 };
 $StateActions->[ATTR_VALUE__DQ__STATE___CHARREF_STATE] = sub {
-if ($Input =~ /\G([\	\\ \
-])/gcs) {
-push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ATTR_VALUE__DQ__STATE;
-push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
-} elsif ($Input =~ /\G([\])/gcs) {
+if ($Input =~ /\G([\])/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Attr->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
@@ -18296,10 +18263,6 @@ $State = ATTR_VALUE__DQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([0123456789])/gcs) {
 $Temp .= $1;
 $State = ATTR_VALUE__DQ__STATE___CHARREF_NAME_STATE;
-} elsif ($Input =~ /\G([\<])/gcs) {
-push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ATTR_VALUE__DQ__STATE;
-push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([ABCDEFGHJKNQRVWZILMOPSTUXY])/gcs) {
 $Temp .= $1;
 $State = ATTR_VALUE__DQ__STATE___CHARREF_NAME_STATE;
@@ -19480,12 +19443,7 @@ return 1;
 return 0;
 };
 $StateActions->[ATTR_VALUE__SQ__STATE___CHARREF_STATE] = sub {
-if ($Input =~ /\G([\	\\ \
-])/gcs) {
-push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ATTR_VALUE__SQ__STATE;
-push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
-} elsif ($Input =~ /\G([\])/gcs) {
+if ($Input =~ /\G([\])/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Attr->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
@@ -19504,10 +19462,6 @@ $State = A_ATTR_VALUE__QUOTED__STATE;
 } elsif ($Input =~ /\G([0123456789])/gcs) {
 $Temp .= $1;
 $State = ATTR_VALUE__SQ__STATE___CHARREF_NAME_STATE;
-} elsif ($Input =~ /\G([\<])/gcs) {
-push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ATTR_VALUE__SQ__STATE;
-push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([ABCDEFGHJKNQRVWZILMOPSTUXY])/gcs) {
 $Temp .= $1;
 $State = ATTR_VALUE__SQ__STATE___CHARREF_NAME_STATE;
@@ -25048,23 +25002,7 @@ return 1;
 return 0;
 };
 $StateActions->[CHARREF_IN_RCDATA_STATE] = sub {
-if ($Input =~ /\G([\	\\ \
-])/gcs) {
-$Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
-
-          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                          value => $Temp,
-                          di => $DI,
-                          index => $TempIndex} if length $Temp;
-        
-$State = RCDATA_STATE;
-
-          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                          value => $1,
-                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
-        
-} elsif ($Input =~ /\G([\])/gcs) {
+if ($Input =~ /\G([\])/gcs) {
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 
@@ -25179,23 +25117,7 @@ return 1;
 return 0;
 };
 $StateActions->[CHARREF_IN_DATA_STATE] = sub {
-if ($Input =~ /\G([\	\\ \
-])/gcs) {
-$Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
-
-          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                          value => $Temp,
-                          di => $DI,
-                          index => $TempIndex} if length $Temp;
-        
-$State = DATA_STATE;
-
-          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                          value => $1,
-                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
-        
-} elsif ($Input =~ /\G([\])/gcs) {
+if ($Input =~ /\G([\])/gcs) {
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 
@@ -26821,21 +26743,7 @@ return 1;
 return 0;
 };
 $StateActions->[DATA_STATE___CHARREF_STATE] = sub {
-if ($Input =~ /\G([\	\\ \
-])/gcs) {
-
-          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                          value => $Temp,
-                          di => $DI,
-                          index => $TempIndex} if length $Temp;
-        
-$State = DATA_STATE;
-
-          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                          value => $1,
-                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
-        
-} elsif ($Input =~ /\G([\])/gcs) {
+if ($Input =~ /\G([\])/gcs) {
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $Temp,
@@ -26930,21 +26838,7 @@ return 1;
 return 0;
 };
 $StateActions->[DATA_STATE___CHARREF_STATE_CR] = sub {
-if ($Input =~ /\G([\	\\ \
-])/gcs) {
-
-          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                          value => $Temp,
-                          di => $DI,
-                          index => $TempIndex} if length $Temp;
-        
-$State = DATA_STATE;
-
-          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                          value => $1,
-                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
-        
-} elsif ($Input =~ /\G([\
+if ($Input =~ /\G([\
 ])/gcs) {
 $State = DATA_STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
