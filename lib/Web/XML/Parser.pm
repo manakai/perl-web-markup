@@ -3318,10 +3318,16 @@ return;
                       unless $_ == 0;
                 } # items
                 $def->{cm_type} = 'mixed';
-              } else {
+              } else { # element content
                 my @group = ($root_group);
                 while (@group) {
                   my $group = shift @group;
+                  unless (@{$group->{items}}) {
+                    push @$Errors, {level => 'm',
+                                    type => 'xml:dtd:no group item',
+                                    di => $group->{di}, index => $group->{index}};
+                    last CM;
+                  }
                   for my $item (@{$group->{items}}) {
                     if (defined $item->{items}) {
                       push @group, $item;
