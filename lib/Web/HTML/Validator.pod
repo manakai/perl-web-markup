@@ -281,6 +281,10 @@ The C<RDF> element in the RDF namespace is metadata content.
 The Atom Syndication Format <http://tools.ietf.org/html/rfc4287>,
 <http://www.rfc-editor.org/errata_search.php?rfc=4287>.
 
+The C<rel> attribute value MUST be a link type or link relation for
+which semantics in Atom document is specified.  It MUST NOT be a
+non-conforming link type.
+
 =item ATOM03
 
 The Atom Syndication Format 0.3 (PRE-DRAFT)
@@ -365,6 +369,36 @@ Open Graph protocol
 
 Social Feedback - GREE Developer Center
 <https://docs.developer.gree.net/ja/platform/connect/socialfeedback>.
+
+=item REL5924
+
+HTML Standard Tracker <https://html5.org/r/5924>.
+
+=item REL5925
+
+HTML Standard Tracker <https://html5.org/r/5925>.
+
+=item WHATWGWIKI
+
+WHATWG Wiki MetaExtensions
+<https://wiki.whatwg.org/wiki/MetaExtensions>.
+
+WHATWG Wiki RelExtensions
+<https://wiki.whatwg.org/wiki/RelExtensions>.
+
+Unless otherwise specified, link types marked as "accepted" in the
+RelExtensions table MUST be treated as if it were part of the
+Microformats Wiki's relevant table.
+
+=item UFWIKI
+
+Microformats Wiki - existing rel values
+<http://microformats.org/wiki/existing-rel-values>.
+
+=item CSP
+
+Content Security Policy
+<https://w3c.github.io/webappsec/specs/content-security-policy/>.
 
 =item MIMESNIFF
 
