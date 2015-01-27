@@ -126,7 +126,7 @@ $data->{xml_datatypes} = $xml_datatypes->{datatypes};
     next unless $json->{headers}->{$key}->{http_equiv};
     my $d = $data->{http_equiv}->{$key} = {%{$json->{headers}->{$key}->{http_equiv}},
                                            %{$json->{headers}->{$key}}};
-    delete $d->{$_} for qw(spec id url name http_equiv http sip rtsp fcast s-http
+    delete $d->{$_} for qw(id url name http_equiv http sip rtsp fcast s-http
                            mail netnews icap ssdp mime
                            enumerated_attr_state_name multiple);
   }

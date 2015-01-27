@@ -250,6 +250,10 @@ as whether scripting is enabled or disabled for the nodes returned by
 the HTML parser, is same as whether scripting is enabled or disabled
 for the node document of the node.
 
+If the |http-equiv| attribute of the |meta| element is in the Default
+style state, the |content| attribute value MUST NOT be the empty
+string.
+
 =item OBSVOCAB
 
 manakai's Conformance Checking Guideline for Obsolete HTML Elements
