@@ -4055,6 +4055,48 @@ $Element->{+HTML_NS}->{link} = {
 $ElementAttrChecker->{(HTML_NS)}->{meta}->{''}->{$_} = sub {}
     for qw(charset content http-equiv name property); ## Checked by |check_attrs2|
 
+my $HTTPEquivChecker = { };
+$HTTPEquivChecker->{'content-type'} = sub { };
+$HTTPEquivChecker->{'default-style'} = $CheckerByType->{'non-empty text'};
+$HTTPEquivChecker->{'refresh'} = sub {
+  my ($self, $attr) = @_;
+  my $content = $attr->value;
+  if ($content =~ /\A[0-9]+\z/) { # Non-negative integer.
+    #
+  } elsif ($content =~ s/\A[0-9]+;[\x09\x0A\x0C\x0D\x20]+[Uu][Rr][Ll]=//) { # Non-negative integer, ";", space characters, "URL" ASCII case-insensitive, "="
+    if ($content =~ m{^[\x22\x27]}) {
+      $self->{onerror}->(node => $attr,
+                         value => $content,
+                         type => 'refresh:bad url',
+                         level => 'm');
+    }
+
+    ## URL [URL]
+    require Web::URL::Checker;
+    my $chk = Web::URL::Checker->new_from_string ($content);
+    $chk->onerror (sub {
+      $self->{onerror}->(value => $content, @_, node => $attr);
+    });
+    $chk->check_iri_reference; # XXX
+    $self->{has_uri_attr} = 1; ## NOTE: One of "attributes with URLs".
+  } else {
+    $self->{onerror}->(node => $attr,
+                       type => 'refresh:syntax error',
+                       level => 'm');
+  }
+}; # <meta http-equiv=refresh>
+$HTTPEquivChecker->{'x-ua-compatible'} = sub {
+  my ($self, $attr) = @_;
+  $self->{onerror}->(node => $attr,
+                     type => 'invalid attribute value',
+                     level => 'm')
+      unless $attr->value eq 'IE=edge';
+}; # <meta http-equiv=x-ua-compatible>
+## BCP 47 language tag [OBSVOCAB]
+$HTTPEquivChecker->{'content-language'} = $CheckerByType->{'language tag'};
+## XXX set-cookie-string [OBSVOCAB]
+#$HTTPEquivChecker->{'set-cookie'}
+
 $Element->{+HTML_NS}->{meta} = {
   %HTMLEmptyChecker,
   check_attrs2 => sub {
@@ -4142,37 +4184,7 @@ $Element->{+HTML_NS}->{meta} = {
         $self->{flag}->{has_http_equiv}->{$keyword} = 1;
       }
 
-      # XXX
-      if ($keyword eq 'content-type' or
-          $keyword eq 'default-style' or
-          $keyword eq 'refresh' or
-          $keyword eq 'pics-label' or
-          $keyword eq 'x-ua-compatible') {
-        #
-      } elsif ($keyword eq 'content-language' or
-               $keyword eq 'set-cookie') {
-        $self->{onerror}->(node => $http_equiv_attr,
-                           type => 'enumerated:non-conforming',
-                           level => 'm');
-      } else {
-        $self->{onerror}->(node => $http_equiv_attr,
-                           type => 'enumerated:invalid',
-                           level => 'm');
-      }
-
-      # XXX
-      if ($keyword eq 'content-language') {
-        if ($content_attr) {
-          ## BCP 47 language tag [OBSVOCAB]
-          require Web::LangTag;
-          my $lang = Web::LangTag->new;
-          $lang->onerror (sub {
-            $self->{onerror}->(@_, node => $content_attr);
-          });
-          my $parsed = $lang->parse_tag ($content_attr->value);
-          $lang->check_parsed_tag ($parsed);
-        }
-      } elsif ($keyword eq 'content-type') {
+      if ($keyword eq 'content-type') {
         if ($content_attr) {
           if ($content_attr->value =~ m{\A[Tt][Ee][Xx][Tt]/[Hh][Tt][Mm][Ll];[\x09\x0A\x0C\x0D\x20]*[Cc][Hh][Aa][Rr][Ss][Ee][Tt]=(.+)\z}s) {
             $charset = $1;
@@ -4187,51 +4199,32 @@ $Element->{+HTML_NS}->{meta} = {
                              type => 'in XML:charset',
                              level => 'm');
         }
-      } elsif ($keyword eq 'default-style') {
-        if ($content_attr) {
-          $self->{onerror}->(node => $content_attr,
-                             type => 'empty style sheet title',
-                             level => 'w')
-              if $content_attr->value eq '';
-        }
-      } elsif ($keyword eq 'refresh') {
-        if ($content_attr) {
-          my $content = $content_attr->value;
-          if ($content =~ /\A[0-9]+\z/) { # Non-negative integer.
-            #
-          } elsif ($content =~ s/\A[0-9]+;[\x09\x0A\x0C\x0D\x20]+[Uu][Rr][Ll]=//) { # Non-negative integer, ";", space characters, "URL" ASCII case-insensitive, "="
-            if ($content =~ m{^[\x22\x27]}) {
-              $self->{onerror}->(node => $content_attr,
-                                 value => $content,
-                                 type => 'refresh:bad url',
-                                 level => 'm');
-            }
+      }
 
-            ## URL [URL]
-            require Web::URL::Checker;
-            my $chk = Web::URL::Checker->new_from_string ($content);
-            $chk->onerror (sub {
-              $self->{onerror}->(value => $content, @_, node => $content_attr);
-            });
-            $chk->check_iri_reference; # XXX
-            $self->{has_uri_attr} = 1; ## NOTE: One of "attributes with URLs".
-          } else {
-            $self->{onerror}->(node => $content_attr,
-                               type => 'refresh:syntax error',
-                               level => 'm');
-          }
+      my $def = $Web::HTML::Validator::_Defs->{http_equiv}->{$keyword} || {};
+      my $content_checker = $HTTPEquivChecker->{$keyword};
+      if ($def->{conforming}) {
+        $content_checker ||= sub {
+          $self->{onerror}->(node => $http_equiv_attr,
+                             type => 'unknown http-equiv',
+                             value => $keyword,
+                             level => 'u');
+        };
+      } else {
+        if (($def->{spec} || '') eq 'HTML') {
+          $self->{onerror}->(node => $http_equiv_attr,
+                             type => 'enumerated:non-conforming',
+                             level => 'm');
+        } else {
+          $self->{onerror}->(node => $http_equiv_attr,
+                             type => 'enumerated:invalid',
+                             level => 'm');
         }
-      } elsif ($keyword eq 'set-cookie') {
-        ## XXX set-cookie-string [OBSVOCAB]
-      } elsif ($keyword eq 'x-ua-compatible') {
-        if ($content_attr) {
-          my $content = $content_attr->value;
-          $self->{onerror}->(node => $content_attr,
-                             type => 'invalid attribute value',
-                             level => 'm')
-              unless $content eq 'IE=edge';
-        }
-      } # $keyword
+      }
+
+      if ($content_attr) {
+        $content_checker->($self, $content_attr) if defined $content_checker;
+      }
     } # $http_equiv_attr
 
     if (defined $charset) {
