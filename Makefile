@@ -127,6 +127,12 @@ local/xml-tokenizer-expanded.json:
 local/xml-tree-constructor-expanded.json:
 	mkdir -p local
 	$(WGET) -O $@ https://raw.githubusercontent.com/manakai/data-web-defs/master/data/xml-tree-constructor-expanded.json
+local/html-metadata.json:
+	mkdir -p local
+	$(WGET) -O $@ https://raw.githubusercontent.com/manakai/data-web-defs/master/data/html-metadata.json
+local/headers.json:
+	mkdir -p local
+	$(WGET) -O $@ https://raw.githubusercontent.com/manakai/data-web-defs/master/data/headers.json
 
 local/maps.json:
 	mkdir -p local
@@ -159,6 +165,7 @@ lib/Web/HTML/_SyntaxDefs.pm: local/elements.json local/isindex-prompt.json \
 lib/Web/HTML/Validator/_Defs.pm: local/elements.json local/microdata.json \
     local/aria.json local/aria-html-map.json local/bin/pmbp.pl \
     local/rdf.json local/xml-datatypes.json local/ogp.json \
+    local/html-metadata.json local/headers.json \
     bin/generate-validator-defs.pl $(JSON_PS)
 	mkdir -p lib/Web/HTML/Validator
 	perl local/bin/pmbp.pl --install-module Path::Tiny \

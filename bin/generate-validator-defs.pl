@@ -97,6 +97,41 @@ for my $role (keys %{$data->{roles}}) {
 $data->{rdf_vocab} = $rdf->{rdf_vocab};
 $data->{xml_datatypes} = $xml_datatypes->{datatypes};
 
+{
+  my $json = json 'html-metadata';
+  $data->{link_types} = $json->{link_types};
+  $data->{metadata_names} = $json->{metadata_names};
+  for (values %{$data->{link_types}}, values %{$data->{metadata_names}}) {
+    delete $_->{name};
+    delete $_->{spec};
+    delete $_->{id};
+    delete $_->{url};
+    delete $_->{desc};
+    delete $_->{microformats_wiki_synonyms_html};
+    delete $_->{microformats_wiki_spec_link_label};
+    delete $_->{microformats_wiki_spec_link_html};
+    delete $_->{microformats_wiki_desc_html};
+    delete $_->{microformats_wiki_url};
+    delete $_->{whatwg_wiki_spec_link_label};
+    delete $_->{whatwg_wiki_desc_html};
+    delete $_->{whatwg_wiki_spec_link_html};
+    delete $_->{whatwg_wiki_synonyms_html};
+    delete $_->{whatwg_wiki_failure_reason};
+  }
+}
+
+{
+  my $json = json 'headers';
+  for my $key (keys %{$json->{headers}}) {
+    next unless $json->{headers}->{$key}->{http_equiv};
+    my $d = $data->{http_equiv}->{$key} = {%{$json->{headers}->{$key}->{http_equiv}},
+                                           %{$json->{headers}->{$key}}};
+    delete $d->{$_} for qw(spec id url name http_equiv http sip rtsp fcast s-http
+                           mail netnews icap ssdp mime
+                           enumerated_attr_state_name multiple);
+  }
+}
+
 $Data::Dumper::Sortkeys = 1;
 $Data::Dumper::Useqq = 1;
 my $pm = Dumper $data;
