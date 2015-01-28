@@ -4362,6 +4362,7 @@ sub _link_types ($$%) {
   my @link_type;
   my %word;
   if ($args{multiple}) {
+    die if $args{case_sensitive};
     ## HTML |rel| attribute - set of space separated tokens, whose
     ## allowed values are defined by the section on link types
 
@@ -4382,6 +4383,7 @@ sub _link_types ($$%) {
       }
     } # $word
   } else { # single
+    die unless $args{case_sensitive};
     push @link_type, $attr->value;
     $word{$link_type[-1]} = 1;
   }
@@ -4404,6 +4406,14 @@ sub _link_types ($$%) {
                            type => 'link type:bad context',
                            level => 'm');
       }
+    } elsif ($link_type =~ /:/ and $args{extension_by_url}) { # for Web Linking
+      ## NOTE: There MUST NOT be any white space [ATOM].
+      require Web::URL::Checker;
+      my $chk = Web::URL::Checker->new_from_string ($link_type);
+      $chk->onerror (sub {
+        $self->{onerror}->(@_, node => $attr);
+      });
+      $chk->check_iri; # XXX URL Standard
     } else {
       if ($effect eq 'hyperlink' or $effect eq '1') {
         $is_hyperlink = 1;
@@ -8944,22 +8954,10 @@ $Element->{+ATOM_NS}->{category}->{check_attrs2} = sub {
 
 $ElementAttrChecker->{(ATOM_NS)}->{link}->{''}->{rel} = sub {
   my ($self, $attr) = @_;
-  my $value = $attr->value;
-  if ($value =~ /\A(?>[0-9A-Za-z._~!\$&'()*+,;=\x{A0}-\x{D7FF}\x{F900}-\x{FDCF}\x{FDF0}-\x{FFEF}\x{10000}-\x{1FFFD}\x{20000}-\x{2FFFD}\x{30000}-\x{3FFFD}\x{40000}-\x{4FFFD}\x{50000}-\x{5FFFD}\x{60000}-\x{6FFFD}\x{70000}-\x{7FFFD}\x{80000}-\x{8FFFD}\x{90000}-\x{9FFFD}\x{A0000}-\x{AFFFD}\x{B0000}-\x{BFFFD}\x{C0000}-\x{CFFFD}\x{D0000}-\x{DFFFD}\x{E1000}-\x{EFFFD}-]|%[0-9A-Fa-f][0-9A-Fa-f]|\@)+\z/) {
-    $value = LINK_REL . $value;
-  }
+  $self->_link_types ($attr, extension_by_url => 1, context => 'atom',
+                      case_sensitive => 1);
 
-  ## NOTE: There MUST NOT be any white space.
-  require Web::URL::Checker;
-  my $chk = Web::URL::Checker->new_from_string ($value);
-  $chk->onerror (sub {
-    $self->{onerror}->(@_, node => $attr);
-  });
-  $chk->check_iri; # XXX URL Standard
-
-  ## TODO: Warn if unregistered
-
-  ## TODO: rel=license [RFC 4946]
+  ## XXX: rel=license [RFC 4946]
   ## MUST NOT multiple rel=license with same href="",type="" pairs
   ## href="" SHOULD be dereferencable
   ## title="" SHOULD be there if multiple rel=license
@@ -8968,7 +8966,7 @@ $ElementAttrChecker->{(ATOM_NS)}->{link}->{''}->{rel} = sub {
 
 $ElementAttrChecker->{(ATOM03_NS)}->{link}->{''}->{rel} = sub {
   my ($self, $attr) = @_;
-  # XXX
+  $self->_link_types ($attr, context => 'atom03', case_sensitive => 1);
 }; # <atom03:link rel="">
 
 $Element->{(ATOM_NS)}->{link}->{check_attrs2} = sub {
