@@ -4367,9 +4367,6 @@ sub _link_types ($$%) {
 
     my $value = $attr->value;
 
-    ## "shortcut icon" has special restriction [HTML]
-    $value =~ s/(?:\G|[\x09\x0A\x0C\x0D\x20])[Ss][Hh][Oo][Rr][Tt][Cc][Uu][Tt]\x20[Ii][Cc][Oo][Nn](?:$|[\x09\x0A\x0C\x0D\x20])/ icon /gs;
-
     for my $word (grep {length $_} split /[\x09\x0A\x0C\x0D\x20]+/, $value) {
       $word =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
       unless ($word{$word}) {
@@ -4395,11 +4392,7 @@ sub _link_types ($$%) {
     my $def = $Web::HTML::Validator::_Defs->{link_types}->{$link_type} || {};
     my $effect = $def->{$args{context}} || 'not allowed';
     if ($def->{conforming}) {
-      if ($link_type eq 'shortcut') {
-        $self->{onerror}->(node => $attr, value => $link_type,
-                           type => 'link type:bad context',
-                           level => 'm');
-      } elsif ($effect eq 'hyperlink' or $effect eq '1') {
+      if ($effect eq 'hyperlink' or $effect eq '1') {
         ## |alternate stylseheet| has special semantics [HTML]
         $is_hyperlink = 1 unless $link_type eq 'alternate' and $word{stylesheet};
       } elsif ($effect eq 'external resource') {
@@ -4434,6 +4427,14 @@ sub _link_types ($$%) {
       }
     }
   } # $link_type
+
+  ## "shortcut icon" has special restriction [HTML]
+  if ($word{shortcut} and
+      not $attr->value =~ /\A[Ss][Hh][Oo][Rr][Tt][Cc][Uu][Tt]\x20[Ii][Cc][Oo][Nn]\z/) {
+    $self->{onerror}->(node => $attr, value => 'shortcut',
+                       type => 'link type:bad context',
+                       level => 'm');
+  }
 
   ## XXX rel=pingback has special syntax restrictions and requirements
   ## on interaction with X-Pingback: header [PINGBACK]
