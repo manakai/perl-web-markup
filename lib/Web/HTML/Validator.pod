@@ -294,6 +294,10 @@ non-conforming link type.
 The Atom Syndication Format 0.3 (PRE-DRAFT)
 <https://github.com/mnot/I-D/blob/master/Published/atom-format/draft-nottingham-atom-format-02.xml>.
 
+The C<rel> attribute value MUST be a link type or link relation for
+which semantics in Atom 0.3 document is specified.  It MUST NOT be a
+non-conforming link type.
+
 =item ATOMTHREADS
 
 Atom Threading Extension <http://tools.ietf.org/html/rfc4685>.
@@ -374,11 +378,11 @@ Open Graph protocol
 Social Feedback - GREE Developer Center
 <https://docs.developer.gree.net/ja/platform/connect/socialfeedback>.
 
-=item REL5924
+=item HTMLPRE5924
 
 HTML Standard Tracker <https://html5.org/r/5924>.
 
-=item REL5925
+=item HTMLPRE5925
 
 HTML Standard Tracker <https://html5.org/r/5925>.
 
