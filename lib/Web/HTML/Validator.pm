@@ -4097,6 +4097,9 @@ $HTTPEquivChecker->{'content-language'} = $CheckerByType->{'language tag'};
 ## XXX set-cookie-string [OBSVOCAB]
 #$HTTPEquivChecker->{'set-cookie'}
 
+my $CheckerByMetadataName = { };
+$CheckerByMetadataName->{keywords} = sub { };
+
 $Element->{+HTML_NS}->{meta} = {
   %HTMLEmptyChecker,
   check_attrs2 => sub {
@@ -4162,13 +4165,42 @@ $Element->{+HTML_NS}->{meta} = {
       $name =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
       my $value = $content_attr ? $content_attr->value : '';
 
-      # XXX need to be updated
-      Web::HTML::Validator::HTML::Metadata->check
-          (name => $name,
-           name_attr => $name_attr,
-           content => $value,
-           content_attr => $content_attr || $el,
-           checker => $self);
+      my $def = $Web::HTML::Validator::_Defs->{metadata_names}->{$name} || {};
+      my $checker = $CheckerByMetadataName->{$name} || $CheckerByType->{$def->{value_type} || ''};
+      if ($def->{conforming}) {
+        $checker ||= sub {
+          $self->{onerror}->(node => $name_attr,
+                             type => 'unknown metadata name',
+                             value => $name,
+                             level => 'u');
+        };
+      } else {
+        if (defined $def->{whatwg_wiki_status} and
+            ($def->{whatwg_wiki_status} eq 'unendorsed' or
+             $def->{whatwg_wiki_status} eq 'incomplete proposal')) {
+          $self->{onerror}->(type => 'metadata:discontinued',
+                             text => $name,
+                             node => $name_attr,
+                             level => 'm');
+        } else {
+          $self->{onerror}->(type => 'metadata:not registered',
+                             text => $name,
+                             node => $name_attr,
+                             level => 'm');
+        }
+      }
+      $checker->($self, $content_attr) if defined $content_attr and defined $checker;
+
+      if ($def->{unique} or $def->{unique_per_lang}) { # XXX lang="" support
+        unless ($self->{flag}->{html_metadata}->{$name}) {
+          $self->{flag}->{html_metadata}->{$name} = 1;
+        } else {
+          $self->{onerror}->(type => 'metadata:duplicate',
+                             text => $name,
+                             node => $name_attr,
+                             level => 'm');
+        }
+      }
     } # name=""
 
     if ($http_equiv_attr) {
@@ -10122,114 +10154,6 @@ sub check_node ($$) {
   #return
   delete $self->{return}; # XXX
 } # check_node
-
-# XXX
-package Web::HTML::Validator::HTML::Metadata;
-use strict;
-use warnings;
-our $VERSION = '1.0';
-
-use constant STATUS_NOT_REGISTERED => 0;
-use constant STATUS_PROPOSED => 1;
-use constant STATUS_RATIFIED => 2;
-use constant STATUS_DISCONTINUED => 3;
-use constant STATUS_STANDARD => 4;
-
-our $Defs;
-
-$Defs->{'application-name'} = {
-  unique => 1,
-  status => STATUS_STANDARD,
-};
-
-$Defs->{author} = {
-  unique => 0,
-  status => STATUS_STANDARD,
-};
-
-$Defs->{description} = {
-  unique => 1,
-  status => STATUS_STANDARD,
-};
-
-$Defs->{generator} = {
-  unique => 0,
-  status => STATUS_STANDARD,
-};
-
-$Defs->{keywords} = {
-  unique => 0,
-  status => STATUS_PROPOSED,
-};
-
-$Defs->{cache} = {
-  unique => 0,
-  status => STATUS_DISCONTINUED,
-};
-
-# XXX Implement all values listed in WHATWG Wiki
-# <http://wiki.whatwg.org/wiki/MetaExtensions>
-
-$Defs->{viewport} = {
-  unique => 1,
-  status => STATUS_STANDARD,
-};
-
-our $DefaultDef = {
-  unique => 0,
-  status => STATUS_NOT_REGISTERED,
-};
-
-sub check ($@) {
-  my ($class, %args) = @_;
-  
-  my $def = $Defs->{$args{name}} || $DefaultDef;
-
-  ## XXX name pattern match (e.g. /^dc\..+/)
-
-  ## --- Name conformance ---
-
-  ## XXX synonyms (necessary to support some of wiki-documented
-  ## metadata names
-
-  if ($def->{status} == STATUS_STANDARD or $def->{status} == STATUS_RATIFIED) {
-    #
-  } elsif ($def->{status} == STATUS_PROPOSED) {
-    $args{checker}->{onerror}->(type => 'metadata:proposed', # XXX TODOC
-                                text => $args{name},
-                                node => $args{name_attr},
-                                level => 'w');
-  } elsif ($def->{status} == STATUS_DISCONTINUED) {
-    $args{checker}->{onerror}->(type => 'metadata:discontinued', # XXX TODOC
-                                text => $args{name},
-                                node => $args{name_attr},
-                                level => 's');
-  } else {
-    $args{checker}->{onerror}->(type => 'metadata:not registered', # XXX TODOC
-                                text => $args{name},
-                                node => $args{name_attr},
-                                level => 'm');
-  }
-
-  ## --- Metadata uniqueness ---
-
-  if ($def->{unique}) {
-    unless ($args{checker}->{flag}->{html_metadata}->{$args{name}}) {
-      $args{checker}->{flag}->{html_metadata}->{$args{name}} = 1;
-    } else {
-      $args{checker}->{onerror}->(type => 'metadata:duplicate', # XXX TODOC
-                                  text => $args{name},
-                                  node => $args{name_attr},
-                                  level => 'm');
-    }
-  }
-
-  ## --- Value conformance ---
-
-  ## XXX implement value conformance checking (not necessary for
-  ## standard metadata names)
-
-} # check
 
 $Web::HTML::Validator::LinkType = {
           'accessibility' => {
