@@ -2695,134 +2695,6 @@ my $GetHTMLEnumeratedAttrChecker = sub {
   };
 }; # $GetHTMLEnumeratedAttrChecker
 
-## |rel| attribute (set of space separated tokens,
-## whose allowed values are defined by the section on link types)
-my $HTMLLinkTypesAttrChecker = sub {
-  my ($a_or_area, $todo, $self, $attr, $item, $element_state) = @_;
-
-  my $value = $attr->value;
-  $value =~ s/(?:\G|[\x09\x0A\x0C\x0D\x20])[Ss][Hh][Oo][Rr][Tt][Cc][Uu][Tt]\x20[Ii][Cc][Oo][Nn](?:$|[\x09\x0A\x0C\x0D\x20])/ icon /gs;
-
-  my %word;
-  for my $word (grep {length $_}
-                split /[\x09\x0A\x0C\x0D\x20]+/, $value) {
-    $word =~ tr/A-Z/a-z/ unless $word =~ /:/; ## ASCII case-insensitive.
-
-    unless ($word{$word}) {
-      $word{$word} = 1;
-    } elsif ($word eq 'up') {
-      #
-    } else {
-      $self->{onerror}->(node => $attr,
-                         type => 'duplicate token', value => $word,
-                         level => 'm');
-    }
-  }
-
-  ## NOTE: Though there is no explicit "MUST NOT" for undefined values,
-  ## "MAY"s and "only ... MAY" restrict non-standard non-registered
-  ## values to be used conformingly.
-
-  # XXX This need to be updated.
-
-  my $is_hyperlink;
-  my $is_resource;
-  our $LinkType;
-  for my $word (keys %word) {
-    my $def = $LinkType->{$word};
-    if (defined $def) {
-      if ($def->{status} eq 'accepted') {
-        if (defined $def->{effect}->[$a_or_area]) {
-          #
-        } else {
-          $self->{onerror}->(node => $attr,
-                             type => 'link type:bad context',
-                             value => $word,
-                             level => 'm');
-        }
-      } elsif ($def->{status} eq 'proposal') {
-        $self->{onerror}->(node => $attr,
-                           type => 'link type:proposed',
-                           value => $word,
-                           level => 's');
-        if (defined $def->{effect}->[$a_or_area]) {
-          #
-        } else {
-          $self->{onerror}->(node => $attr,
-                             type => 'link type:bad context',
-                             value => $word,
-                             level => 'm');
-        }
-      } else { # rejected or synonym
-        $self->{onerror}->(node => $attr,
-                           type => 'link type:non-conforming',
-                           value => $word,
-                           level => 'm');
-      }
-      if (defined $def->{effect}->[$a_or_area]) {
-        if ($word eq 'alternate') {
-          #
-        } elsif ($def->{effect}->[$a_or_area] eq 'hyperlink') {
-          $is_hyperlink = 1;
-        }
-      }
-      if ($def->{unique}) {
-        unless ($self->{has_link_type}->{$word}) {
-          $self->{has_link_type}->{$word} = 1;
-        } else {
-          $self->{onerror}->(node => $attr,
-                             type => 'link type:duplicate',
-                             value => $word,
-                             level => 'm');
-        }
-      }
-
-      if (defined $def->{effect}->[$a_or_area] and $word ne 'alternate') {
-        $is_hyperlink = 1
-            if $def->{effect}->[$a_or_area] eq 'hyperlink' or
-               $def->{effect}->[$a_or_area] eq 'annotation';
-        $is_resource = 1 if $def->{effect}->[$a_or_area] eq 'external resource';
-      }
-    } else {
-      $self->{onerror}->(node => $attr,
-                         type => 'unknown link type',
-                         value => $word,
-                         level => 'u');
-    }
-
-    ## XXX For registered link types, this check should be skipped
-    if ($word =~ /:/) {
-      require Web::URL::Checker;
-      my $chk = Web::URL::Checker->new_from_string ($word);
-      $chk->onerror (sub {
-        $self->{onerror}->(value => $word, @_, node => $attr);
-      });
-      $chk->check_iri_reference; # XXX absolute URL
-    }
-  }
-  $is_hyperlink = 1 if $word{alternate} and not $word{stylesheet};
-  ## TODO: The Pingback 1.0 specification, which is referenced by HTML5,
-  ## says that using both X-Pingback: header field and HTML
-  ## <link rel=pingback> is deprecated and if both appears they
-  ## SHOULD contain exactly the same value.
-  ## ISSUE: Pingback 1.0 specification defines the exact representation
-  ## of its link element, which cannot be tested by the current arch.
-  ## ISSUE: Pingback 1.0 specification says that the document MUST NOT
-  ## include any string that matches to the pattern for the rel=pingback link,
-  ## which again inpossible to test.
-  ## ISSUE: rel=pingback href MUST NOT include entities other than predefined 4.
-
-  ## NOTE: <link rel="up index"><link rel="up up index"> is not an error.
-  ## NOTE: We can't check "If the page is part of multiple hierarchies,
-  ## then they SHOULD be described in different paragraphs.".
-
-  $todo->{has_hyperlink_link_type} = 1 if $is_hyperlink;
-  $element_state->{link_rel} = \%word;
-
-  $self->{flag}->{node_is_hyperlink}->{refaddr $item->{node}} = $item->{node}
-      if $is_hyperlink;
-}; # $HTMLLinkTypesAttrChecker
-
 my $GetHTMLNonNegativeIntegerAttrChecker = sub {
   my $range_check = shift;
   return sub {
@@ -3998,11 +3870,10 @@ $Element->{+HTML_NS}->{link} = {
     my ($self, $item, $element_state) = @_;
 
     my $rel_attr = $item->{node}->get_attribute_node_ns (undef, 'rel');
-    $HTMLLinkTypesAttrChecker->(0, $item, $self, $rel_attr, $item, $element_state)
-        if $rel_attr;
+    my $rel = $rel_attr ? $self->_link_types ($rel_attr, multiple => 1, context => 'html_link') : {};
 
     if ($item->{node}->has_attribute_ns (undef, 'href')) {
-      $self->{has_hyperlink_element} = 1 if $item->{has_hyperlink_link_type};
+      $self->{has_hyperlink_element} = 1 if $rel->{is_hyperlink};
     } else {
       $self->{onerror}->(node => $item->{node},
                          type => 'attribute missing',
@@ -4030,14 +3901,13 @@ $Element->{+HTML_NS}->{link} = {
     }
     
     if ($item->{node}->has_attribute_ns (undef, 'sizes') and
-        not $element_state->{link_rel}->{icon}) {
+        not $rel->{link_types}->{icon}) {
       $self->{onerror}->(node => $item->{node}->get_attribute_node_ns (undef, 'sizes'),
                          type => 'attribute not allowed',
                          level => 'm');
     }
 
-    if ($element_state->{link_rel}->{alternate} and
-        $element_state->{link_rel}->{stylesheet}) {
+    if ($rel->{link_types}->{alternate} and $rel->{link_types}->{stylesheet}) {
       my $title_attr = $item->{node}->get_attribute_node_ns (undef, 'title');
       unless ($title_attr) {
         $element_state->{require_title} = 'm';
@@ -4048,7 +3918,14 @@ $Element->{+HTML_NS}->{link} = {
       }
     }
 
-    # XXX warn if crossorigin="" is set but external resource link
+    unless ($rel->{is_external_resource_link}) {
+      my $co_attr = $item->{node}->get_attribute_node_ns (undef, 'crossorigin');
+      if ($co_attr) {
+        $self->{onerror}->(node => $co_attr,
+                           type => 'non external resource crossorigin',
+                           level => 'w');
+      }
+    }
   }, # check_attrs2
 }; # link
 
@@ -4478,6 +4355,95 @@ $Element->{+HTML_NS}->{style} = {
     $AnyChecker{check_end}->(@_);
   },
 }; # style
+
+sub _link_types ($$%) {
+  my ($self, $attr, %args) = @_;
+
+  my @link_type;
+  my %word;
+  if ($args{multiple}) {
+    ## HTML |rel| attribute - set of space separated tokens, whose
+    ## allowed values are defined by the section on link types
+
+    my $value = $attr->value;
+
+    ## "shortcut icon" has special restriction [HTML]
+    $value =~ s/(?:\G|[\x09\x0A\x0C\x0D\x20])[Ss][Hh][Oo][Rr][Tt][Cc][Uu][Tt]\x20[Ii][Cc][Oo][Nn](?:$|[\x09\x0A\x0C\x0D\x20])/ icon /gs;
+
+    for my $word (grep {length $_} split /[\x09\x0A\x0C\x0D\x20]+/, $value) {
+      $word =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
+      unless ($word{$word}) {
+        $word{$word} = 1;
+        push @link_type, $word;
+      } elsif ($word eq 'up') {
+        ## |up up| has special semantics [HTMLPRE5924]
+        #
+      } else {
+        $self->{onerror}->(node => $attr, value => $word,
+                           type => 'duplicate token',
+                           level => 'm');
+      }
+    } # $word
+  } else { # single
+    push @link_type, $attr->value;
+    $word{$link_type[-1]} = 1;
+  }
+
+  my $is_hyperlink;
+  my $is_external_resource_link;
+  for my $link_type (@link_type) {
+    my $def = $Web::HTML::Validator::_Defs->{link_types}->{$link_type} || {};
+    my $effect = $def->{$args{context}} || 'not allowed';
+    if ($def->{conforming}) {
+      if ($link_type eq 'shortcut') {
+        $self->{onerror}->(node => $attr, value => $link_type,
+                           type => 'link type:bad context',
+                           level => 'm');
+      } elsif ($effect eq 'hyperlink' or $effect eq '1') {
+        ## |alternate stylseheet| has special semantics [HTML]
+        $is_hyperlink = 1 unless $link_type eq 'alternate' and $word{stylesheet};
+      } elsif ($effect eq 'external resource') {
+        $is_external_resource_link = 1;
+      } elsif ($effect eq 'annotation') {
+        #
+      } else {
+        $self->{onerror}->(node => $attr, value => $link_type,
+                           type => 'link type:bad context',
+                           level => 'm');
+      }
+    } else {
+      if ($effect eq 'hyperlink' or $effect eq '1') {
+        $is_hyperlink = 1;
+      } elsif ($effect eq 'external resource') {
+        $is_external_resource_link = 1;
+      }
+      $self->{onerror}->(node => $attr, value => $link_type,
+                         type => 'link type:non-conforming',
+                         level => 'm',
+                         preferred => $def->{preferred}); # or undef
+    }
+
+    ## Global uniqueness
+    if ($link_type eq 'pingback') {
+      unless ($self->{has_link_type}->{$link_type}) {
+        $self->{has_link_type}->{$link_type} = 1;
+      } else {
+        $self->{onerror}->(node => $attr, value => $link_type,
+                           type => 'link type:duplicate',
+                           level => 'm');
+      }
+    }
+  } # $link_type
+
+  ## XXX rel=pingback has special syntax restrictions and requirements
+  ## on interaction with X-Pingback: header [PINGBACK]
+
+  $self->{flag}->{node_is_hyperlink}->{refaddr $attr->owner_element} = $attr->owner_element
+      if $is_hyperlink;
+  return {is_hyperlink => $is_hyperlink,
+          is_external_resource_link => $is_external_resource_link,
+          link_types => \%word};
+} # _link_types
 
 # ---- Scripting ----
 
@@ -5039,16 +5005,15 @@ $Element->{+HTML_NS}->{a} = {
           }, # memoryname
           name => $NameAttrChecker,
     rel => sub {}, ## checked in check_attrs2
-          viblength => $GetHTMLNonNegativeIntegerAttrChecker->(sub {
-            1 <= $_[0] and $_[0] <= 9;
-          }),
+    viblength => $GetHTMLNonNegativeIntegerAttrChecker->(sub {
+      1 <= $_[0] and $_[0] <= 9;
+    }),
   }), # check_attrs
   check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
 
     my $rel_attr = $item->{node}->get_attribute_node_ns (undef, 'rel');
-    $HTMLLinkTypesAttrChecker->(1, $item, $self, $rel_attr, $item, $element_state)
-        if $rel_attr;
+    $self->_link_types ($rel_attr, multiple => 1, context => 'html_a') if $rel_attr;
 
     my %attr;
     for my $attr (@{$item->{node}->attributes}) {
@@ -6327,8 +6292,7 @@ $Element->{+HTML_NS}->{area} = {
     my ($self, $item, $element_state) = @_;
 
     my $rel_attr = $item->{node}->get_attribute_node_ns (undef, 'rel');
-    $HTMLLinkTypesAttrChecker->(1, $item, $self, $rel_attr, $item, $element_state)
-        if $rel_attr;
+    $self->_link_types ($rel_attr, multiple => 1, context => 'html_a') if $rel_attr;
 
     my %attr;
     for my $attr (@{$item->{node}->attributes}) {
@@ -10154,913 +10118,6 @@ sub check_node ($$) {
   #return
   delete $self->{return}; # XXX
 } # check_node
-
-$Web::HTML::Validator::LinkType = {
-          'accessibility' => {
-                               'effect' => [
-                                             'hyperlink',
-                                             'hyperlink'
-                                           ],
-                               'status' => 'proposal'
-                             },
-          'acquaintance' => {
-                              'effect' => [
-                                            'hyperlink',
-                                            'hyperlink'
-                                          ],
-                              'status' => 'accepted'
-                            },
-          'admin' => {
-                       'effect' => [
-                                     'hyperlink',
-                                     'hyperlink'
-                                   ],
-                       'status' => 'proposal'
-                     },
-          'ajax' => {
-                      'effect' => [
-                                    undef,
-                                    'hyperlink'
-                                  ],
-                      'status' => 'proposal'
-                    },
-          'alternate' => {
-                           'effect' => [
-                                         'hyperlink',
-                                         'hyperlink'
-                                       ],
-                           'status' => 'accepted'
-                         },
-          'answer' => {
-                        'effect' => [
-                                      'hyperlink',
-                                      'hyperlink'
-                                    ],
-                        'status' => 'proposal'
-                      },
-          'appendix' => {
-                          'effect' => [
-                                        'hyperlink',
-                                        'hyperlink'
-                                      ],
-                          'status' => 'synonym'
-                        },
-          'application-manifest' => {
-                                      'effect' => [
-                                                    'external resource',
-                                                    undef
-                                                  ],
-                                      'status' => 'proposal'
-                                    },
-          'archive' => {
-                         'effect' => [
-                                       'hyperlink',
-                                       'hyperlink'
-                                     ],
-                         'status' => 'synonym'
-                       },
-          'archives' => {
-                          'effect' => [
-                                        'hyperlink',
-                                        'hyperlink'
-                                      ],
-                          'status' => 'accepted'
-                        },
-          'author' => {
-                        'effect' => [
-                                      'hyperlink',
-                                      'hyperlink'
-                                    ],
-                        'status' => 'accepted'
-                      },
-          'begin' => {
-                       'effect' => [
-                                     'hyperlink',
-                                     'hyperlink'
-                                   ],
-                       'status' => 'synonym'
-                     },
-          'bookmark' => {
-                          'effect' => [
-                                        undef,
-                                        'hyperlink'
-                                      ],
-                          'status' => 'accepted'
-                        },
-          'canonical' => {
-                           'effect' => [
-                                         'hyperlink',
-                                         undef
-                                       ],
-                           'status' => 'proposal'
-                         },
-          'canonical-domain' => {
-                                  'effect' => [
-                                                'external resource',
-                                                undef
-                                              ],
-                                  'status' => 'proposal'
-                                },
-          'canonical-first' => {
-                                 'effect' => [
-                                               'external resource',
-                                               'hyperlink'
-                                             ],
-                                 'status' => 'proposal'
-                               },
-          'canonical-human' => {
-                                 'effect' => [
-                                               'external resource',
-                                               'hyperlink'
-                                             ],
-                                 'status' => 'proposal'
-                               },
-          'canonical-organization' => {
-                                        'effect' => [
-                                                      'external resource',
-                                                      'hyperlink'
-                                                    ],
-                                        'status' => 'proposal'
-                                      },
-          'canonical-wwwnone' => {
-                                   'effect' => [
-                                                 'external resource',
-                                                 'hyperlink'
-                                               ],
-                                   'status' => 'proposal'
-                                 },
-          'chapter' => {
-                         'effect' => [
-                                       'hyperlink',
-                                       'hyperlink'
-                                     ],
-                         'status' => 'proposal'
-                       },
-          'child' => {
-                       'effect' => [
-                                     'hyperlink',
-                                     'hyperlink'
-                                   ],
-                       'status' => 'accepted'
-                     },
-          'co-resident' => {
-                             'effect' => [
-                                           'hyperlink',
-                                           'hyperlink'
-                                         ],
-                             'status' => 'accepted'
-                           },
-          'co-worker' => {
-                           'effect' => [
-                                         'hyperlink',
-                                         'hyperlink'
-                                       ],
-                           'status' => 'accepted'
-                         },
-          'colleague' => {
-                           'effect' => [
-                                         'hyperlink',
-                                         'hyperlink'
-                                       ],
-                           'status' => 'accepted'
-                         },
-          'comment' => {
-                         'effect' => [
-                                       'hyperlink',
-                                       'hyperlink'
-                                     ],
-                         'status' => 'synonym'
-                       },
-          'contact' => {
-                         'effect' => [
-                                       'hyperlink',
-                                       'hyperlink'
-                                     ],
-                         'status' => 'accepted'
-                       },
-          'content-negotiation' => {
-                                     'effect' => [
-                                                   'external resource',
-                                                   undef
-                                                 ],
-                                     'status' => 'synonym'
-                                   },
-          'contents' => {
-                          'effect' => [
-                                        'hyperlink',
-                                        'hyperlink'
-                                      ],
-                          'status' => 'synonym'
-                        },
-          'contributor' => {
-                             'effect' => [
-                                           'hyperlink',
-                                           'hyperlink'
-                                         ],
-                             'status' => 'proposal'
-                           },
-          'copyright' => {
-                           'effect' => [
-                                         'hyperlink',
-                                         'hyperlink'
-                                       ],
-                           'status' => 'synonym'
-                         },
-          'crush' => {
-                       'effect' => [
-                                     'hyperlink',
-                                     'hyperlink'
-                                   ],
-                       'status' => 'accepted'
-                     },
-          'date' => {
-                      'effect' => [
-                                    'hyperlink',
-                                    'hyperlink'
-                                  ],
-                      'status' => 'accepted'
-                    },
-          'dns-prefetch' => {
-                              'effect' => [
-                                            'external resource',
-                                            undef
-                                          ],
-                              'status' => 'proposal'
-                            },
-          'edit' => {
-                      'effect' => [
-                                    'hyperlink',
-                                    'hyperlink'
-                                  ],
-                      'status' => 'proposal'
-                    },
-          'edituri' => {
-                         'effect' => [
-                                       'hyperlink',
-                                       undef
-                                     ],
-                         'status' => 'proposal'
-                       },
-          'enclosure' => {
-                           'effect' => [
-                                         'hyperlink',
-                                         'hyperlink'
-                                       ],
-                           'status' => 'proposal'
-                         },
-          'end' => {
-                     'effect' => [
-                                   'hyperlink',
-                                   'hyperlink'
-                                 ],
-                     'status' => 'synonym'
-                   },
-          'enlarged' => {
-                          'effect' => [
-                                        undef,
-                                        'hyperlink'
-                                      ],
-                          'status' => 'proposal'
-                        },
-          'extension' => {
-                           'effect' => [
-                                         'hyperlink',
-                                         'hyperlink'
-                                       ],
-                           'status' => 'proposal'
-                         },
-          'external' => {
-                          'effect' => [
-                                        undef,
-                                        'hyperlink'
-                                      ],
-                          'status' => 'accepted'
-                        },
-          'first' => {
-                       'effect' => [
-                                     'hyperlink',
-                                     'hyperlink'
-                                   ],
-                       'status' => 'accepted'
-                     },
-          'friend' => {
-                        'effect' => [
-                                      'hyperlink',
-                                      'hyperlink'
-                                    ],
-                        'status' => 'accepted'
-                      },
-          'gallery' => {
-                         'effect' => [
-                                       'hyperlink',
-                                       'hyperlink'
-                                     ],
-                         'status' => 'proposal'
-                       },
-          'glossary' => {
-                          'effect' => [
-                                        'hyperlink',
-                                        'hyperlink'
-                                      ],
-                          'status' => 'proposal'
-                        },
-          'help' => {
-                      'effect' => [
-                                    'hyperlink',
-                                    'hyperlink'
-                                  ],
-                      'status' => 'accepted'
-                    },
-          'hub' => {
-                     'effect' => [
-                                   'hyperlink',
-                                   undef
-                                 ],
-                     'status' => 'proposal'
-                   },
-          'i18nrules' => {
-                           'effect' => [
-                                         'hyperlink',
-                                         undef
-                                       ],
-                           'status' => 'proposal'
-                         },
-          'icon' => {
-                      'effect' => [
-                                    'external resource',
-                                    undef
-                                  ],
-                      'status' => 'accepted'
-                    },
-          'index' => {
-                       'effect' => [
-                                     'hyperlink',
-                                     'hyperlink'
-                                   ],
-                       'status' => 'accepted'
-                     },
-          'jump' => {
-                      'effect' => [
-                                    undef,
-                                    'hyperlink'
-                                  ],
-                      'status' => 'proposal'
-                    },
-          'kin' => {
-                     'effect' => [
-                                   'hyperlink',
-                                   'hyperlink'
-                                 ],
-                     'status' => 'accepted'
-                   },
-          'last' => {
-                      'effect' => [
-                                    'hyperlink',
-                                    'hyperlink'
-                                  ],
-                      'status' => 'accepted'
-                    },
-          'latest-version' => {
-                                'effect' => [
-                                              'hyperlink',
-                                              'hyperlink'
-                                            ],
-                                'status' => 'proposal'
-                              },
-          'license' => {
-                         'effect' => [
-                                       'hyperlink',
-                                       'hyperlink'
-                                     ],
-                         'status' => 'accepted'
-                       },
-          'login' => {
-                       'effect' => [
-                                     'hyperlink',
-                                     'hyperlink'
-                                   ],
-                       'status' => 'proposal'
-                     },
-          'logout' => {
-                        'effect' => [
-                                      'external resource',
-                                      undef
-                                    ],
-                        'status' => 'proposal'
-                      },
-          'longdesc' => {
-                          'effect' => [
-                                        'hyperlink',
-                                        'hyperlink'
-                                      ],
-                          'status' => 'proposal'
-                        },
-          'maintainer' => {
-                            'effect' => [
-                                          'hyperlink',
-                                          'hyperlink'
-                                        ],
-                            'status' => 'synonym'
-                          },
-          'map' => {
-                     'effect' => [
-                                   'hyperlink',
-                                   'hyperlink'
-                                 ],
-                     'status' => 'proposal'
-                   },
-          'me' => {
-                    'effect' => [
-                                  'hyperlink',
-                                  'hyperlink'
-                                ],
-                    'status' => 'accepted'
-                  },
-          'met' => {
-                     'effect' => [
-                                   'hyperlink',
-                                   'hyperlink'
-                                 ],
-                     'status' => 'accepted'
-                   },
-          'meta' => {
-                      'effect' => [
-                                    'external resource',
-                                    'hyperlink'
-                                  ],
-                      'status' => 'proposal'
-                    },
-          'muse' => {
-                      'effect' => [
-                                    'hyperlink',
-                                    'hyperlink'
-                                  ],
-                      'status' => 'accepted'
-                    },
-          'neighbor' => {
-                          'effect' => [
-                                        'hyperlink',
-                                        'hyperlink'
-                                      ],
-                          'status' => 'accepted'
-                        },
-          'next' => {
-                      'effect' => [
-                                    'hyperlink',
-                                    'hyperlink'
-                                  ],
-                      'status' => 'accepted'
-                    },
-          'next-archive' => {
-                              'effect' => [
-                                            'hyperlink',
-                                            'hyperlink'
-                                          ],
-                              'status' => 'proposal'
-                            },
-          'nofollow' => {
-                          'effect' => [
-                                        undef,
-                                        'annotation'
-                                      ],
-                          'status' => 'accepted'
-                        },
-          'noprefetch' => {
-                            'effect' => [
-                                          'external resource',
-                                          'hyperlink'
-                                        ],
-                            'status' => 'proposal'
-                          },
-          'noreferrer' => {
-                            'effect' => [
-                                          undef,
-                                          'annotation'
-                                        ],
-                            'status' => 'accepted'
-                          },
-          'note' => {
-                      'effect' => [
-                                    undef,
-                                    'hyperlink'
-                                  ],
-                      'status' => 'proposal'
-                    },
-          'openid.delegate' => {
-                                 'effect' => [
-                                               'external resource',
-                                               undef
-                                             ],
-                                 'status' => 'proposal'
-                               },
-          'openid.server' => {
-                               'effect' => [
-                                             'external resource',
-                                             undef
-                                           ],
-                               'status' => 'proposal'
-                             },
-          'openid2.local_id' => {
-                                  'effect' => [
-                                                'external resource',
-                                                undef
-                                              ],
-                                  'status' => 'proposal'
-                                },
-          'openid2.provider' => {
-                                  'effect' => [
-                                                'external resource',
-                                                undef
-                                              ],
-                                  'status' => 'proposal'
-                                },
-          'option' => {
-                        'effect' => [
-                                      'hyperlink',
-                                      'hyperlink'
-                                    ],
-                        'status' => 'synonym'
-                      },
-          'parent' => {
-                        'effect' => [
-                                      'hyperlink',
-                                      'hyperlink'
-                                    ],
-                        'status' => 'accepted'
-                      },
-          'payment' => {
-                         'effect' => [
-                                       'hyperlink',
-                                       'hyperlink'
-                                     ],
-                         'status' => 'proposal'
-                       },
-          'pgpkey' => {
-                        'effect' => [
-                                      'hyperlink',
-                                      undef
-                                    ],
-                        'status' => 'proposal'
-                      },
-          'pingback' => {
-                          'effect' => [
-                                        'external resource',
-                                        undef
-                                      ],
-                          'status' => 'accepted',
-                          'unique' => 1
-                        },
-          'posting' => {
-                         'effect' => [
-                                       'hyperlink',
-                                       'hyperlink'
-                                     ],
-                         'status' => 'synonym'
-                       },
-          'prefetch' => {
-                          'effect' => [
-                                        'external resource',
-                                        undef
-                                      ],
-                          'status' => 'accepted'
-                        },
-          'prerender' => {
-                           'effect' => [
-                                         'external resource',
-                                         undef
-                                       ],
-                           'status' => 'proposal'
-                         },
-          'presentation' => {
-                              'effect' => [
-                                            'external resource',
-                                            'hyperlink'
-                                          ],
-                              'status' => 'proposal'
-                            },
-          'prev' => {
-                      'effect' => [
-                                    'hyperlink',
-                                    'hyperlink'
-                                  ],
-                      'status' => 'accepted'
-                    },
-          'prev-archive' => {
-                              'effect' => [
-                                            'hyperlink',
-                                            'hyperlink'
-                                          ],
-                              'status' => 'proposal'
-                            },
-          'previous' => {
-                          'effect' => [
-                                        'hyperlink',
-                                        'hyperlink'
-                                      ],
-                          'status' => 'synonym'
-                        },
-          'print' => {
-                       'effect' => [
-                                     'external resource',
-                                     'hyperlink'
-                                   ],
-                       'status' => 'proposal'
-                     },
-          'problem' => {
-                         'effect' => [
-                                       'hyperlink',
-                                       'hyperlink'
-                                     ],
-                         'status' => 'synonym'
-                       },
-          'profile' => {
-                         'effect' => [
-                                       'hyperlink',
-                                       'hyperlink'
-                                     ],
-                         'status' => 'proposal'
-                       },
-          'pronunciation' => {
-                               'effect' => [
-                                             'external resource',
-                                             undef
-                                           ],
-                               'status' => 'proposal'
-                             },
-          'question' => {
-                          'effect' => [
-                                        'hyperlink',
-                                        'hyperlink'
-                                      ],
-                          'status' => 'proposal'
-                        },
-          'related' => {
-                         'effect' => [
-                                       'hyperlink',
-                                       'hyperlink'
-                                     ],
-                         'status' => 'proposal'
-                       },
-          'reply' => {
-                       'effect' => [
-                                     'hyperlink',
-                                     'hyperlink'
-                                   ],
-                       'status' => 'proposal'
-                     },
-          'resource-description' => {
-                                      'effect' => [
-                                                    'external resource',
-                                                    undef
-                                                  ],
-                                      'status' => 'synonym'
-                                    },
-          'resource-package' => {
-                                  'effect' => [
-                                                'external resource',
-                                                undef
-                                              ],
-                                  'status' => 'proposal'
-                                },
-          'resources' => {
-                           'effect' => [
-                                         'external resource',
-                                         undef
-                                       ],
-                           'status' => 'proposal'
-                         },
-          'reviewer' => {
-                          'effect' => [
-                                        'hyperlink',
-                                        undef
-                                      ],
-                          'status' => 'proposal'
-                        },
-          'script' => {
-                        'effect' => [
-                                      undef,
-                                      undef
-                                    ],
-                        'status' => 'rejected'
-                      },
-          'search' => {
-                        'effect' => [
-                                      'hyperlink',
-                                      'hyperlink'
-                                    ],
-                        'status' => 'accepted'
-                      },
-          'section' => {
-                         'effect' => [
-                                       'hyperlink',
-                                       'hyperlink'
-                                     ],
-                         'status' => 'synonym'
-                       },
-          'self' => {
-                      'effect' => [
-                                    'hyperlink',
-                                    'hyperlink'
-                                  ],
-                      'status' => 'proposal'
-                    },
-          'service' => {
-                         'effect' => [
-                                       'external resource',
-                                       undef
-                                     ],
-                         'status' => 'proposal'
-                       },
-          'shortlink' => {
-                           'effect' => [
-                                         'hyperlink',
-                                         'hyperlink'
-                                       ],
-                           'status' => 'proposal'
-                         },
-          'sibling' => {
-                         'effect' => [
-                                       'hyperlink',
-                                       'hyperlink'
-                                     ],
-                         'status' => 'accepted'
-                       },
-          'sidebar' => {
-                         'effect' => [
-                                       'hyperlink',
-                                       'hyperlink'
-                                     ],
-                         'status' => 'accepted'
-                       },
-          'slides' => {
-                        'effect' => [
-                                      'external resource',
-                                      'hyperlink'
-                                    ],
-                        'status' => 'synonym'
-                      },
-          'slideshow' => {
-                           'effect' => [
-                                         'external resource',
-                                         'hyperlink'
-                                       ],
-                           'status' => 'synonym'
-                         },
-          'spouse' => {
-                        'effect' => [
-                                      'hyperlink',
-                                      'hyperlink'
-                                    ],
-                        'status' => 'accepted'
-                      },
-          'start' => {
-                       'effect' => [
-                                     'hyperlink',
-                                     'hyperlink'
-                                   ],
-                       'status' => 'synonym'
-                     },
-          'statechart' => {
-                            'effect' => [
-                                          'external resource',
-                                          undef
-                                        ],
-                            'status' => 'proposal'
-                          },
-          'stylesheet' => {
-                            'effect' => [
-                                          'external resource',
-                                          undef
-                                        ],
-                            'status' => 'accepted'
-                          },
-          'subject' => {
-                         'effect' => [
-                                       'hyperlink',
-                                       'hyperlink'
-                                     ],
-                         'status' => 'synonym'
-                       },
-          'subresource' => {
-                             'effect' => [
-                                           'hyperlink',
-                                           undef
-                                         ],
-                             'status' => 'proposal'
-                           },
-          'subsection' => {
-                            'effect' => [
-                                          'hyperlink',
-                                          'hyperlink'
-                                        ],
-                            'status' => 'synonym'
-                          },
-          'sweetheart' => {
-                            'effect' => [
-                                          'hyperlink',
-                                          'hyperlink'
-                                        ],
-                            'status' => 'accepted'
-                          },
-          'tag' => {
-                     'effect' => [
-                                   undef,
-                                   'hyperlink'
-                                 ],
-                     'status' => 'accepted'
-                   },
-          'technicalauthor' => {
-                                 'effect' => [
-                                               'hyperlink',
-                                               'hyperlink'
-                                             ],
-                                 'status' => 'proposal'
-                               },
-          'thread' => {
-                        'effect' => [
-                                      'hyperlink',
-                                      'hyperlink'
-                                    ],
-                        'status' => 'proposal'
-                      },
-          'timesheet' => {
-                           'effect' => [
-                                         'external resource',
-                                         undef
-                                       ],
-                           'status' => 'proposal'
-                         },
-          'toc' => {
-                     'effect' => [
-                                   'hyperlink',
-                                   'hyperlink'
-                                 ],
-                     'status' => 'synonym'
-                   },
-          'top' => {
-                     'effect' => [
-                                   'hyperlink',
-                                   'hyperlink'
-                                 ],
-                     'status' => 'synonym'
-                   },
-          'topic' => {
-                       'effect' => [
-                                     'hyperlink',
-                                     'hyperlink'
-                                   ],
-                       'status' => 'synonym'
-                     },
-          'translatedfrom' => {
-                                'effect' => [
-                                              'hyperlink',
-                                              'hyperlink'
-                                            ],
-                                'status' => 'proposal'
-                              },
-          'translator' => {
-                            'effect' => [
-                                          'hyperlink',
-                                          'hyperlink'
-                                        ],
-                            'status' => 'proposal'
-                          },
-          'up' => {
-                    'effect' => [
-                                  'hyperlink',
-                                  'hyperlink'
-                                ],
-                    'status' => 'accepted'
-                  },
-          'us' => {
-                    'effect' => [
-                                  'hyperlink',
-                                  'hyperlink'
-                                ],
-                    'status' => 'proposal'
-                  },
-          'webmaster' => {
-                           'effect' => [
-                                         'hyperlink',
-                                         'hyperlink'
-                                       ],
-                           'status' => 'proposal'
-                         },
-          'widget' => {
-                        'effect' => [
-                                      'hyperlink',
-                                      'hyperlink'
-                                    ],
-                        'status' => 'proposal'
-                      },
-          'wlwmanifest' => {
-                             'effect' => [
-                                           'hyperlink',
-                                           undef
-                                         ],
-                             'status' => 'proposal'
-                           }
-        };
 
 1;
 
