@@ -4054,16 +4054,19 @@ $Element->{+HTML_NS}->{meta} = {
       } else {
         if (defined $def->{whatwg_wiki_status} and
             ($def->{whatwg_wiki_status} eq 'unendorsed' or
-             $def->{whatwg_wiki_status} eq 'incomplete proposal')) {
+             $def->{whatwg_wiki_status} eq 'incomplete proposal' or
+             $def->{whatwg_wiki_status} eq 'proposal')) { # registered but non-conforming
           $self->{onerror}->(type => 'metadata:discontinued',
                              text => $name,
                              node => $name_attr,
-                             level => 'm');
+                             level => 'm',
+                             preferred => $def->{preferred}); # or undef
         } else {
           $self->{onerror}->(type => 'metadata:not registered',
                              text => $name,
                              node => $name_attr,
-                             level => 'm');
+                             level => 'm',
+                             preferred => $def->{preferred}); # or undef
         }
       }
       $checker->($self, $content_attr) if defined $content_attr and defined $checker;
