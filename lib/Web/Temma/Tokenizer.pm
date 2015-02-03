@@ -180,7 +180,7 @@ sub onrestartwithencoding ($;$) {
     } # _cleanup_states
 
     ## ------ Common defs ------
-    our $AFE;our $AnchoredIndex;our $Attr;our $CONTEXT;our $Callbacks;our $Confident;our $DI;our $EOF;our $Errors;our $FORM_ELEMENT;our $FRAMESET_OK;our $HEAD_ELEMENT;our $IM;our $IframeSrcdoc;our $InForeign;our $Input;our $LastStartTagName;our $NEXT_ID;our $OE;our $OP;our $ORIGINAL_IM;our $Offset;our $QUIRKS;our $Scripting;our $State;our $TABLE_CHARS;our $TEMPLATE_IMS;our $Temp;our $TempIndex;our $Token;our $Tokens;
+    our $AnchoredIndex;our $Attr;our $Callbacks;our $Confident;our $DI;our $EOF;our $Errors;our $IframeSrcdoc;our $Input;our $LastStartTagName;our $Offset;our $Scripting;our $State;our $Temp;our $TempIndex;our $Token;our $Tokens;
     ## ------ Tokenizer defs ------
     my $InvalidCharRefs = $Web::HTML::_SyntaxDefs->{charref_invalid};
 sub DOCTYPE_TOKEN () { 1 }
@@ -4386,7 +4386,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -4400,10 +4400,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G([ABCDEFGHJKNQRVWZILMOPSTUXY])/gcs) {
@@ -4505,7 +4505,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -4519,10 +4519,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -4720,7 +4720,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -4734,10 +4734,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G([ABCDEFGHJKNQRVWZILMOPSTUXY])/gcs) {
@@ -7230,7 +7230,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -7244,10 +7244,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -7420,7 +7420,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -7434,10 +7434,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G([\`])/gcs) {
@@ -7791,7 +7791,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -7805,10 +7805,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G([\`])/gcs) {
@@ -8219,7 +8219,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -8233,10 +8233,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G([\`])/gcs) {
@@ -8651,7 +8651,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -8665,10 +8665,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 return 1 if $return;
@@ -9300,7 +9300,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -9314,10 +9314,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G([\`])/gcs) {
@@ -9406,7 +9406,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -9420,10 +9420,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G([ABCDEFGHJKNQRVWZILMOPSTUXY])/gcs) {
@@ -9538,7 +9538,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -9552,10 +9552,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -9866,7 +9866,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -9880,10 +9880,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -10101,7 +10101,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -10115,10 +10115,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -10173,7 +10173,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -10187,10 +10187,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -10341,7 +10341,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -10355,10 +10355,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G([^\ \	\
@@ -10414,7 +10414,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -10428,10 +10428,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G([^\ \	\
@@ -10485,7 +10485,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -10499,10 +10499,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G([^\ \	\
@@ -10556,7 +10556,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -10570,10 +10570,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G([^\ \	\
@@ -10749,7 +10749,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -10763,10 +10763,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -10852,7 +10852,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -10866,10 +10866,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G([^\ \	\
@@ -10922,7 +10922,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -10936,10 +10936,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -10994,7 +10994,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -11008,10 +11008,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G([^\ \	\
@@ -11064,7 +11064,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -11078,10 +11078,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -11134,7 +11134,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -11148,10 +11148,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G([^\ \	\
@@ -11202,7 +11202,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -11216,10 +11216,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G([^\ \	\
@@ -11270,7 +11270,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -11284,10 +11284,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -11340,7 +11340,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -11354,10 +11354,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -11466,7 +11466,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -11480,10 +11480,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G([^\ \	\
@@ -11532,7 +11532,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -11546,10 +11546,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -11601,7 +11601,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -11615,10 +11615,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -11670,7 +11670,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -11684,10 +11684,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -11737,7 +11737,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -11751,10 +11751,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -11804,7 +11804,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -11818,10 +11818,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -11871,7 +11871,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -11885,10 +11885,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G([^\ \	\
@@ -11936,7 +11936,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -11950,10 +11950,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -12001,7 +12001,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -12015,10 +12015,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G([^\ \	\
@@ -12064,7 +12064,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -12078,10 +12078,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -12128,7 +12128,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -12142,10 +12142,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -12190,7 +12190,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -12204,10 +12204,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G\/\>/gcs) {
@@ -12234,7 +12234,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -12248,10 +12248,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G\>/gcs) {
@@ -12276,7 +12276,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -12290,10 +12290,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G([\	\\ \
@@ -12322,7 +12322,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -12336,10 +12336,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G([ABCDEFGHJKNQRVWZILMOPSTUXY])/gcs) {
@@ -12481,7 +12481,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -12495,10 +12495,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G([\`])/gcs) {
@@ -14666,10 +14666,10 @@ $Token->{q<tag_name>} = '';
 push @$Tokens, $Token;
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G([ABCDEFGHJKNQRVWZILMOPSTUXY])/gcs) {
@@ -15860,7 +15860,9 @@ return 1;
 return 0;
 };
 $StateActions->[MDO_STATE__5BCDATA] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
+if ($Input =~ /\G([\[])/gcs) {
+$State = CDATA_SECTION_STATE;
+} elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -15900,14 +15902,6 @@ $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 push @$Tokens, $Token;
 $State = DATA_STATE;
-} elsif ($Input =~ /\G([\[])/gcs) {
-
-            unless (@$OE) {
-              push @$Errors, {type => 'bogus comment', level => 'm',
-                              di => $DI, index => $Offset + (pos $Input) - 1};
-            }
-          
-$State = CDATA_SECTION_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -18015,7 +18009,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -18029,10 +18023,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -18189,7 +18183,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -18203,10 +18197,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G([ABCDEFGHJKNQRVWZILMOPSTUXY])/gcs) {
@@ -18237,7 +18231,59 @@ return 1;
 return 0;
 };
 $StateActions->[TAG_OPEN_STATE] = sub {
-if ($Input =~ /\G\!(\-)\-\-([^\ \\-\>])([^\ \\-]*)\-([^\ \\-])([^\ \\-]*)/gcs) {
+if ($Input =~ /\G\!(\[)(C)(D)(A)(T)(A)\[([^\\]]*)(\])(\])(\]*)([^\\>\]])([^\\]]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__5B;
+$Temp .= $2;
+$State = MDO_STATE__5BC;
+$Temp .= $3;
+$State = MDO_STATE__5BCD;
+$Temp .= $4;
+$State = MDO_STATE__5BCDA;
+$Temp .= $5;
+$State = MDO_STATE__5BCDAT;
+$Temp .= $6;
+$State = MDO_STATE__5BCDATA;
+$State = CDATA_SECTION_STATE;
+
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $7,
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
+        
+$Temp = $8;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = CDATA_SECTION_STATE__5D;
+$Temp .= $9;
+$State = CDATA_SECTION_STATE__5D_5D;
+
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $10,
+                          di => $DI, index => $Offset + (pos $Input) - (length $1) - 2};
+        
+
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
+$State = CDATA_SECTION_STATE;
+
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $11,
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
+        
+
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $12,
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
+        
+} elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\>])([^\ \\-]*)\-([^\ \\-])([^\ \\-]*)/gcs) {
 
         $Temp = '';
         $TempIndex = $Offset + (pos $Input);
@@ -18335,6 +18381,215 @@ $Token->{q<tag_name>} = chr ((ord $1) + 32);
 $State = TAG_NAME_STATE;
 $Token->{q<tag_name>} .= $2;
 $State = B_ATTR_NAME_STATE;
+} elsif ($Input =~ /\G\!(\[)(C)(D)(A)(T)(A)\[([^\\]]*)(\])([^\\]])([^\\]]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__5B;
+$Temp .= $2;
+$State = MDO_STATE__5BC;
+$Temp .= $3;
+$State = MDO_STATE__5BCD;
+$Temp .= $4;
+$State = MDO_STATE__5BCDA;
+$Temp .= $5;
+$State = MDO_STATE__5BCDAT;
+$Temp .= $6;
+$State = MDO_STATE__5BCDATA;
+$State = CDATA_SECTION_STATE;
+
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $7,
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
+        
+$Temp = $8;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = CDATA_SECTION_STATE__5D;
+
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
+$State = CDATA_SECTION_STATE;
+
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $9,
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
+        
+
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $10,
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
+        
+} elsif ($Input =~ /\G\!(\[)(C)(D)(A)(T)(A)\[([^\\]]*)(\])(\])(\]*)(\])(\]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__5B;
+$Temp .= $2;
+$State = MDO_STATE__5BC;
+$Temp .= $3;
+$State = MDO_STATE__5BCD;
+$Temp .= $4;
+$State = MDO_STATE__5BCDA;
+$Temp .= $5;
+$State = MDO_STATE__5BCDAT;
+$Temp .= $6;
+$State = MDO_STATE__5BCDATA;
+$State = CDATA_SECTION_STATE;
+
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $7,
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
+        
+$Temp = $8;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = CDATA_SECTION_STATE__5D;
+$Temp .= $9;
+$State = CDATA_SECTION_STATE__5D_5D;
+
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $10,
+                          di => $DI, index => $Offset + (pos $Input) - (length $1) - 2};
+        
+
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $11,
+                          di => $DI, index => $Offset + (pos $Input) - (length $1) - 2};
+        
+
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $12,
+                          di => $DI, index => $Offset + (pos $Input) - (length $1) - 2};
+        
+} elsif ($Input =~ /\G\!(\[)(C)(D)(A)(T)(A)\[([^\\]]*)([^\\]])([^\\]]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__5B;
+$Temp .= $2;
+$State = MDO_STATE__5BC;
+$Temp .= $3;
+$State = MDO_STATE__5BCD;
+$Temp .= $4;
+$State = MDO_STATE__5BCDA;
+$Temp .= $5;
+$State = MDO_STATE__5BCDAT;
+$Temp .= $6;
+$State = MDO_STATE__5BCDATA;
+$State = CDATA_SECTION_STATE;
+
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $7,
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
+        
+
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $8,
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
+        
+
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $9,
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
+        
+} elsif ($Input =~ /\G\!(\[)(C)(D)(A)(T)(A)\[([^\\]]*)(\])(\])(\]*)\/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__5B;
+$Temp .= $2;
+$State = MDO_STATE__5BC;
+$Temp .= $3;
+$State = MDO_STATE__5BCD;
+$Temp .= $4;
+$State = MDO_STATE__5BCDA;
+$Temp .= $5;
+$State = MDO_STATE__5BCDAT;
+$Temp .= $6;
+$State = MDO_STATE__5BCDATA;
+$State = CDATA_SECTION_STATE;
+
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $7,
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
+        
+$Temp = $8;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = CDATA_SECTION_STATE__5D;
+$Temp .= $9;
+$State = CDATA_SECTION_STATE__5D_5D;
+
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $10,
+                          di => $DI, index => $Offset + (pos $Input) - (length $1) - 2};
+        
+
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
+
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => q@
+@,
+                          di => $DI, index => $Offset + (pos $Input) - (length $1) - 0};
+        
+$State = CDATA_SECTION_STATE_CR;
+} elsif ($Input =~ /\G\!(\[)(C)(D)(A)(T)(A)\[([^\\]]*)(\])(\])(\]*)\>/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__5B;
+$Temp .= $2;
+$State = MDO_STATE__5BC;
+$Temp .= $3;
+$State = MDO_STATE__5BCD;
+$Temp .= $4;
+$State = MDO_STATE__5BCDA;
+$Temp .= $5;
+$State = MDO_STATE__5BCDAT;
+$Temp .= $6;
+$State = MDO_STATE__5BCDATA;
+$State = CDATA_SECTION_STATE;
+
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $7,
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
+        
+$Temp = $8;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = CDATA_SECTION_STATE__5D;
+$Temp .= $9;
+$State = CDATA_SECTION_STATE__5D_5D;
+
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $10,
+                          di => $DI, index => $Offset + (pos $Input) - (length $1) - 2};
+        
+$State = DATA_STATE;
 } elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\>])([^\ \\-]*)\-\-\>/gcs) {
 
         $Temp = '';
@@ -18381,6 +18636,47 @@ $State = COMMENT_END_DASH_STATE;
 $State = COMMENT_END_STATE;
 $State = DATA_STATE;
 push @$Tokens, $Token;
+} elsif ($Input =~ /\G\!(\[)(C)(D)(A)(T)(A)\[([^\\]]*)(\])\/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__5B;
+$Temp .= $2;
+$State = MDO_STATE__5BC;
+$Temp .= $3;
+$State = MDO_STATE__5BCD;
+$Temp .= $4;
+$State = MDO_STATE__5BCDA;
+$Temp .= $5;
+$State = MDO_STATE__5BCDAT;
+$Temp .= $6;
+$State = MDO_STATE__5BCDATA;
+$State = CDATA_SECTION_STATE;
+
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $7,
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
+        
+$Temp = $8;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = CDATA_SECTION_STATE__5D;
+
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $Temp,
+                          di => $DI,
+                          index => $TempIndex} if length $Temp;
+        
+
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => q@
+@,
+                          di => $DI, index => $Offset + (pos $Input) - (length $1) - 0};
+        
+$State = CDATA_SECTION_STATE_CR;
 } elsif ($Input =~ /\G\/([a-z])([^\ \	\
 \\\ \/\>A-Z]*)\/\>/gcs) {
 $State = END_TAG_OPEN_STATE;
@@ -18414,7 +18710,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -18428,10 +18724,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G\/([A-Z])([^\ \	\
@@ -18467,7 +18763,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -18481,10 +18777,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G([a-z])([^\ \	\
@@ -18519,7 +18815,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -18533,10 +18829,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G\/([a-z])([^\ \	\
@@ -18570,7 +18866,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -18584,10 +18880,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -18622,7 +18918,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -18636,10 +18932,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G\/([A-Z])([^\ \	\
@@ -18673,7 +18969,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -18687,12 +18983,44 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
+} elsif ($Input =~ /\G\!(\[)(C)(D)(A)(T)(A)\[([^\\]]*)\/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__5B;
+$Temp .= $2;
+$State = MDO_STATE__5BC;
+$Temp .= $3;
+$State = MDO_STATE__5BCD;
+$Temp .= $4;
+$State = MDO_STATE__5BCDA;
+$Temp .= $5;
+$State = MDO_STATE__5BCDAT;
+$Temp .= $6;
+$State = MDO_STATE__5BCDATA;
+$State = CDATA_SECTION_STATE;
+
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $7,
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
+        
+
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => q@
+@,
+                          di => $DI, index => $Offset + (pos $Input) - (length $1) - 0};
+        
+$State = CDATA_SECTION_STATE_CR;
 } elsif ($Input =~ /\G([a-z])([^\ \	\
 \\\ \/\>A-Z]*)\>/gcs) {
 
@@ -18723,7 +19051,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -18737,10 +19065,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -18773,7 +19101,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -18787,10 +19115,10 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G\!(\-)\-\-\-\>/gcs) {
@@ -18840,10 +19168,10 @@ $Token->{q<tag_name>} = '';
 push @$Tokens, $Token;
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
+            ## 
           }
         
 } elsif ($Input =~ /\G([\!])/gcs) {
@@ -19054,7 +19382,7 @@ return 0;
           $self->_construct_tree;
 
           if (@$Callbacks or @$Errors or $self->{is_sub_parser}) {
-            $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
+            $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, Confident => $Confident, DI => $DI, EOF => $EOF, LastStartTagName => $LastStartTagName, Offset => $Offset, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
             {
               my $Errors = $Errors;
               my $Callbacks = $Callbacks;
@@ -19080,8 +19408,8 @@ return 0;
                 return 1;
               }
             }
-            ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $QUIRKS, $State, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset QUIRKS State Temp TempIndex Token)};
-($AFE, $Callbacks, $Errors, $OE, $OP, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP TABLE_CHARS TEMPLATE_IMS Tokens)};
+            ($AnchoredIndex, $Attr, $Confident, $DI, $EOF, $LastStartTagName, $Offset, $State, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr Confident DI EOF LastStartTagName Offset State Temp TempIndex Token)};
+($Callbacks, $Errors, $Tokens) = @{$self->{saved_lists}}{qw(Callbacks Errors Tokens)};
 () = @{$self->{saved_maps}}{qw()};
           }
 
@@ -19146,12 +19474,10 @@ return 0;
       $doc->manakai_compat_mode ('no quirks');
       $doc->remove_child ($_) for $doc->child_nodes->to_list;
       $self->{nodes} = [$doc];
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $QUIRKS, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
-      $FRAMESET_OK = 1;
-$AnchoredIndex = 0;
-$NEXT_ID = 1;
+      local ($AnchoredIndex, $Attr, $Callbacks, $Confident, $DI, $EOF, $Errors, $IframeSrcdoc, $Input, $LastStartTagName, $Offset, $Scripting, $State, $Temp, $TempIndex, $Token, $Tokens);
+      $AnchoredIndex = 0;
 $Offset = 0;
-$self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
+$self->{saved_lists} = {Callbacks => ($Callbacks = []), Errors => ($Errors = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {};
       $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};

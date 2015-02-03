@@ -52,52 +52,52 @@ sub _element_defs ($) {
 } # _element_defs
 
 my $Vars = {
-  Scripting => {input => 1, type => 'boolean'},
-  IframeSrcdoc => {input => 1, type => 'boolean'},
-  Confident => {save => 1, type => 'boolean'},
-  DI => {save => 1, type => 'index'},
-  AnchoredIndex => {save => 1, type => 'index', default => 0},
-  EOF => {save => 1, type => 'boolean'},
-  Offset => {save => 1, type => 'index', default => 0},
-  State => {save => 1, type => 'enum'},
-  Token => {save => 1, type => 'struct?'},
-  Attr => {save => 1, type => 'struct?'},
-  Temp => {save => 1, type => 'string?'},
-  TempIndex => {save => 1, type => 'index'},
-  LastStartTagName => {save => 1, type => 'string?'},
-  IM => {save => 1, type => 'enum'},
-  TEMPLATE_IMS => {unchanged => 1, type => 'list'},
-  ORIGINAL_IM => {save => 1, type => 'enum?'},
-  FRAMESET_OK => {save => 1, type => 'boolean', default => 'true'},
-  QUIRKS => {save => 1, type => 'boolean'},
-  NEXT_ID => {save => 1, type => 'index', default => 1},
-  HEAD_ELEMENT => {save => 1, type => 'struct?'},
-  FORM_ELEMENT => {save => 1, type => 'struct?'},
-  CONTEXT => {save => 1, type => 'struct?'},
-  OE => {unchanged => 1, type => 'list'},
-  AFE => {unchanged => 1, type => 'list'},
-  TABLE_CHARS => {unchanged => 1, type => 'list'},
-  Tokens => {unchanged => 1, type => 'list'},
-  Errors => {unchanged => 1, type => 'list'},
-  OP => {unchanged => 1, type => 'list'},
-  Input => {type => 'string'},
-  InForeign => {type => 'boolean'},
-  Callbacks => {unchanged => 1, type => 'list'},
-};
-
-if ($LANG eq 'XML') {
-  $Vars->{DTDMode} = {type => 'enum', save => 1, default => 'N/A'};
-  $Vars->{OpenMarkedSections} = {unchanged => 1, type => 'list'};
-  $Vars->{OpenCMGroups} = {unchanged => 1, type => 'list'};
-  $Vars->{InitialCMGroupDepth} = {save => 1, type => 'integer', default => 0};
-  $Vars->{DTDDefs} = {unchanged => 1, type => 'map'};
-  $Vars->{OriginalState} = {save => 1, type => 'enum'};
-  $Vars->{SC} = {input => 1, from_method => 1};
-  $Vars->{InMDEntity} = {input => 1, unchanged => 1, type => 'boolean'};
-  $Vars->{InLiteral} = {save => 1, type => 'boolean'};
-  $Vars->{TempRef} = {save => 1, type => 'object'};
-  $Vars->{LastCMItem} = {save => 1, type => 'enum?'};
-  $Vars->{BaseURLDI} = {input => 1, unchanged => 1, type => 'index'};
+  Scripting => {input => 1, type => 'boolean', HTML=>1,XML=>1,Temma=>1},
+  IframeSrcdoc => {input => 1, type => 'boolean', HTML=>1,XML=>1,Temma=>1},
+  Confident => {save => 1, type => 'boolean', HTML=>1,XML=>1,Temma=>1},
+  DI => {save => 1, type => 'index', HTML=>1,XML=>1,Temma=>1},
+  AnchoredIndex => {save => 1, type => 'index', default => 0, HTML=>1,XML=>1,Temma=>1},
+  EOF => {save => 1, type => 'boolean', HTML=>1,XML=>1,Temma=>1},
+  Offset => {save => 1, type => 'index', default => 0, HTML=>1,XML=>1,Temma=>1},
+  State => {save => 1, type => 'enum', HTML=>1,XML=>1,Temma=>1},
+  Token => {save => 1, type => 'struct?', HTML=>1,XML=>1,Temma=>1},
+  Attr => {save => 1, type => 'struct?', HTML=>1,XML=>1,Temma=>1},
+  Temp => {save => 1, type => 'string?', HTML=>1,XML=>1,Temma=>1},
+  TempIndex => {save => 1, type => 'index', HTML=>1,XML=>1,Temma=>1},
+  LastStartTagName => {save => 1, type => 'string?', HTML=>1,XML=>1,Temma=>1},
+  IM => {save => 1, type => 'enum', HTML=>1,XML=>1},
+  TEMPLATE_IMS => {unchanged => 1, type => 'list', HTML=>1},
+  ORIGINAL_IM => {save => 1, type => 'enum?', HTML=>1,XML=>1},
+  FRAMESET_OK => {save => 1, type => 'boolean', default => 'true', HTML=>1},
+  QUIRKS => {save => 1, type => 'boolean', HTML=>1},
+  NEXT_ID => {save => 1, type => 'index', default => 1, HTML=>1,XML=>1},
+  HEAD_ELEMENT => {save => 1, type => 'struct?', HTML=>1},
+  FORM_ELEMENT => {save => 1, type => 'struct?', HTML=>1},
+  CONTEXT => {save => 1, type => 'struct?', HTML=>1,XML=>1},
+  OE => {unchanged => 1, type => 'list', HTML=>1,XML=>1},
+  AFE => {unchanged => 1, type => 'list', HTML=>1},
+  Tokens => {unchanged => 1, type => 'list', HTML=>1,XML=>1,Temma=>1},
+  OP => {unchanged => 1, type => 'list', HTML=>1,XML=>1},
+  TABLE_CHARS => {unchanged => 1, type => 'list', HTML=>1},
+  InForeign => {type => 'boolean', HTML=>1},
+  Errors => {unchanged => 1, type => 'list', HTML=>1,XML=>1,Temma=>1},
+  Input => {type => 'string', HTML=>1,XML=>1,Temma=>1},
+  Callbacks => {unchanged => 1, type => 'list', HTML=>1,XML=>1,Temma=>1},
+  DTDMode => {type => 'enum', save => 1, default => 'N/A', XML=>1},
+  OpenMarkedSections => {unchanged => 1, type => 'list', XML=>1},
+  OpenCMGroups => {unchanged => 1, type => 'list', XML=>1},
+  InitialCMGroupDepth => {save => 1, type => 'integer', default => 0, XML=>1},
+  DTDDefs => {unchanged => 1, type => 'map', XML=>1},
+  OriginalState => {save => 1, type => 'enum', XML=>1},
+  SC => {input => 1, from_method => 1, XML=>1},
+  InMDEntity => {input => 1, unchanged => 1, type => 'boolean', XML=>1},
+  InLiteral => {save => 1, type => 'boolean', XML=>1},
+  TempRef => {save => 1, type => 'object', XML=>1},
+  LastCMItem => {save => 1, type => 'enum?', XML=>1},
+  BaseURLDI => {input => 1, unchanged => 1, type => 'index', XML=>1},
+}; # $Vars
+for (keys %$Vars) {
+  delete $Vars->{$_} unless $Vars->{$_}->{$LANG};
 }
 
 ## ------ Input byte stream ------
@@ -745,7 +745,9 @@ sub serialize_actions ($;%) {
       if ($_->{possible_token_types}->{'start tag token'}) {
         push @result, q{
           if ($Token->{type} == START_TAG_TOKEN) {
+            ## <!Temma><HTML>
             undef $InForeign;
+            ## </HTML></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -761,10 +763,14 @@ sub serialize_actions ($;%) {
       if ($_->{possible_token_types}->{'end tag token'}) {
         push @result, q{
           if ($Token->{type} == END_TAG_TOKEN) {
+            ## <!Temma><HTML>
             undef $InForeign;
+            ## </HTML></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## <XML>
             return 1 if @$OE <= 1;
+            ## </XML>
           }
         };
       }
@@ -1044,7 +1050,6 @@ sub serialize_actions ($;%) {
         }
         $Temp = chr $code;
       };
-      $result[-1] =~ s{<XML>.*?</XML>}{}gs unless $LANG eq 'XML';
       push @result, q{$Attr->{has_ref} = 1;} if $_->{in_attr};
     } elsif ($type eq 'process-temp-as-hexadecimal') {
       push @result, q{
@@ -1080,7 +1085,6 @@ sub serialize_actions ($;%) {
         }
         $Temp = chr $code;
       };
-      $result[-1] =~ s{<XML>.*?</XML>}{}gs unless $LANG eq 'XML';
       push @result, q{$Attr->{has_ref} = 1;} if $_->{in_attr};
     } elsif ($type eq 'process-temp-as-named') {
       if ($_->{in_attr}) {
@@ -1360,8 +1364,6 @@ sub serialize_actions ($;%) {
         };
       }
       $return = '1 if $return';
-      $result[-1] =~ s{<XML>.*?</XML>}{}gs unless $LANG eq 'XML';
-      $result[-1] =~ s{<HTML>.*?</HTML>}{}gs unless $LANG eq 'HTML' or $LANG eq 'Temma';
     } elsif ($type eq 'validate-temp-as-entref') {
       push @result, q{
         $DTDDefs->{entity_names_in_entity_values}->{$Temp}
@@ -1657,6 +1659,11 @@ sub serialize_actions ($;%) {
   push @result, q[pos ($Input)--;] if $reconsume;
   if (defined $return) {
     push @result, qq{return $return;};
+  }
+  for (@result) {
+    s{<!Temma>.*?</!Temma>}{}gs if $LANG eq 'Temma';
+    s{<XML>.*?</XML>}{}gs unless $LANG eq 'XML';
+    s{<HTML>.*?</HTML>}{}gs unless $LANG eq 'HTML' or $LANG eq 'Temma';
   }
   return join '', map { $_ . "\n" } @result;
 } # serialize_actions
