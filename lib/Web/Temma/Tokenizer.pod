@@ -1,0 +1,33 @@
+=head1 NAME
+
+Web::Temma::Tokenizer - A tokenizer for L<Temma::Parser>
+
+=head1 DESCRIPTION
+
+The C<Web::Temma::Tokenizer> is a tokenizer for the L<Temma::Parser>
+module in the Temma package <https://github.com/wakaba/temma>.  It
+should not be used for any other purpose.
+
+=head1 SEE ALSO
+
+L<Temma::Parser> module in the Temma package
+<https://github.com/wakaba/temma>.
+
+=head1 AUTHOR
+
+Wakaba <wakaba@suikawiki.org>.
+
+=head1 LICENSE
+
+Copyright 2007-2015 Wakaba <wakaba@suikawiki.org>.
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+This library derived from a JSON file, which contains data extracted
+from HTML Standard.  "Written by Ian Hickson (Google, ian@hixie.ch) -
+Parts © Copyright 2004-2014 Apple Inc., Mozilla Foundation, and Opera
+Software ASA; You are granted a license to use, reproduce and create
+derivative works of this document."
+
+=cut

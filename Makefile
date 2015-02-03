@@ -1,6 +1,7 @@
 all: generated-pm-files lib/Web/HTML/Validator/_Defs.pm \
     lib/Web/HTML/_SyntaxDefs.pm lib/Web/HTML/_NamedEntityList.pm \
-    lib/Web/HTML/Parser.pm lib/Web/XML/Parser.pm
+    lib/Web/HTML/Parser.pm lib/Web/XML/Parser.pm \
+    lib/Web/Temma/Tokenizer.pm
 clean: clean-json-ps
 	rm -fr local/*.json
 
@@ -69,6 +70,14 @@ lib/Web/XML/Parser.pm: bin/generate-parser.pl \
 	PARSER_LANG=XML \
 	$(PERL) bin/generate-parser.pl > $@
 	$(PERL) -c $@
+lib/Web/Temma/Tokenizer.pm: bin/generate-parser.pl \
+    local/temma-tokenizer-expanded.json \
+    local/elements.json local/bin/pmbp.pl $(JSON_PS)
+	#perl local/bin/pmbp.pl --create-perl-command-shortcut perl \
+	#    --install-module Path::Tiny
+	PARSER_LANG=Temma \
+	$(PERL) bin/generate-parser.pl > $@
+	$(PERL) -c $@
 
 lib/Web/HTML/_NamedEntityList.pm: local/html-charrefs.json local/bin/pmbp.pl \
     Makefile
@@ -127,6 +136,9 @@ local/xml-tokenizer-expanded.json:
 local/xml-tree-constructor-expanded.json:
 	mkdir -p local
 	$(WGET) -O $@ https://raw.githubusercontent.com/manakai/data-web-defs/master/data/xml-tree-constructor-expanded.json
+local/temma-tokenizer-expanded.json:
+	mkdir -p local
+	$(WGET) -O $@ https://raw.githubusercontent.com/manakai/data-web-defs/master/data/temma-tokenizer-expanded.json
 local/html-metadata.json:
 	mkdir -p local
 	$(WGET) -O $@ https://raw.githubusercontent.com/manakai/data-web-defs/master/data/html-metadata.json

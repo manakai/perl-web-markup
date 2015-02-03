@@ -7,7 +7,7 @@
     use warnings FATAL => 'redefine';
     use warnings FATAL => 'uninitialized';
     use utf8;
-    our $VERSION = '7.0';
+    our $VERSION = '8.0';
     use Carp qw(croak);
     
     use Encode qw(decode); # XXX
@@ -180,7 +180,7 @@ sub onrestartwithencoding ($;$) {
     } # _cleanup_states
 
     ## ------ Common defs ------
-    our $AFE;our $AnchoredIndex;our $Attr;our $BaseURLDI;our $CONTEXT;our $Callbacks;our $Confident;our $DI;our $DTDDefs;our $DTDMode;our $EOF;our $Errors;our $FORM_ELEMENT;our $FRAMESET_OK;our $HEAD_ELEMENT;our $IM;our $IframeSrcdoc;our $InForeign;our $InLiteral;our $InMDEntity;our $InitialCMGroupDepth;our $Input;our $LastCMItem;our $LastStartTagName;our $NEXT_ID;our $OE;our $OP;our $ORIGINAL_IM;our $Offset;our $OpenCMGroups;our $OpenMarkedSections;our $OriginalState;our $QUIRKS;our $SC;our $Scripting;our $State;our $TABLE_CHARS;our $TEMPLATE_IMS;our $Temp;our $TempIndex;our $TempRef;our $Token;our $Tokens;
+    our $AnchoredIndex;our $Attr;our $BaseURLDI;our $CONTEXT;our $Callbacks;our $Confident;our $DI;our $DTDDefs;our $DTDMode;our $EOF;our $Errors;our $IM;our $IframeSrcdoc;our $InLiteral;our $InMDEntity;our $InitialCMGroupDepth;our $Input;our $LastCMItem;our $LastStartTagName;our $NEXT_ID;our $OE;our $OP;our $ORIGINAL_IM;our $Offset;our $OpenCMGroups;our $OpenMarkedSections;our $OriginalState;our $SC;our $Scripting;our $State;our $Temp;our $TempIndex;our $TempRef;our $Token;our $Tokens;
     ## ------ Tokenizer defs ------
     my $InvalidCharRefs = $Web::HTML::_SyntaxDefs->{xml_charref_invalid};
 sub ATTLIST_TOKEN () { 1 }
@@ -28287,7 +28287,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -28301,10 +28301,12 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## <XML>
             return 1 if @$OE <= 1;
+            ## </XML>
           }
         
 } elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY])/gcs) {
@@ -28374,7 +28376,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -28388,10 +28390,12 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## <XML>
             return 1 if @$OE <= 1;
+            ## </XML>
           }
         
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -32506,7 +32510,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -32520,10 +32524,12 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## <XML>
             return 1 if @$OE <= 1;
+            ## </XML>
           }
         
 } else {
@@ -38326,7 +38332,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -38340,10 +38346,12 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## <XML>
             return 1 if @$OE <= 1;
+            ## </XML>
           }
         
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -38516,7 +38524,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -38530,10 +38538,12 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## <XML>
             return 1 if @$OE <= 1;
+            ## </XML>
           }
         
 } elsif ($Input =~ /\G([\`])/gcs) {
@@ -38947,7 +38957,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -38961,10 +38971,12 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## <XML>
             return 1 if @$OE <= 1;
+            ## </XML>
           }
         
 } elsif ($Input =~ /\G([\`])/gcs) {
@@ -39453,7 +39465,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -39467,10 +39479,12 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## <XML>
             return 1 if @$OE <= 1;
+            ## </XML>
           }
         
 } elsif ($Input =~ /\G([\`])/gcs) {
@@ -41140,7 +41154,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -41154,10 +41168,12 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## <XML>
             return 1 if @$OE <= 1;
+            ## </XML>
           }
         
 return 1 if $return;
@@ -41572,7 +41588,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -41586,10 +41602,12 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## <XML>
             return 1 if @$OE <= 1;
+            ## </XML>
           }
         
 } elsif ($Input =~ /\G([X])/gcs) {
@@ -41761,7 +41779,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -41775,10 +41793,12 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## <XML>
             return 1 if @$OE <= 1;
+            ## </XML>
           }
         
 } elsif ($Input =~ /\G([\`])/gcs) {
@@ -41854,7 +41874,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -41868,10 +41888,12 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## <XML>
             return 1 if @$OE <= 1;
+            ## </XML>
           }
         
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -56119,7 +56141,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -56133,10 +56155,12 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## <XML>
             return 1 if @$OE <= 1;
+            ## </XML>
           }
         
 } elsif ($Input =~ /\G([^\ \	\
@@ -56194,7 +56218,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -56208,10 +56232,12 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## <XML>
             return 1 if @$OE <= 1;
+            ## </XML>
           }
         
 } elsif ($Input =~ /\G([^\ \	\
@@ -56267,7 +56293,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -56281,10 +56307,12 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## <XML>
             return 1 if @$OE <= 1;
+            ## </XML>
           }
         
 } elsif ($Input =~ /\G([^\ \	\
@@ -56340,7 +56368,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -56354,10 +56382,12 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## <XML>
             return 1 if @$OE <= 1;
+            ## </XML>
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -56546,7 +56576,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -56560,10 +56590,12 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## <XML>
             return 1 if @$OE <= 1;
+            ## </XML>
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -56620,7 +56652,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -56634,10 +56666,12 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## <XML>
             return 1 if @$OE <= 1;
+            ## </XML>
           }
         
 } elsif ($Input =~ /\G([^\ \	\
@@ -56692,7 +56726,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -56706,10 +56740,12 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## <XML>
             return 1 if @$OE <= 1;
+            ## </XML>
           }
         
 } elsif ($Input =~ /\G([^\ \	\
@@ -56764,7 +56800,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -56778,10 +56814,12 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## <XML>
             return 1 if @$OE <= 1;
+            ## </XML>
           }
         
 } elsif ($Input =~ /\G([^\ \	\
@@ -56834,7 +56872,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -56848,10 +56886,12 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## <XML>
             return 1 if @$OE <= 1;
+            ## </XML>
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -56906,7 +56946,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -56920,10 +56960,12 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## <XML>
             return 1 if @$OE <= 1;
+            ## </XML>
           }
         
 } elsif ($Input =~ /\G([^\ \	\
@@ -56976,7 +57018,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -56990,10 +57032,12 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## <XML>
             return 1 if @$OE <= 1;
+            ## </XML>
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -57048,7 +57092,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -57062,10 +57106,12 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## <XML>
             return 1 if @$OE <= 1;
+            ## </XML>
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -57181,7 +57227,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -57195,10 +57241,12 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## <XML>
             return 1 if @$OE <= 1;
+            ## </XML>
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -57252,7 +57300,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -57266,10 +57314,12 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## <XML>
             return 1 if @$OE <= 1;
+            ## </XML>
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -57321,7 +57371,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -57335,10 +57385,12 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## <XML>
             return 1 if @$OE <= 1;
+            ## </XML>
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -57390,7 +57442,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -57404,10 +57456,12 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## <XML>
             return 1 if @$OE <= 1;
+            ## </XML>
           }
         
 } elsif ($Input =~ /\G\/\>/gcs) {
@@ -57434,7 +57488,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -57448,10 +57502,12 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## <XML>
             return 1 if @$OE <= 1;
+            ## </XML>
           }
         
 } elsif ($Input =~ /\G\>/gcs) {
@@ -57476,7 +57532,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -57490,10 +57546,12 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## <XML>
             return 1 if @$OE <= 1;
+            ## </XML>
           }
         
 } elsif ($Input =~ /\G([\	\\ \
@@ -57522,7 +57580,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -57536,10 +57594,12 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## <XML>
             return 1 if @$OE <= 1;
+            ## </XML>
           }
         
 } elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY])/gcs) {
@@ -57685,7 +57745,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -57699,10 +57759,12 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## <XML>
             return 1 if @$OE <= 1;
+            ## </XML>
           }
         
 } elsif ($Input =~ /\G([\`])/gcs) {
@@ -73890,10 +73952,12 @@ $Token->{q<tag_name>} = '';
 push @$Tokens, $Token;
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## <XML>
             return 1 if @$OE <= 1;
+            ## </XML>
           }
         
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -77086,7 +77150,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -77100,10 +77164,12 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## <XML>
             return 1 if @$OE <= 1;
+            ## </XML>
           }
         
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -77260,7 +77326,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -77274,10 +77340,12 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## <XML>
             return 1 if @$OE <= 1;
+            ## </XML>
           }
         
 } elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY]+)/gcs) {
@@ -77371,7 +77439,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -77385,10 +77453,12 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## <XML>
             return 1 if @$OE <= 1;
+            ## </XML>
           }
         
 } elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\>])([^\ \\-]*)\-([^\ \\-])([^\ \\-]*)/gcs) {
@@ -77448,7 +77518,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -77462,10 +77532,12 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## <XML>
             return 1 if @$OE <= 1;
+            ## </XML>
           }
         
 } elsif ($Input =~ /\G\!(\-)\-([^\ \\-\>])([^\ \\-]*)\-([^\ \\-])([^\ \\-]*)/gcs) {
@@ -77526,7 +77598,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -77540,10 +77612,12 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## <XML>
             return 1 if @$OE <= 1;
+            ## </XML>
           }
         
 } elsif ($Input =~ /\G\/([^\ \	\
@@ -77579,7 +77653,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 
           if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             if (not defined $LastStartTagName) { # "first start tag"
               $LastStartTagName = $Token->{tag_name};
@@ -77593,10 +77667,12 @@ push @$Tokens, $Token;
         
 
           if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
+            ## <!Temma></!Temma>
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## <XML>
             return 1 if @$OE <= 1;
+            ## </XML>
           }
         
 } elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\>])([^\ \\-]*)\-\-\>/gcs) {
@@ -78432,7 +78508,7 @@ sub dom_tree ($$) {
           $self->_construct_tree;
 
           if (@$Callbacks or @$Errors or $self->{is_sub_parser}) {
-            $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, InLiteral => $InLiteral, InitialCMGroupDepth => $InitialCMGroupDepth, LastCMItem => $LastCMItem, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, TempRef => $TempRef, Token => $Token};
+            $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, IM => $IM, InLiteral => $InLiteral, InitialCMGroupDepth => $InitialCMGroupDepth, LastCMItem => $LastCMItem, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, State => $State, Temp => $Temp, TempIndex => $TempIndex, TempRef => $TempRef, Token => $Token};
             {
               my $Errors = $Errors;
               my $Callbacks = $Callbacks;
@@ -78458,8 +78534,8 @@ sub dom_tree ($$) {
                 return 1;
               }
             }
-            ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $InLiteral, $InitialCMGroupDepth, $LastCMItem, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $Temp, $TempIndex, $TempRef, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM InLiteral InitialCMGroupDepth LastCMItem LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State Temp TempIndex TempRef Token)};
-($AFE, $Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP OpenCMGroups OpenMarkedSections TABLE_CHARS TEMPLATE_IMS Tokens)};
+            ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $IM, $InLiteral, $InitialCMGroupDepth, $LastCMItem, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $State, $Temp, $TempIndex, $TempRef, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF IM InLiteral InitialCMGroupDepth LastCMItem LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState State Temp TempIndex TempRef Token)};
+($Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $Tokens) = @{$self->{saved_lists}}{qw(Callbacks Errors OE OP OpenCMGroups OpenMarkedSections Tokens)};
 ($DTDDefs) = @{$self->{saved_maps}}{qw(DTDDefs)};
           }
 
@@ -78543,18 +78619,20 @@ sub dom_tree ($$) {
 
       $self->{document} = my $doc = $_[2];
       $self->{IframeSrcdoc} = $doc->manakai_is_srcdoc;
+      ## 
+      ## <XML>
       $doc->manakai_is_html (0);
+      ## </XML>
       $doc->manakai_compat_mode ('no quirks');
       $doc->remove_child ($_) for $doc->child_nodes->to_list;
       $self->{nodes} = [$doc];
-      local ($AFE, $AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
-      $FRAMESET_OK = 1;
-$AnchoredIndex = 0;
+      local ($AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $IM, $IframeSrcdoc, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $SC, $Scripting, $State, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
+      $AnchoredIndex = 0;
 $InitialCMGroupDepth = 0;
 $NEXT_ID = 1;
 $Offset = 0;
 $DTDMode = q{N/A};
-$self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
+$self->{saved_lists} = {Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
       $BaseURLDI = $self->{BaseURLDI};
 $IframeSrcdoc = $self->{IframeSrcdoc};
@@ -78563,7 +78641,9 @@ $SC = $self->_sc;
 $Scripting = $self->{Scripting};
       $Confident = 1; # irrelevant
       $State = DATA_STATE;;
+      ## <!Temma>
       $IM = BEFORE_XML_DECLARATION_IM;
+      ## </!Temma>
 
       $self->{input_stream} = [];
       my $dids = $self->di_data_set;
@@ -78599,14 +78679,13 @@ $Scripting = $self->{Scripting};
       my $nodes = $self->{nodes} = [$doc];
       ## 
 
-      local ($AFE, $AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
-      $FRAMESET_OK = 1;
-$AnchoredIndex = 0;
+      local ($AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $IM, $IframeSrcdoc, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $SC, $Scripting, $State, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
+      $AnchoredIndex = 0;
 $InitialCMGroupDepth = 0;
 $NEXT_ID = 1;
 $Offset = 0;
 $DTDMode = q{N/A};
-$self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
+$self->{saved_lists} = {Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
       $BaseURLDI = $self->{BaseURLDI};
 $IframeSrcdoc = $self->{IframeSrcdoc};
@@ -78741,14 +78820,13 @@ $Scripting = $self->{Scripting};
       $doc->remove_child ($_) for $doc->child_nodes->to_list;
       $self->{nodes} = [$doc];
 
-      local ($AFE, $AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
-      $FRAMESET_OK = 1;
-$AnchoredIndex = 0;
+      local ($AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $IM, $IframeSrcdoc, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $SC, $Scripting, $State, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
+      $AnchoredIndex = 0;
 $InitialCMGroupDepth = 0;
 $NEXT_ID = 1;
 $Offset = 0;
 $DTDMode = q{N/A};
-$self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
+$self->{saved_lists} = {Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
       $BaseURLDI = $self->{BaseURLDI};
 $IframeSrcdoc = $self->{IframeSrcdoc};
@@ -78771,7 +78849,7 @@ $Scripting = $self->{Scripting};
       $self->{BaseURLDI} = $BaseURLDI = $source_di;
       ## </XML>
 
-      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, InLiteral => $InLiteral, InitialCMGroupDepth => $InitialCMGroupDepth, LastCMItem => $LastCMItem, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, TempRef => $TempRef, Token => $Token};
+      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, IM => $IM, InLiteral => $InLiteral, InitialCMGroupDepth => $InitialCMGroupDepth, LastCMItem => $LastCMItem, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, State => $State, Temp => $Temp, TempIndex => $TempIndex, TempRef => $TempRef, Token => $Token};
       return;
     } # parse_chars_start
   
@@ -78780,32 +78858,32 @@ $Scripting = $self->{Scripting};
       my $self = $_[0];
       my $input = [$_[1]]; # string copy
 
-      local ($AFE, $AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
+      local ($AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $IM, $IframeSrcdoc, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $SC, $Scripting, $State, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
       $BaseURLDI = $self->{BaseURLDI};
 $IframeSrcdoc = $self->{IframeSrcdoc};
 $InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
-      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $InLiteral, $InitialCMGroupDepth, $LastCMItem, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $Temp, $TempIndex, $TempRef, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM InLiteral InitialCMGroupDepth LastCMItem LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State Temp TempIndex TempRef Token)};
-($AFE, $Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP OpenCMGroups OpenMarkedSections TABLE_CHARS TEMPLATE_IMS Tokens)};
+      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $IM, $InLiteral, $InitialCMGroupDepth, $LastCMItem, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $State, $Temp, $TempIndex, $TempRef, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF IM InLiteral InitialCMGroupDepth LastCMItem LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState State Temp TempIndex TempRef Token)};
+($Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $Tokens) = @{$self->{saved_lists}}{qw(Callbacks Errors OE OP OpenCMGroups OpenMarkedSections Tokens)};
 ($DTDDefs) = @{$self->{saved_maps}}{qw(DTDDefs)};
 
       $self->_feed_chars ($input) or die "Can't restart";
 
-      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, InLiteral => $InLiteral, InitialCMGroupDepth => $InitialCMGroupDepth, LastCMItem => $LastCMItem, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, TempRef => $TempRef, Token => $Token};
+      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, IM => $IM, InLiteral => $InLiteral, InitialCMGroupDepth => $InitialCMGroupDepth, LastCMItem => $LastCMItem, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, State => $State, Temp => $Temp, TempIndex => $TempIndex, TempRef => $TempRef, Token => $Token};
       return;
     } # parse_chars_feed
 
     sub parse_chars_end ($) {
       my $self = $_[0];
-      local ($AFE, $AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
+      local ($AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $IM, $IframeSrcdoc, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $SC, $Scripting, $State, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
       $BaseURLDI = $self->{BaseURLDI};
 $IframeSrcdoc = $self->{IframeSrcdoc};
 $InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
-      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $InLiteral, $InitialCMGroupDepth, $LastCMItem, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $Temp, $TempIndex, $TempRef, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM InLiteral InitialCMGroupDepth LastCMItem LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State Temp TempIndex TempRef Token)};
-($AFE, $Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP OpenCMGroups OpenMarkedSections TABLE_CHARS TEMPLATE_IMS Tokens)};
+      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $IM, $InLiteral, $InitialCMGroupDepth, $LastCMItem, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $State, $Temp, $TempIndex, $TempRef, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF IM InLiteral InitialCMGroupDepth LastCMItem LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState State Temp TempIndex TempRef Token)};
+($Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $Tokens) = @{$self->{saved_lists}}{qw(Callbacks Errors OE OP OpenCMGroups OpenMarkedSections Tokens)};
 ($DTDDefs) = @{$self->{saved_maps}}{qw(DTDDefs)};
 
       $self->_feed_eof or die "Can't restart";
@@ -78841,14 +78919,13 @@ $Scripting = $self->{Scripting};
         $self->{nodes} = [$doc];
         $doc->remove_child ($_) for $doc->child_nodes->to_list;
 
-        local ($AFE, $AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
-        $FRAMESET_OK = 1;
-$AnchoredIndex = 0;
+        local ($AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $IM, $IframeSrcdoc, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $SC, $Scripting, $State, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
+        $AnchoredIndex = 0;
 $InitialCMGroupDepth = 0;
 $NEXT_ID = 1;
 $Offset = 0;
 $DTDMode = q{N/A};
-$self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
+$self->{saved_lists} = {Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
         $BaseURLDI = $self->{BaseURLDI};
 $IframeSrcdoc = $self->{IframeSrcdoc};
@@ -78895,13 +78972,12 @@ $Scripting = $self->{Scripting};
 
       delete $self->{parse_bytes_started};
       $self->{input_stream} = [];
-      $FRAMESET_OK = 1;
-$AnchoredIndex = 0;
+      $AnchoredIndex = 0;
 $InitialCMGroupDepth = 0;
 $NEXT_ID = 1;
 $Offset = 0;
 $DTDMode = q{N/A};
-$self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
+$self->{saved_lists} = {Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
       $BaseURLDI = $self->{BaseURLDI};
 $IframeSrcdoc = $self->{IframeSrcdoc};
@@ -78960,7 +79036,7 @@ $Scripting = $self->{Scripting};
       $doc->manakai_is_html (0);
       $self->{can_restart} = 1;
 
-      local ($AFE, $AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
+      local ($AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $IM, $IframeSrcdoc, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $SC, $Scripting, $State, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
       PARSER: {
         $self->_parse_bytes_init;
         $self->_parse_bytes_start_parsing (no_body_data_yet => 1) or do {
@@ -78969,7 +79045,7 @@ $Scripting = $self->{Scripting};
         };
       } # PARSER
 
-      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, InLiteral => $InLiteral, InitialCMGroupDepth => $InitialCMGroupDepth, LastCMItem => $LastCMItem, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, TempRef => $TempRef, Token => $Token};
+      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, IM => $IM, InLiteral => $InLiteral, InitialCMGroupDepth => $InitialCMGroupDepth, LastCMItem => $LastCMItem, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, State => $State, Temp => $Temp, TempIndex => $TempIndex, TempRef => $TempRef, Token => $Token};
       return;
     } # parse_bytes_start
   
@@ -78980,14 +79056,14 @@ $Scripting = $self->{Scripting};
     sub parse_bytes_feed ($$;%) {
       my ($self, undef, %args) = @_;
 
-      local ($AFE, $AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
+      local ($AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $IM, $IframeSrcdoc, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $SC, $Scripting, $State, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
       $BaseURLDI = $self->{BaseURLDI};
 $IframeSrcdoc = $self->{IframeSrcdoc};
 $InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
-      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $InLiteral, $InitialCMGroupDepth, $LastCMItem, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $Temp, $TempIndex, $TempRef, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM InLiteral InitialCMGroupDepth LastCMItem LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State Temp TempIndex TempRef Token)};
-($AFE, $Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP OpenCMGroups OpenMarkedSections TABLE_CHARS TEMPLATE_IMS Tokens)};
+      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $IM, $InLiteral, $InitialCMGroupDepth, $LastCMItem, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $State, $Temp, $TempIndex, $TempRef, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF IM InLiteral InitialCMGroupDepth LastCMItem LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState State Temp TempIndex TempRef Token)};
+($Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $Tokens) = @{$self->{saved_lists}}{qw(Callbacks Errors OE OP OpenCMGroups OpenMarkedSections Tokens)};
 ($DTDDefs) = @{$self->{saved_maps}}{qw(DTDDefs)};
 
       $self->{byte_buffer} .= $_[1];
@@ -79016,20 +79092,20 @@ $Scripting = $self->{Scripting};
         }
       } # PARSER
 
-      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, InLiteral => $InLiteral, InitialCMGroupDepth => $InitialCMGroupDepth, LastCMItem => $LastCMItem, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, TempRef => $TempRef, Token => $Token};
+      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, IM => $IM, InLiteral => $InLiteral, InitialCMGroupDepth => $InitialCMGroupDepth, LastCMItem => $LastCMItem, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, State => $State, Temp => $Temp, TempIndex => $TempIndex, TempRef => $TempRef, Token => $Token};
       return;
     } # parse_bytes_feed
 
     sub parse_bytes_end ($) {
       my $self = $_[0];
-      local ($AFE, $AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
+      local ($AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $IM, $IframeSrcdoc, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $SC, $Scripting, $State, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
       $BaseURLDI = $self->{BaseURLDI};
 $IframeSrcdoc = $self->{IframeSrcdoc};
 $InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
-      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $InLiteral, $InitialCMGroupDepth, $LastCMItem, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $Temp, $TempIndex, $TempRef, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM InLiteral InitialCMGroupDepth LastCMItem LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State Temp TempIndex TempRef Token)};
-($AFE, $Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP OpenCMGroups OpenMarkedSections TABLE_CHARS TEMPLATE_IMS Tokens)};
+      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $IM, $InLiteral, $InitialCMGroupDepth, $LastCMItem, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $State, $Temp, $TempIndex, $TempRef, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF IM InLiteral InitialCMGroupDepth LastCMItem LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState State Temp TempIndex TempRef Token)};
+($Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $Tokens) = @{$self->{saved_lists}}{qw(Callbacks Errors OE OP OpenCMGroups OpenMarkedSections Tokens)};
 ($DTDDefs) = @{$self->{saved_maps}}{qw(DTDDefs)};
 
       PARSER: {
@@ -79069,14 +79145,13 @@ $Scripting = $self->{Scripting};
   sub parse ($$$) {
     my ($self, $main, $in) = @_;
 
-    local ($AFE, $AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
-    $FRAMESET_OK = 1;
-$AnchoredIndex = 0;
+    local ($AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $IM, $IframeSrcdoc, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $SC, $Scripting, $State, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
+    $AnchoredIndex = 0;
 $InitialCMGroupDepth = 0;
 $NEXT_ID = 1;
 $Offset = 0;
 $DTDMode = q{N/A};
-$self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
+$self->{saved_lists} = {Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
     $BaseURLDI = $self->{BaseURLDI};
 $IframeSrcdoc = $self->{IframeSrcdoc};
@@ -79138,14 +79213,13 @@ $Scripting = $self->{Scripting};
   sub parse ($$$) {
     my ($self, $main, $in) = @_;
 
-    local ($AFE, $AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
-    $FRAMESET_OK = 1;
-$AnchoredIndex = 0;
+    local ($AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $IM, $IframeSrcdoc, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $SC, $Scripting, $State, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
+    $AnchoredIndex = 0;
 $InitialCMGroupDepth = 0;
 $NEXT_ID = 1;
 $Offset = 0;
 $DTDMode = q{N/A};
-$self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
+$self->{saved_lists} = {Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
     $BaseURLDI = $self->{BaseURLDI};
 $IframeSrcdoc = $self->{IframeSrcdoc};
@@ -79213,7 +79287,7 @@ $Scripting = $self->{Scripting};
       $self->{main_parser} = $_[2];
       $self->{can_restart} = 1;
 
-      local ($AFE, $AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
+      local ($AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $IM, $IframeSrcdoc, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $SC, $Scripting, $State, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
       PARSER: {
         $self->_parse_bytes_init;
         $self->_parse_bytes_start_parsing (no_body_data_yet => 1) or do {
@@ -79222,7 +79296,7 @@ $Scripting = $self->{Scripting};
         };
       } # PARSER
 
-      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, InLiteral => $InLiteral, InitialCMGroupDepth => $InitialCMGroupDepth, LastCMItem => $LastCMItem, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, TempRef => $TempRef, Token => $Token};
+      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, IM => $IM, InLiteral => $InLiteral, InitialCMGroupDepth => $InitialCMGroupDepth, LastCMItem => $LastCMItem, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, State => $State, Temp => $Temp, TempIndex => $TempIndex, TempRef => $TempRef, Token => $Token};
       return;
     } # parse_bytes_start
 
@@ -79232,13 +79306,12 @@ $Scripting = $self->{Scripting};
 
     delete $self->{parse_bytes_started};
 
-    $FRAMESET_OK = 1;
-$AnchoredIndex = 0;
+    $AnchoredIndex = 0;
 $InitialCMGroupDepth = 0;
 $NEXT_ID = 1;
 $Offset = 0;
 $DTDMode = q{N/A};
-$self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
+$self->{saved_lists} = {Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
     $BaseURLDI = $self->{BaseURLDI};
 $IframeSrcdoc = $self->{IframeSrcdoc};
@@ -79294,14 +79367,13 @@ $Scripting = $self->{Scripting};
   sub parse ($$$) {
     my ($self, $main, $in) = @_;
 
-    local ($AFE, $AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
-    $FRAMESET_OK = 1;
-$AnchoredIndex = 0;
+    local ($AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $IM, $IframeSrcdoc, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $SC, $Scripting, $State, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
+    $AnchoredIndex = 0;
 $InitialCMGroupDepth = 0;
 $NEXT_ID = 1;
 $Offset = 0;
 $DTDMode = q{N/A};
-$self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
+$self->{saved_lists} = {Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
     $BaseURLDI = $self->{BaseURLDI};
 $IframeSrcdoc = $self->{IframeSrcdoc};
@@ -79365,7 +79437,7 @@ $Scripting = $self->{Scripting};
       $self->{main_parser} = $_[2];
       $self->{can_restart} = 1;
 
-      local ($AFE, $AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
+      local ($AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $IM, $IframeSrcdoc, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $SC, $Scripting, $State, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
       PARSER: {
         $self->_parse_bytes_init;
         $self->_parse_bytes_start_parsing (no_body_data_yet => 1) or do {
@@ -79374,7 +79446,7 @@ $Scripting = $self->{Scripting};
         };
       } # PARSER
 
-      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, InLiteral => $InLiteral, InitialCMGroupDepth => $InitialCMGroupDepth, LastCMItem => $LastCMItem, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, TempRef => $TempRef, Token => $Token};
+      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, IM => $IM, InLiteral => $InLiteral, InitialCMGroupDepth => $InitialCMGroupDepth, LastCMItem => $LastCMItem, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, State => $State, Temp => $Temp, TempIndex => $TempIndex, TempRef => $TempRef, Token => $Token};
       return;
     } # parse_bytes_start
 
@@ -79384,13 +79456,12 @@ $Scripting = $self->{Scripting};
 
     delete $self->{parse_bytes_started};
 
-    $FRAMESET_OK = 1;
-$AnchoredIndex = 0;
+    $AnchoredIndex = 0;
 $InitialCMGroupDepth = 0;
 $NEXT_ID = 1;
 $Offset = 0;
 $DTDMode = q{N/A};
-$self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
+$self->{saved_lists} = {Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
     $BaseURLDI = $self->{BaseURLDI};
 $IframeSrcdoc = $self->{IframeSrcdoc};
@@ -79438,14 +79509,13 @@ $Scripting = $self->{Scripting};
   sub parse ($$$) {
     my ($self, $main, $in) = @_;
 
-    local ($AFE, $AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
-    $FRAMESET_OK = 1;
-$AnchoredIndex = 0;
+    local ($AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $IM, $IframeSrcdoc, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $SC, $Scripting, $State, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
+    $AnchoredIndex = 0;
 $InitialCMGroupDepth = 0;
 $NEXT_ID = 1;
 $Offset = 0;
 $DTDMode = q{N/A};
-$self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
+$self->{saved_lists} = {Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
     $BaseURLDI = $self->{BaseURLDI};
 $IframeSrcdoc = $self->{IframeSrcdoc};
@@ -79510,7 +79580,7 @@ $Scripting = $self->{Scripting};
       $self->{main_parser} = $_[2];
       $self->{can_restart} = 1;
 
-      local ($AFE, $AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
+      local ($AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $IM, $IframeSrcdoc, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $SC, $Scripting, $State, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
       PARSER: {
         $self->_parse_bytes_init;
         $self->_parse_bytes_start_parsing (no_body_data_yet => 1) or do {
@@ -79519,7 +79589,7 @@ $Scripting = $self->{Scripting};
         };
       } # PARSER
 
-      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, InLiteral => $InLiteral, InitialCMGroupDepth => $InitialCMGroupDepth, LastCMItem => $LastCMItem, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, TempRef => $TempRef, Token => $Token};
+      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, IM => $IM, InLiteral => $InLiteral, InitialCMGroupDepth => $InitialCMGroupDepth, LastCMItem => $LastCMItem, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, State => $State, Temp => $Temp, TempIndex => $TempIndex, TempRef => $TempRef, Token => $Token};
       return;
     } # parse_bytes_start
 
@@ -79529,13 +79599,12 @@ $Scripting = $self->{Scripting};
 
     delete $self->{parse_bytes_started};
 
-    $FRAMESET_OK = 1;
-$AnchoredIndex = 0;
+    $AnchoredIndex = 0;
 $InitialCMGroupDepth = 0;
 $NEXT_ID = 1;
 $Offset = 0;
 $DTDMode = q{N/A};
-$self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
+$self->{saved_lists} = {Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
     $BaseURLDI = $self->{BaseURLDI};
 $IframeSrcdoc = $self->{IframeSrcdoc};
@@ -79585,14 +79654,13 @@ $Scripting = $self->{Scripting};
     my ($self, $main, $in) = @_;
 
     $self->{InMDEntity} = 1;
-    local ($AFE, $AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
-    $FRAMESET_OK = 1;
-$AnchoredIndex = 0;
+    local ($AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $IM, $IframeSrcdoc, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $SC, $Scripting, $State, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
+    $AnchoredIndex = 0;
 $InitialCMGroupDepth = 0;
 $NEXT_ID = 1;
 $Offset = 0;
 $DTDMode = q{N/A};
-$self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
+$self->{saved_lists} = {Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
     $BaseURLDI = $self->{BaseURLDI};
 $IframeSrcdoc = $self->{IframeSrcdoc};
@@ -79668,7 +79736,7 @@ $Scripting = $self->{Scripting};
 
       $self->{InMDEntity} = 1;
 
-      local ($AFE, $AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
+      local ($AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $IM, $IframeSrcdoc, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $SC, $Scripting, $State, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
       PARSER: {
         $self->_parse_bytes_init;
         $self->_parse_bytes_start_parsing (no_body_data_yet => 1) or do {
@@ -79677,7 +79745,7 @@ $Scripting = $self->{Scripting};
         };
       } # PARSER
 
-      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, InLiteral => $InLiteral, InitialCMGroupDepth => $InitialCMGroupDepth, LastCMItem => $LastCMItem, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, TempRef => $TempRef, Token => $Token};
+      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, IM => $IM, InLiteral => $InLiteral, InitialCMGroupDepth => $InitialCMGroupDepth, LastCMItem => $LastCMItem, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, State => $State, Temp => $Temp, TempIndex => $TempIndex, TempRef => $TempRef, Token => $Token};
       return;
     } # parse_bytes_start
 
@@ -79687,13 +79755,12 @@ $Scripting = $self->{Scripting};
 
     delete $self->{parse_bytes_started};
 
-    $FRAMESET_OK = 1;
-$AnchoredIndex = 0;
+    $AnchoredIndex = 0;
 $InitialCMGroupDepth = 0;
 $NEXT_ID = 1;
 $Offset = 0;
 $DTDMode = q{N/A};
-$self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
+$self->{saved_lists} = {Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), Tokens => ($Tokens = [])};
 $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
     $BaseURLDI = $self->{BaseURLDI};
 $IframeSrcdoc = $self->{IframeSrcdoc};
@@ -79746,14 +79813,14 @@ $Scripting = $self->{Scripting};
 
     sub _parse_sub_done ($) {
       my $self = $_[0];
-      local ($AFE, $AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $SC, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
+      local ($AnchoredIndex, $Attr, $BaseURLDI, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $IM, $IframeSrcdoc, $InLiteral, $InMDEntity, $InitialCMGroupDepth, $Input, $LastCMItem, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $SC, $Scripting, $State, $Temp, $TempIndex, $TempRef, $Token, $Tokens);
       $BaseURLDI = $self->{BaseURLDI};
 $IframeSrcdoc = $self->{IframeSrcdoc};
 $InMDEntity = $self->{InMDEntity};
 $SC = $self->_sc;
 $Scripting = $self->{Scripting};
-      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $InLiteral, $InitialCMGroupDepth, $LastCMItem, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $Temp, $TempIndex, $TempRef, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM InLiteral InitialCMGroupDepth LastCMItem LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State Temp TempIndex TempRef Token)};
-($AFE, $Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP OpenCMGroups OpenMarkedSections TABLE_CHARS TEMPLATE_IMS Tokens)};
+      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $IM, $InLiteral, $InitialCMGroupDepth, $LastCMItem, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $State, $Temp, $TempIndex, $TempRef, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF IM InLiteral InitialCMGroupDepth LastCMItem LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState State Temp TempIndex TempRef Token)};
+($Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $Tokens) = @{$self->{saved_lists}}{qw(Callbacks Errors OE OP OpenCMGroups OpenMarkedSections Tokens)};
 ($DTDDefs) = @{$self->{saved_maps}}{qw(DTDDefs)};
 
       $self->_run or die "Can't restart";
@@ -79768,6 +79835,12 @@ Copyright 2007-2015 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
+
+This library derived from a JSON file, which contains data extracted
+from HTML Standard.  "Written by Ian Hickson (Google, ian@hixie.ch) -
+Parts Â© Copyright 2004-2014 Apple Inc., Mozilla Foundation, and Opera
+Software ASA; You are granted a license to use, reproduce and create
+derivative works of this document."
 
 =cut
 
