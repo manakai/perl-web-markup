@@ -52,6 +52,7 @@ for (0x0001..0x0008, 0x000B, 0x000E..0x001F) {
 $InvalidCharRefs->{1.0}->{0x000C} = [0x000C, 'must'];
 $InvalidCharRefs->{1.1}->{0x000C} = [0x000C, 'warn'];
 $InvalidCharRefs->{0}->{0x007F} = [0x007F, 'must'];
+$InvalidCharRefs->{0}->{0x000D} = [0x000D, 'must'];
 for (0x007F..0x009F) {
   $InvalidCharRefs->{1.0}->{$_} =
   $InvalidCharRefs->{1.1}->{$_} = [$_, 'warn'];
