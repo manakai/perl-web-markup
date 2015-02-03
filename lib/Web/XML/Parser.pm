@@ -7,7 +7,7 @@
     use warnings FATAL => 'redefine';
     use warnings FATAL => 'uninitialized';
     use utf8;
-    our $VERSION = '7.0';
+    our $VERSION = '8.0';
     use Carp qw(croak);
     
     use Encode qw(decode); # XXX
@@ -78543,7 +78543,10 @@ sub dom_tree ($$) {
 
       $self->{document} = my $doc = $_[2];
       $self->{IframeSrcdoc} = $doc->manakai_is_srcdoc;
+      ## 
+      ## <XML>
       $doc->manakai_is_html (0);
+      ## </XML>
       $doc->manakai_compat_mode ('no quirks');
       $doc->remove_child ($_) for $doc->child_nodes->to_list;
       $self->{nodes} = [$doc];
@@ -78563,7 +78566,9 @@ $SC = $self->_sc;
 $Scripting = $self->{Scripting};
       $Confident = 1; # irrelevant
       $State = DATA_STATE;;
+      ## <!Temma>
       $IM = BEFORE_XML_DECLARATION_IM;
+      ## </!Temma>
 
       $self->{input_stream} = [];
       my $dids = $self->di_data_set;
@@ -79768,6 +79773,12 @@ Copyright 2007-2015 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
+
+This library derived from a JSON file, which contains data extracted
+from HTML Standard.  "Written by Ian Hickson (Google, ian@hixie.ch) -
+Parts Â© Copyright 2004-2014 Apple Inc., Mozilla Foundation, and Opera
+Software ASA; You are granted a license to use, reproduce and create
+derivative works of this document."
 
 =cut
 

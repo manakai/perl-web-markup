@@ -6,7 +6,7 @@ use JSON::PS;
 
 my $LANG = $ENV{PARSER_LANG} ||= 'HTML';
 
-my $GeneratedPackageName = q{Web::}.$LANG.q{::Parser};
+my $GeneratedPackageName = $LANG eq 'Temma' ? q{Web::Temma::Tokenizer} : q{Web::}.$LANG.q{::Parser};
 my $DefDataPath = path (__FILE__)->parent->parent->child (q{local});
 my $UseLibCode = q{};
 
@@ -21,6 +21,10 @@ sub _expanded_tokenizer_defs ($) {
     my $expanded_json_path = $DefDataPath->child
         ('xml-tokenizer-expanded.json');
     return json_bytes2perl $expanded_json_path->slurp;
+  } elsif ($LANG eq 'Temma') {
+    my $expanded_json_path = $DefDataPath->child
+        ('temma-tokenizer-expanded.json');
+    return json_bytes2perl $expanded_json_path->slurp;
   } else {
     my $expanded_json_path = $DefDataPath->child
         ('html-tokenizer-expanded.json');
@@ -33,6 +37,8 @@ sub _parser_defs ($) {
     my $expanded_json_path = $DefDataPath->child
         ('xml-tree-constructor-expanded.json');
     return json_bytes2perl $expanded_json_path->slurp;
+  } elsif ($LANG eq 'Temma') {
+    return {};
   } else {
     my $expanded_json_path = $DefDataPath->child
         ('html-tree-constructor-expanded-no-isindex.json');
@@ -1355,7 +1361,7 @@ sub serialize_actions ($;%) {
       }
       $return = '1 if $return';
       $result[-1] =~ s{<XML>.*?</XML>}{}gs unless $LANG eq 'XML';
-      $result[-1] =~ s{<HTML>.*?</HTML>}{}gs unless $LANG eq 'HTML';
+      $result[-1] =~ s{<HTML>.*?</HTML>}{}gs unless $LANG eq 'HTML' or $LANG eq 'Temma';
     } elsif ($type eq 'validate-temp-as-entref') {
       push @result, q{
         $DTDDefs->{entity_names_in_entity_values}->{$Temp}
@@ -1661,7 +1667,7 @@ sub generate_tokenizer {
   my $defs = $self->_expanded_tokenizer_defs->{tokenizer};
   my @def_code;
 
-  if ($LANG eq 'HTML') {
+  if ($LANG eq 'HTML' or $LANG eq 'Temma') {
     push @def_code, q{my $InvalidCharRefs = $Web::HTML::_SyntaxDefs->{charref_invalid};};
   } else {
     push @def_code, q{my $InvalidCharRefs = $Web::HTML::_SyntaxDefs->{xml_charref_invalid};};
@@ -2586,7 +2592,7 @@ sub foster_code ($$$;$) {
 } # foster_code
 
 sub E2Tns ($) {
-  if ($LANG eq 'HTML') {
+  if ($LANG eq 'HTML' or $LANG eq 'Temma') {
     return sprintf q{$Element2Type->[%s]}, $_[0];
   } else {
     return sprintf q{$Element2Type->{(%s)}}, $_[0];
@@ -3635,7 +3641,7 @@ sub actions_to_code ($;%) {
         }, $codes->{else}, $codes->{null};
       } else {
         if (defined $act->{char_actions}) {
-          die if $LANG eq 'HTML';
+          die if $LANG eq 'HTML' or $LANG eq 'Temma';
           $code = sprintf q{
             while ($token->{value} =~ /(.)/gs) {
               %s
@@ -4756,8 +4762,8 @@ sub generate_tree_constructor ($) {
     }
   }
 
-  my $def_code = join "\n",
-      ($LANG eq 'HTML' ? q{my $Element2Type = [];} : q{my $Element2Type = {};}),
+  my $def_code = $LANG eq 'Temma' ? '' : join "\n",
+      (($LANG eq 'HTML') ? q{my $Element2Type = [];} : q{my $Element2Type = {};}),
       q{my $ProcessIM = [];},
       (join "\n", @group_code),
       (join "\n", @im_code),
@@ -4805,6 +4811,35 @@ sub generate_tree_constructor ($) {
       @$Tokens = ();
     } # _construct_tree
   } if $LANG eq 'XML';
+
+  if ($LANG eq 'Temma') {
+     $code = sprintf q{
+       sub _construct_tree ($) {
+         my $self = $_[0];
+         my $state = $self->ontokens->($self, $Tokens);
+         if (defined $state) {
+           if ($state eq 'script data state') {
+             %s
+           } elsif ($state eq 'RCDATA state') {
+             %s
+           } elsif ($state eq 'RAWTEXT state') {
+             %s
+           }
+         }
+         @$Tokens = ();
+       } # _construct_tree
+
+       sub ontokens ($;$) {
+         if (@_ > 1) {
+           $_[0]->{ontokens} = $_[1];
+         }
+         return $_[0]->{ontokens} || sub { };
+       } # ontokens
+     },
+         switch_state_code 'script data state',
+         switch_state_code 'RCDATA state',
+         switch_state_code 'RAWTEXT state';
+  } # Temma
 
   return ($def_code, $code);
 } # generate_tree_constructor
@@ -5300,7 +5335,7 @@ sub generate_api ($) {
 
       return $self->_run;
     } # _feed_chars
-  } if $LANG eq 'HTML';
+  } if $LANG eq 'HTML' or $LANG eq 'Temma';
 
   push @sub_code, sprintf q{
     sub _feed_chars ($$) {
@@ -5345,7 +5380,12 @@ sub generate_api ($) {
 
       $self->{document} = my $doc = $_[2];
       $self->{IframeSrcdoc} = $doc->manakai_is_srcdoc;
-      $doc->manakai_is_html (%d);
+      ## <HTML>
+      $doc->manakai_is_html (1);
+      ## </HTML>
+      ## <XML>
+      $doc->manakai_is_html (0);
+      ## </XML>
       $doc->manakai_compat_mode ('no quirks');
       $doc->remove_child ($_) for $doc->child_nodes->to_list;
       $self->{nodes} = [$doc];
@@ -5354,7 +5394,9 @@ sub generate_api ($) {
       VARS::RESET;
       $Confident = 1; # irrelevant
       SWITCH_STATE ("data state");
+      ## <!Temma>
       $IM = IM (HTML => "initial", XML => "before XML declaration");
+      ## </!Temma>
 
       $self->{input_stream} = [];
       my $dids = $self->di_data_set;
@@ -5371,7 +5413,7 @@ sub generate_api ($) {
 
       return;
     } # parse_char_string
-  }, $LANG eq 'HTML';
+  };
 
   push @sub_code, sprintf q{
     sub parse_char_string_with_context ($$$$) {
@@ -5600,9 +5642,8 @@ sub generate_api ($) {
     E2Tns 'HTMLNS', E2Tns 'HTMLNS', E2Tns 'HTMLNS', E2Tns 'HTMLNS',
     E2Tns 'SVGNS', E2Tns 'SVGNS', E2Tns 'SVGNS', E2Tns 'SVGNS',
     E2Tns 'MATHMLNS', E2Tns 'MATHMLNS', E2Tns 'MATHMLNS', E2Tns 'MATHMLNS',
-    E2Tns 'HTMLNS', E2Tns 'HTMLNS', E2Tns 'HTMLNS';
-  $sub_code[-1] =~ s{<XML>.*?</XML>}{}gs unless $LANG eq 'XML';
-  $sub_code[-1] =~ s{<HTML>.*?</HTML>}{}gs unless $LANG eq 'HTML';
+    E2Tns 'HTMLNS', E2Tns 'HTMLNS', E2Tns 'HTMLNS'
+      unless $LANG eq 'Temma';
 
   push @sub_code, sprintf q{
     sub parse_chars_start ($$) {
@@ -5638,7 +5679,7 @@ sub generate_api ($) {
       VARS::SAVE;
       return;
     } # parse_chars_start
-  }, $LANG eq 'HTML';
+  }, $LANG eq 'HTML' unless $LANG eq 'Temma';
 
   push @sub_code, sprintf q{
     sub parse_chars_feed ($$) {
@@ -5678,7 +5719,7 @@ sub generate_api ($) {
 ## XXX The policy mentioned above might change when we implement
 ## Encoding Standard spec.
 
-  };
+  } unless $LANG eq 'Temma';
 
   push @sub_code, sprintf q{
     sub parse_byte_string ($$$$) {
@@ -5726,7 +5767,7 @@ sub generate_api ($) {
 
       return;
     } # parse_byte_string
-  }, $LANG eq 'HTML';
+  }, $LANG eq 'HTML' unless $LANG eq 'Temma';
 
   push @sub_code, sprintf q{
     sub _parse_bytes_init ($) {
@@ -5756,7 +5797,7 @@ sub generate_api ($) {
       $self->{BaseURLDI} = $BaseURLDI = $source_di;
       ## </XML>
     } # _parse_bytes_init
-  };
+  } unless $LANG eq 'Temma';
 
   push @sub_code, sprintf q{
     sub _parse_bytes_start_parsing ($;%%) {
@@ -5781,7 +5822,7 @@ sub generate_api ($) {
 
       return 1;
     } # _parse_bytes_start_parsing
-  };
+  } unless $LANG eq 'Temma';
 
   push @sub_code, sprintf q{
     sub parse_bytes_start ($$$) {
@@ -5807,7 +5848,7 @@ sub generate_api ($) {
       VARS::SAVE;
       return;
     } # parse_bytes_start
-  }, $LANG eq 'HTML';
+  }, $LANG eq 'HTML' unless $LANG eq 'Temma';
 
   push @sub_code, sprintf q{
     ## The $args{start_parsing} flag should be set true if it has
@@ -5883,7 +5924,7 @@ sub generate_api ($) {
       
       return;
     } # parse_bytes_end
-  };
+  } unless $LANG eq 'Temma';
 
   push @sub_code, q{
 
@@ -6483,12 +6524,13 @@ sub generate_api ($) {
   for (@sub_code) {
     s/\bSWITCH_STATE\s*\("([^"]+)"\)/switch_state_code $1/ge;
     s{\bIM\s*\(HTML\s*=>\s*"([^"]+)"\s*,\s*XML\s*=>\s*"([^"]+)"\)}{
-      im_const ($LANG eq 'HTML' ? $1 : $2);
+      im_const (($LANG eq 'HTML' or $LANG eq 'Temma') ? $1 : $2);
     }ge;
     s/\bIM\s*\("([^"]+)"\)/im_const $1/ge;
     s/\bVARS::(\w+);/$vars_codes->{$1}/ge;
+    s{<!Temma>.*?</!Temma>}{}gs if $LANG eq 'Temma';
     s{<XML>.*?</XML>}{}gs unless $LANG eq 'XML';
-    s{<HTML>.*?</HTML>}{}gs unless $LANG eq 'HTML';
+    s{<HTML>.*?</HTML>}{}gs unless $LANG eq 'HTML' or $LANG eq 'Temma';
   }
   push @code, @sub_code;
 
@@ -6512,7 +6554,7 @@ sub generate ($) {
     use warnings FATAL => 'redefine';
     use warnings FATAL => 'uninitialized';
     use utf8;
-    our $VERSION = '7.0';
+    our $VERSION = '8.0';
     use Carp qw(croak);
     %s
     use Encode qw(decode); # XXX
@@ -6709,6 +6751,12 @@ Copyright 2007-2015 Wakaba <wakaba@suikawiki.org>.
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
 
+This library derived from a JSON file, which contains data extracted
+from HTML Standard.  "Written by Ian Hickson (Google, ian@hixie.ch) -
+Parts © Copyright 2004-2014 Apple Inc., Mozilla Foundation, and Opera
+Software ASA; You are granted a license to use, reproduce and create
+derivative works of this document."
+
 =cut
 
   },
@@ -6738,7 +6786,7 @@ it under the same terms as Perl itself.
       $self->generate_input_bytes_handler,
       $tokenizer_code,
       $tree_code,
-      $self->generate_dom_glue,
+      $LANG eq 'Temma' ? '' : $self->generate_dom_glue,
       $api_code;
 } # generate
 
