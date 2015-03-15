@@ -7,7 +7,7 @@ Test::NoWarnings~1.04
 Module::Runtime~0.014
 Regexp::Parser~0.21
 Unicode::Normalize~1.18
-Encode~2.71
+Encode~2.72
 Test::Builder~1.001014
 Algorithm::Diff~1.1903
 MRO::Compat~0.12
