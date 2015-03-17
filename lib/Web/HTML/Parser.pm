@@ -601,8 +601,8 @@ $TagName2Group->{q@xmp@} = 61;
         sub DT_ELS () { 2048 }
       
 
-        ## HTML:fieldset,HTML:input,HTML:select,HTML:textarea
-        sub FIE_INP_SEL_TEX_ELS () { 4096 }
+        ## HTML:fieldset,HTML:input,HTML:select
+        sub FIE_INP_SEL_ELS () { 4096 }
       
 
         ## HTML:h1,HTML:h2,HTML:h3,HTML:h4,HTML:h5,HTML:h6
@@ -669,139 +669,143 @@ $TagName2Group->{q@xmp@} = 61;
         sub TEM_ELS () { 268435456 }
       
 
+        ## HTML:textarea
+        sub TEX_ELS () { 536870912 }
+      
+
         ## HTML:tr
-        sub TR_ELS () { 536870912 }
+        sub TR_ELS () { 1073741824 }
       
 
         ## MathML:*
-        sub MATHML_NS_ELS () { 1073741824 }
+        sub MATHML_NS_ELS () { 2147483648 }
       
 
         ## MathML:annotation-xml
-        sub M_ANN_ELS () { 2147483648 }
+        sub M_ANN_ELS () { 4294967296 }
       
 
         ## MathML:annotation-xml@encoding=application/xhtml+xml,MathML:annotation-xml@encoding=text/html
-        sub M_ANN_M_ANN_ELS () { 4294967296 }
+        sub M_ANN_M_ANN_ELS () { 8589934592 }
       
 
         ## MathML:mi,MathML:mn,MathML:mo,MathML:ms,MathML:mtext
-        sub M_MI_M_MN_M_MO_M_MS_M_MTE_ELS () { 8589934592 }
+        sub M_MI_M_MN_M_MO_M_MS_M_MTE_ELS () { 17179869184 }
       
 
         ## SVG:*
-        sub SVG_NS_ELS () { 17179869184 }
+        sub SVG_NS_ELS () { 34359738368 }
       
 
         ## SVG:desc,SVG:foreignObject,SVG:title
-        sub S_DES_S_FOR_S_TIT_ELS () { 34359738368 }
+        sub S_DES_S_FOR_S_TIT_ELS () { 68719476736 }
       
 $Element2Type->[HTMLNS]->{q@*@} = HTML_NS_ELS;
-sub A_EL () { HTML_NS_ELS | ABBCEFINSSSSTU_ELS | 68719476736 } $Element2Type->[HTMLNS]->{q@a@} = A_EL;
-sub ADDRESS_EL () { HTML_NS_ELS | ADD_DIV_ELS | 68719476736 } $Element2Type->[HTMLNS]->{q@address@} = ADDRESS_EL;
+sub A_EL () { HTML_NS_ELS | ABBCEFINSSSSTU_ELS | 137438953472 } $Element2Type->[HTMLNS]->{q@a@} = A_EL;
+sub ADDRESS_EL () { HTML_NS_ELS | ADD_DIV_ELS | 137438953472 } $Element2Type->[HTMLNS]->{q@address@} = ADDRESS_EL;
 sub APPLET_EL () { HTML_NS_ELS | APP_ELS } $Element2Type->[HTMLNS]->{q@applet@} = APPLET_EL;
 $Element2Type->[HTMLNS]->{q@area@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS;
-sub ARTICLE_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | 68719476736 } $Element2Type->[HTMLNS]->{q@article@} = ARTICLE_EL;
-sub ASIDE_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | 137438953472 } $Element2Type->[HTMLNS]->{q@aside@} = ASIDE_EL;
+sub ARTICLE_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | 137438953472 } $Element2Type->[HTMLNS]->{q@article@} = ARTICLE_EL;
+sub ASIDE_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | 274877906944 } $Element2Type->[HTMLNS]->{q@aside@} = ASIDE_EL;
 $Element2Type->[HTMLNS]->{q@audio@} = HTML_NS_ELS | AUD_VID_ELS;
 $Element2Type->[HTMLNS]->{q@b@} = HTML_NS_ELS | ABBCEFINSSSSTU_ELS;
 $Element2Type->[HTMLNS]->{q@base@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS;
 $Element2Type->[HTMLNS]->{q@basefont@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS;
 $Element2Type->[HTMLNS]->{q@bgsound@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS;
 $Element2Type->[HTMLNS]->{q@big@} = HTML_NS_ELS | ABBCEFINSSSSTU_ELS;
-sub BLOCKQUOTE_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | 206158430208 } $Element2Type->[HTMLNS]->{q@blockquote@} = BLOCKQUOTE_EL;
+sub BLOCKQUOTE_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | 412316860416 } $Element2Type->[HTMLNS]->{q@blockquote@} = BLOCKQUOTE_EL;
 sub BODY_EL () { HTML_NS_ELS | BOD_ELS } $Element2Type->[HTMLNS]->{q@body@} = BODY_EL;
 $Element2Type->[HTMLNS]->{q@br@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS;
 sub BUTTON_EL () { HTML_NS_ELS | BUT_ELS } $Element2Type->[HTMLNS]->{q@button@} = BUTTON_EL;
 sub CAPTION_EL () { HTML_NS_ELS | CAP_ELS } $Element2Type->[HTMLNS]->{q@caption@} = CAPTION_EL;
-sub CENTER_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | 274877906944 } $Element2Type->[HTMLNS]->{q@center@} = CENTER_EL;
+sub CENTER_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | 549755813888 } $Element2Type->[HTMLNS]->{q@center@} = CENTER_EL;
 $Element2Type->[HTMLNS]->{q@code@} = HTML_NS_ELS | ABBCEFINSSSSTU_ELS;
 $Element2Type->[HTMLNS]->{q@col@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS;
 sub COLGROUP_EL () { HTML_NS_ELS | COL_ELS } $Element2Type->[HTMLNS]->{q@colgroup@} = COLGROUP_EL;
 sub DD_EL () { HTML_NS_ELS | DD_ELS } $Element2Type->[HTMLNS]->{q@dd@} = DD_EL;
-sub DETAILS_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | 343597383680 } $Element2Type->[HTMLNS]->{q@details@} = DETAILS_EL;
-sub DIALOG_EL () { HTML_NS_ELS | 68719476736 } $Element2Type->[HTMLNS]->{q@dialog@} = DIALOG_EL;
-sub DIR_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | 412316860416 } $Element2Type->[HTMLNS]->{q@dir@} = DIR_EL;
-sub DIV_EL () { HTML_NS_ELS | ADD_DIV_ELS | 137438953472 } $Element2Type->[HTMLNS]->{q@div@} = DIV_EL;
-sub DL_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | 481036337152 } $Element2Type->[HTMLNS]->{q@dl@} = DL_EL;
+sub DETAILS_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | 687194767360 } $Element2Type->[HTMLNS]->{q@details@} = DETAILS_EL;
+sub DIALOG_EL () { HTML_NS_ELS | 137438953472 } $Element2Type->[HTMLNS]->{q@dialog@} = DIALOG_EL;
+sub DIR_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | 824633720832 } $Element2Type->[HTMLNS]->{q@dir@} = DIR_EL;
+sub DIV_EL () { HTML_NS_ELS | ADD_DIV_ELS | 274877906944 } $Element2Type->[HTMLNS]->{q@div@} = DIV_EL;
+sub DL_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | 962072674304 } $Element2Type->[HTMLNS]->{q@dl@} = DL_EL;
 sub DT_EL () { HTML_NS_ELS | DT_ELS } $Element2Type->[HTMLNS]->{q@dt@} = DT_EL;
 $Element2Type->[HTMLNS]->{q@em@} = HTML_NS_ELS | ABBCEFINSSSSTU_ELS;
 $Element2Type->[HTMLNS]->{q@embed@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS;
-sub FIELDSET_EL () { HTML_NS_ELS | FIE_INP_SEL_TEX_ELS | 68719476736 } $Element2Type->[HTMLNS]->{q@fieldset@} = FIELDSET_EL;
-sub FIGCAPTION_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | 549755813888 } $Element2Type->[HTMLNS]->{q@figcaption@} = FIGCAPTION_EL;
-sub FIGURE_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | 618475290624 } $Element2Type->[HTMLNS]->{q@figure@} = FIGURE_EL;
+sub FIELDSET_EL () { HTML_NS_ELS | FIE_INP_SEL_ELS | 137438953472 } $Element2Type->[HTMLNS]->{q@fieldset@} = FIELDSET_EL;
+sub FIGCAPTION_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | 1099511627776 } $Element2Type->[HTMLNS]->{q@figcaption@} = FIGCAPTION_EL;
+sub FIGURE_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | 1236950581248 } $Element2Type->[HTMLNS]->{q@figure@} = FIGURE_EL;
 $Element2Type->[HTMLNS]->{q@font@} = HTML_NS_ELS | ABBCEFINSSSSTU_ELS;
-sub FOOTER_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | 687194767360 } $Element2Type->[HTMLNS]->{q@footer@} = FOOTER_EL;
-sub FORM_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | 755914244096 } $Element2Type->[HTMLNS]->{q@form@} = FORM_EL;
+sub FOOTER_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | 1374389534720 } $Element2Type->[HTMLNS]->{q@footer@} = FOOTER_EL;
+sub FORM_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | 1511828488192 } $Element2Type->[HTMLNS]->{q@form@} = FORM_EL;
 $Element2Type->[HTMLNS]->{q@frame@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS;
-sub FRAMESET_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | 824633720832 } $Element2Type->[HTMLNS]->{q@frameset@} = FRAMESET_EL;
-sub H1_EL () { HTML_NS_ELS | HHHHHH_ELS | 68719476736 } $Element2Type->[HTMLNS]->{q@h1@} = H1_EL;
-sub H2_EL () { HTML_NS_ELS | HHHHHH_ELS | 137438953472 } $Element2Type->[HTMLNS]->{q@h2@} = H2_EL;
-sub H3_EL () { HTML_NS_ELS | HHHHHH_ELS | 206158430208 } $Element2Type->[HTMLNS]->{q@h3@} = H3_EL;
-sub H4_EL () { HTML_NS_ELS | HHHHHH_ELS | 274877906944 } $Element2Type->[HTMLNS]->{q@h4@} = H4_EL;
-sub H5_EL () { HTML_NS_ELS | HHHHHH_ELS | 343597383680 } $Element2Type->[HTMLNS]->{q@h5@} = H5_EL;
-sub H6_EL () { HTML_NS_ELS | HHHHHH_ELS | 412316860416 } $Element2Type->[HTMLNS]->{q@h6@} = H6_EL;
-sub HEAD_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | 893353197568 } $Element2Type->[HTMLNS]->{q@head@} = HEAD_EL;
-sub HEADER_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | 962072674304 } $Element2Type->[HTMLNS]->{q@header@} = HEADER_EL;
-sub HGROUP_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | 1030792151040 } $Element2Type->[HTMLNS]->{q@hgroup@} = HGROUP_EL;
+sub FRAMESET_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | 1649267441664 } $Element2Type->[HTMLNS]->{q@frameset@} = FRAMESET_EL;
+sub H1_EL () { HTML_NS_ELS | HHHHHH_ELS | 137438953472 } $Element2Type->[HTMLNS]->{q@h1@} = H1_EL;
+sub H2_EL () { HTML_NS_ELS | HHHHHH_ELS | 274877906944 } $Element2Type->[HTMLNS]->{q@h2@} = H2_EL;
+sub H3_EL () { HTML_NS_ELS | HHHHHH_ELS | 412316860416 } $Element2Type->[HTMLNS]->{q@h3@} = H3_EL;
+sub H4_EL () { HTML_NS_ELS | HHHHHH_ELS | 549755813888 } $Element2Type->[HTMLNS]->{q@h4@} = H4_EL;
+sub H5_EL () { HTML_NS_ELS | HHHHHH_ELS | 687194767360 } $Element2Type->[HTMLNS]->{q@h5@} = H5_EL;
+sub H6_EL () { HTML_NS_ELS | HHHHHH_ELS | 824633720832 } $Element2Type->[HTMLNS]->{q@h6@} = H6_EL;
+sub HEAD_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | 1786706395136 } $Element2Type->[HTMLNS]->{q@head@} = HEAD_EL;
+sub HEADER_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | 1924145348608 } $Element2Type->[HTMLNS]->{q@header@} = HEADER_EL;
+sub HGROUP_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | 2061584302080 } $Element2Type->[HTMLNS]->{q@hgroup@} = HGROUP_EL;
 $Element2Type->[HTMLNS]->{q@hr@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS;
 sub HTML_EL () { HTML_NS_ELS | HTM_ELS } $Element2Type->[HTMLNS]->{q@html@} = HTML_EL;
 $Element2Type->[HTMLNS]->{q@i@} = HTML_NS_ELS | ABBCEFINSSSSTU_ELS;
 $Element2Type->[HTMLNS]->{q@iframe@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS;
 $Element2Type->[HTMLNS]->{q@img@} = HTML_NS_ELS | IMG_ELS;
-$Element2Type->[HTMLNS]->{q@input@} = HTML_NS_ELS | FIE_INP_SEL_TEX_ELS;
+$Element2Type->[HTMLNS]->{q@input@} = HTML_NS_ELS | FIE_INP_SEL_ELS;
 $Element2Type->[HTMLNS]->{q@keygen@} = HTML_NS_ELS | KEY_LAB_OUT_ELS;
 $Element2Type->[HTMLNS]->{q@label@} = HTML_NS_ELS | KEY_LAB_OUT_ELS;
 sub LI_EL () { HTML_NS_ELS | LI_ELS } $Element2Type->[HTMLNS]->{q@li@} = LI_EL;
 $Element2Type->[HTMLNS]->{q@link@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS;
-sub LISTING_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | 1099511627776 } $Element2Type->[HTMLNS]->{q@listing@} = LISTING_EL;
-sub MAIN_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | 1168231104512 } $Element2Type->[HTMLNS]->{q@main@} = MAIN_EL;
+sub LISTING_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | 2199023255552 } $Element2Type->[HTMLNS]->{q@listing@} = LISTING_EL;
+sub MAIN_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | 2336462209024 } $Element2Type->[HTMLNS]->{q@main@} = MAIN_EL;
 sub MARQUEE_EL () { HTML_NS_ELS | MAR_M_ANN_ELS } $Element2Type->[HTMLNS]->{q@marquee@} = MARQUEE_EL;
-sub MENU_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | 1236950581248 } $Element2Type->[HTMLNS]->{q@menu@} = MENU_EL;
+sub MENU_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | 2473901162496 } $Element2Type->[HTMLNS]->{q@menu@} = MENU_EL;
 $Element2Type->[HTMLNS]->{q@menuitem@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS;
 $Element2Type->[HTMLNS]->{q@meta@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS;
-sub NAV_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | 1305670057984 } $Element2Type->[HTMLNS]->{q@nav@} = NAV_EL;
-sub NOBR_EL () { HTML_NS_ELS | ABBCEFINSSSSTU_ELS | 137438953472 } $Element2Type->[HTMLNS]->{q@nobr@} = NOBR_EL;
+sub NAV_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | 2611340115968 } $Element2Type->[HTMLNS]->{q@nav@} = NAV_EL;
+sub NOBR_EL () { HTML_NS_ELS | ABBCEFINSSSSTU_ELS | 274877906944 } $Element2Type->[HTMLNS]->{q@nobr@} = NOBR_EL;
 $Element2Type->[HTMLNS]->{q@noembed@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS;
 $Element2Type->[HTMLNS]->{q@noframes@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS;
 $Element2Type->[HTMLNS]->{q@noscript@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS;
 sub OBJECT_EL () { HTML_NS_ELS | OBJ_ELS } $Element2Type->[HTMLNS]->{q@object@} = OBJECT_EL;
-sub OL_EL () { HTML_NS_ELS | OL_UL_ELS | 68719476736 } $Element2Type->[HTMLNS]->{q@ol@} = OL_EL;
-sub OPTGROUP_EL () { HTML_NS_ELS | OPT_OPT_ELS | 68719476736 } $Element2Type->[HTMLNS]->{q@optgroup@} = OPTGROUP_EL;
-sub OPTION_EL () { HTML_NS_ELS | OPT_OPT_ELS | 137438953472 } $Element2Type->[HTMLNS]->{q@option@} = OPTION_EL;
+sub OL_EL () { HTML_NS_ELS | OL_UL_ELS | 137438953472 } $Element2Type->[HTMLNS]->{q@ol@} = OL_EL;
+sub OPTGROUP_EL () { HTML_NS_ELS | OPT_OPT_ELS | 137438953472 } $Element2Type->[HTMLNS]->{q@optgroup@} = OPTGROUP_EL;
+sub OPTION_EL () { HTML_NS_ELS | OPT_OPT_ELS | 274877906944 } $Element2Type->[HTMLNS]->{q@option@} = OPTION_EL;
 $Element2Type->[HTMLNS]->{q@output@} = HTML_NS_ELS | KEY_LAB_OUT_ELS;
 sub P_EL () { HTML_NS_ELS | P_ELS } $Element2Type->[HTMLNS]->{q@p@} = P_EL;
 $Element2Type->[HTMLNS]->{q@param@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS;
 $Element2Type->[HTMLNS]->{q@plaintext@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS;
-sub PRE_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | 1374389534720 } $Element2Type->[HTMLNS]->{q@pre@} = PRE_EL;
+sub PRE_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | 2748779069440 } $Element2Type->[HTMLNS]->{q@pre@} = PRE_EL;
 $Element2Type->[HTMLNS]->{q@rp@} = HTML_NS_ELS | RP_RT_ELS;
 $Element2Type->[HTMLNS]->{q@rt@} = HTML_NS_ELS | RP_RT_ELS;
-sub RUBY_EL () { HTML_NS_ELS | 137438953472 } $Element2Type->[HTMLNS]->{q@ruby@} = RUBY_EL;
+sub RUBY_EL () { HTML_NS_ELS | 274877906944 } $Element2Type->[HTMLNS]->{q@ruby@} = RUBY_EL;
 $Element2Type->[HTMLNS]->{q@s@} = HTML_NS_ELS | ABBCEFINSSSSTU_ELS;
-sub SARCASM_EL () { HTML_NS_ELS | 206158430208 } $Element2Type->[HTMLNS]->{q@sarcasm@} = SARCASM_EL;
-sub SCRIPT_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | 1443109011456 } $Element2Type->[HTMLNS]->{q@script@} = SCRIPT_EL;
-sub SECTION_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | 1511828488192 } $Element2Type->[HTMLNS]->{q@section@} = SECTION_EL;
-sub SELECT_EL () { HTML_NS_ELS | FIE_INP_SEL_TEX_ELS | 137438953472 } $Element2Type->[HTMLNS]->{q@select@} = SELECT_EL;
+sub SARCASM_EL () { HTML_NS_ELS | 412316860416 } $Element2Type->[HTMLNS]->{q@sarcasm@} = SARCASM_EL;
+sub SCRIPT_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | 2886218022912 } $Element2Type->[HTMLNS]->{q@script@} = SCRIPT_EL;
+sub SECTION_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | 3023656976384 } $Element2Type->[HTMLNS]->{q@section@} = SECTION_EL;
+sub SELECT_EL () { HTML_NS_ELS | FIE_INP_SEL_ELS | 274877906944 } $Element2Type->[HTMLNS]->{q@select@} = SELECT_EL;
 $Element2Type->[HTMLNS]->{q@small@} = HTML_NS_ELS | ABBCEFINSSSSTU_ELS;
 $Element2Type->[HTMLNS]->{q@source@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS;
 $Element2Type->[HTMLNS]->{q@strike@} = HTML_NS_ELS | ABBCEFINSSSSTU_ELS;
 $Element2Type->[HTMLNS]->{q@strong@} = HTML_NS_ELS | ABBCEFINSSSSTU_ELS;
 $Element2Type->[HTMLNS]->{q@style@} = HTML_NS_ELS | STY_ELS;
-sub SUMMARY_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | 1580547964928 } $Element2Type->[HTMLNS]->{q@summary@} = SUMMARY_EL;
+sub SUMMARY_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | 3161095929856 } $Element2Type->[HTMLNS]->{q@summary@} = SUMMARY_EL;
 sub TABLE_EL () { HTML_NS_ELS | TAB_ELS } $Element2Type->[HTMLNS]->{q@table@} = TABLE_EL;
-sub TBODY_EL () { HTML_NS_ELS | TBO_TFO_THE_ELS | 68719476736 } $Element2Type->[HTMLNS]->{q@tbody@} = TBODY_EL;
-sub TD_EL () { HTML_NS_ELS | TD_TH_ELS | 68719476736 } $Element2Type->[HTMLNS]->{q@td@} = TD_EL;
+sub TBODY_EL () { HTML_NS_ELS | TBO_TFO_THE_ELS | 137438953472 } $Element2Type->[HTMLNS]->{q@tbody@} = TBODY_EL;
+sub TD_EL () { HTML_NS_ELS | TD_TH_ELS | 137438953472 } $Element2Type->[HTMLNS]->{q@td@} = TD_EL;
 sub TEMPLATE_EL () { HTML_NS_ELS | TEM_ELS } $Element2Type->[HTMLNS]->{q@template@} = TEMPLATE_EL;
-$Element2Type->[HTMLNS]->{q@textarea@} = HTML_NS_ELS | FIE_INP_SEL_TEX_ELS;
-sub TFOOT_EL () { HTML_NS_ELS | TBO_TFO_THE_ELS | 137438953472 } $Element2Type->[HTMLNS]->{q@tfoot@} = TFOOT_EL;
-sub TH_EL () { HTML_NS_ELS | TD_TH_ELS | 137438953472 } $Element2Type->[HTMLNS]->{q@th@} = TH_EL;
-sub THEAD_EL () { HTML_NS_ELS | TBO_TFO_THE_ELS | 206158430208 } $Element2Type->[HTMLNS]->{q@thead@} = THEAD_EL;
+$Element2Type->[HTMLNS]->{q@textarea@} = HTML_NS_ELS | TEX_ELS;
+sub TFOOT_EL () { HTML_NS_ELS | TBO_TFO_THE_ELS | 274877906944 } $Element2Type->[HTMLNS]->{q@tfoot@} = TFOOT_EL;
+sub TH_EL () { HTML_NS_ELS | TD_TH_ELS | 274877906944 } $Element2Type->[HTMLNS]->{q@th@} = TH_EL;
+sub THEAD_EL () { HTML_NS_ELS | TBO_TFO_THE_ELS | 412316860416 } $Element2Type->[HTMLNS]->{q@thead@} = THEAD_EL;
 $Element2Type->[HTMLNS]->{q@title@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS;
 sub TR_EL () { HTML_NS_ELS | TR_ELS } $Element2Type->[HTMLNS]->{q@tr@} = TR_EL;
 $Element2Type->[HTMLNS]->{q@track@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS;
 $Element2Type->[HTMLNS]->{q@tt@} = HTML_NS_ELS | ABBCEFINSSSSTU_ELS;
 $Element2Type->[HTMLNS]->{q@u@} = HTML_NS_ELS | ABBCEFINSSSSTU_ELS;
-sub UL_EL () { HTML_NS_ELS | OL_UL_ELS | 137438953472 } $Element2Type->[HTMLNS]->{q@ul@} = UL_EL;
+sub UL_EL () { HTML_NS_ELS | OL_UL_ELS | 274877906944 } $Element2Type->[HTMLNS]->{q@ul@} = UL_EL;
 $Element2Type->[HTMLNS]->{q@video@} = HTML_NS_ELS | AUD_VID_ELS;
 $Element2Type->[HTMLNS]->{q@wbr@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS;
 $Element2Type->[HTMLNS]->{q@xmp@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS;
@@ -815,7 +819,7 @@ $Element2Type->[MATHMLNS]->{q@mtext@} = MATHML_NS_ELS | M_MI_M_MN_M_MO_M_MS_M_MT
 $Element2Type->[SVGNS]->{q@*@} = SVG_NS_ELS;
 $Element2Type->[SVGNS]->{q@desc@} = SVG_NS_ELS | S_DES_S_FOR_S_TIT_ELS;
 $Element2Type->[SVGNS]->{q@foreignObject@} = SVG_NS_ELS | S_DES_S_FOR_S_TIT_ELS;
-sub SVG_SCRIPT_EL () { SVG_NS_ELS | 68719476736 } $Element2Type->[SVGNS]->{q@script@} = SVG_SCRIPT_EL;
+sub SVG_SCRIPT_EL () { SVG_NS_ELS | 137438953472 } $Element2Type->[SVGNS]->{q@script@} = SVG_SCRIPT_EL;
 $Element2Type->[SVGNS]->{q@title@} = SVG_NS_ELS | S_DES_S_FOR_S_TIT_ELS;
 sub AFTER_AFTER_BODY_IM () { 1 }
 sub AFTER_AFTER_FRAMESET_IM () { 2 }
@@ -2136,7 +2140,7 @@ return;
 return;
           } else {
             
-          if ($_node->{et} & (ADD_DIV_ELS | APP_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | BOD_ELS | BUT_ELS | CAP_ELS | COL_ELS | DD_ELS | DT_ELS | FIE_INP_SEL_TEX_ELS | HHHHHH_ELS | HTM_ELS | IMG_ELS | LI_ELS | MAR_M_ANN_ELS | OBJ_ELS | OL_UL_ELS | P_ELS | STY_ELS | TAB_ELS | TBO_TFO_THE_ELS | TD_TH_ELS | TEM_ELS | TR_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS | S_DES_S_FOR_S_TIT_ELS)) {
+          if ($_node->{et} & (ADD_DIV_ELS | APP_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | BOD_ELS | BUT_ELS | CAP_ELS | COL_ELS | DD_ELS | DT_ELS | FIE_INP_SEL_ELS | HHHHHH_ELS | HTM_ELS | IMG_ELS | LI_ELS | MAR_M_ANN_ELS | OBJ_ELS | OL_UL_ELS | P_ELS | STY_ELS | TAB_ELS | TBO_TFO_THE_ELS | TD_TH_ELS | TEM_ELS | TEX_ELS | TR_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS | S_DES_S_FOR_S_TIT_ELS)) {
             push @$Errors, {type => 'stray end tag',
                                             level => 'm',
                                             value => $token->{tag_name},di => $token->{di},
@@ -2709,7 +2713,7 @@ pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | RP_RT
 return;
           } else {
             
-          if ($_node->{et} & (ADD_DIV_ELS | APP_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | BOD_ELS | BUT_ELS | CAP_ELS | COL_ELS | DD_ELS | DT_ELS | FIE_INP_SEL_TEX_ELS | HHHHHH_ELS | HTM_ELS | IMG_ELS | LI_ELS | MAR_M_ANN_ELS | OBJ_ELS | OL_UL_ELS | P_ELS | STY_ELS | TAB_ELS | TBO_TFO_THE_ELS | TD_TH_ELS | TEM_ELS | TR_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS | S_DES_S_FOR_S_TIT_ELS)) {
+          if ($_node->{et} & (ADD_DIV_ELS | APP_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | BOD_ELS | BUT_ELS | CAP_ELS | COL_ELS | DD_ELS | DT_ELS | FIE_INP_SEL_ELS | HHHHHH_ELS | HTM_ELS | IMG_ELS | LI_ELS | MAR_M_ANN_ELS | OBJ_ELS | OL_UL_ELS | P_ELS | STY_ELS | TAB_ELS | TBO_TFO_THE_ELS | TD_TH_ELS | TEM_ELS | TEX_ELS | TR_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS | S_DES_S_FOR_S_TIT_ELS)) {
             push @$Errors, {type => 'stray end tag',
                                             level => 'm',
                                             value => $token->{tag_name},di => $token->{di},
@@ -2809,12 +2813,12 @@ push @$OP, ['stop-parsing'];
       push @$OP, ['insert', $node => $OE->[-1]->{id}];
     
 
-            if ($node->{et} & (BUT_ELS | FIE_INP_SEL_TEX_ELS | IMG_ELS | KEY_LAB_OUT_ELS | OBJ_ELS)) {
+            if ($node->{et} & (BUT_ELS | FIE_INP_SEL_ELS | IMG_ELS | KEY_LAB_OUT_ELS | OBJ_ELS | TEX_ELS)) {
               
           if (defined $FORM_ELEMENT) {
             FORM: {
               last FORM if defined $token->{attrs}->{form} and
-                           ($node->{et} & (BUT_ELS | FIE_INP_SEL_TEX_ELS | KEY_LAB_OUT_ELS | OBJ_ELS)); # reassociateable
+                           ($node->{et} & (BUT_ELS | FIE_INP_SEL_ELS | KEY_LAB_OUT_ELS | OBJ_ELS | TEX_ELS)); # reassociateable
               for my $oe (@$OE) {
                 if ($oe->{et} & (TEM_ELS)) { # template
                   last FORM;
@@ -2964,12 +2968,12 @@ push @$OE, $node;
       push @$OP, ['insert', $node => $OE->[-1]->{id}];
     
 
-            if ($node->{et} & (BUT_ELS | FIE_INP_SEL_TEX_ELS | IMG_ELS | KEY_LAB_OUT_ELS | OBJ_ELS)) {
+            if ($node->{et} & (BUT_ELS | FIE_INP_SEL_ELS | IMG_ELS | KEY_LAB_OUT_ELS | OBJ_ELS | TEX_ELS)) {
               
           if (defined $FORM_ELEMENT) {
             FORM: {
               last FORM if defined $token->{attrs}->{form} and
-                           ($node->{et} & (BUT_ELS | FIE_INP_SEL_TEX_ELS | KEY_LAB_OUT_ELS | OBJ_ELS)); # reassociateable
+                           ($node->{et} & (BUT_ELS | FIE_INP_SEL_ELS | KEY_LAB_OUT_ELS | OBJ_ELS | TEX_ELS)); # reassociateable
               for my $oe (@$OE) {
                 if ($oe->{et} & (TEM_ELS)) { # template
                   last FORM;
@@ -3010,12 +3014,12 @@ push @$OE, $node;
       push @$OP, ['insert', $node => $OE->[-1]->{id}];
     
 
-            if ($node->{et} & (BUT_ELS | FIE_INP_SEL_TEX_ELS | IMG_ELS | KEY_LAB_OUT_ELS | OBJ_ELS)) {
+            if ($node->{et} & (BUT_ELS | FIE_INP_SEL_ELS | IMG_ELS | KEY_LAB_OUT_ELS | OBJ_ELS | TEX_ELS)) {
               
           if (defined $FORM_ELEMENT) {
             FORM: {
               last FORM if defined $token->{attrs}->{form} and
-                           ($node->{et} & (BUT_ELS | FIE_INP_SEL_TEX_ELS | KEY_LAB_OUT_ELS | OBJ_ELS)); # reassociateable
+                           ($node->{et} & (BUT_ELS | FIE_INP_SEL_ELS | KEY_LAB_OUT_ELS | OBJ_ELS | TEX_ELS)); # reassociateable
               for my $oe (@$OE) {
                 if ($oe->{et} & (TEM_ELS)) { # template
                   last FORM;
@@ -3060,12 +3064,12 @@ push @$AFE, '#marker';
       push @$OP, ['insert', $node => $OE->[-1]->{id}];
     
 
-            if ($node->{et} & (BUT_ELS | FIE_INP_SEL_TEX_ELS | IMG_ELS | KEY_LAB_OUT_ELS | OBJ_ELS)) {
+            if ($node->{et} & (BUT_ELS | FIE_INP_SEL_ELS | IMG_ELS | KEY_LAB_OUT_ELS | OBJ_ELS | TEX_ELS)) {
               
           if (defined $FORM_ELEMENT) {
             FORM: {
               last FORM if defined $token->{attrs}->{form} and
-                           ($node->{et} & (BUT_ELS | FIE_INP_SEL_TEX_ELS | KEY_LAB_OUT_ELS | OBJ_ELS)); # reassociateable
+                           ($node->{et} & (BUT_ELS | FIE_INP_SEL_ELS | KEY_LAB_OUT_ELS | OBJ_ELS | TEX_ELS)); # reassociateable
               for my $oe (@$OE) {
                 if ($oe->{et} & (TEM_ELS)) { # template
                   last FORM;
@@ -3239,7 +3243,7 @@ pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS
           if (defined $FORM_ELEMENT) {
             FORM: {
               last FORM if defined $token->{attrs}->{form} and
-                           ($node->{et} & (BUT_ELS | FIE_INP_SEL_TEX_ELS | KEY_LAB_OUT_ELS | OBJ_ELS)); # reassociateable
+                           ($node->{et} & (BUT_ELS | FIE_INP_SEL_ELS | KEY_LAB_OUT_ELS | OBJ_ELS | TEX_ELS)); # reassociateable
               for my $oe (@$OE) {
                 if ($oe->{et} & (TEM_ELS)) { # template
                   last FORM;
@@ -3330,7 +3334,7 @@ last;
 last;
           } else {
             
-          if ($_node->{et} & (APP_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | BOD_ELS | BUT_ELS | CAP_ELS | COL_ELS | DD_ELS | DT_ELS | FIE_INP_SEL_TEX_ELS | HHHHHH_ELS | HTM_ELS | IMG_ELS | LI_ELS | MAR_M_ANN_ELS | OBJ_ELS | OL_UL_ELS | STY_ELS | TAB_ELS | TBO_TFO_THE_ELS | TD_TH_ELS | TEM_ELS | TR_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS | S_DES_S_FOR_S_TIT_ELS)) {
+          if ($_node->{et} & (APP_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | BOD_ELS | BUT_ELS | CAP_ELS | COL_ELS | DD_ELS | DT_ELS | FIE_INP_SEL_ELS | HHHHHH_ELS | HTM_ELS | IMG_ELS | LI_ELS | MAR_M_ANN_ELS | OBJ_ELS | OL_UL_ELS | STY_ELS | TAB_ELS | TBO_TFO_THE_ELS | TD_TH_ELS | TEM_ELS | TEX_ELS | TR_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS | S_DES_S_FOR_S_TIT_ELS)) {
             last;
           } else {
             
@@ -3795,7 +3799,7 @@ push @$Errors, {type => 'image',
                  ns => HTMLNS,
                  local_name => 'input',
                  attr_list => $token->{attr_list},
-                 et => (HTML_NS_ELS | FIE_INP_SEL_TEX_ELS), aet => (HTML_NS_ELS | FIE_INP_SEL_TEX_ELS) };
+                 et => (HTML_NS_ELS | FIE_INP_SEL_ELS), aet => (HTML_NS_ELS | FIE_INP_SEL_ELS) };
       
 
       push @$OP, ['insert', $node => $OE->[-1]->{id}];
@@ -3804,7 +3808,7 @@ push @$Errors, {type => 'image',
           if (defined $FORM_ELEMENT) {
             FORM: {
               last FORM if defined $token->{attrs}->{form} and
-                           ($node->{et} & (BUT_ELS | FIE_INP_SEL_TEX_ELS | KEY_LAB_OUT_ELS | OBJ_ELS)); # reassociateable
+                           ($node->{et} & (BUT_ELS | FIE_INP_SEL_ELS | KEY_LAB_OUT_ELS | OBJ_ELS | TEX_ELS)); # reassociateable
               for my $oe (@$OE) {
                 if ($oe->{et} & (TEM_ELS)) { # template
                   last FORM;
@@ -3869,7 +3873,7 @@ push @$Errors, {type => 'image',
 last;
           } else {
             
-          if ($_node->{et} & (APP_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | BOD_ELS | BUT_ELS | CAP_ELS | COL_ELS | DD_ELS | DT_ELS | FIE_INP_SEL_TEX_ELS | HHHHHH_ELS | HTM_ELS | IMG_ELS | LI_ELS | MAR_M_ANN_ELS | OBJ_ELS | OL_UL_ELS | STY_ELS | TAB_ELS | TBO_TFO_THE_ELS | TD_TH_ELS | TEM_ELS | TR_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS | S_DES_S_FOR_S_TIT_ELS)) {
+          if ($_node->{et} & (APP_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | BOD_ELS | BUT_ELS | CAP_ELS | COL_ELS | DD_ELS | DT_ELS | FIE_INP_SEL_ELS | HHHHHH_ELS | HTM_ELS | IMG_ELS | LI_ELS | MAR_M_ANN_ELS | OBJ_ELS | OL_UL_ELS | STY_ELS | TAB_ELS | TBO_TFO_THE_ELS | TD_TH_ELS | TEM_ELS | TEX_ELS | TR_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS | S_DES_S_FOR_S_TIT_ELS)) {
             last;
           } else {
             
@@ -4417,7 +4421,7 @@ push @$OE, $node;
           if (defined $FORM_ELEMENT) {
             FORM: {
               last FORM if defined $token->{attrs}->{form} and
-                           ($node->{et} & (BUT_ELS | FIE_INP_SEL_TEX_ELS | KEY_LAB_OUT_ELS | OBJ_ELS)); # reassociateable
+                           ($node->{et} & (BUT_ELS | FIE_INP_SEL_ELS | KEY_LAB_OUT_ELS | OBJ_ELS | TEX_ELS)); # reassociateable
               for my $oe (@$OE) {
                 if ($oe->{et} & (TEM_ELS)) { # template
                   last FORM;
@@ -4594,7 +4598,7 @@ push @$OE, $node;
                  ns => HTMLNS,
                  local_name => 'textarea',
                  attr_list => $token->{attr_list},
-                 et => (HTML_NS_ELS | FIE_INP_SEL_TEX_ELS), aet => (HTML_NS_ELS | FIE_INP_SEL_TEX_ELS) };
+                 et => (HTML_NS_ELS | TEX_ELS), aet => (HTML_NS_ELS | TEX_ELS) };
       
 
       push @$OP, ['insert', $node => $OE->[-1]->{id}];
@@ -4603,7 +4607,7 @@ push @$OE, $node;
           if (defined $FORM_ELEMENT) {
             FORM: {
               last FORM if defined $token->{attrs}->{form} and
-                           ($node->{et} & (BUT_ELS | FIE_INP_SEL_TEX_ELS | KEY_LAB_OUT_ELS | OBJ_ELS)); # reassociateable
+                           ($node->{et} & (BUT_ELS | FIE_INP_SEL_ELS | KEY_LAB_OUT_ELS | OBJ_ELS | TEX_ELS)); # reassociateable
               for my $oe (@$OE) {
                 if ($oe->{et} & (TEM_ELS)) { # template
                   last FORM;
@@ -8642,12 +8646,12 @@ push @$Errors, {type => 'in table',
       }
     
 
-            if ($node->{et} & (BUT_ELS | FIE_INP_SEL_TEX_ELS | IMG_ELS | KEY_LAB_OUT_ELS | OBJ_ELS)) {
+            if ($node->{et} & (BUT_ELS | FIE_INP_SEL_ELS | IMG_ELS | KEY_LAB_OUT_ELS | OBJ_ELS | TEX_ELS)) {
               
           if (defined $FORM_ELEMENT) {
             FORM: {
               last FORM if defined $token->{attrs}->{form} and
-                           ($node->{et} & (BUT_ELS | FIE_INP_SEL_TEX_ELS | KEY_LAB_OUT_ELS | OBJ_ELS)); # reassociateable
+                           ($node->{et} & (BUT_ELS | FIE_INP_SEL_ELS | KEY_LAB_OUT_ELS | OBJ_ELS | TEX_ELS)); # reassociateable
               for my $oe (@$OE) {
                 if ($oe->{et} & (TEM_ELS)) { # template
                   last FORM;
@@ -8835,12 +8839,12 @@ push @$Errors, {type => 'in table',
       }
     
 
-            if ($node->{et} & (BUT_ELS | FIE_INP_SEL_TEX_ELS | IMG_ELS | KEY_LAB_OUT_ELS | OBJ_ELS)) {
+            if ($node->{et} & (BUT_ELS | FIE_INP_SEL_ELS | IMG_ELS | KEY_LAB_OUT_ELS | OBJ_ELS | TEX_ELS)) {
               
           if (defined $FORM_ELEMENT) {
             FORM: {
               last FORM if defined $token->{attrs}->{form} and
-                           ($node->{et} & (BUT_ELS | FIE_INP_SEL_TEX_ELS | KEY_LAB_OUT_ELS | OBJ_ELS)); # reassociateable
+                           ($node->{et} & (BUT_ELS | FIE_INP_SEL_ELS | KEY_LAB_OUT_ELS | OBJ_ELS | TEX_ELS)); # reassociateable
               for my $oe (@$OE) {
                 if ($oe->{et} & (TEM_ELS)) { # template
                   last FORM;
@@ -8900,12 +8904,12 @@ push @$Errors, {type => 'in table',
       }
     
 
-            if ($node->{et} & (BUT_ELS | FIE_INP_SEL_TEX_ELS | IMG_ELS | KEY_LAB_OUT_ELS | OBJ_ELS)) {
+            if ($node->{et} & (BUT_ELS | FIE_INP_SEL_ELS | IMG_ELS | KEY_LAB_OUT_ELS | OBJ_ELS | TEX_ELS)) {
               
           if (defined $FORM_ELEMENT) {
             FORM: {
               last FORM if defined $token->{attrs}->{form} and
-                           ($node->{et} & (BUT_ELS | FIE_INP_SEL_TEX_ELS | KEY_LAB_OUT_ELS | OBJ_ELS)); # reassociateable
+                           ($node->{et} & (BUT_ELS | FIE_INP_SEL_ELS | KEY_LAB_OUT_ELS | OBJ_ELS | TEX_ELS)); # reassociateable
               for my $oe (@$OE) {
                 if ($oe->{et} & (TEM_ELS)) { # template
                   last FORM;
@@ -8969,12 +8973,12 @@ push @$Errors, {type => 'in table',
       }
     
 
-            if ($node->{et} & (BUT_ELS | FIE_INP_SEL_TEX_ELS | IMG_ELS | KEY_LAB_OUT_ELS | OBJ_ELS)) {
+            if ($node->{et} & (BUT_ELS | FIE_INP_SEL_ELS | IMG_ELS | KEY_LAB_OUT_ELS | OBJ_ELS | TEX_ELS)) {
               
           if (defined $FORM_ELEMENT) {
             FORM: {
               last FORM if defined $token->{attrs}->{form} and
-                           ($node->{et} & (BUT_ELS | FIE_INP_SEL_TEX_ELS | KEY_LAB_OUT_ELS | OBJ_ELS)); # reassociateable
+                           ($node->{et} & (BUT_ELS | FIE_INP_SEL_ELS | KEY_LAB_OUT_ELS | OBJ_ELS | TEX_ELS)); # reassociateable
               for my $oe (@$OE) {
                 if ($oe->{et} & (TEM_ELS)) { # template
                   last FORM;
@@ -9234,7 +9238,7 @@ pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS
           if (defined $FORM_ELEMENT) {
             FORM: {
               last FORM if defined $token->{attrs}->{form} and
-                           ($node->{et} & (BUT_ELS | FIE_INP_SEL_TEX_ELS | KEY_LAB_OUT_ELS | OBJ_ELS)); # reassociateable
+                           ($node->{et} & (BUT_ELS | FIE_INP_SEL_ELS | KEY_LAB_OUT_ELS | OBJ_ELS | TEX_ELS)); # reassociateable
               for my $oe (@$OE) {
                 if ($oe->{et} & (TEM_ELS)) { # template
                   last FORM;
@@ -9415,7 +9419,7 @@ last;
 last;
           } else {
             
-          if ($_node->{et} & (APP_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | BOD_ELS | BUT_ELS | CAP_ELS | COL_ELS | DD_ELS | DT_ELS | FIE_INP_SEL_TEX_ELS | HHHHHH_ELS | HTM_ELS | IMG_ELS | LI_ELS | MAR_M_ANN_ELS | OBJ_ELS | OL_UL_ELS | STY_ELS | TAB_ELS | TBO_TFO_THE_ELS | TD_TH_ELS | TEM_ELS | TR_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS | S_DES_S_FOR_S_TIT_ELS)) {
+          if ($_node->{et} & (APP_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | BOD_ELS | BUT_ELS | CAP_ELS | COL_ELS | DD_ELS | DT_ELS | FIE_INP_SEL_ELS | HHHHHH_ELS | HTM_ELS | IMG_ELS | LI_ELS | MAR_M_ANN_ELS | OBJ_ELS | OL_UL_ELS | STY_ELS | TAB_ELS | TBO_TFO_THE_ELS | TD_TH_ELS | TEM_ELS | TEX_ELS | TR_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS | S_DES_S_FOR_S_TIT_ELS)) {
             last;
           } else {
             
@@ -9986,7 +9990,7 @@ push @$Errors, {type => 'image',
                  ns => HTMLNS,
                  local_name => 'input',
                  attr_list => $token->{attr_list},
-                 et => (HTML_NS_ELS | FIE_INP_SEL_TEX_ELS), aet => (HTML_NS_ELS | FIE_INP_SEL_TEX_ELS) };
+                 et => (HTML_NS_ELS | FIE_INP_SEL_ELS), aet => (HTML_NS_ELS | FIE_INP_SEL_ELS) };
       
 
       if ($OE->[-1]->{et} & (TAB_ELS | TBO_TFO_THE_ELS | TR_ELS)) { # table* context
@@ -10010,7 +10014,7 @@ push @$Errors, {type => 'image',
           if (defined $FORM_ELEMENT) {
             FORM: {
               last FORM if defined $token->{attrs}->{form} and
-                           ($node->{et} & (BUT_ELS | FIE_INP_SEL_TEX_ELS | KEY_LAB_OUT_ELS | OBJ_ELS)); # reassociateable
+                           ($node->{et} & (BUT_ELS | FIE_INP_SEL_ELS | KEY_LAB_OUT_ELS | OBJ_ELS | TEX_ELS)); # reassociateable
               for my $oe (@$OE) {
                 if ($oe->{et} & (TEM_ELS)) { # template
                   last FORM;
@@ -10056,7 +10060,7 @@ push @$Errors, {type => 'image',
                  ns => HTMLNS,
                  local_name => 'input',
                  attr_list => $token->{attr_list},
-                 et => (HTML_NS_ELS | FIE_INP_SEL_TEX_ELS), aet => (HTML_NS_ELS | FIE_INP_SEL_TEX_ELS) };
+                 et => (HTML_NS_ELS | FIE_INP_SEL_ELS), aet => (HTML_NS_ELS | FIE_INP_SEL_ELS) };
       
 
       push @$OP, ['insert', $node => $OE->[-1]->{id}];
@@ -10065,7 +10069,7 @@ push @$Errors, {type => 'image',
           if (defined $FORM_ELEMENT) {
             FORM: {
               last FORM if defined $token->{attrs}->{form} and
-                           ($node->{et} & (BUT_ELS | FIE_INP_SEL_TEX_ELS | KEY_LAB_OUT_ELS | OBJ_ELS)); # reassociateable
+                           ($node->{et} & (BUT_ELS | FIE_INP_SEL_ELS | KEY_LAB_OUT_ELS | OBJ_ELS | TEX_ELS)); # reassociateable
               for my $oe (@$OE) {
                 if ($oe->{et} & (TEM_ELS)) { # template
                   last FORM;
@@ -10120,7 +10124,7 @@ push @$Errors, {type => 'in table',
 last;
           } else {
             
-          if ($_node->{et} & (APP_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | BOD_ELS | BUT_ELS | CAP_ELS | COL_ELS | DD_ELS | DT_ELS | FIE_INP_SEL_TEX_ELS | HHHHHH_ELS | HTM_ELS | IMG_ELS | LI_ELS | MAR_M_ANN_ELS | OBJ_ELS | OL_UL_ELS | STY_ELS | TAB_ELS | TBO_TFO_THE_ELS | TD_TH_ELS | TEM_ELS | TR_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS | S_DES_S_FOR_S_TIT_ELS)) {
+          if ($_node->{et} & (APP_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | BOD_ELS | BUT_ELS | CAP_ELS | COL_ELS | DD_ELS | DT_ELS | FIE_INP_SEL_ELS | HHHHHH_ELS | HTM_ELS | IMG_ELS | LI_ELS | MAR_M_ANN_ELS | OBJ_ELS | OL_UL_ELS | STY_ELS | TAB_ELS | TBO_TFO_THE_ELS | TD_TH_ELS | TEM_ELS | TEX_ELS | TR_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS | S_DES_S_FOR_S_TIT_ELS)) {
             last;
           } else {
             
@@ -11006,7 +11010,7 @@ push @$Errors, {type => 'in table',
           if (defined $FORM_ELEMENT) {
             FORM: {
               last FORM if defined $token->{attrs}->{form} and
-                           ($node->{et} & (BUT_ELS | FIE_INP_SEL_TEX_ELS | KEY_LAB_OUT_ELS | OBJ_ELS)); # reassociateable
+                           ($node->{et} & (BUT_ELS | FIE_INP_SEL_ELS | KEY_LAB_OUT_ELS | OBJ_ELS | TEX_ELS)); # reassociateable
               for my $oe (@$OE) {
                 if ($oe->{et} & (TEM_ELS)) { # template
                   last FORM;
@@ -11252,7 +11256,7 @@ push @$Errors, {type => 'in table',
                  ns => HTMLNS,
                  local_name => 'textarea',
                  attr_list => $token->{attr_list},
-                 et => (HTML_NS_ELS | FIE_INP_SEL_TEX_ELS), aet => (HTML_NS_ELS | FIE_INP_SEL_TEX_ELS) };
+                 et => (HTML_NS_ELS | TEX_ELS), aet => (HTML_NS_ELS | TEX_ELS) };
       
 
       if ($OE->[-1]->{et} & (TAB_ELS | TBO_TFO_THE_ELS | TR_ELS)) { # table* context
@@ -11276,7 +11280,7 @@ push @$Errors, {type => 'in table',
           if (defined $FORM_ELEMENT) {
             FORM: {
               last FORM if defined $token->{attrs}->{form} and
-                           ($node->{et} & (BUT_ELS | FIE_INP_SEL_TEX_ELS | KEY_LAB_OUT_ELS | OBJ_ELS)); # reassociateable
+                           ($node->{et} & (BUT_ELS | FIE_INP_SEL_ELS | KEY_LAB_OUT_ELS | OBJ_ELS | TEX_ELS)); # reassociateable
               for my $oe (@$OE) {
                 if ($oe->{et} & (TEM_ELS)) { # template
                   last FORM;
@@ -12245,7 +12249,7 @@ my $ResetIMByETUnlessLast = {  (HEAD_EL) => IN_HEAD_IM,
                 if ($OE->[$_]->{et} & (APP_ELS | CAP_ELS | HTM_ELS | MAR_M_ANN_ELS | OBJ_ELS | TAB_ELS | TD_TH_ELS | TEM_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS | S_DES_S_FOR_S_TIT_ELS)) {
                   $beyond_scope = 1;
                 }
-                if ($OE->[$_]->{et} & (ADD_DIV_ELS | APP_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | BOD_ELS | BUT_ELS | CAP_ELS | COL_ELS | DD_ELS | DT_ELS | FIE_INP_SEL_TEX_ELS | HHHHHH_ELS | HTM_ELS | IMG_ELS | LI_ELS | MAR_M_ANN_ELS | OBJ_ELS | OL_UL_ELS | P_ELS | STY_ELS | TAB_ELS | TBO_TFO_THE_ELS | TD_TH_ELS | TEM_ELS | TR_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS | S_DES_S_FOR_S_TIT_ELS)) {
+                if ($OE->[$_]->{et} & (ADD_DIV_ELS | APP_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | BOD_ELS | BUT_ELS | CAP_ELS | COL_ELS | DD_ELS | DT_ELS | FIE_INP_SEL_ELS | HHHHHH_ELS | HTM_ELS | IMG_ELS | LI_ELS | MAR_M_ANN_ELS | OBJ_ELS | OL_UL_ELS | P_ELS | STY_ELS | TAB_ELS | TBO_TFO_THE_ELS | TD_TH_ELS | TEM_ELS | TEX_ELS | TR_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS | S_DES_S_FOR_S_TIT_ELS)) {
                   $furthest_block = $OE->[$_];
                   $furthest_block_i = $_;
                 }
@@ -12451,7 +12455,7 @@ my $ResetIMByETUnlessLast = {  (HEAD_EL) => IN_HEAD_IM,
                 if ($OE->[$_]->{et} & (APP_ELS | CAP_ELS | HTM_ELS | MAR_M_ANN_ELS | OBJ_ELS | TAB_ELS | TD_TH_ELS | TEM_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS | S_DES_S_FOR_S_TIT_ELS)) {
                   $beyond_scope = 1;
                 }
-                if ($OE->[$_]->{et} & (ADD_DIV_ELS | APP_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | BOD_ELS | BUT_ELS | CAP_ELS | COL_ELS | DD_ELS | DT_ELS | FIE_INP_SEL_TEX_ELS | HHHHHH_ELS | HTM_ELS | IMG_ELS | LI_ELS | MAR_M_ANN_ELS | OBJ_ELS | OL_UL_ELS | P_ELS | STY_ELS | TAB_ELS | TBO_TFO_THE_ELS | TD_TH_ELS | TEM_ELS | TR_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS | S_DES_S_FOR_S_TIT_ELS)) {
+                if ($OE->[$_]->{et} & (ADD_DIV_ELS | APP_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | BOD_ELS | BUT_ELS | CAP_ELS | COL_ELS | DD_ELS | DT_ELS | FIE_INP_SEL_ELS | HHHHHH_ELS | HTM_ELS | IMG_ELS | LI_ELS | MAR_M_ANN_ELS | OBJ_ELS | OL_UL_ELS | P_ELS | STY_ELS | TAB_ELS | TBO_TFO_THE_ELS | TD_TH_ELS | TEM_ELS | TEX_ELS | TR_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS | S_DES_S_FOR_S_TIT_ELS)) {
                   $furthest_block = $OE->[$_];
                   $furthest_block_i = $_;
                 }
@@ -31704,14 +31708,14 @@ sub dom_tree ($$) {
       }
 
     } elsif ($op->[0] eq 'popped') {
-      push @$Callbacks, [$self->onelementspopped, [map { $nodes->[$_->{id}] } grep { $_->{et} & (APP_ELS | AUD_VID_ELS | OBJ_ELS | STY_ELS) } @{$op->[1]}]];
+      push @$Callbacks, [$self->onelementspopped, [map { $nodes->[$_->{id}] } grep { $_->{et} & (APP_ELS | AUD_VID_ELS | OBJ_ELS | STY_ELS | TEX_ELS) } @{$op->[1]}]];
     } elsif ($op->[0] eq 'stop-parsing') {
-      push @$Callbacks, [$self->onelementspopped, [map { $nodes->[$_->{id}] } grep { $_->{et} & (APP_ELS | AUD_VID_ELS | OBJ_ELS | STY_ELS) } @$OE]];
+      push @$Callbacks, [$self->onelementspopped, [map { $nodes->[$_->{id}] } grep { $_->{et} & (APP_ELS | AUD_VID_ELS | OBJ_ELS | STY_ELS | TEX_ELS) } @$OE]];
       #@$OE = ();
 
       # XXX stop parsing
     } elsif ($op->[0] eq 'abort') {
-      push @$Callbacks, [$self->onelementspopped, [map { $nodes->[$_->{id}] } grep { $_->{et} & (APP_ELS | AUD_VID_ELS | OBJ_ELS | STY_ELS) } @$OE]];
+      push @$Callbacks, [$self->onelementspopped, [map { $nodes->[$_->{id}] } grep { $_->{et} & (APP_ELS | AUD_VID_ELS | OBJ_ELS | STY_ELS | TEX_ELS) } @$OE]];
       #@$OE = ();
 
       # XXX abort
