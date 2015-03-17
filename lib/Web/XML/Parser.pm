@@ -1101,35 +1101,35 @@ $TagName2Group->{q@textarea@} = 1;
         sub APP_AUD_STY_VID_ELS () { 2 }
       
 
-        ## HTML:button,HTML:fieldset,HTML:input,HTML:keygen,HTML:label,HTML:output,HTML:select,HTML:textarea
-        sub BFIKLOST_ELS () { 4 }
+        ## HTML:button,HTML:fieldset,HTML:input,HTML:keygen,HTML:label,HTML:output,HTML:select
+        sub BFIKLOS_ELS () { 4 }
       
 
         ## HTML:img
         sub IMG_ELS () { 8 }
       
 
-        ## HTML:object
-        sub OBJ_ELS () { 16 }
+        ## HTML:object,HTML:textarea
+        sub OBJ_TEX_ELS () { 16 }
       
 $Element2Type->{(HTMLNS)}->{q@*@} = HTML_NS_ELS;
 $Element2Type->{(HTMLNS)}->{q@applet@} = HTML_NS_ELS | APP_AUD_STY_VID_ELS;
 $Element2Type->{(HTMLNS)}->{q@audio@} = HTML_NS_ELS | APP_AUD_STY_VID_ELS;
-$Element2Type->{(HTMLNS)}->{q@button@} = HTML_NS_ELS | BFIKLOST_ELS;
-$Element2Type->{(HTMLNS)}->{q@fieldset@} = HTML_NS_ELS | BFIKLOST_ELS;
+$Element2Type->{(HTMLNS)}->{q@button@} = HTML_NS_ELS | BFIKLOS_ELS;
+$Element2Type->{(HTMLNS)}->{q@fieldset@} = HTML_NS_ELS | BFIKLOS_ELS;
 sub HEAD_EL () { HTML_NS_ELS | 32 } $Element2Type->{(HTMLNS)}->{q@head@} = HEAD_EL;
 sub HTML_EL () { HTML_NS_ELS | 64 } $Element2Type->{(HTMLNS)}->{q@html@} = HTML_EL;
 $Element2Type->{(HTMLNS)}->{q@img@} = HTML_NS_ELS | IMG_ELS;
-$Element2Type->{(HTMLNS)}->{q@input@} = HTML_NS_ELS | BFIKLOST_ELS;
-$Element2Type->{(HTMLNS)}->{q@keygen@} = HTML_NS_ELS | BFIKLOST_ELS;
-$Element2Type->{(HTMLNS)}->{q@label@} = HTML_NS_ELS | BFIKLOST_ELS;
-$Element2Type->{(HTMLNS)}->{q@object@} = HTML_NS_ELS | OBJ_ELS;
-$Element2Type->{(HTMLNS)}->{q@output@} = HTML_NS_ELS | BFIKLOST_ELS;
-sub SELECT_EL () { HTML_NS_ELS | BFIKLOST_ELS } $Element2Type->{(HTMLNS)}->{q@select@} = SELECT_EL;
+$Element2Type->{(HTMLNS)}->{q@input@} = HTML_NS_ELS | BFIKLOS_ELS;
+$Element2Type->{(HTMLNS)}->{q@keygen@} = HTML_NS_ELS | BFIKLOS_ELS;
+$Element2Type->{(HTMLNS)}->{q@label@} = HTML_NS_ELS | BFIKLOS_ELS;
+$Element2Type->{(HTMLNS)}->{q@object@} = HTML_NS_ELS | OBJ_TEX_ELS;
+$Element2Type->{(HTMLNS)}->{q@output@} = HTML_NS_ELS | BFIKLOS_ELS;
+sub SELECT_EL () { HTML_NS_ELS | BFIKLOS_ELS } $Element2Type->{(HTMLNS)}->{q@select@} = SELECT_EL;
 $Element2Type->{(HTMLNS)}->{q@style@} = HTML_NS_ELS | APP_AUD_STY_VID_ELS;
 sub TABLE_EL () { HTML_NS_ELS | 96 } $Element2Type->{(HTMLNS)}->{q@table@} = TABLE_EL;
 sub TEMPLATE_EL () { HTML_NS_ELS | 128 } $Element2Type->{(HTMLNS)}->{q@template@} = TEMPLATE_EL;
-$Element2Type->{(HTMLNS)}->{q@textarea@} = HTML_NS_ELS | BFIKLOST_ELS;
+$Element2Type->{(HTMLNS)}->{q@textarea@} = HTML_NS_ELS | OBJ_TEX_ELS;
 $Element2Type->{(HTMLNS)}->{q@video@} = HTML_NS_ELS | APP_AUD_STY_VID_ELS;
 sub AFTER_DOCTYPE_IM () { 1 }
 sub AFTER_ROOT_ELEMENT_IM () { 2 }
@@ -78368,14 +78368,14 @@ sub dom_tree ($$) {
       }
 
     } elsif ($op->[0] eq 'popped') {
-      push @$Callbacks, [$self->onelementspopped, [map { $nodes->[$_->{id}] } grep { $_->{et} & (APP_AUD_STY_VID_ELS | OBJ_ELS) } @{$op->[1]}]];
+      push @$Callbacks, [$self->onelementspopped, [map { $nodes->[$_->{id}] } grep { $_->{et} & (APP_AUD_STY_VID_ELS | OBJ_TEX_ELS) } @{$op->[1]}]];
     } elsif ($op->[0] eq 'stop-parsing') {
-      push @$Callbacks, [$self->onelementspopped, [map { $nodes->[$_->{id}] } grep { $_->{et} & (APP_AUD_STY_VID_ELS | OBJ_ELS) } @$OE]];
+      push @$Callbacks, [$self->onelementspopped, [map { $nodes->[$_->{id}] } grep { $_->{et} & (APP_AUD_STY_VID_ELS | OBJ_TEX_ELS) } @$OE]];
       #@$OE = ();
 
       # XXX stop parsing
     } elsif ($op->[0] eq 'abort') {
-      push @$Callbacks, [$self->onelementspopped, [map { $nodes->[$_->{id}] } grep { $_->{et} & (APP_AUD_STY_VID_ELS | OBJ_ELS) } @$OE]];
+      push @$Callbacks, [$self->onelementspopped, [map { $nodes->[$_->{id}] } grep { $_->{et} & (APP_AUD_STY_VID_ELS | OBJ_TEX_ELS) } @$OE]];
       #@$OE = ();
 
       # XXX abort
