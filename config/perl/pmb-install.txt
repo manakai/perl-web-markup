@@ -13,7 +13,7 @@ Algorithm::Diff~1.1903
 MRO::Compat~0.12
 Path::Tiny~0.068
 Try::Tiny~0.22
-parent~0.232
+parent~0.233
 AnyEvent~7.09
 Term::ANSIColor~4.03
 Exporter::Lite~0.06
