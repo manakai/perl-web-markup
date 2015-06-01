@@ -2419,6 +2419,13 @@ sub _validate_aria ($$) {
   }
 } # _validate_aria
 
+# XXX role=text element SHOULD NOT be an interactive content or have
+# an interactive content descendant
+# <http://w3c.github.io/aria/aria/aria.html#text>.
+
+# XXX role=switch aria-checked=mixed is "not supported"
+# <http://w3c.github.io/aria/aria/aria.html#switch>.
+
 ## ------ Element content model ------
 
 my $ElementDisallowedDescendants = {};

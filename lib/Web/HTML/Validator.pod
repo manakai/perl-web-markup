@@ -341,8 +341,8 @@ absolute URL.
 
 =item ARIA
 
-Accessible Rich Internet Applications (WAI-ARIA) 1.0
-<http://www.w3.org/WAI/PF/aria/complete>.
+Accessible Rich Internet Applications (WAI-ARIA) 1.1
+<http://w3c.github.io/aria/aria/aria.html>.
 
 When an attribute value is defined as "token list", the value MUST be
 a valid unordered set of unique space-separated tokens.

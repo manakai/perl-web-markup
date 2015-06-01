@@ -108,7 +108,7 @@ local/microdata.json:
 	$(WGET) -O $@ https://raw.github.com/manakai/data-web-defs/master/data/microdata.json
 local/aria.json:
 	mkdir -p local
-	$(WGET) -O $@ https://raw.github.com/manakai/data-web-defs/master/data/aria.json
+	$(WGET) -O $@ https://raw.githubusercontent.com/manakai/data-web-defs/master/data/aria.json
 local/html-syntax.json:
 	mkdir -p local
 	$(WGET) -O $@ https://raw.github.com/manakai/data-web-defs/master/data/html-syntax.json
