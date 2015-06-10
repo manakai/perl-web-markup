@@ -31,10 +31,10 @@ MRO::Compat~0.12
 Perl::OSType~1.008
 Path::Tiny~0.068
 ExtUtils::CBuilder~0.280223
-Parse::CPAN::Meta~1.4414
+Parse::CPAN::Meta~1.4417
 version~0.9912
 Test::Tester~0.114
 CPAN::Meta::YAML~0.016
-Exporter~5.70
+Exporter~5.72
 Carp~1.36
 JSON::PP~2.27300
