@@ -9161,18 +9161,12 @@ sub _check_fallback_html ($$$$) {
 $ElementAttrChecker->{(HTML_NS)}->{iframe}->{''}->{srcdoc} = sub {
   my ($self, $attr) = @_;
   require Web::DOM::Document;
+  require Web::HTML::Parser;
   my $doc = new Web::DOM::Document;
   $doc->manakai_is_srcdoc (1);
-  my $parser;
-  if ($attr->owner_document->manakai_is_html) {
-    $doc->manakai_is_html (1);
-    require Web::HTML::Parser;
-    $parser = Web::HTML::Parser->new;
-    $parser->scripting ($self->scripting);
-  } else {
-    require Web::XML::Parser;
-    $parser = Web::XML::Parser->new;
-  }
+  $doc->manakai_is_html (1);
+  my $parser = Web::HTML::Parser->new;
+  $parser->scripting ($self->scripting);
   my $onerror = $GetNestedOnError->($self->onerror, $attr);
   $parser->onerror ($onerror);
   my $dids = $self->di_data_set;
