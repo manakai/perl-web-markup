@@ -3974,7 +3974,7 @@ $HTTPEquivChecker->{'x-ua-compatible'} = sub {
   $self->{onerror}->(node => $attr,
                      type => 'invalid attribute value',
                      level => 'm')
-      unless $attr->value eq 'IE=edge';
+      unless $attr->value =~ /\A[Ii][Ee]=[Ee][Dd][Gg][Ee]\z/;
 }; # <meta http-equiv=x-ua-compatible>
 ## BCP 47 language tag [OBSVOCAB]
 $HTTPEquivChecker->{'content-language'} = $CheckerByType->{'language tag'};
