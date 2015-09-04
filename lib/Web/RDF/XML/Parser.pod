@@ -158,6 +158,13 @@ as input, although there is no direct dependency.
 RDF 1.1 XML Syntax
 <https://dvcs.w3.org/hg/rdf/raw-file/default/rdf-xml/index.html>.
 
+=item XMLBASE
+
+XML Base <http://www.w3.org/TR/xmlbase/>.
+
+XML Base Specification Errata
+<http://www.w3.org/2009/01/xmlbase-errata>.
+
 =item VALLANGS
 
 Handling of unknown namespaces in conformance checking
@@ -171,7 +178,7 @@ Wakaba <wakaba@suikawiki.org>.
 
 =head1 LICENSE
 
-Copyright 2013-2014 Wakaba <wakaba@suikawiki.org>.
+Copyright 2013-2015 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
