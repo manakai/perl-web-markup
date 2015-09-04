@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use warnings FATAL => 'recursion';
 no warnings 'utf8';
-our $VERSION = '5.0';
+our $VERSION = '6.0';
 use Web::URL::Canonicalize qw(url_to_canon_url);
 
 sub RDF_NS () { q<http://www.w3.org/1999/02/22-rdf-syntax-ns#> }
@@ -258,13 +258,26 @@ my %oldTerms = (
 );
 
 my $resolve = sub {
+  my @base;
+  my $element = $_[1]->owner_element;
+  while (defined $element) {
+    my $xmlbase = $element->get_attribute_ns (XML_NS, 'base');
+    if (defined $xmlbase) {
+      unshift @base, $xmlbase;
+    }
+    $element = $element->parent_element;
+  }
+  my $base = $_[1]->owner_document->base_uri;
+  while (@base) {
+    $base = url_to_canon_url shift (@base), $base;
+    last if not defined $base;
+  }
   # XXX url_to_canon_url can't handle fragment-only relative URLs...
-  # XXX don't use ->base_uri as it might drop xml:base support...
-  my $resolved = url_to_canon_url $_[0], $_[1]->base_uri;
+  my $resolved = url_to_canon_url $_[0], $base;
   if (not defined $resolved and $_[0] =~ /^#/) {
-    return $_[1]->base_uri . $_[0];
+    return $base . $_[0];
   } elsif (not defined $resolved and $_[0] eq '') {
-    return $_[1]->base_uri;
+    return $base;
   }
   return defined $resolved ? $resolved : $_[0];
 }; # $resolve
