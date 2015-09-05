@@ -52,13 +52,6 @@ $Web::HTML::_SyntaxDefs = {
                                                         "type"
                                                       ]
                                                     ],
-                                      "xml:base" => [
-                                                    "http://www.w3.org/XML/1998/namespace",
-                                                    [
-                                                      "xml",
-                                                      "base"
-                                                    ]
-                                                  ],
                                       "xml:lang" => [
                                                     "http://www.w3.org/XML/1998/namespace",
                                                     [
