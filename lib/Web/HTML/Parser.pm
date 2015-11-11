@@ -4380,14 +4380,14 @@ $State = PLAINTEXT_STATE;
       }
     ) {
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RB_RP_RT_ELS | RTC_ELS);
-          }
-        
 
           if (not ($OE->[-1]->{et} & (RUB_ELS))) {
             push @$Errors, {type => 'in body',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
+          }
+        
           }
         
 
@@ -4432,14 +4432,14 @@ push @$OE, $node;
       }
     ) {
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RB_RP_RT_ELS);
-          }
-        
 
           if (not ($OE->[-1]->{et} & (RTC_ELS | RUB_ELS))) {
             push @$Errors, {type => 'element not closed before implied ancestor end tag',
                                             level => 'm',
                                             text => $OE->[-1]->{local_name},value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
+          }
+        
           }
         
 
@@ -10987,14 +10987,14 @@ push @$Errors, {type => 'in table',
       }
     ) {
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RB_RP_RT_ELS | RTC_ELS);
-          }
-        
 
           if (not ($OE->[-1]->{et} & (RUB_ELS))) {
             push @$Errors, {type => 'in body',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
+          }
+        
           }
         
 
@@ -11058,14 +11058,14 @@ push @$Errors, {type => 'in table',
       }
     ) {
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RB_RP_RT_ELS);
-          }
-        
 
           if (not ($OE->[-1]->{et} & (RTC_ELS | RUB_ELS))) {
             push @$Errors, {type => 'element not closed before implied ancestor end tag',
                                             level => 'm',
                                             text => $OE->[-1]->{local_name},value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
+          }
+        
           }
         
 

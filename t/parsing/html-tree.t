@@ -131,7 +131,7 @@ sub _test ($) {
     }
   }); # onerror
 
-  $parser->scripting (1) unless $test->{noscript};
+  $parser->scripting (1) if not $test->{noscript} and not $test->{'script-off'};
 
   my $result;
   unless (defined $test->{element}) {
@@ -183,7 +183,7 @@ my @FILES = (
 
 for (@FILES) {
   my $file_name = $_;
-  $file_name = $1 if $file_name =~ m{([^/]+)$};
+  $file_name = $1 if $file_name =~ m{([^/]+/[^/]+/[^/]+)$};
   for_each_test ($_, {
     data => {is_prefixed => 1},
     errors => {is_list => 1},

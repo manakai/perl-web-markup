@@ -1313,11 +1313,6 @@ $CheckerByType->{idref} = sub {
   push @{$self->{idref}}, [$def->{id_type} || 'any', $attr->value => $attr];
 }; # ID reference
 
-$ElementAttrChecker->{(HTML_NS)}->{menuitem}->{''}->{command} = sub {
-  my ($self, $attr) = @_;
-#  push @{$self->{idref}}, ['command', $attr->value, $attr]; # XXX not implemented yet
-}; # <menuitem command="">
-
 ## XXX Warn violation to control-dependent restrictions.  For example,
 ## |<input type=url maxlength=10 list=a> <datalist id=a><option
 ## value=nonurlandtoolong></datalist>| should be warned.
@@ -6348,7 +6343,7 @@ $Element->{+HTML_NS}->{area} = {
                            level => 'm');
       }
     } else {
-      for (qw/target ping rel hreflang type alt/) {
+      for (qw/target ping rel alt/) {
         if (defined $attr{$_}) {
           $self->{onerror}->(node => $attr{$_},
                              type => 'attribute not allowed',
@@ -7847,16 +7842,16 @@ $Element->{+HTML_NS}->{summary} = {
 $Element->{+HTML_NS}->{menu} = {
   %AnyChecker,
   ## <menu type=toolbar>: (li | script-supporting)* | flow
-  ## <menu type=popup>: (menuitem | hr | <menu type=popup> | script-supporting)*
+  ## <menu type=context>: (menuitem | hr | <menu type=context> | script-supporting)*
   check_start => sub {
     my ($self, $item, $element_state) = @_;
-    $element_state->{phase} = $item->{node}->type; # "toolbar" or "popup"
+    $element_state->{phase} = $item->{node}->type eq 'toolbar' ? 'toolbar' : 'popup';
       ## $element_state->{phase}
       ##   toolbar -> toolbar-li | toolbar-flow
       ##   toolbar-li
       ##   toolbar-flow
       ##   popup
-    $element_state->{id_type} = 'popup' if $item->{node}->type eq 'popup';
+    $element_state->{id_type} = 'popup' if $item->{node}->type eq 'context';
     $AnyChecker{check_start}->(@_);
   }, # check_start
   check_attrs2 => sub {
@@ -7867,7 +7862,7 @@ $Element->{+HTML_NS}->{menu} = {
       if ($parent and
           $parent->node_type == 1 and # ELEMENT_NODE
           $parent->manakai_element_type_match (HTML_NS, 'menu') and
-          $parent->type eq 'popup') {
+          $parent->type eq 'context') {
         #
       } else {
         $self->{onerror}->(node => $label_attr,
@@ -7921,7 +7916,7 @@ $Element->{+HTML_NS}->{menu} = {
         #
       } else {
         $self->{onerror}->(node => $child_el,
-                           type => 'element not allowed:menu type=popup',
+                           type => 'element not allowed:menu type=popup', # now type=context
                            level => 'm');
       }
     } else {
@@ -7958,22 +7953,13 @@ $Element->{+HTML_NS}->{menuitem} = {
   %HTMLEmptyChecker,
   check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
-    if ($item->{node}->has_attribute_ns (undef, 'command')) {
-      ## Indirect command mode.
-      for (qw(type label icon disabled checked radiogroup)) {
-        my $attr = $item->{node}->get_attribute_node_ns (undef, $_) or next;
-        $self->{onerror}->(node => $attr,
-                           type => 'attribute not allowed',
-                           level => 'm');
-      }
-    } else {
-      ## Explicit command mode.
-      unless ($item->{node}->has_attribute_ns (undef, 'label')) {
-        $self->{onerror}->(node => $item->{node},
-                           type => 'attribute missing',
-                           text => 'label',
-                           level => 'm');
-      }
+
+    ## Explicit command mode.
+    unless ($item->{node}->has_attribute_ns (undef, 'label')) {
+      $self->{onerror}->(node => $item->{node},
+                         type => 'attribute missing',
+                         text => 'label',
+                         level => 'm');
     }
 
     my $type = $item->{node}->get_attribute_ns (undef, 'type') || '';
@@ -9306,7 +9292,7 @@ $Element->{+HTML_NS}->{template} = {
       $container = $df->owner_document->create_element ('head');
     } elsif ($model eq 'popup menu') {
       $container = $df->owner_document->create_element ('menu');
-      $container->set_attribute_ns (undef, type => 'popup');
+      $container->set_attribute_ns (undef, type => 'context');
     } else {
       $container = $df->owner_document->create_element ($model);
       $container->set_attribute_ns (undef, data => 'http://test/') if $model eq 'object';
@@ -10044,7 +10030,6 @@ sub _check_refs ($) {
   ## $self->{id_type}->{$id} Type of first ID node's element
   ## ID types:
   ##   any       Any type is allowed (For |idref| only)
-  ##   command   Master command
   ##   form      <form>
   ##   datalist  <datalist>
   ##   labelable Labelable element
@@ -10063,7 +10048,6 @@ sub _check_refs ($) {
         datalist => 'no referenced datalist',
         object => 'no referenced object',
         popup => 'no referenced menu',
-        command => 'no referenced master command',
       }->{$_->[0]};
       $self->{onerror}->(node => $_->[2],
                          type => $error_type,
