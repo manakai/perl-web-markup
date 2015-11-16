@@ -22,7 +22,7 @@ Path::Class~0.35
 Unicode::Stringprep~1.105
 Module::Metadata~1.000027
 Scalar::Util~1.42
-File::Spec~3.47
+File::Spec~3.59
 Module::Runtime~0.014
 Regexp::Parser~0.21
 Unicode::Normalize~1.23
@@ -30,7 +30,7 @@ Algorithm::Diff~1.1903
 Perl::OSType~1.009
 MRO::Compat~0.12
 ExtUtils::CBuilder~0.280224
-Path::Tiny~0.072
+Path::Tiny~0.076
 Parse::CPAN::Meta~1.4417
 version~0.9912
 Test::Tester~0.114
