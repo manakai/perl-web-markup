@@ -22,7 +22,7 @@ Path::Class~0.35
 Unicode::Stringprep~1.105
 Module::Metadata~1.000027
 Scalar::Util~1.42
-File::Spec~3.59
+File::Spec~3.60
 Module::Runtime~0.014
 Regexp::Parser~0.21
 Unicode::Normalize~1.23
