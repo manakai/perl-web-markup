@@ -6,7 +6,7 @@ Test::Builder~1.001014
 CPAN::Meta~2.150005
 Module::Build~0.4214
 Try::Tiny~0.22
-Term::ANSIColor~4.03
+Term::ANSIColor~4.04
 parent~0.234
 AnyEvent~7.11
 Exporter::Lite~0.07
