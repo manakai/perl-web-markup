@@ -5,7 +5,7 @@ Encode~2.78
 Test::Builder~1.001014
 CPAN::Meta~2.150005
 Module::Build~0.4214
-Try::Tiny~0.22
+Try::Tiny~0.24
 Term::ANSIColor~4.04
 parent~0.234
 AnyEvent~7.11
@@ -34,7 +34,7 @@ Path::Tiny~0.076
 Parse::CPAN::Meta~1.4417
 version~0.9912
 Test::Tester~0.114
-CPAN::Meta::YAML~0.016
+CPAN::Meta::YAML~0.018
 Exporter~5.72
 Carp~1.38
 JSON::PP~2.27300
