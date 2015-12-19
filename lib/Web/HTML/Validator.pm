@@ -6415,7 +6415,7 @@ $Element->{+HTML_NS}->{table} = {
       } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'tr') {
         $element_state->{phase} = 'in trs';
       } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'tfoot') {
-        $element_state->{phase} = 'in tbodys';
+        $element_state->{phase} = 'after tfoot';
         $element_state->{has_tfoot} = 1;
       } else {
         $self->{onerror}->(node => $child_el,
@@ -6432,7 +6432,7 @@ $Element->{+HTML_NS}->{table} = {
       } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'tr') {
         $element_state->{phase} = 'in trs';
       } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'tfoot') {
-        $element_state->{phase} = 'in tbodys';
+        $element_state->{phase} = 'after tfoot';
         $element_state->{has_tfoot} = 1;
       } else {
         $self->{onerror}->(node => $child_el,
@@ -6457,7 +6457,7 @@ $Element->{+HTML_NS}->{table} = {
       } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'tr') {
         $element_state->{phase} = 'in trs';
       } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'tfoot') {
-        $element_state->{phase} = 'in tbodys';
+        $element_state->{phase} = 'after tfoot';
         $element_state->{has_tfoot} = 1;
       } else {
         $self->{onerror}->(node => $child_el,
