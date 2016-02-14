@@ -12911,6 +12911,7 @@ sub _encoding_sniffing ($;%) {
   ## callback should not invoke any exception.
 
   ## Step 3. BOM
+  ## XXX Now this step is part of "decode" in the specs
   if (defined $head) {
     if ($$head =~ /^\xFE\xFF/) {
       $self->{input_encoding} = 'utf-16be';
@@ -13013,7 +13014,7 @@ sub _encoding_sniffing ($;%) {
   }
 
   ## Step 8. Default of default
-  $self->{input_encoding} = 'windows-1252';
+  $self->{input_encoding} = Web::Encoding::encoding_label_to_name 'windows-1252';
   $Confident = 0; # tentative
   return;
 
@@ -13172,8 +13173,7 @@ sub _change_the_encoding ($$$) {
   ## <http://www.whatwg.org/specs/web-apps/current-work/#change-the-encoding>.
 
   ## Step 1. UTF-16
-  if ($self->{input_encoding} eq 'utf-16le' or
-      $self->{input_encoding} eq 'utf-16be') {
+  if (Web::Encoding::is_utf16_encoding_key $self->{input_encoding}) {
     $Confident = 1; # certain
     return undef;
   }
