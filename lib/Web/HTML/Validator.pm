@@ -2993,13 +2993,19 @@ my $ShapeCoordsChecker = sub ($$$$) {
   
   my $coords;
   if ($attrs->{coords}) {
-    my $coords_value = $attrs->{coords}->value;
-    if ($coords_value =~ /\A-?[0-9]+(?>,-?[0-9]+)*\z/) {
-      $coords = [split /,/, $coords_value];
-    } else {
-      $self->{onerror}->(node => $attrs->{coords},
-                         type => 'coords:syntax error',
-                         level => 'm');
+    $coords = [split /,/, $attrs->{coords}->value, -1];
+    $coords = [''] unless @$coords;
+    for (@$coords) {
+      unless (m{\A
+        (-? (?> [0-9]+ (?>(\.[0-9]+))? | \.[0-9]+))
+        (?>[Ee] ([+-]?[0-9]+) )?
+      \z}x) {
+        $self->{onerror}->(node => $attrs->{coords},
+                           type => 'coords:syntax error',
+                           level => 'm',
+                           value => $_);
+        return;
+      }
     }
   }
 
