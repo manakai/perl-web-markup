@@ -97,6 +97,7 @@ my $GetNestedOnError = sub ($$) {
 ##                       flag is undefined.
 ##   {has_meta_charset}  Set to true if there is a <meta charset=""> or
 ##                       <meta http-equiv=content-type> element.
+##   {in_a}              Set to true if there is an ancestor |a| element.
 ##   {in_a_href}         Set to true if there is an ancestor |a| element
 ##                       with a |href| attribute.
 ##   {in_canvas}         Set to true if there is an ancestor |canvas| element.
@@ -1878,9 +1879,6 @@ sub _validate_aria ($$) {
       } elsif ($ln eq 'li') {
         $adef = $aria_defs->{'in-ulol'}
             if $node_context->{refaddr $node}->{in_ulol};
-      } elsif ($ln eq 'th') {
-        # XXX sorting capable ...
-        $adef = $aria_defs->{'not-sort-1'};
       } elsif ($ln eq 'menu') {
         $adef = $aria_defs->{$node->type}; # type=popup or toolbar
       } elsif ($ln =~ /\Ah[1-6]\z/) {
@@ -2592,7 +2590,10 @@ sub _is_minus_element ($$$$) {
       return 1 if $self->{flag}->{in_media};
 
       return $el->has_attribute_ns (undef, 'controls');
-    } elsif ($ln eq 'a' or $ln eq 'button') {
+    } elsif ($ln eq 'a') {
+      return (($self->{flag}->{no_interactive} || !$self->{flag}->{in_canvas}) &&
+              ($self->{flag}->{in_a} || $el->has_attribute_ns (undef, 'href')));
+    } elsif ($ln eq 'button') {
       return $self->{flag}->{no_interactive} || !$self->{flag}->{in_canvas};
     } elsif ($ln eq 'select') {
       if ($self->{flag}->{no_interactive} or not $self->{flag}->{in_canvas}) {
@@ -2600,9 +2601,6 @@ sub _is_minus_element ($$$$) {
       } else { ## in canvas
         return not ($el->multiple || $el->size > 1);
       }
-    } elsif ($ln eq 'th') {
-      # XXX disallow sorting interface th element
-      return 0;
     } else {
       return 1;
     }
@@ -5089,6 +5087,8 @@ $Element->{+HTML_NS}->{a} = {
     $element_state->{no_interactive_original}
         = $self->{flag}->{no_interactive};
     $self->{flag}->{no_interactive} = 1;
+    $element_state->{in_a_original} = $self->{flag}->{in_a};
+    $self->{flag}->{in_a} = 1;
     $TransparentChecker{check_start}->(@_);
   }, # check_start
   check_end => sub {
@@ -5097,6 +5097,8 @@ $Element->{+HTML_NS}->{a} = {
         unless $element_state->{in_a_href_original};
     delete $self->{flag}->{no_interactive}
         unless $element_state->{no_interactive};
+    delete $self->{flag}->{in_a}
+        unless $element_state->{in_a_original};
 
     $NameAttrCheckEnd->(@_);
     $TransparentChecker{check_end}->(@_);
@@ -6558,8 +6560,6 @@ $Element->{+HTML_NS}->{table} = {
   # XXXwarn no tbody/tr child
   # XXXwarn tr child is not serializable as HTML
 }; # table
-
-# XXX sortable table
 
 $Element->{+HTML_NS}->{colgroup} = {
   %HTMLEmptyChecker,
