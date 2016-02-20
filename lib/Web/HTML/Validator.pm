@@ -4866,20 +4866,27 @@ $ElementAttrChecker->{(HTML_NS)}->{$_}->{''}->{type} = sub {
 $ElementAttrChecker->{(HTML_NS)}->{li}->{''}->{value} = sub {
   my ($self, $attr) = @_;
 
-  my $parent_is_ol;
-  my $parent = $attr->owner_element->manakai_parent_element;
-  if (defined $parent) {
-    my $parent_ns = $parent->namespace_uri;
-    $parent_ns = '' unless defined $parent_ns;
-    my $parent_ln = $parent->local_name;
-    $parent_is_ol = ($parent_ns eq HTML_NS and $parent_ln eq 'ol');
+  my $allowed = 1;
+  {
+    my $node = $attr->owner_element;
+    last unless defined $node;
+
+    $node = $node->manakai_parent_element;
+    last unless defined $node;
+
+    my $ns = $node->namespace_uri;
+    last unless defined $ns;
+
+    my $ln = $node->local_name;
+    if ($ln eq 'ul' or $ln eq 'menu') {
+      $allowed = 0;
+    }
   }
 
-  unless ($parent_is_ol) {
-    $self->{onerror}->(node => $attr,
-                       type => 'non-ol li value',
-                       level => 'm');
-  }
+  $self->{onerror}->(node => $attr,
+                     type => 'non-ol li value',
+                     level => 'm')
+      unless $allowed;
   
   my $value = $attr->value;
   unless ($value =~ /\A-?[0-9]+\z/) {
@@ -10116,7 +10123,7 @@ sub check_node ($$) {
 
 =head1 LICENSE
 
-Copyright 2007-2015 Wakaba <wakaba@suikawiki.org>.
+Copyright 2007-2016 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
