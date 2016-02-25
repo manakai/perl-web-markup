@@ -1,0 +1,253 @@
+{
+   "errors" : {
+      "script language" : {
+         "default_level" : "s",
+         "desc" : {
+            "en" : "\u003Cp>The \u003Ccode>language\u003C/code> attribute of the \u003Ccode>script\u003C/code>\u000Aelement is obsolete.  Use the \u003Ccode>type\u003C/code> attribute instead.\u003C/p>\u000A\u003Cp>If the script language is JavaScript, no additional\u000Aattribute is necessary.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>script\u003C/code> 要素の \u003Ccode>language\u003C/code> 属性は廃止されました。\u000Aかわりに \u003Ccode>type\u003C/code> 属性を使ってください。\u003C/p>\u000A\u003Cp>スクリプト言語が JavaScript の時は、何も属性を指定しなくて構いません。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "The \u003Ccode>language\u003C/code> attribute is obsolete",
+            "ja" : "\u003Ccode>language\u003C/code> 属性は廃止されました"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         },
+         "targets" : {
+            "attr" : 1
+         }
+      },
+      "script language:ne type" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>The script language specified by the \u003Ccode>language\u003C/code> attribute\u000A    is different from the one specified by the \u003Ccode>type\u003C/code> attribute.\u003C/p>\u000A    \u003Cp>Use the \u003Ccode>type\u003C/code> attribute only.  The \u003Ccode>language\u003C/code>\u000A    attribute is obsolete.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>language\u003C/code> 属性で指定されたスクリプト言語が \u000A    \u003Ccode>type\u003C/code> 属性で指定されたスクリプト言語と異なります。\u003C/p>\u000A    \u003Cp>\u003Ccode>type\u003C/code> 属性だけを使ってください。 \u003Ccode>language\u003C/code>\u000A    属性は廃止されました。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "The script language is different from the\u000Alanguage in the \u003Ccode>type\u003C/code> attribute",
+            "ja" : "スクリプト言語が \u003Ccode>type\u003C/code> 属性と異なります"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "script language:not js" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>The \u003Ccode>language\u003C/code> attribute value must be\u000A\u003Ccode>javascript\u003C/code>.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>language\u003C/code> 属性値は \u003Ccode>javascript\u003C/code>\u000Aでなければいけません。\u003C/p>"
+         },
+         "layer" : "microsyntax",
+         "message" : {
+            "en" : "The script language must be \u003Ccode>javascript\u003C/code>",
+            "ja" : "スクリプト言語は \u003Ccode>javascript\u003C/code> でなければいけません"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "script type:bad params" : {
+         "default_level" : "w",
+         "desc" : {
+            "en" : "\u003Cp>Although parameters can be specified to the MIME type in the\u000A\u003Ccode>type\u003C/code> attribute of the \u003Ccode>script\u003C/code> element in\u000Atheory, at the time of writing, there is no known JavaScript MIME type\u000Awhich accepts parameters.  If there is a parameter, it is not\u000Arecognized as an executable script.\u000A\u000A\u003C/p>\u003Cp>Parameters \u003Ccode>e4x\u003C/code> and \u003Ccode>version\u003C/code> are obsolete.\u000AThey are not allowed.\u003C/p>",
+            "ja" : "\u003Cp>理論上は \u003Ccode>script\u003C/code> 要素の \u003Ccode>type\u003C/code> 属性に\u000AMIME 型の引数を指定することもできますが、現在 JavaScript MIME \u000A型で引数が認められているものはありません。引数があると、\u000A実行可能なスクリプトとは認識されません。\u000A\u000A\u003C/p>\u003Cp>引数 \u003Ccode>e4x\u003C/code> や引数 \u003Ccode>version\u003C/code>\u000Aは廃止されました。使ってはいけません。\u003C/p>"
+         },
+         "layer" : "microsyntax",
+         "message" : {
+            "en" : "There is a MIME type parameter",
+            "ja" : "MIME 型に引数があります"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "script type:bad spaces" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>For a module script, the \u003Ccode>type\u003C/code> attribute value of a\u000A\u003Ccode>script\u003C/code> element must be \u003Ccode>module\u003C/code>.  No white\u000Aspace characters are allowed before or after the type.\u003C/p>",
+            "ja" : "\u003Cp>モジュールスクリプトの \u003Ccode>script\u003C/code> 要素の \u003Ccode>type\u003C/code>\u000A属性値は \u003Ccode>module\u003C/code> でなければいけません。\u000A空白を入れてはいけません。\u003C/p>"
+         },
+         "layer" : "microsyntax",
+         "message" : {
+            "en" : "There is a space character in the attribute value",
+            "ja" : "属性値に空白が混ざっています"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "script type:classic" : {
+         "default_level" : "s",
+         "desc" : {
+            "en" : "\u003Cp>The \u003Ccode>type\u003C/code> attribute of the \u003Ccode>script\u003C/code> element\u000Awhich contains a classic script (in other word, the \u003Ccode>type\u003C/code>\u000Aattribute whose value is a JavaScript MIME type) should omitted as it\u000Ais the default.\u003C/p>",
+            "ja" : "\u003Cp>古典スクリプトの \u003Ccode>script\u003C/code> 要素の \u003Ccode>type\u003C/code>\u000A属性 (値が JavaScript MIME 型の \u003Ccode>type\u003C/code> 属性) は、\u000A省略するべきです。 \u003Ccode>type\u003C/code> 要素の既定値は古典スクリプトなので、\u000A冗長です。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "There is a redundant \u003Ccode>type\u003C/code> attribute",
+            "ja" : "冗長な \u003Ccode>type\u003C/code> 属性があります"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         },
+         "targets" : {
+            "attr" : 1
+         }
+      },
+      "script type:empty" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>The \u003Ccode>type\u003C/code> attribute (and the \u003Ccode>language\u003C/code>\u000Aattribute) must specify the type of the script.  It can't be empty.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>type\u003C/code> 属性 (や \u003Ccode>language\u003C/code> 属性)\u000Aの値は、スクリプトの型を指定しなければなりません。\u000A属性値を空文字列にしてはいけません。\u003C/p>"
+         },
+         "layer" : "microsyntax",
+         "message" : {
+            "en" : "The attribute value is empty",
+            "ja" : "属性値が空です"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "script type:scripting lang" : {
+         "default_level" : "w",
+         "desc" : {
+            "en" : "\u003Cp>The \u003Ccode>type\u003C/code> attribute (or the \u003Ccode>language\u003C/code>\u000Aattribute) specifies a scripting language, which was historically used\u000Ato implement actions on the Web page.  However, no scripting language\u000Aother than JavaScript can be executed on the Web these days.  The\u000A\u003Ccode>script\u003C/code> element with obsolete scripting language is simply\u000Aignored.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>type\u003C/code> 属性 (や \u003Ccode>language\u003C/code> 属性) が、かつて \u000AWeb ページ上の動作を記述するために使われていたスクリプト言語を表しています。\u000A現在では Web 上で実行できるのは JavaScript だけです。\u000Aかつてのスクリプト言語を指定した \u003Ccode>script\u003C/code>\u000A要素は、単に無視されるだけです。\u003C/p>"
+         },
+         "layer" : "feature",
+         "message" : {
+            "en" : "An obsolete scripting language is specified",
+            "ja" : "廃止されたスクリプト言語が指定されています"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "script:ignored async" : {
+         "default_level" : "w",
+         "desc" : {
+            "en" : "\u003Cp>The \u003Ccode>async\u003C/code> attribute of the \u003Ccode>script\u003C/code> element\u000Ais effective only when the element defines a module script, or when\u000Athe element defines a classic script and has a \u003Ccode>src\u003C/code>\u000Aattribute.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>script\u003C/code> 要素の \u003Ccode>defer\u003C/code>\u000A属性に効果があるのは、モジュールスクリプトのときと、\u000A古典スクリプトで \u003Ccode>src\u003C/code> 属性があるときだけです。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "The \u003Ccode>async\u003C/code> attribute has no effect",
+            "ja" : "この \u003Ccode>async\u003C/code> 属性には意味がありません"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         },
+         "targets" : {
+            "attr" : 1
+         }
+      },
+      "script:ignored charset" : {
+         "default_level" : "w",
+         "desc" : {
+            "en" : "\u003Cp>The \u003Ccode>charset\u003C/code> attribute of the \u003Ccode>script\u003C/code>\u000Aelement is effective only when the element defines a classic script\u000Aand has a \u003Ccode>src\u003C/code> attribute.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>script\u003C/code> 要素の \u003Ccode>charset\u003C/code>\u000A属性に効果があるのは、古典スクリプトで \u003Ccode>src\u003C/code>\u000A属性があるときだけです。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "The \u003Ccode>charset\u003C/code> attribute has no effect",
+            "ja" : "この \u003Ccode>charset\u003C/code> 属性には意味がありません"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         },
+         "targets" : {
+            "attr" : 1
+         }
+      },
+      "script:ignored crossorigin" : {
+         "default_level" : "w",
+         "desc" : {
+            "en" : "\u003Cp>The \u003Ccode>crossorigin\u003C/code> attribute of the \u003Ccode>script\u003C/code> element\u000Ais effective only when the element defines a module script, or when\u000Athe element defines a classic script and has a \u003Ccode>src\u003C/code>\u000Aattribute.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>script\u003C/code> 要素の \u003Ccode>crossorigin\u003C/code>\u000A属性に効果があるのは、モジュールスクリプトのときと、\u000A古典スクリプトで \u003Ccode>src\u003C/code> 属性があるときだけです。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "The \u003Ccode>crossorigin\u003C/code> attribute has no effect",
+            "ja" : "この \u003Ccode>crossorigin\u003C/code> 属性には意味がありません"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         },
+         "targets" : {
+            "attr" : 1
+         }
+      },
+      "script:ignored defer" : {
+         "default_level" : "w",
+         "desc" : {
+            "en" : "\u003Cp>The \u003Ccode>defer\u003C/code> attribute of the \u003Ccode>script\u003C/code>\u000Aelement is effective only when the element defines a classic script,\u000Ahas a \u003Ccode>src\u003C/code> attribute, and does not have any\u000A\u003Ccode>async\u003C/code> attribute.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>script\u003C/code> 要素の \u003Ccode>defer\u003C/code>\u000A属性に効果があるのは、古典スクリプトで \u003Ccode>src\u003C/code>\u000A属性があり、 \u003Ccode>async\u003C/code> 属性がないときだけです。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "The \u003Ccode>defer\u003C/code> attribute has no effect",
+            "ja" : "この \u003Ccode>defer\u003C/code> 属性には意味がありません"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         },
+         "targets" : {
+            "attr" : 1
+         }
+      },
+      "script:ignored nonce" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>The \u003Ccode>nonce\u003C/code> attribute of the \u003Ccode>script\u003C/code> element\u000Ais effective only when the element defines a module script or a\u000Aclassic script.  It can't be used when the element defines a data\u000Ablock.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>script\u003C/code> 要素の \u003Ccode>nonce\u003C/code>\u000A属性に効果があるのは、モジュールスクリプトか古典スクリプトのときだけです。\u000Aデータブロックの \u003Ccode>script\u003C/code> 要素には指定できません。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "The \u003Ccode>nonce\u003C/code> attribute has no effect",
+            "ja" : "この \u003Ccode>nonce\u003C/code> 属性には意味がありません"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         },
+         "targets" : {
+            "attr" : 1
+         }
+      },
+      "script:ignored src" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>The \u003Ccode>src\u003C/code> attribute of the \u003Ccode>script\u003C/code> element\u000Ais effective only when the element defines a module script or a\u000Aclassic script.  It can't be used when the element defines a data\u000Ablock.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>script\u003C/code> 要素の \u003Ccode>src\u003C/code>\u000A属性に効果があるのは、モジュールスクリプトか古典スクリプトのときだけです。\u000Aデータブロックの \u003Ccode>script\u003C/code> 要素には指定できません。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "The \u003Ccode>src\u003C/code> attribute has no effect",
+            "ja" : "この \u003Ccode>src\u003C/code> 属性には意味がありません"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         },
+         "targets" : {
+            "attr" : 1
+         }
+      },
+      "unknown script lang" : {
+         "default_level" : "u",
+         "desc" : {
+            "en" : "\u003Cp>Conformance checking of the scripting language or data blocj\u000A    specified by the \u003Ccode>type\u003C/code> attribute of the\u000A    \u003Ccode>script\u003C/code> element is not supported.\u003C/p>\u000A\u000A    \u003Cp>Whether the content is conforming or not is\u000A    \u003Cem>unknown\u003C/em>.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>script\u003C/code> 要素の \u003Ccode>type\u003C/code>\u000A    属性で指定されたスクリプト言語、あたはデータブロックの適合性検査には対応していません。\u003C/p>\u000A    \u000A    \u003Cp>内容が適合しているかどうかは\u003Cem>不明\u003C/em>です。\u003C/p>"
+         },
+         "layer" : "feature",
+         "message" : {
+            "en" : "Validation of the scripting language or\u000Adata block \u003Ccode>\u003Cvar>{value}\u003C/var>\u003C/code> is not supported",
+            "ja" : "スクリプト言語またはデータブロック\u000A\u003Ccode>\u003Cvar>{value}\u003C/var>\u003C/code>  の妥当性検証には対応していません"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      }
+   }
+}

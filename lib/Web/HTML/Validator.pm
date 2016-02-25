@@ -899,26 +899,6 @@ $ElementAttrChecker->{(HTML_NS)}->{style}->{''}->{type} = sub {
   $element_state->{content_type} = $type;
 }; # <style type="">
 
-$ElementAttrChecker->{(HTML_NS)}->{script}->{''}->{type} = sub {
-  my ($self, $attr, $item, $element_state) = @_;
-
-  require Web::MIME::Type;
-  my $onerror = sub { $self->{onerror}->(@_, node => $attr) };
-  my $type = Web::MIME::Type->parse_web_mime_type
-      ($attr->value, $onerror);
-
-  if ($type) {
-    $type->validate ($onerror);
-
-    $self->{onerror}->(node => $attr,
-                       value => 'charset',
-                       type => 'IMT:parameter not allowed',
-                       level => 'm')
-        if defined $type->param ('charset');
-  }
-  $element_state->{content_type} = $type;
-}; # <script type="">
-
 ## Language tag [HTML] [BCP47]
 $CheckerByType->{'language tag'} = sub {
   my ($self, $attr) = @_;
@@ -4479,45 +4459,167 @@ $Element->{+HTML_NS}->{script} = {
   check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
     my $el = $item->{node};
-    unless ($el->has_attribute_ns (undef, 'src')) {
-      for my $attr_name (qw(charset defer async crossorigin)) {
-        my $attr = $el->get_attribute_node_ns (undef, $attr_name);
-        $self->{onerror}->(type => 'attribute not allowed',
-                           node => $attr,
-                           level => $attr_name eq 'crossorigin' ? 'w' : 'm')
-            if $attr;
-      }
-    }
 
+    ## <https://wiki.suikawiki.org/n/script%20block%27s%20type%20string#anchor-143>
     my $type = $item->{node}->get_attribute_ns (undef, 'type');
     my $language = $item->{node}->get_attribute_ns (undef, 'language');
-    if ((defined $type and $type eq '') or
-        (not defined $type and defined $language and $language eq '') or
-        (not defined $type and not defined $language)) {
-      $element_state->{content_type} = do {
-        require Web::MIME::Type;
-        Web::MIME::Type->parse_web_mime_type ('text/javascript');
-      };
+    my $computed_type;
+    if (defined $type) {
+      if ($type eq '') {
+        $computed_type = 'text/javascript';
+      } else {
+        $computed_type = $type;
+        $computed_type =~ s/\A[\x09\x0A\x0C\x0D\x20]+//; # space characters
+        $computed_type =~ s/[\x09\x0A\x0C\x0D\x20]+\z//; # space characters
+      }
     } elsif (defined $language) {
-      $element_state->{content_type} ||= do {
-        require Web::MIME::Type;
-        Web::MIME::Type->parse_web_mime_type ('text/' . $language, sub { });
-      };
+      if ($language eq '') {
+        $computed_type = 'text/javascript';
+      } else {
+        $computed_type = 'text/' . $language;
+      }
+    } else {
+      $computed_type = 'text/javascript';
     }
 
-    $element_state->{element_allowed} = 1
-        if $element_state->{content_type} and
-           $element_state->{content_type}->is_xml_mime_type and
-           not $el->has_attribute_ns (undef, 'src');
+    if ($computed_type =~ m{\A[Mm][Oo][Dd][Uu][Ll][Ee]\z}) {
+      $element_state->{content_type} = 'module';
+      $self->{onerror}->(node => $item->{node}->get_attribute_node_ns (undef, 'type'),
+                         value => $type,
+                         type => 'script type:bad spaces',
+                         level => 'm')
+          if $type =~ /[^MODULEmodule]/;
+      my $charset_attr = $item->{node}->get_attribute_node_ns (undef, 'charset');
+      $self->{onerror}->(node => $charset_attr,
+                         type => 'script:ignored charset',
+                         level => 'm')
+          if defined $charset_attr;
+      my $defer_attr = $item->{node}->get_attribute_node_ns (undef, 'defer');
+      $self->{onerror}->(node => $defer_attr,
+                         type => 'script:ignored defer',
+                         level => 'm')
+          if defined $defer_attr;
+    } else {
+      require Web::MIME::Type;
+      my $mime_type;
+      if (defined $type) {
+        my $attr = $item->{node}->get_attribute_node_ns (undef, 'type');
+        my $onerror = sub { $self->{onerror}->(@_, node => $attr) };
+        $mime_type = Web::MIME::Type->parse_web_mime_type
+            ($computed_type, $onerror);
+        $mime_type->validate ($onerror) if defined $mime_type;
+      } elsif ($computed_type eq 'text/javascript') {
+        $mime_type = Web::MIME::Type->parse_web_mime_type
+            ($computed_type, sub { });
+      } else {
+        my $attr = $item->{node}->get_attribute_node_ns (undef, 'language');
+        my $onerror = sub { $self->{onerror}->(@_, node => $attr) };
+        $mime_type = Web::MIME::Type->parse_web_mime_type
+            ($computed_type, $onerror);
+        $mime_type->validate ($onerror) if defined $mime_type;
+      }
+      my $type_attr = $item->{node}->get_attribute_node_ns (undef, 'type') ||
+                      $item->{node}->get_attribute_node_ns (undef, 'language');
+      if (defined $mime_type and
+          $mime_type->is_javascript and
+          $computed_type =~ m{\A[^\x00-\x20\x3B]+\z}) {
+        $element_state->{content_type} = 'classic';
+        if (defined $type) {
+          if ($type eq '') {
+            $self->{onerror}->(node => $type_attr,
+                               value => $computed_type,
+                               type => 'script type:empty',
+                               level => 'm');
+          } else {
+            $self->{onerror}->(node => $type_attr,
+                               value => $computed_type,
+                               type => 'script type:classic',
+                               level => 's');
+          }
+        }
+        my $async_attr = $item->{node}->get_attribute_node_ns (undef, 'async');
+        my $defer_attr = $item->{node}->get_attribute_node_ns (undef, 'defer');
+        my $co_attr = $item->{node}->get_attribute_node_ns (undef, 'crossorigin');
+        my $charset_attr = $item->{node}->get_attribute_node_ns (undef, 'charset');
+        my $src_attr = $item->{node}->get_attribute_node_ns (undef, 'src');
+        $self->{onerror}->(node => $defer_attr,
+                           type => 'script:ignored defer',
+                           level => 'w')
+            if (defined $defer_attr and defined $async_attr) or
+               (defined $defer_attr and not defined $src_attr);
+        $self->{onerror}->(node => $async_attr,
+                           type => 'script:ignored async',
+                           level => 'w')
+            if defined $async_attr and not defined $src_attr;
+        $self->{onerror}->(node => $co_attr,
+                           type => 'script:ignored crossorigin',
+                           level => 'w')
+            if defined $co_attr and not defined $src_attr;
+        $self->{onerror}->(node => $charset_attr,
+                           type => 'script:ignored charset',
+                           level => 'm')
+            if defined $charset_attr and not defined $src_attr;
+      } else {
+        $element_state->{content_type} = $mime_type; # or undef; data block
+        for my $name (qw(async charset crossorigin defer nonce src)) {
+          my $attr = $item->{node}->get_attribute_node_ns (undef, $name);
+          $self->{onerror}->(node => $attr,
+                             type => 'script:ignored ' . $name,
+                             level => 'm')
+              if defined $attr;
+        }
+
+        if (not defined $mime_type) {
+          #
+        } elsif ($mime_type->is_javascript) {
+          $self->{onerror}->(node => $type_attr,
+                             value => $computed_type,
+                             type => 'script type:bad params',
+                             level => 'w');
+        } elsif ($mime_type->is_scripting_lang) {
+          $self->{onerror}->(node => $type_attr,
+                             value => $computed_type,
+                             type => 'script type:scripting lang',
+                             level => 'w');
+        }
+      }
+    } # script element type
+
+    if (defined $language) {
+      my $attr = $item->{node}->get_attribute_node_ns (undef, 'language');
+      if ($language =~ /\A[Jj][Aa][Vv][Aa][Ss][Cc][Rr][Ii][Pp][Tt]\z/) {
+        if (not defined $type or
+            $type =~ m{\A[Tt][Ee][Xx][Tt]/[Jj][Aa][Vv][Aa][Ss][Cc][Rr][Ii][Pp][Tt]\z}) {
+          $self->{onerror}->(node => $attr,
+                             type => 'script language',
+                             level => 's'); # obsolete but conforming
+        } else {
+          $self->{onerror}->(node => $attr,
+                             type => 'script language:ne type',
+                             level => 'm');
+        }
+      } elsif ($language eq '') {
+        $self->{onerror}->(node => $attr,
+                           type => 'script type:empty',
+                           level => 'm');
+      } else {
+        $self->{onerror}->(node => $attr,
+                           value => $language,
+                           type => 'script language:not js',
+                           level => 'm');
+      }
+    }
   }, # check_attrs2
   check_child_element => sub {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
-    unless ($element_state->{element_allowed}) {
-      $self->{onerror}->(node => $child_el,
-                         type => 'element not allowed',
-                         level => 'm');
-    }
+    ## In theory, a MIME type can define that a |script| element data
+    ## block can contain a child element in XML or by scripting.
+    ## However, at the time of writing, there is no known MIME type
+    ## that allows child elements in data block.
+    $self->{onerror}->(node => $child_el,
+                       type => 'element not allowed',
+                       level => 'm');
   }, # check_child_element
   check_end => sub {
     my ($self, $item, $element_state) = @_;
@@ -4525,6 +4627,7 @@ $Element->{+HTML_NS}->{script} = {
     my ($text, $tc, $text_sps, $tc_sps)
         = node_to_text_and_tc_and_sps $item->{node};
 
+    ## Common
     my $length = length $tc;
     $tc =~ s{\G(.*?<!--)(.*?)-->}{
       my $pos = length $1;
@@ -4548,32 +4651,30 @@ $Element->{+HTML_NS}->{script} = {
     }
 
     if ($item->{node}->has_attribute_ns (undef, 'src')) {
-      if (defined $element_state->{content_type} and
-          $element_state->{content_type}->is_scripting_lang) {
-        #
-      } else {
-        $self->{onerror}->(node => $item->{node},
-                           type => 'script:external data block',
-                           level => 'm');
-      }
+      ## Documentation
       unless ($text =~ m{\A(?>(?>[\x20\x09]|/\*(?>[^*]|\*[^/])*\*+/)*(?>//[^\x0A]*)?\x0A)*\z}) {
         ## Non-Unicode character error is detected by other place.
         $self->{onerror}->(node => $item->{node},
                            type => 'script:inline doc:invalid',
                            level => 'm');
       }
-    } elsif (defined $element_state->{content_type} and
-             $element_state->{content_type}->is_javascript) {
-      require Web::JS::Checker;
-      my $jsc = Web::JS::Checker->new;
-      $jsc->impl ('JE');
-      $jsc->onerror ($GetNestedOnError->($self->onerror, $item->{node}));
-      $jsc->check_char_string ($text);
-    } elsif (defined $element_state->{content_type}) {
-      $self->{onerror}->(node => $item->{node},
-                         value => $element_state->{content_type}->as_valid_mime_type,
-                         type => 'unknown script lang',
-                         level => 'u');
+    } else {
+      if (not defined $element_state->{content_type}) {
+        ## Data block with bad type=""
+        #
+      } elsif (ref $element_state->{content_type}) {
+        $self->{onerror}->(node => $item->{node},
+                           value => $element_state->{content_type}->as_valid_mime_type,
+                           type => 'unknown script lang',
+                           level => 'u');
+      } else { # classic / module
+        # XXX Module validation is not supported yet
+        require Web::JS::Checker;
+        my $jsc = Web::JS::Checker->new;
+        $jsc->impl ('JE');
+        $jsc->onerror ($GetNestedOnError->($self->onerror, $item->{node}));
+        $jsc->check_char_string ($text);
+      }
     }
 
     $AnyChecker{check_end}->(@_);
@@ -4583,30 +4684,11 @@ $Element->{+HTML_NS}->{script} = {
   ## referenced resource.  <script type=""> must be specified if the
   ## referenced resource is not JavaScript.  <script charset=""> must
   ## match the charset="" of the referenced resource.
-}; # script
 
-$ElementAttrChecker->{(HTML_NS)}->{script}->{''}->{language} = sub {
-  my ($self, $attr, $item, $element_state) = @_;
-  my $lang = $attr->value;
-  $lang =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
-  if ($lang eq 'javascript') {
-    my $type = $item->{node}->get_attribute_ns (undef, 'type');
-    $type =~ tr/A-Z/a-z/ if defined $type; ## ASCII case-insensitive.
-    if (not defined $type or $type eq 'text/javascript') {
-      $self->{onerror}->(node => $attr,
-                         type => 'script language',
-                         level => 's'); # obsolete but conforming
-    } else {
-      $self->{onerror}->(node => $attr,
-                         type => 'script language:ne type',
-                         level => 'm');
-    }
-  } else {
-    $self->{onerror}->(node => $attr,
-                       type => 'script language:not js',
-                       level => 'm');
-  }
-}; # <script language="">
+  ## XXX warn if bad nonce=""
+}; # script
+$ElementAttrChecker->{(HTML_NS)}->{script}->{''}->{type} = sub {};
+$ElementAttrChecker->{(HTML_NS)}->{script}->{''}->{language} = sub {};
 
 ## Event handler content attribute [HTML]
 $CheckerByType->{'event handler'} = sub {

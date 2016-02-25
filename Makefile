@@ -1,9 +1,12 @@
 all: generated-pm-files lib/Web/HTML/Validator/_Defs.pm \
     lib/Web/HTML/_SyntaxDefs.pm lib/Web/HTML/_NamedEntityList.pm \
     lib/Web/HTML/Parser.pm lib/Web/XML/Parser.pm \
-    lib/Web/Temma/Tokenizer.pm
+    lib/Web/Temma/Tokenizer.pm \
+    data
 clean: clean-json-ps
 	rm -fr local/*.json
+
+data: intermediate/validator-errors.json
 
 updatenightly: update-submodules dataautoupdate-commit
 
@@ -191,6 +194,10 @@ clean-json-ps:
 $(JSON_PS):
 	mkdir -p local/perl-latest/pm/lib/perl5/JSON
 	$(WGET) -O $@ https://raw.githubusercontent.com/wakaba/perl-json-ps/master/lib/JSON/PS.pm
+
+intermediate/validator-errors.json: bin/generate-errors.pl \
+    src/validator-errors.txt $(JSON_PS)
+	$(PERL) $< src/validator-errors.txt > $@
 
 ## ------ Tests ------
 
