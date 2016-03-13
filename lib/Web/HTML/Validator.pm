@@ -7570,10 +7570,20 @@ $Element->{+HTML_NS}->{option} = {
             if $element_state->{has_palpable};
       }
     } else {
-      $self->{onerror}->(node => $item->{node},
-                         type => 'no significant content',
-                         level => 'm')
-          unless $element_state->{has_palpable};
+      unless ($element_state->{has_palpable}) {
+        my $parent = $item->{node}->parent_node;
+        if (defined $parent and
+            $parent->node_type == 1 and # ELEMENT_NODE
+            $parent->manakai_element_type_match (HTML_NS, 'datalist')) {
+          $self->{onerror}->(node => $item->{node},
+                             type => 'no significant content',
+                             level => 'w');
+        } else {
+          $self->{onerror}->(node => $item->{node},
+                             type => 'no significant content',
+                             level => 'm');
+        }
+      }
     }
     $HTMLTextChecker{check_end}->(@_);
   }, # check_end
