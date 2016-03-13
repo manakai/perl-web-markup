@@ -1092,7 +1092,8 @@ sub serialize_actions ($;%) {
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -1119,7 +1120,7 @@ sub serialize_actions ($;%) {
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -1192,7 +1193,9 @@ sub serialize_actions ($;%) {
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -1264,7 +1267,7 @@ sub serialize_actions ($;%) {
                 push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                                 value => $_->[0],
                                 di => $_->[1], index => $_->[2]}
-                    for @{$ent->{value}};
+                    for @{$ent->{value}}; # IndexedString
                 $TempIndex += length $Temp;
                 $Temp = '';
                 last REF;
@@ -4012,6 +4015,7 @@ sub actions_to_code ($;%) {
                   apos => "'",
                 }->{$token->{name}}, -1, 0]],
                 only_text => 1,
+                predefined => 1,
               };
             } elsif (not $DTDDefs->{ge}->{'&'.$token->{name}.';'}) {
               my $is_external = not $token->{DTDMode} eq 'internal subset'; # not in param entity
