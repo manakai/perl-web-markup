@@ -3437,6 +3437,7 @@ return;
                   apos => "'",
                 }->{$token->{name}}, -1, 0]],
                 only_text => 1,
+                predefined => 1,
               };
             } elsif (not $DTDDefs->{ge}->{'&'.$token->{name}.';'}) {
               my $is_external = not $token->{DTDMode} eq 'internal subset'; # not in param entity
@@ -33356,7 +33357,8 @@ $Temp .= $1;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -33383,7 +33385,7 @@ $Temp .= $1;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -33446,7 +33448,9 @@ $Temp .= $1;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -33499,7 +33503,8 @@ $Temp .= q@�@;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -33526,7 +33531,7 @@ $Temp .= q@�@;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -33589,7 +33594,9 @@ $Temp .= q@�@;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -33636,7 +33643,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -33663,7 +33671,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -33726,7 +33734,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -33773,7 +33783,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -33800,7 +33811,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -33863,7 +33874,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -33909,7 +33922,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -33936,7 +33950,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -33999,7 +34013,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -34046,7 +34062,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -34073,7 +34090,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -34136,7 +34153,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -34183,7 +34202,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -34210,7 +34230,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -34273,7 +34293,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -34321,7 +34343,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -34348,7 +34371,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -34411,7 +34434,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -34458,7 +34483,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -34485,7 +34511,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -34548,7 +34574,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -34599,7 +34627,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -34626,7 +34655,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -34689,7 +34718,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -34736,7 +34767,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -34763,7 +34795,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -34826,7 +34858,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -34873,7 +34907,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -34900,7 +34935,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -34963,7 +34998,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -35011,7 +35048,8 @@ if ($EOF) {
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -35038,7 +35076,7 @@ if ($EOF) {
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -35101,7 +35139,9 @@ if ($EOF) {
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -36223,7 +36263,8 @@ $Temp .= $1;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -36250,7 +36291,7 @@ $Temp .= $1;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -36313,7 +36354,9 @@ $Temp .= $1;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -36366,7 +36409,8 @@ $Temp .= q@�@;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -36393,7 +36437,7 @@ $Temp .= q@�@;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -36456,7 +36500,9 @@ $Temp .= q@�@;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -36503,7 +36549,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -36530,7 +36577,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -36593,7 +36640,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -36640,7 +36689,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -36667,7 +36717,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -36730,7 +36780,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -36777,7 +36829,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -36804,7 +36857,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -36867,7 +36920,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -36914,7 +36969,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -36941,7 +36997,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -37004,7 +37060,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -37051,7 +37109,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -37078,7 +37137,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -37141,7 +37200,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -37189,7 +37250,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -37216,7 +37278,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -37279,7 +37341,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -37325,7 +37389,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -37352,7 +37417,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -37415,7 +37480,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -37466,7 +37533,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -37493,7 +37561,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -37556,7 +37624,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -37603,7 +37673,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -37630,7 +37701,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -37693,7 +37764,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -37740,7 +37813,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -37767,7 +37841,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -37830,7 +37904,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -37878,7 +37954,8 @@ if ($EOF) {
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -37905,7 +37982,7 @@ if ($EOF) {
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -37968,7 +38045,9 @@ if ($EOF) {
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -39617,7 +39696,8 @@ $Temp .= $1;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -39644,7 +39724,7 @@ $Temp .= $1;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -39707,7 +39787,9 @@ $Temp .= $1;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -39760,7 +39842,8 @@ $Temp .= q@�@;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -39787,7 +39870,7 @@ $Temp .= q@�@;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -39850,7 +39933,9 @@ $Temp .= q@�@;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -39896,7 +39981,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -39923,7 +40009,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -39986,7 +40072,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -40032,7 +40120,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -40059,7 +40148,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -40122,7 +40211,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -40173,7 +40264,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -40200,7 +40292,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -40263,7 +40355,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -40310,7 +40404,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -40337,7 +40432,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -40400,7 +40495,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -40447,7 +40544,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -40474,7 +40572,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -40537,7 +40635,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -40585,7 +40685,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -40612,7 +40713,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -40675,7 +40776,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -40726,7 +40829,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -40753,7 +40857,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -40816,7 +40920,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -40867,7 +40973,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -40894,7 +41001,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -40957,7 +41064,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -41008,7 +41117,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -41035,7 +41145,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -41098,7 +41208,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -41186,7 +41298,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -41213,7 +41326,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -41276,7 +41389,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -41328,7 +41443,8 @@ if ($EOF) {
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -41355,7 +41471,7 @@ if ($EOF) {
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -41418,7 +41534,9 @@ if ($EOF) {
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -42663,7 +42781,8 @@ $Temp .= $1;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -42690,7 +42809,7 @@ $Temp .= $1;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -42753,7 +42872,9 @@ $Temp .= $1;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -42806,7 +42927,8 @@ $Temp .= q@�@;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -42833,7 +42955,7 @@ $Temp .= q@�@;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -42896,7 +43018,9 @@ $Temp .= q@�@;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -42943,7 +43067,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -42970,7 +43095,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -43033,7 +43158,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -43080,7 +43207,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -43107,7 +43235,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -43170,7 +43298,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -43217,7 +43347,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -43244,7 +43375,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -43307,7 +43438,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -43354,7 +43487,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -43381,7 +43515,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -43444,7 +43578,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -43491,7 +43627,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -43518,7 +43655,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -43581,7 +43718,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -43629,7 +43768,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -43656,7 +43796,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -43719,7 +43859,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -43766,7 +43908,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -43793,7 +43936,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -43856,7 +43999,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -43907,7 +44052,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -43934,7 +44080,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -43997,7 +44143,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -44044,7 +44192,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -44071,7 +44220,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -44134,7 +44283,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -44181,7 +44332,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -44208,7 +44360,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -44271,7 +44423,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -44319,7 +44473,8 @@ if ($EOF) {
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -44346,7 +44501,7 @@ if ($EOF) {
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -44409,7 +44564,9 @@ if ($EOF) {
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -62404,7 +62561,7 @@ $Temp .= $1;
                 push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                                 value => $_->[0],
                                 di => $_->[1], index => $_->[2]}
-                    for @{$ent->{value}};
+                    for @{$ent->{value}}; # IndexedString
                 $TempIndex += length $Temp;
                 $Temp = '';
                 last REF;
@@ -62554,7 +62711,7 @@ $Temp .= q@�@;
                 push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                                 value => $_->[0],
                                 di => $_->[1], index => $_->[2]}
-                    for @{$ent->{value}};
+                    for @{$ent->{value}}; # IndexedString
                 $TempIndex += length $Temp;
                 $Temp = '';
                 last REF;
@@ -62702,7 +62859,7 @@ return 1 if $return;
                 push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                                 value => $_->[0],
                                 di => $_->[1], index => $_->[2]}
-                    for @{$ent->{value}};
+                    for @{$ent->{value}}; # IndexedString
                 $TempIndex += length $Temp;
                 $Temp = '';
                 last REF;
@@ -62851,7 +63008,7 @@ return 1 if $return;
                 push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                                 value => $_->[0],
                                 di => $_->[1], index => $_->[2]}
-                    for @{$ent->{value}};
+                    for @{$ent->{value}}; # IndexedString
                 $TempIndex += length $Temp;
                 $Temp = '';
                 last REF;
@@ -62999,7 +63156,7 @@ return 1 if $return;
                 push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                                 value => $_->[0],
                                 di => $_->[1], index => $_->[2]}
-                    for @{$ent->{value}};
+                    for @{$ent->{value}}; # IndexedString
                 $TempIndex += length $Temp;
                 $Temp = '';
                 last REF;
@@ -63147,7 +63304,7 @@ return 1 if $return;
                 push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                                 value => $_->[0],
                                 di => $_->[1], index => $_->[2]}
-                    for @{$ent->{value}};
+                    for @{$ent->{value}}; # IndexedString
                 $TempIndex += length $Temp;
                 $Temp = '';
                 last REF;
@@ -63295,7 +63452,7 @@ return 1 if $return;
                 push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                                 value => $_->[0],
                                 di => $_->[1], index => $_->[2]}
-                    for @{$ent->{value}};
+                    for @{$ent->{value}}; # IndexedString
                 $TempIndex += length $Temp;
                 $Temp = '';
                 last REF;
@@ -63438,7 +63595,7 @@ return 1 if $return;
                 push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                                 value => $_->[0],
                                 di => $_->[1], index => $_->[2]}
-                    for @{$ent->{value}};
+                    for @{$ent->{value}}; # IndexedString
                 $TempIndex += length $Temp;
                 $Temp = '';
                 last REF;
@@ -63586,7 +63743,7 @@ return 1 if $return;
                 push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                                 value => $_->[0],
                                 di => $_->[1], index => $_->[2]}
-                    for @{$ent->{value}};
+                    for @{$ent->{value}}; # IndexedString
                 $TempIndex += length $Temp;
                 $Temp = '';
                 last REF;
@@ -63730,7 +63887,7 @@ return 1 if $return;
                 push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                                 value => $_->[0],
                                 di => $_->[1], index => $_->[2]}
-                    for @{$ent->{value}};
+                    for @{$ent->{value}}; # IndexedString
                 $TempIndex += length $Temp;
                 $Temp = '';
                 last REF;
@@ -63878,7 +64035,7 @@ return 1 if $return;
                 push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                                 value => $_->[0],
                                 di => $_->[1], index => $_->[2]}
-                    for @{$ent->{value}};
+                    for @{$ent->{value}}; # IndexedString
                 $TempIndex += length $Temp;
                 $Temp = '';
                 last REF;
@@ -64026,7 +64183,7 @@ return 1 if $return;
                 push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                                 value => $_->[0],
                                 di => $_->[1], index => $_->[2]}
-                    for @{$ent->{value}};
+                    for @{$ent->{value}}; # IndexedString
                 $TempIndex += length $Temp;
                 $Temp = '';
                 last REF;
@@ -64175,7 +64332,7 @@ if ($EOF) {
                 push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                                 value => $_->[0],
                                 di => $_->[1], index => $_->[2]}
-                    for @{$ent->{value}};
+                    for @{$ent->{value}}; # IndexedString
                 $TempIndex += length $Temp;
                 $Temp = '';
                 last REF;
@@ -65851,7 +66008,8 @@ $Temp .= $1;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -65878,7 +66036,7 @@ $Temp .= $1;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -65941,7 +66099,9 @@ $Temp .= $1;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -65994,7 +66154,8 @@ $Temp .= q@�@;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -66021,7 +66182,7 @@ $Temp .= q@�@;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -66084,7 +66245,9 @@ $Temp .= q@�@;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -66131,7 +66294,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -66158,7 +66322,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -66221,7 +66385,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -66268,7 +66434,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -66295,7 +66462,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -66358,7 +66525,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -66405,7 +66574,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -66432,7 +66602,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -66495,7 +66665,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -66542,7 +66714,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -66569,7 +66742,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -66632,7 +66805,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -66679,7 +66854,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -66706,7 +66882,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -66769,7 +66945,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -66817,7 +66995,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -66844,7 +67023,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -66907,7 +67086,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -66954,7 +67135,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -66981,7 +67163,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -67044,7 +67226,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -67095,7 +67279,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -67122,7 +67307,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -67185,7 +67370,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -67232,7 +67419,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -67259,7 +67447,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -67322,7 +67510,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -67369,7 +67559,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -67396,7 +67587,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -67459,7 +67650,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -67507,7 +67700,8 @@ if ($EOF) {
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -67534,7 +67728,7 @@ if ($EOF) {
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -67597,7 +67791,9 @@ if ($EOF) {
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -68941,7 +69137,8 @@ $Temp .= $1;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -68968,7 +69165,7 @@ $Temp .= $1;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -69031,7 +69228,9 @@ $Temp .= $1;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -69084,7 +69283,8 @@ $Temp .= q@�@;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -69111,7 +69311,7 @@ $Temp .= q@�@;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -69174,7 +69374,9 @@ $Temp .= q@�@;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -69221,7 +69423,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -69248,7 +69451,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -69311,7 +69514,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -69358,7 +69563,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -69385,7 +69591,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -69448,7 +69654,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -69495,7 +69703,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -69522,7 +69731,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -69585,7 +69794,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -69632,7 +69843,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -69659,7 +69871,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -69722,7 +69934,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -69769,7 +69983,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -69796,7 +70011,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -69859,7 +70074,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -69907,7 +70124,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -69934,7 +70152,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -69997,7 +70215,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -70044,7 +70264,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -70071,7 +70292,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -70134,7 +70355,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -70185,7 +70408,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -70212,7 +70436,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -70275,7 +70499,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -70322,7 +70548,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -70349,7 +70576,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -70412,7 +70639,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -70459,7 +70688,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -70486,7 +70716,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -70549,7 +70779,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -70597,7 +70829,8 @@ if ($EOF) {
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -70624,7 +70857,7 @@ if ($EOF) {
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -70687,7 +70920,9 @@ if ($EOF) {
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -71831,7 +72066,8 @@ $Temp .= $1;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -71858,7 +72094,7 @@ $Temp .= $1;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -71921,7 +72157,9 @@ $Temp .= $1;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -71974,7 +72212,8 @@ $Temp .= q@�@;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -72001,7 +72240,7 @@ $Temp .= q@�@;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -72064,7 +72303,9 @@ $Temp .= q@�@;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -72111,7 +72352,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -72138,7 +72380,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -72201,7 +72443,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -72248,7 +72492,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -72275,7 +72520,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -72338,7 +72583,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -72385,7 +72632,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -72412,7 +72660,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -72475,7 +72723,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -72522,7 +72772,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -72549,7 +72800,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -72612,7 +72863,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -72659,7 +72912,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -72686,7 +72940,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -72749,7 +73003,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -72797,7 +73053,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -72824,7 +73081,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -72887,7 +73144,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -72934,7 +73193,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -72961,7 +73221,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -73024,7 +73284,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -73075,7 +73337,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -73102,7 +73365,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -73165,7 +73428,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -73212,7 +73477,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -73239,7 +73505,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -73302,7 +73568,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -73349,7 +73617,8 @@ return 1 if $return;
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -73376,7 +73645,7 @@ return 1 if $return;
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -73439,7 +73708,9 @@ return 1 if $return;
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
@@ -73487,7 +73758,8 @@ if ($EOF) {
           my $return;
           REF: {
             ## <XML>
-            if (defined $DTDDefs->{ge}->{$Temp}) {
+            if (defined $DTDDefs->{ge}->{$Temp} and
+                not $DTDDefs->{ge}->{$Temp}->{predefined}) {
               my $ent = $DTDDefs->{ge}->{$Temp};
 
               if (my $ext = $ent->{external}) {
@@ -73514,7 +73786,7 @@ if ($EOF) {
                                 di => $DI, index => $TempIndex};
                 last REF;
               } elsif (defined $ent->{value}) {
-                ## Internal entity with "&" and/or "<"
+                ## Internal entity with or without "&" and/or "<"
                 my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
                 if ($value =~ /</) {
                   push @$Errors, {level => 'm',
@@ -73577,7 +73849,9 @@ if ($EOF) {
                   '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
                   '&apos;' => 1,
                 }->{$Temp}) {
-                  if ($DTDDefs->{need_predefined_decls} or
+                  if ($DTDDefs->{ge}->{$Temp}) {
+                    #
+                  } elsif ($DTDDefs->{need_predefined_decls} or
                       not $DTDMode eq 'N/A') {
                     push @$Errors, {level => 's',
                                     type => 'entity not declared',
