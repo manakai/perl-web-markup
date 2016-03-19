@@ -6,7 +6,8 @@ all: generated-pm-files lib/Web/HTML/Validator/_Defs.pm \
 clean: clean-json-ps
 	rm -fr local/*.json
 
-data: intermediate/validator-errors.json
+data: intermediate/validator-errors.json \
+    lib/Web/Feed/_Defs.pm
 
 updatenightly: update-submodules dataautoupdate-commit
 
@@ -96,6 +97,10 @@ lib/Web/HTML/_NamedEntityList.pm: local/html-charrefs.json local/bin/pmbp.pl \
 	  print "$$pm\n1;\n# © Copyright 2004-2011 Apple Computer, Inc., Mozilla Foundation, and Opera Software ASA.\n# You are granted a license to use, reproduce and create derivative works of this document."; #\
 	' < local/html-charrefs.json > lib/Web/HTML/_NamedEntityList.pm
 	perl -c lib/Web/HTML/_NamedEntityList.pm
+
+lib/Web/Feed/_Defs.pm: bin/generate-feed-defs.pl local/elements.json
+	$(PERL) $< > $@
+	$(PERL) -c $@
 
 local/html-charrefs.json:
 	mkdir -p local

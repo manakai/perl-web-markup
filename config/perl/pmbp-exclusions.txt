@@ -9,3 +9,5 @@
 - "../../t_deps/modules/web-dom" tests
 - "../../t_deps/modules/web-langtag" tests updater
 - "../../t_deps/modules/web-resource" tests updater
+
+- "../../t_deps/modules/json-ps" build tests

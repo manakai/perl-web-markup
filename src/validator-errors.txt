@@ -1,0 +1,344 @@
+## Validation errors and warnings
+##
+## This file is used to generate error definition data file available
+## from <https://github.com/manakai/data-errors>.
+##
+## Per CC0 <https://creativecommons.org/publicdomain/zero/1.0/>, to
+## the extent possible under law, the author has waived all copyright
+## and related or neighboring rights to this work.
+
+module=Web::HTML::Validator
+
+* script type:bad spaces
+
+layer=microsyntax
+default_level=m
+
+@en
+There is a space character in the attribute value
+@ja
+属性値に空白が混ざっています
+
+@en
+
+<p>For a module script, the <code>type</code> attribute value of a
+<code>script</code> element must be <code>module</code>.  No white
+space characters are allowed before or after the type.
+
+@ja
+
+<p>モジュールスクリプトの <code>script</code> 要素の <code>type</code>
+属性値は <code>module</code> でなければいけません。
+空白を入れてはいけません。
+
+* script type:empty
+
+layer=microsyntax
+default_level=m
+
+@en
+The attribute value is empty
+@ja
+属性値が空です
+
+@en
+<p>The <code>type</code> attribute (and the <code>language</code>
+attribute) must specify the type of the script.  It can't be empty.
+
+@ja
+<p><code>type</code> 属性 (や <code>language</code> 属性)
+の値は、スクリプトの型を指定しなければなりません。
+属性値を空文字列にしてはいけません。
+
+* script type:bad params
+
+layer=microsyntax
+default_level=w
+
+@en
+There is a MIME type parameter
+@ja
+MIME 型に引数があります
+
+@en
+<p>Although parameters can be specified to the MIME type in the
+<code>type</code> attribute of the <code>script</code> element in
+theory, at the time of writing, there is no known JavaScript MIME type
+which accepts parameters.  If there is a parameter, it is not
+recognized as an executable script.
+
+<p>Parameters <code>e4x</code> and <code>version</code> are obsolete.
+They are not allowed.
+
+@ja
+<p>理論上は <code>script</code> 要素の <code>type</code> 属性に
+MIME 型の引数を指定することもできますが、現在 JavaScript MIME 
+型で引数が認められているものはありません。引数があると、
+実行可能なスクリプトとは認識されません。
+
+<p>引数 <code>e4x</code> や引数 <code>version</code>
+は廃止されました。使ってはいけません。
+
+* script type:scripting lang
+
+layer=feature
+default_level=w
+
+@en
+An obsolete scripting language is specified
+@ja
+廃止されたスクリプト言語が指定されています
+
+@en
+<p>The <code>type</code> attribute (or the <code>language</code>
+attribute) specifies a scripting language, which was historically used
+to implement actions on the Web page.  However, no scripting language
+other than JavaScript can be executed on the Web these days.  The
+<code>script</code> element with obsolete scripting language is simply
+ignored.
+
+@ja
+<p><code>type</code> 属性 (や <code>language</code> 属性) が、かつて 
+Web ページ上の動作を記述するために使われていたスクリプト言語を表しています。
+現在では Web 上で実行できるのは JavaScript だけです。
+かつてのスクリプト言語を指定した <code>script</code>
+要素は、単に無視されるだけです。
+
+* script type:classic
+
+layer=content-model
+default_level=s
+attr
+
+@en
+There is a redundant <code>type</code> attribute
+@ja
+冗長な <code>type</code> 属性があります
+
+@en
+<p>The <code>type</code> attribute of the <code>script</code> element
+which contains a classic script (in other word, the <code>type</code>
+attribute whose value is a JavaScript MIME type) should omitted as it
+is the default.
+
+@ja
+<p>古典スクリプトの <code>script</code> 要素の <code>type</code>
+属性 (値が JavaScript MIME 型の <code>type</code> 属性) は、
+省略するべきです。 <code>type</code> 要素の既定値は古典スクリプトなので、
+冗長です。
+
+* script:ignored charset
+
+layer=content-model
+default_level=w
+attr
+
+@en
+The <code>charset</code> attribute has no effect
+@ja
+この <code>charset</code> 属性には意味がありません
+
+@en
+<p>The <code>charset</code> attribute of the <code>script</code>
+element is effective only when the element defines a classic script
+and has a <code>src</code> attribute.
+
+@ja
+<p><code>script</code> 要素の <code>charset</code>
+属性に効果があるのは、古典スクリプトで <code>src</code>
+属性があるときだけです。
+
+* script:ignored defer
+
+layer=content-model
+default_level=w
+attr
+
+@en
+The <code>defer</code> attribute has no effect
+@ja
+この <code>defer</code> 属性には意味がありません
+
+@en
+<p>The <code>defer</code> attribute of the <code>script</code>
+element is effective only when the element defines a classic script,
+has a <code>src</code> attribute, and does not have any
+<code>async</code> attribute.
+
+@ja
+<p><code>script</code> 要素の <code>defer</code>
+属性に効果があるのは、古典スクリプトで <code>src</code>
+属性があり、 <code>async</code> 属性がないときだけです。
+
+* script:ignored async
+
+layer=content-model
+default_level=w
+attr
+
+@en
+The <code>async</code> attribute has no effect
+@ja
+この <code>async</code> 属性には意味がありません
+
+@en
+<p>The <code>async</code> attribute of the <code>script</code> element
+is effective only when the element defines a module script, or when
+the element defines a classic script and has a <code>src</code>
+attribute.
+
+@ja
+<p><code>script</code> 要素の <code>defer</code>
+属性に効果があるのは、モジュールスクリプトのときと、
+古典スクリプトで <code>src</code> 属性があるときだけです。
+
+* script:ignored src
+
+layer=content-model
+default_level=m
+attr
+
+@en
+The <code>src</code> attribute has no effect
+@ja
+この <code>src</code> 属性には意味がありません
+
+@en
+<p>The <code>src</code> attribute of the <code>script</code> element
+is effective only when the element defines a module script or a
+classic script.  It can't be used when the element defines a data
+block.
+
+@ja
+<p><code>script</code> 要素の <code>src</code>
+属性に効果があるのは、モジュールスクリプトか古典スクリプトのときだけです。
+データブロックの <code>script</code> 要素には指定できません。
+
+* script:ignored nonce
+
+layer=content-model
+default_level=m
+attr
+
+@en
+The <code>nonce</code> attribute has no effect
+@ja
+この <code>nonce</code> 属性には意味がありません
+
+@en
+<p>The <code>nonce</code> attribute of the <code>script</code> element
+is effective only when the element defines a module script or a
+classic script.  It can't be used when the element defines a data
+block.
+
+@ja
+<p><code>script</code> 要素の <code>nonce</code>
+属性に効果があるのは、モジュールスクリプトか古典スクリプトのときだけです。
+データブロックの <code>script</code> 要素には指定できません。
+
+* script:ignored crossorigin
+
+layer=content-model
+default_level=w
+attr
+
+@en
+The <code>crossorigin</code> attribute has no effect
+@ja
+この <code>crossorigin</code> 属性には意味がありません
+
+@en
+<p>The <code>crossorigin</code> attribute of the <code>script</code> element
+is effective only when the element defines a module script, or when
+the element defines a classic script and has a <code>src</code>
+attribute.
+
+@ja
+<p><code>script</code> 要素の <code>crossorigin</code>
+属性に効果があるのは、モジュールスクリプトのときと、
+古典スクリプトで <code>src</code> 属性があるときだけです。
+
+* script language
+
+layer=content-model
+default_level=s
+attr
+
+@en
+The <code>language</code> attribute is obsolete
+@ja
+<code>language</code> 属性は廃止されました
+
+@en
+<p>The <code>language</code> attribute of the <code>script</code>
+element is obsolete.  Use the <code>type</code> attribute instead.</p>
+<p>If the script language is JavaScript, no additional
+attribute is necessary.</p>
+@ja
+<p><code>script</code> 要素の <code>language</code> 属性は廃止されました。
+かわりに <code>type</code> 属性を使ってください。</p>
+<p>スクリプト言語が JavaScript の時は、何も属性を指定しなくて構いません。</p>
+
+* script language:ne type
+
+layer=content-model
+default_level=m
+
+@en
+The script language is different from the
+language in the <code>type</code> attribute
+@ja
+スクリプト言語が <code>type</code> 属性と異なります
+
+@en
+    <p>The script language specified by the <code>language</code> attribute
+    is different from the one specified by the <code>type</code> attribute.</p>
+    <p>Use the <code>type</code> attribute only.  The <code>language</code>
+    attribute is obsolete.</p>
+@ja
+    <p><code>language</code> 属性で指定されたスクリプト言語が 
+    <code>type</code> 属性で指定されたスクリプト言語と異なります。</p>
+    <p><code>type</code> 属性だけを使ってください。 <code>language</code>
+    属性は廃止されました。</p>
+
+* script language:not js
+
+layer=microsyntax
+default_level=m
+
+@en
+The script language must be <code>javascript</code>
+@ja
+スクリプト言語は <code>javascript</code> でなければいけません
+
+@en
+<p>The <code>language</code> attribute value must be
+<code>javascript</code>.</p>
+@ja
+<p><code>language</code> 属性値は <code>javascript</code>
+でなければいけません。</p>
+
+* unknown script lang
+
+default_level=u
+layer=feature
+
+@en
+Validation of the scripting language or
+data block <code><var>{value}</var></code> is not supported
+@ja
+スクリプト言語またはデータブロック
+<code><var>{value}</var></code>  の妥当性検証には対応していません
+
+@en
+    <p>Conformance checking of the scripting language or data blocj
+    specified by the <code>type</code> attribute of the
+    <code>script</code> element is not supported.</p>
+
+    <p>Whether the content is conforming or not is
+    <em>unknown</em>.</p>
+@ja
+    <p><code>script</code> 要素の <code>type</code>
+    属性で指定されたスクリプト言語、あたはデータブロックの適合性検査には対応していません。</p>
+    
+    <p>内容が適合しているかどうかは<em>不明</em>です。</p>
