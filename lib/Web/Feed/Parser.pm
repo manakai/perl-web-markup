@@ -11,7 +11,8 @@ sub new_entry () { return {authors => [], categories => [], enclosures => []}; }
 
 sub ATOM_NS () { q<http://www.w3.org/2005/Atom> }
 sub ATOM03_NS () { q<http://purl.org/atom/ns#> }
-sub RDF_NS () { q<XXX> }
+sub RDF_NS () { q<http://www.w3.org/1999/02/22-rdf-syntax-ns#> }
+sub RSS_NS () { q<http://purl.org/rss/1.0/> }
 sub DC_NS () { q<http://purl.org/dc/elements/1.1/> }
 sub GD_NS () { q<http://schemas.google.com/g/2005> }
 sub ITUNES_NS () { q<http://www.itunes.com/dtds/podcast-1.0.dtd> }
@@ -29,17 +30,17 @@ sub parse_document ($$) {
     return undef;
   } elsif ($root->manakai_element_type_match (ATOM_NS, 'feed') or
            $root->manakai_element_type_match (ATOM03_NS, 'feed')) {
-    return $self->_process_feed ($root);
+    return $self->_feed ($root);
   } elsif ($root->manakai_element_type_match (undef, 'rss')) {
-    return $self->_process_rss ($root);
+    return $self->_rss ($root);
   } elsif ($root->manakai_element_type_match (RDF_NS, 'RDF')) {
-    return $self->_process_rdf ($root);
+    return $self->_rdf ($root);
   } else {
     return undef;
   }
 } # parse_document
 
-sub _process_feed ($$) {
+sub _feed ($$) {
   my ($self, $el) = @_;
   my $feed = new_feed;
   for my $child ($el->children->to_list) {
@@ -77,9 +78,9 @@ sub _process_feed ($$) {
     }
   }
   return $feed;
-} # _proess_feed
+} # _feed
 
-sub _process_rss ($$) {
+sub _rss ($$) {
   my ($self, $el) = @_;
   my $feed = new_feed;
   for my $child ($el->children->to_list) {
@@ -95,7 +96,7 @@ sub _process_rss ($$) {
     }
   }
   return $feed;
-} # _process_rss
+} # _rss
 
 sub ctc ($) {
   return join '', map { $_->node_type == 3 ? $_->data : '' } $_[0]->child_nodes->to_list;
@@ -135,7 +136,7 @@ sub _channel2 ($$$) {
       $feed->{subtitle} = $self->_string ($child) if not defined $feed->{subtitle};
     } elsif (($ln eq 'description' and not defined $ns) or
              ($ln eq 'summary' and defined $ns and $ns eq ITUNES_NS)) {
-      $feed->{summary} = $self->_string ($child) if not defined $feed->{summary};
+      $feed->{desc} = $self->_string ($child) if not defined $feed->{desc};
     } elsif ($ln eq 'link') {
       if (not defined $ns) {
         $feed->{page_url} = $self->_url ($child) if not defined $feed->{page_url};
@@ -148,6 +149,58 @@ sub _channel2 ($$$) {
     }
   }
 } # _channel2
+
+sub _rdf ($$) {
+  my ($self, $el) = @_;
+  my $feed = new_feed;
+  for my $child ($el->children->to_list) {
+    my $ns = $child->namespace_uri;
+    my $ln = $child->local_name;
+    if (defined $ns and $ns eq RSS_NS) {
+      if ($ln eq 'channel') {
+        $self->_channel1 ($child => $feed);
+      } elsif ($ln eq 'item') {
+        #XXX
+
+      } elsif ($ln eq 'image') {
+        if (not defined $feed->{logo}) {
+          for ($child->children->to_list) {
+            if ($_->manakai_element_type_match (RSS_NS, 'url')) {
+              my $image = {url => $self->_url ($_)};
+              $feed->{logo} = $image if defined $image->{url};
+              last;
+            }
+          }
+        }
+      }
+    }
+  }
+  return $feed;
+} # _rdf
+
+sub _channel1 ($$$) {
+  my ($self, $el, $feed) = @_;
+  for my $child ($el->children->to_list) {
+    my $ns = $child->namespace_uri || '';
+    my $ln = $child->local_name;
+    if ($ln eq 'date' and $ns eq DC_NS) {
+      $feed->{updated} = $self->_dtf ($child) if not defined $feed->{updated};
+    } elsif ($ln eq 'creator' and defined $ns and $ns eq DC_NS) {
+      my $text = ctc $child;
+      push @{$feed->{authors}}, {name => $text} if length $text;
+    } elsif ($ln eq 'title' and $ns eq RSS_NS) {
+      $feed->{title} = $self->_string ($child) if not defined $feed->{title};
+    } elsif ($ln eq 'description' and $ns eq RSS_NS) {
+      $feed->{desc} = $self->_string ($child) if not defined $feed->{desc};
+    } elsif ($ln eq 'link') {
+      if ($ns eq RSS_NS) {
+        $feed->{page_url} = $self->_url ($child) if not defined $feed->{page_url};
+      } elsif ($ns eq ATOM_NS) {
+        $self->_feed_link ($child => $feed);
+      }
+    }
+  }
+} # _channel1
 
 my $Space = qr/[\x09\x0A\x0C\x0D\x20]/;
 my $NonSpace = qr/[^\x09\x0A\x0C\x0D\x20]/;
