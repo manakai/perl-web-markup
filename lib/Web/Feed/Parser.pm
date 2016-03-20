@@ -12,7 +12,9 @@ sub new_entry () { return {authors => [], categories => [], enclosures => []}; }
 sub ATOM_NS () { q<http://www.w3.org/2005/Atom> }
 sub ATOM03_NS () { q<http://purl.org/atom/ns#> }
 sub RDF_NS () { q<XXX> }
+sub DC_NS () { q<http://purl.org/dc/elements/1.1/> }
 sub GD_NS () { q<http://schemas.google.com/g/2005> }
+sub ITUNES_NS () { q<http://www.itunes.com/dtds/podcast-1.0.dtd> }
 sub HTML_NS () { q<http://www.w3.org/1999/xhtml> }
 sub SVG_NS () { q<http://www.w3.org/2000/svg> }
 
@@ -77,12 +79,78 @@ sub _process_feed ($$) {
   return $feed;
 } # _proess_feed
 
-my $Space = qr/[\x09\x0A\x0C\x0D\x20]/;
-my $NonSpace = qr/[^\x09\x0A\x0C\x0D\x20]/;
+sub _process_rss ($$) {
+  my ($self, $el) = @_;
+  my $feed = new_feed;
+  for my $child ($el->children->to_list) {
+    my $ns = $child->namespace_uri;
+    my $ln = $child->local_name;
+    if (not defined $ns) {
+      if ($ln eq 'channel') {
+        $self->_channel2 ($child => $feed);
+      } elsif ($ln eq 'item') {
+        #XXX
+
+      }
+    }
+  }
+  return $feed;
+} # _process_rss
 
 sub ctc ($) {
   return join '', map { $_->node_type == 3 ? $_->data : '' } $_[0]->child_nodes->to_list;
 } # ctc
+
+sub _channel2 ($$$) {
+  my ($self, $el, $feed) = @_;
+  for my $child ($el->children->to_list) {
+    my $ns = $child->namespace_uri;
+    my $ln = $child->local_name;
+    if ($ln eq 'image') {
+      if (not defined $ns) {
+        if (not defined $feed->{logo}) {
+          for ($child->children->to_list) {
+            if ($_->manakai_element_type_match (undef, 'url')) {
+              my $image = {url => $self->_url ($_)};
+              $feed->{logo} = $image if defined $image->{url};
+              last;
+            }
+          }
+        }
+      } elsif ($ns eq ITUNES_NS) {
+        $feed->{icon} = $self->_image ($child, 'href') if not defined $feed->{icon};
+      }
+    } elsif (($ln eq 'creator' and defined $ns and $ns eq DC_NS) or
+             ($ln eq 'author' and defined $ns and $ns eq ITUNES_NS)) {
+      my $text = ctc $child;
+      push @{$feed->{authors}}, {name => $text} if length $text;
+    } elsif ($ln eq 'managingEditor' and not defined $ns) {
+      my $person = $self->_mailbox ($child);
+      push @{$feed->{authors}}, $person if defined $person;
+    } elsif (($ln eq 'lastBuildDate' or $ln eq 'pubDate') and not defined $ns) {
+      $feed->{updated} = $self->_date822 ($child) if not defined $feed->{updated};
+    } elsif ($ln eq 'title' and not defined $ns) {
+      $feed->{title} = $self->_string ($child) if not defined $feed->{title};
+    } elsif ($ln eq 'subtitle' and defined $ns and $ns eq ITUNES_NS) {
+      $feed->{subtitle} = $self->_string ($child) if not defined $feed->{subtitle};
+    } elsif (($ln eq 'description' and not defined $ns) or
+             ($ln eq 'summary' and defined $ns and $ns eq ITUNES_NS)) {
+      $feed->{summary} = $self->_string ($child) if not defined $feed->{summary};
+    } elsif ($ln eq 'link') {
+      if (not defined $ns) {
+        $feed->{page_url} = $self->_url ($child) if not defined $feed->{page_url};
+      } elsif ($ns eq ATOM_NS) {
+        $self->_feed_link ($child => $feed);
+      }
+    } elsif ($ln eq 'item' and not defined $ns) {
+      # XXX
+
+    }
+  }
+} # _channel2
+
+my $Space = qr/[\x09\x0A\x0C\x0D\x20]/;
+my $NonSpace = qr/[^\x09\x0A\x0C\x0D\x20]/;
 
 sub _string ($$) {
   my ($self, $el) = @_;
@@ -211,6 +279,13 @@ sub _dtf ($$) {
   return $parser->parse_w3c_dtf_string (ctc $el); # or undef
 } # _dtf
 
+sub _date822 ($$) {
+  my ($self, $el) = @_;
+  my $parser = Web::DateTime::Parser->new;
+  $parser->onerror (sub { });
+  return $parser->parse_rss2_date_time_string (ctc $el); # or undef
+} # _date822
+
 sub _feed_link ($$$) {
   my ($self, $el => $feed) = @_;
   my $rel = $el->get_attribute ('rel');
@@ -295,6 +370,18 @@ sub _person ($$) {
   }
   return $person;
 } # _person
+
+sub _mailbox ($$) {
+  my ($self, $el) = @_;
+  my $t = ctc $el;
+  if (not length $t) {
+    return undef;
+  } elsif ($t =~ /\A($NonSpace+)$Space+\((.+)\)\z/s) {
+    return {name => $2, email => $1};
+  } else {
+    return {name => $t};
+  }
+} # _mailbox
 
 1;
 
