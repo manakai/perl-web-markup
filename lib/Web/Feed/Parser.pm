@@ -3,6 +3,8 @@ use strict;
 use warnings;
 our $VERSION = '1.0';
 use Web::Feed::_Defs;
+use Web::DateTime::Parser;
+use Web::URL::Canonicalize qw(url_to_canon_url);
 
 sub new_feed () { return {entries => [], authors => []}; }
 sub new_entry () { return {authors => [], categories => [], enclosures => []}; }
@@ -10,6 +12,7 @@ sub new_entry () { return {authors => [], categories => [], enclosures => []}; }
 sub ATOM_NS () { q<http://www.w3.org/2005/Atom> }
 sub ATOM03_NS () { q<http://purl.org/atom/ns#> }
 sub RDF_NS () { q<XXX> }
+sub GD_NS () { q<http://schemas.google.com/g/2005> }
 sub HTML_NS () { q<http://www.w3.org/1999/xhtml> }
 sub SVG_NS () { q<http://www.w3.org/2000/svg> }
 
@@ -48,6 +51,27 @@ sub _process_feed ($$) {
       $feed->{subtitle} = $self->_text ($child) if not defined $feed->{subtitle};
     } elsif ($ln eq 'tagline' and $ns eq ATOM03_NS) {
       $feed->{subtitle} = $self->_content ($child) if not defined $feed->{subtitle};
+    } elsif ($ln eq 'updated' and $ns eq ATOM_NS) {
+      $feed->{updated} = $self->_date ($child) if not defined $feed->{updated};
+    } elsif ($ln eq 'modified' and ($ns eq ATOM03_NS or $ns eq ATOM_NS)) {
+      $feed->{updated} = $self->_dtf ($child) if not defined $feed->{updated};
+    } elsif ($ln eq 'link' and ($ns eq ATOM_NS or $ns eq ATOM03_NS)) {
+      $self->_feed_link ($child => $feed);
+    } elsif ($ln eq 'icon' and $ns eq ATOM_NS) {
+      if (not defined $feed->{icon}) {
+        my $url = $self->_url ($child);
+        $feed->{icon} = {url => $url} if defined $url;
+      }
+    } elsif ($ln eq 'logo' and $ns eq ATOM_NS) {
+      if (not defined $feed->{logo}) {
+        my $url = $self->_url ($child);
+        $feed->{logo} = {url => $url} if defined $url;
+      }
+    } elsif ($ln eq 'author' and ($ns eq ATOM_NS or $ns eq ATOM03_NS)) {
+      push @{$feed->{authors}}, $self->_person ($child);
+    } elsif ($ln eq 'entry' and ($ns eq ATOM_NS or $ns eq ATOM03_NS)) {
+      #XXX
+      
     }
   }
   return $feed;
@@ -59,6 +83,12 @@ my $NonSpace = qr/[^\x09\x0A\x0C\x0D\x20]/;
 sub ctc ($) {
   return join '', map { $_->node_type == 3 ? $_->data : '' } $_[0]->child_nodes->to_list;
 } # ctc
+
+sub _string ($$) {
+  my ($self, $el) = @_;
+  my $t = ctc $el;
+  return $t =~ /$NonSpace/o ? $t : undef;
+} # _string
 
 sub _text ($$) {
   my ($self, $el) = @_;
@@ -166,6 +196,105 @@ sub _xml ($$) {
     return undef;
   }
 } # _xml
+
+sub _date ($$) {
+  my ($self, $el) = @_;
+  my $parser = Web::DateTime::Parser->new;
+  $parser->onerror (sub { });
+  return $parser->parse_rfc3339_xs_date_time_string (ctc $el); # or undef
+} # _date
+
+sub _dtf ($$) {
+  my ($self, $el) = @_;
+  my $parser = Web::DateTime::Parser->new;
+  $parser->onerror (sub { });
+  return $parser->parse_w3c_dtf_string (ctc $el); # or undef
+} # _dtf
+
+sub _feed_link ($$$) {
+  my ($self, $el => $feed) = @_;
+  my $rel = $el->get_attribute ('rel');
+  if (not defined $rel) {
+    $rel = 'http://www.iana.org/assignments/relation/alternate';
+  } elsif (not $rel =~ /:/) {
+    $rel = "http://www.iana.org/assignments/relation/$rel";
+  }
+  if ($rel eq 'http://www.iana.org/assignments/relation/alternate') {
+    if (not defined $feed->{page_url}) {
+      my $href = $el->get_attribute ('href');
+      $href = '' if not defined $href;
+      $feed->{page_url} = url_to_canon_url $href, $el->base_uri; # or undef
+    }
+  } elsif ($rel eq 'http://www.iana.org/assignments/relation/self') {
+    if (not defined $feed->{feed_url}) {
+      my $href = $el->get_attribute ('href');
+      $href = '' if not defined $href;
+      $feed->{feed_url} = url_to_canon_url $href, $el->base_uri; # or undef
+    }
+  } elsif ($rel eq 'http://www.iana.org/assignments/relation/previous' or
+           $rel eq 'http://www.iana.org/assignments/relation/prev') {
+    if (not defined $feed->{prev_feed_url}) {
+      my $href = $el->get_attribute ('href');
+      $href = '' if not defined $href;
+      $feed->{prev_feed_url} = url_to_canon_url $href, $el->base_uri; # or undef
+    }
+  } elsif ($rel eq 'http://www.iana.org/assignments/relation/next') {
+    if (not defined $feed->{next_feed_url}) {
+      my $href = $el->get_attribute ('href');
+      $href = '' if not defined $href;
+      $feed->{next_feed_url} = url_to_canon_url $href, $el->base_uri; # or undef
+    }
+  }
+} # _feed_link
+
+sub _url ($$) {
+  my ($self, $el) = @_;
+  my $text = ctc $el;
+  return undef if not length $text;
+  return url_to_canon_url $text, $el->base_uri; # or undef
+} # _url
+
+sub _image ($$$) {
+  my ($self, $el, $an) = @_;
+  my $text = $el->get_attribute ($an);
+  if (defined $text and length $text) {
+    my $image = {url => url_to_canon_url $text, $el->base_uri}; # or undef
+    return undef unless defined $image->{url};
+
+    my $w = $el->get_attribute ('width');
+    if (defined $w and $w =~ /^([0-9]+)/) {
+      $image->{width} = 0+$1;
+    }
+    my $h = $el->get_attribute ('height');
+    if (defined $h and $h =~ /^([0-9]+)/) {
+      $image->{height} = 0+$1;
+    }
+
+    return $image;
+  }
+  return undef;
+} # _image
+
+sub _person ($$) {
+  my ($self, $el) = @_;
+  my $person = {};
+  for my $child ($el->children->to_list) {
+    my $ns = $child->namespace_uri || '';
+    my $ln = $child->local_name;
+    if ($ns eq ATOM_NS or $ns eq ATOM03_NS) {
+      if ($ln eq 'name') {
+        $person->{name} = $self->_string ($child) if not defined $person->{name};
+      } elsif ($ln eq 'email') {
+        $person->{email} = $self->_string ($child) if not defined $person->{email};
+      } elsif ($ln eq 'uri') {
+        $person->{page_url} = $self->_url ($child) if not defined $person->{page_url};
+      }
+    } elsif ($ns eq GD_NS and $ln eq 'image') {
+      $person->{logo} = $self->_image ($child, 'src') if not defined $person->{logo};
+    }
+  }
+  return $person;
+} # _person
 
 1;
 
