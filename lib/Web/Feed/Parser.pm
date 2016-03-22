@@ -13,6 +13,7 @@ sub ATOM_NS () { q<http://www.w3.org/2005/Atom> }
 sub ATOM03_NS () { q<http://purl.org/atom/ns#> }
 sub RDF_NS () { q<http://www.w3.org/1999/02/22-rdf-syntax-ns#> }
 sub RSS_NS () { q<http://purl.org/rss/1.0/> }
+sub CONTENT_NS () { q<http://purl.org/rss/1.0/modules/content/> }
 sub DC_NS () { q<http://purl.org/dc/elements/1.1/> }
 sub GD_NS () { q<http://schemas.google.com/g/2005> }
 sub ITUNES_NS () { q<http://www.itunes.com/dtds/podcast-1.0.dtd> }
@@ -91,8 +92,8 @@ sub _rss ($$) {
       if ($ln eq 'channel') {
         $self->_channel2 ($child => $feed);
       } elsif ($ln eq 'item') {
-        #XXX
-
+        push @{$feed->{entries}}, my $entry = $self->_item2 ($child);
+        $self->_cleanup_entry ($entry);
       }
     }
   }
@@ -145,8 +146,8 @@ sub _channel2 ($$$) {
         $self->_feed_link ($child => $feed);
       }
     } elsif ($ln eq 'item' and not defined $ns) {
-      # XXX
-
+      push @{$feed->{entries}}, my $entry = $self->_item2 ($child);
+      $self->_cleanup_entry ($entry);
     }
   }
 } # _channel2
@@ -269,6 +270,70 @@ sub _entry ($$) {
   }
   return $entry;
 } # _entry
+
+sub _item2 ($$) {
+  my ($self, $el) = @_;
+  my $entry = new_entry;
+  for my $child ($el->children->to_list) {
+    my $ns = $child->namespace_uri;
+    my $ln = $child->local_name;
+    if ($ln eq 'category' and not defined $ns) {
+      my $term = ctc $child;
+      $entry->{categories}->{$term} = 1 if length $term;
+    } elsif ($ln eq 'author' and not defined $ns) {
+      my $person = $self->_mailbox ($child);
+      push @{$entry->{authors}}, $person if defined $person;
+    } elsif (($ln eq 'creator' and defined $ns and $ns eq DC_NS) or
+             ($ln eq 'author' and defined $ns and $ns eq ITUNES_NS)) {
+      my $text = ctc $child;
+      push @{$entry->{authors}}, {name => $text} if length $text;
+    } elsif ($ln eq 'pubDate' and not defined $ns) {
+      $entry->{updated} = $self->_date822 ($child) if not defined $entry->{updated};
+    } elsif ($ln eq 'updated' and $ns eq ATOM_NS) {
+      $entry->{updated} = $self->_date ($child) if not defined $entry->{updated};
+    } elsif ($ln eq 'link' and not defined $ns) {
+      $entry->{page_url} = $self->_url ($child) if not defined $entry->{page_url};
+    } elsif ($ln eq 'thumbnail' and defined $ns and $ns eq MEDIA_NS) {
+      $entry->{thumbnail} = $self->_image ($child, 'url') if not defined $entry->{thumbnail};
+    } elsif ($ln eq 'image' and defined $ns and $ns eq ITUNES_NS) {
+      $entry->{thumbnail} = $self->_image ($child, 'href') if not defined $entry->{thumbnail};
+    } elsif ($ln eq 'enclosure' and not defined $ns) {
+      my $href = $child->get_attribute ('url');
+      if (defined $href and length $href) {
+        my $enclosure = {};
+        $enclosure->{url} = url_to_canon_url $href, $child->base_uri; # or undef
+        if (defined $enclosure->{url} and length $enclosure->{url}) {
+          $enclosure->{type} = $child->get_attribute ('type');
+          my $length = $child->get_attribute ('length');
+          if (defined $length and $length =~ /^([0-9]+)/) {
+            $enclosure->{length} = 0+$1;
+          }
+          push @{$entry->{enclosures}}, $enclosure;
+        }
+      }
+    } elsif ($ln eq 'title' and not defined $ns) {
+      $entry->{title} = $self->_string ($child) if not defined $entry->{title};
+    } elsif ($ln eq 'subtitle' and defined $ns and $ns eq ITUNES_NS) {
+      $entry->{subtitle} = $self->_string ($child) if not defined $entry->{subtitle};
+    } elsif ($ln eq 'description' and not defined $ns) {
+      $entry->{summary} = $self->_html ($child) if not defined $entry->{summary};
+    } elsif ($ln eq 'encoded' and defined $ns and $ns eq CONTENT_NS) {
+      $entry->{content} = $self->_html ($child) if not defined $entry->{content};
+    } elsif ($ln eq 'duration' and defined $ns and $ns eq ITUNES_NS) {
+      if (not defined $entry->{duration}) {
+        my $text = ctc $child;
+        if ($text =~ /\A([0-9]+)\z/) {
+          $entry->{duration} = 0+$1;
+        } elsif ($text =~ /\A([0-9]+):([0-9]+)\z/) {
+          $entry->{duration} = $1 * 60 + $2;
+        } elsif ($text =~ /\A([0-9]+):([0-9]+):([0-9]+)\z/) {
+          $entry->{duration} = $1 * 3600 + $2 * 60 + $3;
+        }
+      }
+    }
+  }
+  return $entry;
+} # _item2
 
 sub _cleanup_entry ($$) {
   my ($self, $entry) = @_;
