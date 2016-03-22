@@ -26,6 +26,10 @@ sub cleanup ($) {
           cleanup $obj;
         }
       }
+    } elsif (ref $parsed->{$_} eq 'HASH') {
+      if (not keys %{$parsed->{$_}}) {
+        delete $parsed->{$_};
+      }
     } elsif (UNIVERSAL::isa ($parsed->{$_}, 'Web::DOM::Node')) {
       $parsed->{$_} = $parsed->{$_}->inner_html;
     } elsif (UNIVERSAL::isa ($parsed->{$_}, 'Web::DateTime')) {

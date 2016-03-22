@@ -7,7 +7,7 @@ use Web::DateTime::Parser;
 use Web::URL::Canonicalize qw(url_to_canon_url);
 
 sub new_feed () { return {entries => [], authors => []}; }
-sub new_entry () { return {authors => [], categories => [], enclosures => []}; }
+sub new_entry () { return {authors => [], categories => {}, enclosures => []}; }
 
 sub ATOM_NS () { q<http://www.w3.org/2005/Atom> }
 sub ATOM03_NS () { q<http://purl.org/atom/ns#> }
@@ -16,6 +16,7 @@ sub RSS_NS () { q<http://purl.org/rss/1.0/> }
 sub DC_NS () { q<http://purl.org/dc/elements/1.1/> }
 sub GD_NS () { q<http://schemas.google.com/g/2005> }
 sub ITUNES_NS () { q<http://www.itunes.com/dtds/podcast-1.0.dtd> }
+sub MEDIA_NS () { q<http://search.yahoo.com/mrss/> }
 sub HTML_NS () { q<http://www.w3.org/1999/xhtml> }
 sub SVG_NS () { q<http://www.w3.org/2000/svg> }
 
@@ -73,8 +74,8 @@ sub _feed ($$) {
     } elsif ($ln eq 'author' and ($ns eq ATOM_NS or $ns eq ATOM03_NS)) {
       push @{$feed->{authors}}, $self->_person ($child);
     } elsif ($ln eq 'entry' and ($ns eq ATOM_NS or $ns eq ATOM03_NS)) {
-      #XXX
-      
+      push @{$feed->{entries}}, my $entry = $self->_entry ($child);
+      $self->_cleanup_entry ($entry);
     }
   }
   return $feed;
@@ -201,6 +202,79 @@ sub _channel1 ($$$) {
     }
   }
 } # _channel1
+
+sub _entry ($$) {
+  my ($self, $el) = @_;
+  my $entry = new_entry;
+  for my $child ($el->children->to_list) {
+    my $ns = $child->namespace_uri || '';
+    my $ln = $child->local_name;
+    if ($ln eq 'author' and ($ns eq ATOM_NS or $ns eq ATOM03_NS)) {
+      push @{$entry->{authors}}, $self->_person ($child);
+    } elsif ($ln eq 'category' and $ns eq ATOM_NS) {
+      my $term = $child->get_attribute ('term');
+      $entry->{categories}->{$term} = 1 if defined $term and length $term;
+    } elsif ($ln eq 'subject' and $ns eq DC_NS) {
+      my $term = ctc $child;
+      $entry->{categories}->{$term} = 1 if length $term;
+    } elsif ($ln eq 'published' and $ns eq ATOM_NS) {
+      $entry->{published} = $self->_date ($child) if not defined $entry->{published};
+    } elsif ($ln eq 'created' and ($ns eq ATOM03_NS or $ns eq ATOM_NS)) {
+      $entry->{published} = $self->_dtf ($child) if not defined $entry->{published};
+    } elsif ($ln eq 'updated' and $ns eq ATOM_NS) {
+      $entry->{updated} = $self->_date ($child) if not defined $entry->{updated};
+    } elsif ($ln eq 'modified' and ($ns eq ATOM03_NS or $ns eq ATOM_NS)) {
+      $entry->{updated} = $self->_dtf ($child) if not defined $entry->{updated};
+    } elsif ($ln eq 'title' and $ns eq ATOM_NS) {
+      $entry->{title} = $self->_text ($child) if not defined $entry->{title};
+    } elsif ($ln eq 'title' and $ns eq ATOM03_NS) {
+      $entry->{title} = $self->_content ($child) if not defined $entry->{title};
+    } elsif ($ln eq 'summary' and $ns eq ATOM_NS) {
+      $entry->{summary} = $self->_text ($child) if not defined $entry->{summary};
+    } elsif ($ln eq 'summary' and $ns eq ATOM03_NS) {
+      $entry->{summary} = $self->_content ($child) if not defined $entry->{summary};
+    } elsif ($ln eq 'content' and $ns eq ATOM_NS) {
+      $entry->{content} = $self->_text ($child) if not defined $entry->{content};
+    } elsif ($ln eq 'content' and $ns eq ATOM03_NS) {
+      $entry->{content} = $self->_content ($child) if not defined $entry->{content};
+    } elsif ($ln eq 'link' and ($ns eq ATOM_NS or $ns eq ATOM03_NS)) {
+      $self->_entry_link ($child => $entry);
+    } elsif ($ln eq 'thumbnail' and $ns eq MEDIA_NS) {
+      $entry->{thumbnail} = $self->_image ($child, 'url') if not defined $entry->{thumbnail};
+    } elsif ($ln eq 'group' and $ns eq MEDIA_NS) {
+      for my $gc ($child->children->to_list) {
+        my $ns = $gc->namespace_uri || '';
+        next unless $ns eq MEDIA_NS;
+        my $ln = $gc->local_name;
+        if ($ln eq 'title') {
+          $entry->{title} = $self->_string ($gc) if not defined $entry->{title};
+        } elsif ($ln eq 'description') {
+          $entry->{summary} = $self->_string ($gc) if not defined $entry->{summary};
+        } elsif ($ln eq 'thumbnail') {
+          $entry->{thumbnail} = $self->_image ($gc, 'url') if not defined $entry->{thumbnail};
+        } elsif ($ln eq 'content') {
+          my $href = $gc->get_attribute ('url');
+          if (defined $href and length $href) {
+            my $enclosure = {};
+            $enclosure->{url} = url_to_canon_url $href, $gc->base_uri; # or undef
+            if (defined $enclosure->{url} and length $enclosure->{url}) {
+              $enclosure->{type} = $gc->get_attribute ('type');
+              push @{$entry->{enclosures}}, $enclosure;
+            }
+          }
+        }
+      }
+    }
+
+  }
+  return $entry;
+} # _entry
+
+sub _cleanup_entry ($$) {
+  my ($self, $entry) = @_;
+
+  #XXX
+} # _cleanup_entry
 
 my $Space = qr/[\x09\x0A\x0C\x0D\x20]/;
 my $NonSpace = qr/[^\x09\x0A\x0C\x0D\x20]/;
@@ -374,6 +448,35 @@ sub _feed_link ($$$) {
     }
   }
 } # _feed_link
+
+sub _entry_link ($$$) {
+  my ($self, $el => $entry) = @_;
+  my $rel = $el->get_attribute ('rel');
+  if (not defined $rel) {
+    $rel = 'http://www.iana.org/assignments/relation/alternate';
+  } elsif (not $rel =~ /:/) {
+    $rel = "http://www.iana.org/assignments/relation/$rel";
+  }
+  if ($rel eq 'http://www.iana.org/assignments/relation/alternate') {
+    if (not defined $entry->{page_url}) {
+      my $href = $el->get_attribute ('href');
+      $href = '' if not defined $href;
+      $entry->{page_url} = url_to_canon_url $href, $el->base_uri; # or undef
+    }
+  } elsif ($rel eq 'http://www.iana.org/assignments/relation/enclosure') {
+    my $href = $el->get_attribute ('href');
+    $href = '' if not defined $href;
+    my $href = url_to_canon_url $href, $el->base_uri; # or undef
+    if (defined $href) {
+      my $enclosure = {url => $href, type => $el->get_attribute ('type')};
+      my $length = $el->get_attribute ('length');
+      if (defined $length and $length =~ /^([0-9]+)/) {
+        $enclosure->{length} = 0+$1;
+      }
+      push @{$entry->{enclosures}}, $enclosure;
+    }
+  }
+} # _entry_link
 
 sub _url ($$) {
   my ($self, $el) = @_;
