@@ -18,6 +18,7 @@ sub DC_NS () { q<http://purl.org/dc/elements/1.1/> }
 sub GD_NS () { q<http://schemas.google.com/g/2005> }
 sub ITUNES_NS () { q<http://www.itunes.com/dtds/podcast-1.0.dtd> }
 sub MEDIA_NS () { q<http://search.yahoo.com/mrss/> }
+sub HATENA_NS () { q<http://www.hatena.ne.jp/info/xmlns#> }
 sub HTML_NS () { q<http://www.w3.org/1999/xhtml> }
 sub SVG_NS () { q<http://www.w3.org/2000/svg> }
 
@@ -162,8 +163,8 @@ sub _rdf ($$) {
       if ($ln eq 'channel') {
         $self->_channel1 ($child => $feed);
       } elsif ($ln eq 'item') {
-        #XXX
-
+        push @{$feed->{entries}}, my $entry = $self->_item1 ($child);
+        $self->_cleanup_entry ($entry);
       } elsif ($ln eq 'image') {
         if (not defined $feed->{logo}) {
           for ($child->children->to_list) {
@@ -335,10 +336,60 @@ sub _item2 ($$) {
   return $entry;
 } # _item2
 
+sub _item1 ($$) {
+  my ($self, $el) = @_;
+  my $entry = new_entry;
+  for my $child ($el->children->to_list) {
+    my $ns = $child->namespace_uri || '';
+    my $ln = $child->local_name;
+    if ($ln eq 'link' and $ns eq RSS_NS) {
+      $entry->{page_url} = $self->_url ($child) if not defined $entry->{page_url};
+    } elsif ($ln eq 'imageurl' and $ns eq HATENA_NS) {
+      $entry->{thumbnail} = {url => $self->_url ($child)} if not defined $entry->{thumbnail};
+    } elsif ($ln eq 'creator' and $ns eq DC_NS) {
+      my $text = ctc $child;
+      push @{$entry->{authors}}, {name => $text} if length $text;
+    } elsif ($ln eq 'date' and $ns eq DC_NS) {
+      $entry->{updated} = $self->_dtf ($child) if not defined $entry->{updated};
+    } elsif ($ln eq 'subject' and $ns eq DC_NS) {
+      my $term = ctc $child;
+      $entry->{categories}->{$term} = 1 if length $term;
+    } elsif ($ln eq 'title' and $ns eq RSS_NS) {
+      $entry->{title} = $self->_string ($child) if not defined $entry->{title};
+    } elsif ($ln eq 'description' and $ns eq RSS_NS) {
+      $entry->{summary} = $self->_html ($child) if not defined $entry->{summary};
+    } elsif ($ln eq 'encoded' and $ns eq CONTENT_NS) {
+      $entry->{content} = $self->_html ($child) if not defined $entry->{content};
+    }
+  }
+  return $entry;
+} # _item1
+
 sub _cleanup_entry ($$) {
   my ($self, $entry) = @_;
-
-  #XXX
+  if (defined $entry->{page_url} and
+      grep { $_->{url} eq $entry->{page_url} } @{$entry->{enclosures}}) {
+    delete $entry->{page_url};
+  }
+  if (defined $entry->{page_url} and
+      not defined $entry->{thumbnail}) {
+    my $e = [grep {
+      (defined $_->{type} and $_->{type} =~ m{^[Ii][Mm][Aa][Gg][Ee]/}) or
+      (not defined $_->{type} and $_->{url} =~ /\.(?:jpe?g|png)\z/);
+    } @{$entry->{enclosures}}]->[0];
+    if (defined $e) {
+      $entry->{enclosures} = [grep { $_ ne $e } @{$entry->{enclosures}}];
+      $entry->{thumbnail} = {url => $e->{url}};
+    }
+  }
+  if (defined $entry->{subtitle} and not ref $entry->{subtitle} and
+      defined $entry->{title} and not ref $entry->{title}) {
+    delete $entry->{subtitle};
+  }
+  if (defined $entry->{summary} and not ref $entry->{summary} and
+      defined $entry->{title} and not ref $entry->{title}) {
+    delete $entry->{summary};
+  }
 } # _cleanup_entry
 
 my $Space = qr/[\x09\x0A\x0C\x0D\x20]/;
@@ -440,6 +491,10 @@ sub _html ($$) {
   my $df = $el->owner_document->create_document_fragment;
   $df->append_child ($_) for $div->child_nodes->to_list;
   if ($self->_sanitize_and_has_significant ($df)) {
+    if ($df->child_nodes->length == 1 and
+        $df->first_child->node_type == 3) {
+      return $df->first_child->data;
+    }
     return $df;
   } else {
     return undef;
