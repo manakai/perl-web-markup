@@ -1,0 +1,267 @@
+=head1 NAME
+
+Web::Feed::Parser - Atom and RSS feed parser
+
+=head1 SYNOPSIS
+
+  use Web::Feed::Parser;
+  my $parser = Web::Feed::Parser->new;
+  $parsed = $parser->parse_document ($document);
+
+=head1 DESCRIPTION
+
+The C<Web::Feed::Parser> module is an implementation of the feed
+parser.  It accept a DOM document, which is expected to contain a RSS
+or Atom feed, as the input, and returns a data structure that
+represents feed properties and entries extracted from the input
+document.
+
+The module supports following formats: RSS 0.9x, RSS 1.0, RSS 2.0,
+Atom 0.3, and Atom 1.0; and following modules or extensions: Dublin
+Core, GData, Hatena module, Podcast (iTunes namespace), Media RSS, and
+RSS 1.0 Content module.
+
+=head1 METHODS
+
+=over 4
+
+=item $parser = Web::Feed::Parser
+
+Create a feed parser object.
+
+=item $parsed = $parser->parse_document ($document)
+
+Parse the input document and return the result object, if the document
+contains a feed, or the C<undef> value otherwise.
+
+=back
+
+=head1 DOCUMENT
+
+The input document must be an object implementing the DOM C<Document>
+interface using the DOM Perl Binding
+<https://wiki.suikawiki.org/n/DOM%20Perl%20Binding>, such as the
+L<Web::DOM::Document> module
+<https://manakai.github.io/pod/Web/DOM/Document>.
+
+=head1 PARSED FEED DATA STRUCTURE
+
+A feed, after parsing, is represented as a Perl hash reference
+I<$feed>, which has zero or more of folloging key/value pairs:
+
+=over 4
+
+=item $array_of_persons = $feed->{authors}
+
+An array reference of zero or more person data structures,
+representing the authors of the feed.  There is always an C<authors>
+member in the feed data strucuture.  If no feed author is found in the
+input document, the array is empty.
+
+=item $text = $feed->{desc}
+
+The description of the feed, if any.  The value, if any, is a string
+or a C<Node> object.
+
+=item $array_of_entries = $feed->{entries}
+
+An array reference of zero or more entry data structures.  There is
+always an C<entries> member in the feed data structure.  If no entry
+is found in the input document, the array is empty.
+
+=item $url = $feed->{feed_url}
+
+The canonicalized absolute URL of the feed itself, if any.  Note that
+the URL might or might not be the URL that can be used to fetch the
+feed in fact.
+
+=item $image = $feed->{icon}
+
+The image data structure of the icon of the feed, if any.
+
+=item $image = $feed->{logo}
+
+The image data structure of the logo of the feed, if any.
+
+=item $url = $feed->{next_feed_url}
+
+The canonicalized absolute URL of the "next page" feed of the feed, if
+any.
+
+=item $url = $feed->{page_url}
+
+The canonicalized absolute URL of the Web page associated with the
+feed, if any.
+
+=item $url = $feed->{previous_feed_url}
+
+The canonicalized absolute URL of the "previous page" feed of the
+feed, if any.
+
+=item $text = $feed->{subtitle}
+
+The subtitle of the feed, if any.  The value, if any, is a string or a
+C<Node> object.
+
+=item $text = $feed->{title}
+
+The title of the feed, if any.  The value, if any, is a string or a
+C<Node> object.
+
+=item $timestamp = $feed->{updated}
+
+The modified time of the feed, if any.  The value, if any, is a
+L<Web::DateTime> object representing the time.
+
+=back
+
+An entry is represented as a Perl hash reference I<$entry>, which has
+zero or more of folloging key/value pairs:
+
+=over 4
+
+=item $array_of_persons = $entry->{authors}
+
+An array reference of zero or more person data structures,
+representing the authors of the entry.  There is always an C<authors>
+member in the entry data strucuture.  If no explicit entry author is
+found in the input, the array is empty.  If the array is empty but the
+feed author array is not empty, then its content should be considered
+as the authors of the entry.
+
+=item $text = $entry->{content}
+
+The main content of the entry, if any.  The value, if any, is a string
+or a C<Node> object.
+
+=item $number = $entry->{duration}
+
+The duration of the entry, typically used in Podcasts, if any.  The
+value, if any, is the number of seconds.
+
+=item $array_of_enclosures = $entry->{enclosures}
+
+An array reference of zero or more enclosures or attachments.  If no
+attachment is found in the input document, the array is empty.
+
+Any member of the array is a Perl hash reference, with one or more of
+following key/value pairs:
+
+=over 4
+
+=item $integer = $enclosure->{length}
+
+The data size of the enclosure, in bytes, if any.  It might or might
+not be equal to the size of the resource pointed by the URL.
+
+=item $mime = $enclosure->{type}
+
+The MIME type of the enclosure, if any.  The value, if any, is a
+string extracted from the input document, which might or might not be
+a valid MIME type and can contain parameters.  It might or might not
+be equal to the MIME type of the resource pointed by the URL.
+
+=item $url = $enclosure->{url}
+
+The canonicalized absolute URL of the enclosure.  This key/value pair
+is always set.
+
+=back
+
+=item $url = $entry->{page_url}
+
+The canonicalized absolute URL of the Web page associated with the
+entry, if any.
+
+=item $timestamp = $entry->{published}
+
+The published time of the entry, if any.  The value, if any, is a
+L<Web::DateTime> object representing the time.
+
+If the value of this member is not specified, it should be falled back
+to C<< $entry->{updated} >>.  If that is also missing, it should then
+be falled back to C<< $feed->{updated} >>.
+
+=item $image = $entry->{thumbnail}
+
+The image data structure of the thumbnail of the entry, if any.
+
+=item $text = $entry->{summary}
+
+The summary of the entry, if any.  The value, if any, is a string or a
+C<Node> object.
+
+=item $text = $entry->{title}
+
+The title of the entry, if any.  The value, if any, is a string or a
+C<Node> object.
+
+=item $timestamp = $entry->{updated}
+
+The modified time of the entry, if any.  The value, if any, is a
+L<Web::DateTime> object representing the time.
+
+=back
+
+A person is represented as a Perl hash reference I<$person>, which has
+zero or more of folloging key/value pairs:
+
+=over 4
+
+=item $string = $person->{email}
+
+The email address of the person, if any.  Note that the value might or
+might not be a valid email address.
+
+=item $image = $person->{icon}
+
+The image data structure of the icon of the person, if any.
+
+=item $string = $person->{name}
+
+The name of the person, if any.
+
+=item $url = $person->{url}
+
+The canonicalized absolute URL of the Web page of the person, if any.
+
+=back
+
+An image is represented as a Perl hash reference I<$image>, which has
+one or more of folloging key/value pairs:
+
+=over 4
+
+=item $number = $image->{height}
+
+The expected height of the image, if any.  The value, if any, is a
+number.
+
+=item $url = $image->{url}
+
+The canonicalized absolute URL of the image.  This key/value pair is
+always set.
+
+=item $number = $image->{width}
+
+The expected width of the image, if any.  The value, if any, is a
+number.
+
+=back
+
+=head1 SPECIFICATION
+
+Feed Parsing <https://wiki.suikawiki.org/n/Feed%20Parsing>.
+
+=head1 AUTHOR
+
+Wakaba <wakaba@suikawiki.org>.
+
+=head1 LICENSE
+
+Copyright 2016 Wakaba <wakaba@suikawiki.org>.
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut

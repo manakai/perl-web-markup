@@ -44,6 +44,10 @@ An implementation of HTML microdata.
 
 An RDF/XML parser.
 
+=item L<Web::Feed::Parser>
+
+A RSS and Atom parser.
+
 =item L<Web::HTML::Validator>
 
 A DOM conformance checker (for HTML and XML).
@@ -84,10 +88,10 @@ perl-web-markup package.
 
 Most of these modules are originally developed under the name of
 "Whatpm" in 2007-2008
-<http://suika.suikawiki.org/www/markup/html/whatpm/readme> and then
+<https://suika.suikawiki.org/www/markup/html/whatpm/readme> and then
 merged into the manakai-core package
-<http://suika.suikawiki.org/www/manakai-core/doc/web/>.  Those modules
-are split again into this separate package in 2013.
+<https://suika.suikawiki.org/www/manakai-core/doc/web/>.  Those
+modules are split again into this separate package in 2013.
 
 =head1 DEVELOPMENT
 
@@ -97,7 +101,8 @@ repository: <https://github.com/manakai/perl-web-markup>.
 Test results can be reviewed at Travis CI
 <https://travis-ci.org/manakai/perl-web-markup>.
 
-Known issues are recorded at: <http://manakai.g.hatena.ne.jp/task/4/>.
+Known issues are recorded at <https://manakai.g.hatena.ne.jp/task/4/>
+and GitHub Issues.
 
 =head1 AUTHOR
 
@@ -105,7 +110,7 @@ Wakaba <wakaba@suikawiki.org>.
 
 =head1 LICENSE
 
-Copyright 2007-2015 Wakaba <wakaba@suikawiki.org>.
+Copyright 2007-2016 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
