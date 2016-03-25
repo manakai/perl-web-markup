@@ -136,8 +136,13 @@ sub _get_item_of_element ($$;%) {
       $item->{types}->{$_} = 1 if length $_;
     }
 
-    my $itemid = $root->itemid; ## resolve
-    $item->{id} = $itemid if defined $itemid and length $itemid;
+    ## Resolve
+    my $itemid = $root->get_attribute ('itemid');
+    if (defined $itemid) {
+      require Web::URL::Canonicalize;
+      $itemid = Web::URL::Canonicalize::url_to_canon_url ($itemid, $root->base_uri);
+      $item->{id} = $itemid if defined $itemid and length $itemid;
+    }
   }
 
   pop @{$self->{current_item_els}};
