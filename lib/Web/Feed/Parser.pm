@@ -419,13 +419,22 @@ sub _cleanup_entry ($$) {
       $entry->{thumbnail} = {url => $e->{url}};
     }
   }
-  if (defined $entry->{subtitle} and not ref $entry->{subtitle} and
-      defined $entry->{title} and not ref $entry->{title}) {
-    delete $entry->{subtitle};
-  }
-  if (defined $entry->{summary} and not ref $entry->{summary} and
-      defined $entry->{title} and not ref $entry->{title}) {
-    delete $entry->{summary};
+  for (
+    ['title', 'subtitle'],
+    ['title', 'summary'],
+    ['summary', 'content'],
+  ) {
+    my ($x, $y) = @$_;
+    if (defined $entry->{$x} and defined $entry->{$y}) {
+      if (not ref $entry->{$x} and not ref $entry->{$y} and
+          $entry->{$x} eq $entry->{$y}) {
+        delete $entry->{$y};
+      } elsif (ref $entry->{$x} and ref $entry->{$y} and
+               UNIVERSAL::can ($entry->{$x}, 'is_equal_node') and
+               $entry->{$x}->is_equal_node ($entry->{$y})) {
+        delete $entry->{$y};
+      }
+    }
   }
 } # _cleanup_entry
 
