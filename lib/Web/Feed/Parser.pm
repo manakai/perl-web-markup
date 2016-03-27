@@ -18,7 +18,8 @@ sub DC_NS () { q<http://purl.org/dc/elements/1.1/> }
 sub GD_NS () { q<http://schemas.google.com/g/2005> }
 sub ITUNES_NS1 () { q<http://www.itunes.com/dtds/podcast-1.0.dtd> }
 sub ITUNES_NS2 () { q<http://www.itunes.com/DTDs/Podcast-1.0.dtd> }
-sub MEDIA_NS () { q<http://search.yahoo.com/mrss/> }
+sub MEDIA_NS1 () { q<http://search.yahoo.com/mrss/> }
+sub MEDIA_NS2 () { q<http://search.yahoo.com/mrss> }
 sub HATENA_NS () { q<http://www.hatena.ne.jp/info/xmlns#> }
 sub HTML_NS () { q<http://www.w3.org/1999/xhtml> }
 sub SVG_NS () { q<http://www.w3.org/2000/svg> }
@@ -262,12 +263,14 @@ sub _entry ($$) {
       $entry->{content} = $self->_content ($child) if not defined $entry->{content};
     } elsif ($ln eq 'link' and ($ns eq ATOM_NS or $ns eq ATOM03_NS)) {
       $self->_entry_link ($child => $entry);
-    } elsif ($ln eq 'thumbnail' and $ns eq MEDIA_NS) {
+    } elsif (($ln eq 'thumbnail' and $ns eq MEDIA_NS1) or
+             ($ln eq 'thumbnail' and $ns eq MEDIA_NS2)) {
       $entry->{thumbnail} = $self->_image ($child, 'url') if not defined $entry->{thumbnail};
-    } elsif ($ln eq 'group' and $ns eq MEDIA_NS) {
+    } elsif (($ln eq 'group' and $ns eq MEDIA_NS1) or
+             ($ln eq 'group' and $ns eq MEDIA_NS2)) {
       for my $gc ($child->children->to_list) {
         my $ns = $gc->namespace_uri || '';
-        next unless $ns eq MEDIA_NS;
+        next unless $ns eq MEDIA_NS1 or $ns eq MEDIA_NS2;
         my $ln = $gc->local_name;
         if ($ln eq 'title') {
           $entry->{title} = $self->_string ($gc) if not defined $entry->{title};
@@ -322,7 +325,8 @@ sub _item2 ($$) {
       $entry->{updated} = $self->_date ($child) if not defined $entry->{updated};
     } elsif ($ln eq 'link' and not defined $ns) {
       $entry->{page_url} = $self->_url ($child) if not defined $entry->{page_url};
-    } elsif ($ln eq 'thumbnail' and defined $ns and $ns eq MEDIA_NS) {
+    } elsif (($ln eq 'thumbnail' and defined $ns and $ns eq MEDIA_NS1) or
+             ($ln eq 'thumbnail' and defined $ns and $ns eq MEDIA_NS2)) {
       $entry->{thumbnail} = $self->_image ($child, 'url') if not defined $entry->{thumbnail};
     } elsif (($ln eq 'image' and defined $ns and $ns eq ITUNES_NS1) or
              ($ln eq 'image' and defined $ns and $ns eq ITUNES_NS2)) {
