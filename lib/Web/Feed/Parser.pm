@@ -328,6 +328,17 @@ sub _item2 ($$) {
     } elsif (($ln eq 'thumbnail' and defined $ns and $ns eq MEDIA_NS1) or
              ($ln eq 'thumbnail' and defined $ns and $ns eq MEDIA_NS2)) {
       $entry->{thumbnail} = $self->_image ($child, 'url') if not defined $entry->{thumbnail};
+    } elsif (($ln eq 'content' and $ns eq MEDIA_NS1) or
+             ($ln eq 'content' and $ns eq MEDIA_NS2)) {
+      my $href = $child->get_attribute ('url');
+      if (defined $href and length $href) {
+        my $enclosure = {};
+        $enclosure->{url} = url_to_canon_url $href, $child->base_uri; # or undef
+        if (defined $enclosure->{url} and length $enclosure->{url}) {
+          $enclosure->{type} = $child->get_attribute ('type');
+          push @{$entry->{enclosures}}, $enclosure;
+        }
+      }
     } elsif (($ln eq 'image' and defined $ns and $ns eq ITUNES_NS1) or
              ($ln eq 'image' and defined $ns and $ns eq ITUNES_NS2)) {
       $entry->{thumbnail} = $self->_image ($child, 'href') if not defined $entry->{thumbnail};
