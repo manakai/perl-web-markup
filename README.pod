@@ -73,6 +73,10 @@ Perl Binding, and manakai's DOM Extensions.  An example of such a DOM
 implementation is the L<Web::DOM> modules in the perl-web-dom package
 <https://github.com/manakai/perl-web-dom>.
 
+The L<Web::Feed::Parser> module requires modules from
+perl-web-datetime <https://github.com/manakai/perl-web-datetime> and
+perl-web-url <https://github.com/manakai/perl-web-url> packages.
+
 Validator modules such as L<Web::HTML::Validator> and
 L<Web::RDF::Checker> require additional external modules; see their
 documentations.
