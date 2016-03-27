@@ -30,18 +30,19 @@ sub new ($) {
 sub parse_document ($$) {
   my ($self, $doc) = @_;
   my $root = $doc->document_element;
+  my $feed;
   if (not defined $root) {
-    return undef;
+    #
   } elsif ($root->manakai_element_type_match (ATOM_NS, 'feed') or
            $root->manakai_element_type_match (ATOM03_NS, 'feed')) {
-    return $self->_feed ($root);
+    $feed = $self->_feed ($root);
   } elsif ($root->manakai_element_type_match (undef, 'rss')) {
-    return $self->_rss ($root);
+    $feed = $self->_rss ($root);
   } elsif ($root->manakai_element_type_match (RDF_NS, 'RDF')) {
-    return $self->_rdf ($root);
-  } else {
-    return undef;
+    $feed = $self->_rdf ($root);
   }
+  $self->_cleanup_feed ($feed);
+  return $feed;
 } # parse_document
 
 sub _feed ($$) {
@@ -129,10 +130,16 @@ sub _channel2 ($$$) {
              ($ln eq 'author' and defined $ns and $ns eq ITUNES_NS1) or
              ($ln eq 'author' and defined $ns and $ns eq ITUNES_NS2)) {
       my $text = ctc $child;
-      push @{$feed->{authors}}, {name => $text} if length $text;
+      push @{$feed->{authors}}, {name => $text}
+          if length $text and
+             not grep { $_->{name} eq $text } @{$feed->{authors}};
     } elsif ($ln eq 'managingEditor' and not defined $ns) {
       my $person = $self->_mailbox ($child);
-      push @{$feed->{authors}}, $person if defined $person;
+      if (defined $person) {
+        push @{$feed->{authors}}, $person
+            if defined $person->{email} or
+               not grep { $_->{name} eq $person->{name} } @{$feed->{authors}};
+      }
     } elsif (($ln eq 'lastBuildDate' or $ln eq 'pubDate') and not defined $ns) {
       $feed->{updated} = $self->_date822 ($child) if not defined $feed->{updated};
     } elsif ($ln eq 'title' and not defined $ns) {
@@ -194,7 +201,9 @@ sub _channel1 ($$$) {
       $feed->{updated} = $self->_dtf ($child) if not defined $feed->{updated};
     } elsif ($ln eq 'creator' and defined $ns and $ns eq DC_NS) {
       my $text = ctc $child;
-      push @{$feed->{authors}}, {name => $text} if length $text;
+      push @{$feed->{authors}}, {name => $text}
+          if length $text and
+             not grep { $_->{name} eq $text } @{$feed->{authors}};
     } elsif ($ln eq 'title' and $ns eq RSS_NS) {
       $feed->{title} = $self->_string ($child) if not defined $feed->{title};
     } elsif ($ln eq 'description' and $ns eq RSS_NS) {
@@ -208,6 +217,14 @@ sub _channel1 ($$$) {
     }
   }
 } # _channel1
+
+sub _cleanup_feed ($$) {
+  my ($self, $feed) = @_;
+  if (defined $feed->{icon} and defined $feed->{logo} and
+      $feed->{icon}->{url} eq $feed->{logo}->{url}) {
+    delete $feed->{icon}->{url};
+  }
+} # _cleanup_feed
 
 sub _entry ($$) {
   my ($self, $el) = @_;
@@ -287,12 +304,18 @@ sub _item2 ($$) {
       $entry->{categories}->{$term} = 1 if length $term;
     } elsif ($ln eq 'author' and not defined $ns) {
       my $person = $self->_mailbox ($child);
-      push @{$entry->{authors}}, $person if defined $person;
+      if (defined $person) {
+        push @{$entry->{authors}}, $person
+            if defined $person->{email} or
+               not grep { $_->{name} eq $person->{name} } @{$entry->{authors}};
+      }
     } elsif (($ln eq 'creator' and defined $ns and $ns eq DC_NS) or
              ($ln eq 'author' and defined $ns and $ns eq ITUNES_NS1) or
              ($ln eq 'author' and defined $ns and $ns eq ITUNES_NS2)) {
       my $text = ctc $child;
-      push @{$entry->{authors}}, {name => $text} if length $text;
+      push @{$entry->{authors}}, {name => $text}
+          if length $text and
+             not grep { $_->{name} eq $text } @{$entry->{authors}};
     } elsif ($ln eq 'pubDate' and not defined $ns) {
       $entry->{updated} = $self->_date822 ($child) if not defined $entry->{updated};
     } elsif ($ln eq 'updated' and $ns eq ATOM_NS) {
@@ -356,7 +379,9 @@ sub _item1 ($$) {
       $entry->{thumbnail} = {url => $self->_url ($child)} if not defined $entry->{thumbnail};
     } elsif ($ln eq 'creator' and $ns eq DC_NS) {
       my $text = ctc $child;
-      push @{$entry->{authors}}, {name => $text} if length $text;
+      push @{$entry->{authors}}, {name => $text}
+          if length $text and
+             not grep { $_->{name} eq $text } @{$entry->{authors}};
     } elsif ($ln eq 'date' and $ns eq DC_NS) {
       $entry->{updated} = $self->_dtf ($child) if not defined $entry->{updated};
     } elsif ($ln eq 'subject' and $ns eq DC_NS) {
