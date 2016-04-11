@@ -1,0 +1,401 @@
+=head1 NAME
+
+Web::GPX::Parser - GPX parser
+
+=head1 SYNOPSIS
+
+  use Web::GPX::Parser;
+  my $parser = Web::GPX::Parser->new;
+  $parsed = $parser->parse_document ($document);
+
+=head1 DESCRIPTION
+
+The C<Web::GPX::Parser> module is an implementation of the GPX parser.
+It accept a DOM document, which is expected to contain a GPX document,
+as the input, and returns a data structure that represents feed
+properties and entries extracted from the input document.
+
+The module supports GPX 1.1 and a few extensions.
+
+=head1 METHODS
+
+=over 4
+
+=item $parser = Web::GPX::Parser
+
+Create a GPX parser object.
+
+=item $parsed = $parser->parse_document ($document)
+
+Parse the input document and return the result object, if the document
+contains a GPX, or the C<undef> value otherwise.
+
+=back
+
+=head1 DOCUMENT
+
+The input document must be an object implementing the DOM C<Document>
+interface using the DOM Perl Binding
+<https://wiki.suikawiki.org/n/DOM%20Perl%20Binding>, such as the
+L<Web::DOM::Document> module
+<https://manakai.github.io/pod/Web/DOM/Document>.
+
+=head1 PARSED DATA STRUCTURE
+
+A GPX document, after parsing, is represented as a Perl hash reference
+I<$parsed>, which has zero or more of folloging key/value pairs:
+
+=over 4
+
+=item $person = $parsed->{author}
+
+A person data structure, representing the author of the GPX document,
+if any.
+
+=item $string = $parsed->{desc}
+
+The description of the GPX document, if any.
+
+=item $string = $parsed->{generator}
+
+The description of the generating agent of the GPX document, if any.
+
+=item $string = $parsed->{keywords}
+
+The keywords of the GPX document, if any.
+
+=item $license = $parsed->{license}
+
+A licenes data structure, representing the license of the GPX
+document, if any.
+
+=item $number = $parsed->{max_lat}
+
+The maximum latitude of the target area of the GPX document, if any.
+Note that it might be less than C<< $parsed->{min_lat} >>.
+
+=item $number = $parsed->{min_lat}
+
+The minimum latitude of the target area of the GPX document, if any.
+
+=item $number = $parsed->{max_lon}
+
+The maximum longitude of the target area of the GPX document, if any.
+Note that it might be less than C<< $parsed->{min_lon} >>.
+
+=item $number = $parsed->{min_lon}
+
+The minimum longitude of the target area of the GPX document, if any.
+
+=item $url = $parsed->{page_url}
+
+The canonicalized absolute URL of the Web page associated with the GPX
+document, if any.
+
+=item $arrayref_of_routes = $parsed->{routes}
+
+The array reference of zero or more route data structures,
+representing routes in the GPX document.  There is always a C<routes>
+member in the data strucuture.
+
+=item $timestamp = $parsed->{timestamp}
+
+The timestamp of the GPX document, if any.  The value, if any, is a
+L<Web::DateTime> object representing the time.
+
+=item $arrayref_of_tracks = $parsed->{tracks}
+
+The array reference of zero or more track data structures,
+representing tracks in the GPX document.  There is always a C<tracks>
+member in the data strucuture.
+
+=item $timestamp = $parsed->{updated}
+
+The modified time of the GPX document, if any.  The value, if any, is
+a L<Web::DateTime> object representing the time.
+
+=item $arrayref_of_points = $parsed->{waypoints}
+
+The array reference of zero or more point data structures,
+representing waypoints in the GPX document.  There is always a
+C<waypoints> member in the data strucuture.
+
+=back
+
+A point is represented as a Perl hash reference I<$point>, which has
+zero or more of folloging key/value pairs:
+
+=over 4
+
+=item $number = $point->{accuracy}
+
+The accuracy value for the point, if any.
+
+=item $number = $point->{age_of_dgps_data}
+
+The age of the DGPS data for the point, if any.
+
+=item $number = $point->{cadence}
+
+The cadence value for the point, if any.
+
+=item $string = $point->{comment}
+
+The comment of the point, if any.
+
+=item $number = $point->{depth}
+
+The depth value for the point, if any.
+
+=item $string = $point->{desc}
+
+The description of the point, if any.
+
+=item $integer = $point->{dgps_id}
+
+The DGPS ID for the point, if any.
+
+=item $number = $point->{distance}
+
+The distance value for the point, if any.
+
+=item $number = $point->{elevation}
+
+The elevation of the point, if any.
+
+=item $string = $point->{fix}
+
+The "fix" data of the point, if any.
+
+=item $number = $point->{geoid_height}
+
+The geoid height of the point, if any.
+
+=item $number = $point->{hdop}
+
+The "hdop" value of the point, if any.
+
+=item $number = $point->{heartrate}
+
+The heartrate value for the point, if any.
+
+=item $number = $point->{lat}
+
+The latitude of the point, if any.
+
+=item $number = $point->{lon}
+
+The longitude of the point, if any.
+
+=item $number = $point->{magnetic_variation}
+
+The magnetic variation of the point, if any.
+
+=item $string = $point->{name}
+
+The name of the point, if any.
+
+=item $url = $point->{page_url}
+
+The canonicalized absolute URL of the Web page associated with the
+point, if any.
+
+=item $number = $point->{pdop}
+
+The "pdop" value of the point, if any.
+
+=item $number = $point->{power}
+
+The power value for the point, if any.
+
+=item $integer = $point->{satelite_count}
+
+The number of satelites for the point, if any.
+
+=item $string = $point->{source}
+
+The source of the point, if any.
+
+=item $number = $point->{speed}
+
+The speed value for the point, if any.
+
+=item $string = $point->{symbol_name}
+
+The symbol name of the point, if any.
+
+=item $number = $point->{temperature}
+
+The temperature for the point, if any.
+
+=item $timestamp = $point->{timestamp}
+
+The timestamp of the point, if any.  The value, if any, is a
+L<Web::DateTime> object representing the time.
+
+=item $string = $point->{type}
+
+The type of the point, if any.
+
+=item $number = $point->{vdop}
+
+The "vdop" value of the point, if any.
+
+=item $number = $point->{water_temperature}
+
+The water temperature for the point, if any.
+
+=back
+
+A route is represented as a Perl hash reference I<$route>, which has
+zero or more of folloging key/value pairs:
+
+=over 4
+
+=item $string = $route->{comment}
+
+The comment of the route, if any.
+
+=item $string = $route->{desc}
+
+The desc of the route, if any.
+
+=item $string = $route->{name}
+
+The name of the route, if any.
+
+=item $number = $route->{number}
+
+The number of the route, if any.
+
+=item $url = $route->{page_url}
+
+The canonicalized absolute URL of the Web page associated with the
+route, if any.
+
+=item $arrayref_of_points = $route->{points}
+
+The array reference of zero or more point data structures,
+representing the points in the route.  There is always a C<points>
+member in the data strucuture.
+
+=item $string = $route->{source}
+
+The source of the route, if any.
+
+=item $string = $route->{type}
+
+The type of the route, if any.
+
+=back
+
+A track is represented as a Perl hash reference I<$track>, which has
+zero or more of folloging key/value pairs:
+
+=over 4
+
+=item $string = $track->{comment}
+
+The comment of the route, if any.
+
+=item $string = $track->{desc}
+
+The desc of the route, if any.
+
+=item $string = $track->{name}
+
+The name of the route, if any.
+
+=item $number = $track->{number}
+
+The number of the route, if any.
+
+=item $url = $track->{page_url}
+
+The canonicalized absolute URL of the Web page associated with the
+route, if any.
+
+=item $arrayref_of_segments = $track->{segments}
+
+The array reference of zero or more track segment data structures,
+representing the segments in the track.  There is always a C<segments>
+member in the data strucuture.
+
+=item $string = $track->{source}
+
+The source of the route, if any.
+
+=item $string = $track->{type}
+
+The type of the route, if any.
+
+=back
+
+A track segment is represented as a Perl hash reference I<$segment>,
+which has zero or more of folloging key/value pair:
+
+=over 4
+
+=item $arrayref_of_points = $segment->{points}
+
+The array reference of zero or more point data structures,
+representing the points in the route.  There is always a C<points>
+member in the data strucuture.
+
+=back
+
+A person is represented as a Perl hash reference I<$person>, which has
+zero or more of folloging key/value pairs:
+
+=over 4
+
+=item $string = $person->{email}
+
+The email address of the person, if any.  Note that the value might or
+might not be a valid email address.
+
+=item $string = $person->{name}
+
+The name of the person, if any.
+
+=item $url = $person->{page_url}
+
+The canonicalized absolute URL of the Web page of the person, if any.
+
+=back
+
+A license is represented as a Perl hash reference I<$licenes>, which
+has zero or more of folloging key/value pairs:
+
+=over 4
+
+=item $string = $license->{holder}
+
+The license holder, if any.
+
+=item $url = $license->{page_url}
+
+The canonicalized absolute URL of the Web page of the license, if any.
+
+=item $integer = $license->{year}
+
+The year of the license in AD, if any.
+
+=back
+
+=head1 SPECIFICATION
+
+GPX Parsing <https://wiki.suikawiki.org/n/GPX%20Parsing>.
+
+=head1 AUTHOR
+
+Wakaba <wakaba@suikawiki.org>.
+
+=head1 LICENSE
+
+Copyright 2016 Wakaba <wakaba@suikawiki.org>.
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut

@@ -221,7 +221,7 @@ The image data structure of the icon of the person, if any.
 
 The name of the person, if any.
 
-=item $url = $person->{url}
+=item $url = $person->{page_url}
 
 The canonicalized absolute URL of the Web page of the person, if any.
 
