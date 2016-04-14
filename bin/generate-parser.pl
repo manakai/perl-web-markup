@@ -835,7 +835,7 @@ sub serialize_actions ($;%) {
           (map { s/ token$//; s/[- ]/_/g; uc $_ } $_->{token}),
           ($LANG eq 'XML' ? q{DTDMode => $DTDMode,} : '');
     } elsif ($type eq 'create-attr') {
-      push @result, q[$Attr = {di => $DI};];
+      push @result, q[$Attr = {di => $DI, index => 0};];
     } elsif ($type eq 'set-attr') {
       push @result, q{
         if (defined $Token->{attrs}->{$Attr->{name}}) {
@@ -952,7 +952,8 @@ sub serialize_actions ($;%) {
             $field, $value;
         push @result, q{$LastCMItem = 'element';};
       } elsif ($type eq 'emit-char') {
-        my $index_delta = q{$Offset + (pos $Input) - (length $1)};
+        my $index_delta = q{$Offset + (pos $Input)};
+        $index_delta .= q{ - (length $1)} unless $args{in_eof};
         if (defined $_->{value}) {
           if ($_->{value} =~ /^</) { # e.g. |</| of non-matching RCDATA end tag
             $index_delta = q{$AnchoredIndex};
