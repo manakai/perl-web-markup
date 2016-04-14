@@ -835,7 +835,7 @@ sub serialize_actions ($;%) {
           (map { s/ token$//; s/[- ]/_/g; uc $_ } $_->{token}),
           ($LANG eq 'XML' ? q{DTDMode => $DTDMode,} : '');
     } elsif ($type eq 'create-attr') {
-      push @result, q[$Attr = {di => $DI, index => 0};];
+      push @result, q[$Attr = {di => $DI};];
     } elsif ($type eq 'set-attr') {
       push @result, q{
         if (defined $Token->{attrs}->{$Attr->{name}}) {

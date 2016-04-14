@@ -13295,7 +13295,7 @@ $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@]@,
-                          di => $DI, index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1) - 2};
         
 } elsif ($Input =~ /\G(.)/gcs) {
 
@@ -16903,57 +16903,57 @@ push @$Tokens, $Token;
           }
         
 } elsif ($Input =~ /\G([ABCDEFGHJKNQRVWZILMOPSTUXY])/gcs) {
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
+$Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + (pos $Input) - length $1;
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$State = ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
-$Attr = {di => $DI, index => 0};
+$Attr = {di => $DI};
+$Attr->{q<name>} = q@�@;
+$Attr->{index} = $Offset + (pos $Input) - length $1;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Attr->{q<name>} = q@�@;
-$Attr->{index} = $Offset + (pos $Input) - length $1;
 } elsif ($Input =~ /\G([\"])/gcs) {
-$Attr = {di => $DI, index => 0};
+$Attr = {di => $DI};
+$Attr->{q<name>} = $1;
+$Attr->{index} = $Offset + (pos $Input) - length $1;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 
             push @$Errors, {type => 'bad attribute name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Attr->{q<name>} = $1;
-$Attr->{index} = $Offset + (pos $Input) - length $1;
 } elsif ($Input =~ /\G([\'])/gcs) {
-$Attr = {di => $DI, index => 0};
+$Attr = {di => $DI};
+$Attr->{q<name>} = $1;
+$Attr->{index} = $Offset + (pos $Input) - length $1;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 
             push @$Errors, {type => 'bad attribute name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
+} elsif ($Input =~ /\G([\<])/gcs) {
+$Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + (pos $Input) - length $1;
-} elsif ($Input =~ /\G([\<])/gcs) {
-$Attr = {di => $DI, index => 0};
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 
             push @$Errors, {type => 'tag not closed', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
+} elsif ($Input =~ /\G(.)/gcs) {
+$Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + (pos $Input) - length $1;
-} elsif ($Input =~ /\G(.)/gcs) {
-$Attr = {di => $DI, index => 0};
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
-$Attr->{q<name>} = $1;
-$Attr->{index} = $Offset + (pos $Input) - length $1;
 } else {
 if ($EOF) {
 
@@ -17030,57 +17030,57 @@ push @$Tokens, $Token;
             push @$Errors, {type => 'no space before attr name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Attr = {di => $DI, index => 0};
+$Attr = {di => $DI};
+$Attr->{q<name>} = q@�@;
+$Attr->{index} = $Offset + (pos $Input) - length $1;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Attr->{q<name>} = q@�@;
-$Attr->{index} = $Offset + (pos $Input) - length $1;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
             push @$Errors, {type => 'no space before attr name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Attr = {di => $DI, index => 0};
+$Attr = {di => $DI};
+$Attr->{q<name>} = $1;
+$Attr->{index} = $Offset + (pos $Input) - length $1;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 
             push @$Errors, {type => 'bad attribute name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Attr->{q<name>} = $1;
-$Attr->{index} = $Offset + (pos $Input) - length $1;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
             push @$Errors, {type => 'no space before attr name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Attr = {di => $DI, index => 0};
+$Attr = {di => $DI};
+$Attr->{q<name>} = $1;
+$Attr->{index} = $Offset + (pos $Input) - length $1;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 
             push @$Errors, {type => 'bad attribute name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Attr->{q<name>} = $1;
-$Attr->{index} = $Offset + (pos $Input) - length $1;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
             push @$Errors, {type => 'no space before attr name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Attr = {di => $DI, index => 0};
+$Attr = {di => $DI};
+$Attr->{q<name>} = $1;
+$Attr->{index} = $Offset + (pos $Input) - length $1;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 
             push @$Errors, {type => 'tag not closed', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Attr->{q<name>} = $1;
-$Attr->{index} = $Offset + (pos $Input) - length $1;
 } elsif ($Input =~ /\G([\=])/gcs) {
 
             push @$Errors, {type => 'no space before attr name', level => 'm',
@@ -17090,7 +17090,7 @@ $Attr->{index} = $Offset + (pos $Input) - length $1;
             push @$Errors, {type => 'parser:no attr name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Attr = {di => $DI, index => 0};
+$Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + (pos $Input) - length $1;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
@@ -17100,21 +17100,21 @@ $State = ATTR_NAME_STATE;
             push @$Errors, {type => 'no space before attr name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
+$Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + (pos $Input) - length $1;
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$State = ATTR_NAME_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'no space before attr name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
+$Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + (pos $Input) - length $1;
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$State = ATTR_NAME_STATE;
 } else {
 if ($EOF) {
 
@@ -22324,10 +22324,10 @@ if ($Input =~ /\G([^\ \	\
 \\\ \"\&\'\<\=\>\`]*)[\	\
 \\\ ][\	\
 \\\ ]*/gcs) {
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $Attr->{q<name>} .= $2;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
@@ -22353,10 +22353,10 @@ $State = B_ATTR_NAME_STATE;
 \\\ ]*([^\ \	\
 \\\ \"\&\'\<\=\>\`])([^\ \	\
 \\\ \"\&\'\<\=\>\`]*)\>/gcs) {
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $Attr->{q<name>} .= $2;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
@@ -22427,11 +22427,11 @@ push @$Tokens, $Token;
 \\\ \"\&\'\<\=\>\`]*)[\	\
 \\\ ][\	\
 \\\ ]*/gcs) {
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
+$Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
@@ -22457,10 +22457,10 @@ $State = B_ATTR_NAME_STATE;
 \\\ \"\&\'\<\=\>\`]*)[\	\
 \\\ ][\	\
 \\\ ]*/gcs) {
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $Attr->{q<name>} .= $2;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
@@ -22485,10 +22485,10 @@ $State = B_ATTR_NAME_STATE;
 \\\ ]*([^\ \	\
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)/gcs) {
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $Attr->{q<name>} .= $2;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
@@ -22504,11 +22504,11 @@ $Attr->{q<name>} .= $2;
         }
       
 $State = A_ATTR_NAME_STATE;
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
+$Attr = {di => $DI};
 $Attr->{q<name>} = $3;
 $Attr->{index} = $Offset + $-[3];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $4;
 } elsif ($Input =~ /\G([^\ \	\
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
@@ -22518,10 +22518,10 @@ $Attr->{q<name>} .= $4;
 \\\ ]*\'([^\ \\&\']*)\'[\	\
 \\\ ][\	\
 \\\ ]*/gcs) {
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $Attr->{q<name>} .= $2;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
@@ -22546,10 +22546,10 @@ $State = B_ATTR_NAME_STATE;
 \\\ ]*\"([^\ \\"\&]*)\"[\	\
 \\\ ][\	\
 \\\ ]*/gcs) {
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $Attr->{q<name>} .= $2;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
@@ -22572,10 +22572,10 @@ $State = B_ATTR_NAME_STATE;
 \\\ ]*([^\ \	\
 \\\ \"\&\'\<\=\>\`])([^\ \	\
 \\\ \"\&\'\<\=\>\`]*)\>/gcs) {
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $Attr->{q<name>} .= $2;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
@@ -22644,11 +22644,11 @@ push @$Tokens, $Token;
 \\\ ]*([^\ \	\
 \\\ \"\&\'\<\=\>\`])([^\ \	\
 \\\ \"\&\'\<\=\>\`]*)\>/gcs) {
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
+$Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
@@ -22717,11 +22717,11 @@ push @$Tokens, $Token;
 \\\ \"\&\'\<\=\>\`]*)[\	\
 \\\ ][\	\
 \\\ ]*/gcs) {
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
+$Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
@@ -22745,10 +22745,10 @@ $State = B_ATTR_NAME_STATE;
 \\\ ][\	\
 \\\ ]*([A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)/gcs) {
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $Attr->{q<name>} .= $2;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
@@ -22764,11 +22764,11 @@ $Attr->{q<name>} .= $2;
         }
       
 $State = A_ATTR_NAME_STATE;
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
+$Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $3) + 32);
 $Attr->{index} = $Offset + $-[3];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $4;
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)[\	\
@@ -22776,11 +22776,11 @@ $Attr->{q<name>} .= $4;
 \\\ ]*([^\ \	\
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)/gcs) {
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
+$Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
@@ -22796,11 +22796,11 @@ $Attr->{q<name>} .= $2;
         }
       
 $State = A_ATTR_NAME_STATE;
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
+$Attr = {di => $DI};
 $Attr->{q<name>} = $3;
 $Attr->{index} = $Offset + $-[3];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $4;
 } elsif ($Input =~ /\G([^\ \	\
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
@@ -22808,10 +22808,10 @@ $Attr->{q<name>} .= $4;
 \\\ ][\	\
 \\\ ]*\=[\	\
 \\\ ]*\'([^\ \\&\']*)\'\/\>/gcs) {
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $Attr->{q<name>} .= $2;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
@@ -22880,10 +22880,10 @@ push @$Tokens, $Token;
 \\\ ][\	\
 \\\ ]*\=[\	\
 \\\ ]*\"([^\ \\"\&]*)\"\/\>/gcs) {
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $Attr->{q<name>} .= $2;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
@@ -22952,10 +22952,10 @@ push @$Tokens, $Token;
 \\\ ][\	\
 \\\ ]*\=[\	\
 \\\ ]*\'([^\ \\&\']*)\'\>/gcs) {
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $Attr->{q<name>} .= $2;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
@@ -23022,10 +23022,10 @@ push @$Tokens, $Token;
 \\\ ][\	\
 \\\ ]*\=[\	\
 \\\ ]*\"([^\ \\"\&]*)\"\>/gcs) {
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $Attr->{q<name>} .= $2;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
@@ -23092,10 +23092,10 @@ push @$Tokens, $Token;
 \\\ ]*\'([^\ \\&\']*)\'[\	\
 \\\ ][\	\
 \\\ ]*/gcs) {
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $Attr->{q<name>} .= $2;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
@@ -23119,11 +23119,11 @@ $State = B_ATTR_NAME_STATE;
 \\\ ]*\'([^\ \\&\']*)\'[\	\
 \\\ ][\	\
 \\\ ]*/gcs) {
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
+$Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
@@ -23146,10 +23146,10 @@ $State = B_ATTR_NAME_STATE;
 \\\ ]*\"([^\ \\"\&]*)\"[\	\
 \\\ ][\	\
 \\\ ]*/gcs) {
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $Attr->{q<name>} .= $2;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
@@ -23173,11 +23173,11 @@ $State = B_ATTR_NAME_STATE;
 \\\ ]*\"([^\ \\"\&]*)\"[\	\
 \\\ ][\	\
 \\\ ]*/gcs) {
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
+$Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
@@ -23199,11 +23199,11 @@ $State = B_ATTR_NAME_STATE;
 \\\ ]*([^\ \	\
 \\\ \"\&\'\<\=\>\`])([^\ \	\
 \\\ \"\&\'\<\=\>\`]*)\>/gcs) {
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
+$Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
@@ -23270,11 +23270,11 @@ push @$Tokens, $Token;
 \\\ ][\	\
 \\\ ]*([A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)/gcs) {
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
+$Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
@@ -23290,22 +23290,22 @@ $Attr->{q<name>} .= $2;
         }
       
 $State = A_ATTR_NAME_STATE;
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
+$Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $3) + 32);
 $Attr->{index} = $Offset + $-[3];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $4;
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)[\	\
 \\\ ][\	\
 \\\ ]*\=[\	\
 \\\ ]*\'([^\ \\&\']*)\'\/\>/gcs) {
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
+$Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
@@ -23372,10 +23372,10 @@ push @$Tokens, $Token;
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)\=[\	\
 \\\ ]*\'([^\ \\&\']*)\'\/\>/gcs) {
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $Attr->{q<name>} .= $2;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
@@ -23443,11 +23443,11 @@ push @$Tokens, $Token;
 \\\ ][\	\
 \\\ ]*\=[\	\
 \\\ ]*\"([^\ \\"\&]*)\"\/\>/gcs) {
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
+$Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
@@ -23514,10 +23514,10 @@ push @$Tokens, $Token;
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)\=[\	\
 \\\ ]*\"([^\ \\"\&]*)\"\/\>/gcs) {
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $Attr->{q<name>} .= $2;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
@@ -23585,11 +23585,11 @@ push @$Tokens, $Token;
 \\\ ][\	\
 \\\ ]*\=[\	\
 \\\ ]*\"([^\ \\"\&]*)\"\>/gcs) {
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
+$Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
@@ -23654,10 +23654,10 @@ push @$Tokens, $Token;
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)\=[\	\
 \\\ ]*\"([^\ \\"\&]*)\"\>/gcs) {
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $Attr->{q<name>} .= $2;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
@@ -23722,10 +23722,10 @@ push @$Tokens, $Token;
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)\=[\	\
 \\\ ]*\'([^\ \\&\']*)\'\>/gcs) {
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $Attr->{q<name>} .= $2;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
@@ -23791,11 +23791,11 @@ push @$Tokens, $Token;
 \\\ ][\	\
 \\\ ]*\=[\	\
 \\\ ]*\'([^\ \\&\']*)\'\>/gcs) {
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
+$Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
@@ -23861,11 +23861,11 @@ push @$Tokens, $Token;
 \\\ ]*\'([^\ \\&\']*)\'[\	\
 \\\ ][\	\
 \\\ ]*/gcs) {
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
+$Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
@@ -23887,11 +23887,11 @@ $State = B_ATTR_NAME_STATE;
 \\\ ]*\"([^\ \\"\&]*)\"[\	\
 \\\ ][\	\
 \\\ ]*/gcs) {
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
+$Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
@@ -23913,10 +23913,10 @@ $State = B_ATTR_NAME_STATE;
 \\\ \"\'\/\<\=\>A-Z]*)[\	\
 \\\ ][\	\
 \\\ ]*\/\>/gcs) {
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $Attr->{q<name>} .= $2;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
@@ -23983,10 +23983,10 @@ push @$Tokens, $Token;
 \\\ \"\'\/\<\=\>A-Z]*)[\	\
 \\\ ][\	\
 \\\ ]*\>/gcs) {
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $Attr->{q<name>} .= $2;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
@@ -24049,11 +24049,11 @@ push @$Tokens, $Token;
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)\=[\	\
 \\\ ]*\'([^\ \\&\']*)\'\/\>/gcs) {
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
+$Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
@@ -24119,11 +24119,11 @@ push @$Tokens, $Token;
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)\=[\	\
 \\\ ]*\"([^\ \\"\&]*)\"\/\>/gcs) {
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
+$Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
@@ -24189,11 +24189,11 @@ push @$Tokens, $Token;
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)\=[\	\
 \\\ ]*\'([^\ \\&\']*)\'\>/gcs) {
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
+$Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
@@ -24257,11 +24257,11 @@ push @$Tokens, $Token;
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)\=[\	\
 \\\ ]*\"([^\ \\"\&]*)\"\>/gcs) {
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
+$Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
@@ -24326,11 +24326,11 @@ push @$Tokens, $Token;
 \\\ \"\'\/\<\=\>A-Z]*)[\	\
 \\\ ][\	\
 \\\ ]*\/\>/gcs) {
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
+$Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
@@ -24395,10 +24395,10 @@ push @$Tokens, $Token;
 } elsif ($Input =~ /\G([^\ \	\
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)\/\>/gcs) {
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $Attr->{q<name>} .= $2;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
@@ -24464,11 +24464,11 @@ push @$Tokens, $Token;
 \\\ \"\'\/\<\=\>A-Z]*)[\	\
 \\\ ][\	\
 \\\ ]*\>/gcs) {
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
+$Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
@@ -24531,10 +24531,10 @@ push @$Tokens, $Token;
 } elsif ($Input =~ /\G([^\ \	\
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)\>/gcs) {
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $Attr->{q<name>} .= $2;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
@@ -24596,11 +24596,11 @@ push @$Tokens, $Token;
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)\/\>/gcs) {
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
+$Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
@@ -24664,11 +24664,11 @@ push @$Tokens, $Token;
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)\>/gcs) {
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
+$Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
@@ -24873,67 +24873,67 @@ push @$Tokens, $Token;
           }
         
 } elsif ($Input =~ /\G([ABCDEFGHJKNQRVWZILMOPSTUXY])/gcs) {
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
+$Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + (pos $Input) - length $1;
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$State = ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
-$Attr = {di => $DI, index => 0};
+$Attr = {di => $DI};
+$Attr->{q<name>} = q@�@;
+$Attr->{index} = $Offset + (pos $Input) - length $1;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Attr->{q<name>} = q@�@;
-$Attr->{index} = $Offset + (pos $Input) - length $1;
 } elsif ($Input =~ /\G([\"])/gcs) {
-$Attr = {di => $DI, index => 0};
+$Attr = {di => $DI};
+$Attr->{q<name>} = $1;
+$Attr->{index} = $Offset + (pos $Input) - length $1;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 
             push @$Errors, {type => 'bad attribute name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Attr->{q<name>} = $1;
-$Attr->{index} = $Offset + (pos $Input) - length $1;
 } elsif ($Input =~ /\G([\'])/gcs) {
-$Attr = {di => $DI, index => 0};
+$Attr = {di => $DI};
+$Attr->{q<name>} = $1;
+$Attr->{index} = $Offset + (pos $Input) - length $1;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 
             push @$Errors, {type => 'bad attribute name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
+} elsif ($Input =~ /\G([\<])/gcs) {
+$Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + (pos $Input) - length $1;
-} elsif ($Input =~ /\G([\<])/gcs) {
-$Attr = {di => $DI, index => 0};
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 
             push @$Errors, {type => 'tag not closed', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Attr->{q<name>} = $1;
-$Attr->{index} = $Offset + (pos $Input) - length $1;
 } elsif ($Input =~ /\G([\=])/gcs) {
 
             push @$Errors, {type => 'parser:no attr name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Attr = {di => $DI, index => 0};
+$Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + (pos $Input) - length $1;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
+$Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + (pos $Input) - length $1;
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$State = ATTR_NAME_STATE;
 } else {
 if ($EOF) {
 
@@ -30556,15 +30556,15 @@ push @$Tokens, $Token;
             push @$Errors, {type => 'nestc has no net', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Attr = {di => $DI, index => 0};
+$Attr = {di => $DI};
+$Attr->{q<name>} = q@�@;
+$Attr->{index} = $Offset + (pos $Input) - length $1;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Attr->{q<name>} = q@�@;
-$Attr->{index} = $Offset + (pos $Input) - length $1;
 } elsif ($Input =~ /\G([\	\\ \
 \])/gcs) {
 
@@ -30577,29 +30577,29 @@ $State = B_ATTR_NAME_STATE;
             push @$Errors, {type => 'nestc has no net', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Attr = {di => $DI, index => 0};
+$Attr = {di => $DI};
+$Attr->{q<name>} = $1;
+$Attr->{index} = $Offset + (pos $Input) - length $1;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 
             push @$Errors, {type => 'bad attribute name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Attr->{q<name>} = $1;
-$Attr->{index} = $Offset + (pos $Input) - length $1;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
             push @$Errors, {type => 'nestc has no net', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Attr = {di => $DI, index => 0};
+$Attr = {di => $DI};
+$Attr->{q<name>} = $1;
+$Attr->{index} = $Offset + (pos $Input) - length $1;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 
             push @$Errors, {type => 'bad attribute name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Attr->{q<name>} = $1;
-$Attr->{index} = $Offset + (pos $Input) - length $1;
 } elsif ($Input =~ /\G([\/])/gcs) {
 
             push @$Errors, {type => 'nestc has no net', level => 'm',
@@ -30611,15 +30611,15 @@ $State = SELF_CLOSING_START_TAG_STATE;
             push @$Errors, {type => 'nestc has no net', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Attr = {di => $DI, index => 0};
+$Attr = {di => $DI};
+$Attr->{q<name>} = $1;
+$Attr->{index} = $Offset + (pos $Input) - length $1;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 
             push @$Errors, {type => 'tag not closed', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Attr->{q<name>} = $1;
-$Attr->{index} = $Offset + (pos $Input) - length $1;
 } elsif ($Input =~ /\G([\=])/gcs) {
 
             push @$Errors, {type => 'nestc has no net', level => 'm',
@@ -30629,7 +30629,7 @@ $Attr->{index} = $Offset + (pos $Input) - length $1;
             push @$Errors, {type => 'parser:no attr name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Attr = {di => $DI, index => 0};
+$Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + (pos $Input) - length $1;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
@@ -30639,21 +30639,21 @@ $State = ATTR_NAME_STATE;
             push @$Errors, {type => 'nestc has no net', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
+$Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + (pos $Input) - length $1;
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$State = ATTR_NAME_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'nestc has no net', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Attr = {di => $DI, index => 0};
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
+$Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + (pos $Input) - length $1;
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$State = ATTR_NAME_STATE;
 } else {
 if ($EOF) {
 
