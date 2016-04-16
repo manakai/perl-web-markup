@@ -8055,16 +8055,28 @@ $Element->{+HTML_NS}->{menu} = {
 }; # menu
 
 $Element->{+HTML_NS}->{menuitem} = {
-  %HTMLEmptyChecker,
+  %HTMLTextChecker,
   check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
 
     ## Explicit command mode.
-    unless ($item->{node}->has_attribute_ns (undef, 'label')) {
-      $self->{onerror}->(node => $item->{node},
-                         type => 'attribute missing',
-                         text => 'label',
-                         level => 'm');
+    my $label_attr = $item->{node}->get_attribute_node_ns (undef, 'label');
+    unless (defined $label_attr) {
+      my $v = '';
+      for ($item->{node}->child_nodes->to_list) {
+        if ($_->node_type == 3) { # TEXT_NODE
+          $v .= $_->data;
+        }
+      }
+      $v =~ s/\A[\x09\x0A\x0C\x0D\x20]+//;
+      $v =~ s/[\x09\x0A\x0C\x0D\x20]+\z//;
+      $v =~ s/[\x09\x0A\x0C\x0D\x20]+/ /g;
+      unless (length $v) {
+        $self->{onerror}->(node => $item->{node},
+                           type => 'attribute missing',
+                           text => 'label',
+                           level => 'm');
+      }
     }
 
     my $type = $item->{node}->get_attribute_ns (undef, 'type') || '';

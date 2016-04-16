@@ -244,7 +244,7 @@ test {
 } n => 1, name => 'attr_value';
 
 for my $tag_name (qw(
-  html div p command image isindex
+  html div p command image isindex menuitem
 )) {
   test {
     my $c = shift;
@@ -257,7 +257,7 @@ for my $tag_name (qw(
 
 for my $tag_name (qw(
   area base basefont bgsound br col embed frame hr img input
-  keygen link menuitem meta param source track wbr
+  keygen link meta param source track wbr
 )) {
   test {
     my $c = shift;
@@ -438,7 +438,7 @@ run_tests;
 
 =head1 LICENSE
 
-Copyright 2009-2014 Wakaba <wakaba@suikawiki.org>.
+Copyright 2009-2016 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
