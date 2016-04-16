@@ -167,7 +167,7 @@ local/errors.json:
 
 local/bin/jq:
 	mkdir -p local/bin
-	$(WGET) -O $@ http://stedolan.github.io/jq/download/linux64/jq
+	$(WGET) -O $@ https://stedolan.github.io/jq/download/linux64/jq
 	chmod u+x $@
 
 local/aria-html-map.json: local/aria.json local/bin/jq

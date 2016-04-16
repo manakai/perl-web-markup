@@ -2653,7 +2653,6 @@ $Web::HTML::_SyntaxDefs = {
                                                       "input" => 1,
                                                       "keygen" => 1,
                                                       "link" => 1,
-                                                      "menuitem" => 1,
                                                       "meta" => 1,
                                                       "param" => 1,
                                                       "source" => 1,

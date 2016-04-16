@@ -257,6 +257,7 @@ sub get_inner_html ($$) {
         $attr->[1] =~ s/"/&quot;/g;
         #$attr->[1] =~ s/</&lt;/g;
         #$attr->[1] =~ s/>/&gt;/g;
+# XXX U+0000-001F
         $s .= $attr->[1] . '"';
       }
       $s .= '>';

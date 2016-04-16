@@ -89,7 +89,7 @@ DOM Parsing and Serialization Standard
 
 L<Web::HTML::Serializer>.
 
-L<Web::DOM::RootNode>.
+L<Web::DOM::ParentNode>.
 
 Namespace fixup <http://suika.fam.cx/www/markup/xml/nsfixup>.
 
