@@ -56952,10 +56952,98 @@ push @$Tokens, $Token;
             ## </XML>
           }
         
+} elsif ($Input =~ /\G\>/gcs) {
+$State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
+push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            ## <!Temma></!Temma>
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            ## <!Temma></!Temma>
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## <XML>
+            return 1 if @$OE <= 1;
+            ## </XML>
+          }
+        
 } elsif ($Input =~ /\G([\	\\ \
 \]+)/gcs) {
 } elsif ($Input =~ /\G([\/])/gcs) {
 $State = SELF_CLOSING_START_TAG_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
+push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            ## <!Temma></!Temma>
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            ## <!Temma></!Temma>
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## <XML>
+            return 1 if @$OE <= 1;
+            ## </XML>
+          }
+        
 } elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY])/gcs) {
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
@@ -57012,54 +57100,6 @@ $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + (pos $Input) - length $1;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
-} elsif ($Input =~ /\G([\>])/gcs) {
-
-            push @$Errors, {type => 'no attr value', level => 'm',
-                            di => $DI, index => $Offset + (pos $Input) - 1};
-          
-$State = DATA_STATE;
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            if (keys %{$Token->{attrs} or {}}) {
-              push @$Errors, {type => 'end tag attribute',
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-            if ($Token->{self_closing_flag}) {
-              push @$Errors, {type => 'nestc',
-                              text => $Token->{tag_name},
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-          }
-        
-push @$Tokens, $Token;
-
-          if ($Token->{type} == START_TAG_TOKEN) {
-            ## <!Temma></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            if (not defined $LastStartTagName) { # "first start tag"
-              $LastStartTagName = $Token->{tag_name};
-              return 1;
-            } else {
-              $LastStartTagName = $Token->{tag_name};
-            }
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
-          }
-        
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            ## <!Temma></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## <XML>
-            return 1 if @$OE <= 1;
-            ## </XML>
-          }
-        
 } elsif ($Input =~ /\G(.)/gcs) {
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
