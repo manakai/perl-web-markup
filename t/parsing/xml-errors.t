@@ -35,7 +35,7 @@ for my $error_type (keys %$error_defs) {
       $parser->di ($di);
       $parser->scripting (!$test->{noscript});
       if (defined $test->{context}) {
-        my $el = $doc->create_element ($test->{context});
+        my $el = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', $test->{context});
         $parser->parse_char_string_with_context ($test->{input}, $el => $doc);
       } else {
         $parser->parse_chars_start ($doc);

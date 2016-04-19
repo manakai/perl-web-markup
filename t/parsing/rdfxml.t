@@ -76,7 +76,7 @@ for my $path (($data_path->children (qr/\.dat$/))) {
     test {
       my $c = shift;
       my $doc = new Web::DOM::Document;
-      my $el = $doc->create_element ('div');
+      my $el = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'div');
       $el->prefix ('hoge151251122');
       my $p = new Web::XML::Parser;
       $p->onerror (sub { });

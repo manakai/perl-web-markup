@@ -9217,7 +9217,8 @@ $Element->{(AT_NS)}->{'deleted-entry'} = {
 
 sub _check_fallback_html ($$$$) {
   my ($self, $context, $disallowed, $container_ln) = @_;
-  my $container = $context->owner_document->create_element ($container_ln);
+  my $container = $context->owner_document->create_element_ns
+      (HTML_NS, $container_ln);
 
   my $onerror = $GetNestedOnError->($self->onerror, $context);
 
@@ -9292,7 +9293,7 @@ $CheckDIVContent = sub {
   my ($self, $node) = @_;
   require Web::DOM::Document;
   my $doc = new Web::DOM::Document;
-  my $div = $doc->create_element ('div');
+  my $div = $doc->create_element_ns (HTML_NS, 'div');
 
   require Web::HTML::Parser;
   my $parser = Web::HTML::Parser->new;
@@ -9403,15 +9404,15 @@ $Element->{+HTML_NS}->{template} = {
     my $container;
     if (not defined $model) {
       ## Flow content or metadata content
-      $container = $df->owner_document->create_element
-          ($has_flow ? 'div' : 'head');
+      $container = $df->owner_document->create_element_ns
+          (HTML_NS, $has_flow ? 'div' : 'head');
     } elsif ($model eq 'metadata') {
-      $container = $df->owner_document->create_element ('head');
+      $container = $df->owner_document->create_element_ns (HTML_NS, 'head');
     } elsif ($model eq 'popup menu') {
-      $container = $df->owner_document->create_element ('menu');
+      $container = $df->owner_document->create_element_ns (HTML_NS, 'menu');
       $container->set_attribute_ns (undef, type => 'context');
     } else {
-      $container = $df->owner_document->create_element ($model);
+      $container = $df->owner_document->create_element_ns (HTML_NS, $model);
       $container->set_attribute_ns (undef, data => 'http://test/') if $model eq 'object';
     }
 

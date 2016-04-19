@@ -137,7 +137,7 @@ sub check_parsed_term ($$) {
           $self->onerror->(@_);
         }); # XXX sps
         $parser->scripting ($self->scripting);
-        my $container = $doc->create_element ('div');
+        my $container = $doc->create_element_ns (HTML_NS, 'div');
         my $children = $parser->parse_char_string_with_context
             ($term->{lexical}, $container => $doc);
         my $df = $doc->create_document_fragment;

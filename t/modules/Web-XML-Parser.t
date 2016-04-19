@@ -296,7 +296,7 @@ test {
 test {
   my $c = shift;
   my $doc = new Web::DOM::Document;
-  my $el = $doc->create_element ('template');
+  my $el = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'template');
   my $parser = new Web::XML::Parser;
   my $result = $parser->parse_char_string_with_context
       (q{<p>a</p><!--aa-->bb}, $el => $doc);
@@ -312,7 +312,7 @@ test {
 test {
   my $c = shift;
   my $doc = new Web::DOM::Document;
-  my $el = $doc->create_element ('hoge');
+  my $el = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'hoge');
   my $parser = new Web::XML::Parser;
   my $result = $parser->parse_char_string_with_context
       (q{<template><p>a</p><!--aa-->bb</template>}, $el => $doc);

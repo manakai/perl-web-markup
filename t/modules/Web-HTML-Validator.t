@@ -836,7 +836,7 @@ test {
   my $doc = new Web::DOM::Document;
   $$doc->[2]->{encoding} = 'shift_jis'; # XXX
   $doc->xml_encoding ('shift_jis');
-  my $el = $doc->create_element ('meta');
+  my $el = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'meta');
   $el->set_attribute (charset => 'x-sjis');
   $doc->append_child ($el);
   my $validator = Web::HTML::Validator->new;
@@ -858,7 +858,7 @@ test {
   my $c = shift;
   my $doc = new Web::DOM::Document;
   $$doc->[2]->{encoding} = 'shift_jis'; # XXX
-  my $el = $doc->create_element ('meta');
+  my $el = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'meta');
   $el->set_attribute (charset => 'x-sjis');
   $doc->append_child ($el);
   my $validator = Web::HTML::Validator->new;
@@ -1046,7 +1046,7 @@ for my $test (
 test {
   my $c = shift;
   my $doc = new Web::DOM::Document;
-  my $el = $doc->create_element ('br');
+  my $el = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'br');
   $el->set_attribute (style => 'hoge: fuga');
   my $validator = Web::HTML::Validator->new;
   my @error;
@@ -1066,8 +1066,8 @@ test {
 test {
   my $c = shift;
   my $doc = new Web::DOM::Document;
-  my $el = $doc->create_element ('template');
-  my $el2 = $doc->create_element ('p');
+  my $el = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'template');
+  my $el2 = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'p');
   $el->append_child ($el2);
   my $validator = Web::HTML::Validator->new;
   my @error;
@@ -1130,7 +1130,7 @@ for my $test (
 test {
   my $c = shift;
   my $doc = new Web::DOM::Document;
-  my $el = $doc->create_element ('dir');
+  my $el = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'dir');
   my $val = new Web::HTML::Validator;
   my $preferred = [];
   $val->onerror (sub {
@@ -1145,7 +1145,7 @@ test {
 test {
   my $c = shift;
   my $doc = new Web::DOM::Document;
-  my $el = $doc->create_element ('p');
+  my $el = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'p');
   $el->set_attribute (align => 'left');
   $el->text_content (1);
   my $val = new Web::HTML::Validator;

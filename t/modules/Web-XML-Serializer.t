@@ -510,9 +510,9 @@ test {
 test {
   my $c = shift;
   my $doc = new Web::DOM::Document;
-  my $el = $doc->create_element ('template');
-  my $el2 = $doc->create_element ('hoge');
-  my $el3 = $doc->create_element ('fuga');
+  my $el = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'template');
+  my $el2 = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'hoge');
+  my $el3 = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'fuga');
   $el->append_child ($el2);
   $el->content->append_child ($el3);
   $el->content->append_child ($doc->create_text_node ('abc'));
@@ -524,9 +524,9 @@ test {
 test {
   my $c = shift;
   my $doc = new Web::DOM::Document;
-  my $el = $doc->create_element ('template');
-  my $el2 = $doc->create_element ('hoge');
-  my $el3 = $doc->create_element ('br');
+  my $el = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'template');
+  my $el2 = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'hoge');
+  my $el3 = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'br');
   $el->append_child ($el2);
   $el->content->append_child ($el3);
   $el->content->append_child ($doc->create_text_node ('abc'));
@@ -539,11 +539,11 @@ test {
 test {
   my $c = shift;
   my $doc = new Web::DOM::Document;
-  my $el0 = $doc->create_element ('foo');
-  my $el = $doc->create_element ('template');
+  my $el0 = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'foo');
+  my $el = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'template');
   $el0->append_child ($el);
-  my $el2 = $doc->create_element ('hoge');
-  my $el3 = $doc->create_element ('fuga');
+  my $el2 = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'hoge');
+  my $el3 = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'fuga');
   $el->append_child ($el2);
   $el->content->append_child ($el3);
   $el->content->append_child ($doc->create_text_node ('abc'));
@@ -556,10 +556,10 @@ test {
   my $c = shift;
   my $doc = new Web::DOM::Document;
   my $el0 = $doc->create_document_fragment;
-  my $el = $doc->create_element ('template');
+  my $el = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'template');
   $el0->append_child ($el);
-  my $el2 = $doc->create_element ('hoge');
-  my $el3 = $doc->create_element ('fuga');
+  my $el2 = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'hoge');
+  my $el3 = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'fuga');
   $el->append_child ($el2);
   $el->content->append_child ($el3);
   $el->content->append_child ($doc->create_text_node ('abc'));

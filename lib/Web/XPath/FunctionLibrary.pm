@@ -33,7 +33,7 @@ my $Functions = {
     code => sub {
       my ($self, $args, $ctx) = @_;
       if ($args->[0]->{type} ne 'node-set') {
-        $self->onerror->(type => 'xpath:incompat with node-set', # XXX
+        $self->onerror->(type => 'xpath:incompat with node-set',
                          level => 'm',
                          value => $args->[0]->{type});
         return undef;
@@ -91,7 +91,7 @@ my $Functions = {
       if (not $args->[0]) {
         $node = $ctx->{node};
       } elsif ($args->[0]->{type} ne 'node-set') {
-        $self->onerror->(type => 'xpath:incompat with node-set', # XXX
+        $self->onerror->(type => 'xpath:incompat with node-set',
                          level => 'm',
                          value => $args->[0]->{type});
         return undef;
@@ -116,7 +116,7 @@ my $Functions = {
       if (not $args->[0]) {
         $node = $ctx->{node};
       } elsif ($args->[0]->{type} ne 'node-set') {
-        $self->onerror->(type => 'xpath:incompat with node-set', # XXX
+        $self->onerror->(type => 'xpath:incompat with node-set',
                          level => 'm',
                          value => $args->[0]->{type});
         return undef;
@@ -137,7 +137,7 @@ my $Functions = {
       if (not $args->[0]) {
         $node = $ctx->{node};
       } elsif ($args->[0]->{type} ne 'node-set') {
-        $self->onerror->(type => 'xpath:incompat with node-set', # XXX
+        $self->onerror->(type => 'xpath:incompat with node-set',
                          level => 'm',
                          value => $args->[0]->{type});
         return undef;
@@ -388,7 +388,7 @@ my $Functions = {
     code => sub {
       my ($self, $args, $ctx) = @_;
       if ($args->[0]->{type} ne 'node-set') {
-        $self->onerror->(type => 'xpath:incompat with node-set', # XXX
+        $self->onerror->(type => 'xpath:incompat with node-set',
                          level => 'm',
                          value => $args->[0]->{type});
         return undef;

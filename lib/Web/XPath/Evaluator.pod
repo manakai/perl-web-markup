@@ -149,9 +149,9 @@ or not is unknown.  Otherwise, if C<reversed> is true, the nodes in
 the C<value> is sorted in reverse document order.  Otherwise, the
 nodes in the C<value> is sorted in document order.
 
-=back
+=head2 Other types
 
-Any other non-basic data type is not supported.
+No non-basic data type is supported.
 
 =head1 NODES
 
@@ -178,7 +178,7 @@ XML Path Language (XPath) Version 1.0 <http://www.w3.org/TR/xpath/>.
 XML Path Language (XPath) Version 1.0 Specification Errata
 <http://www.w3.org/1999/11/REC-xpath-19991116-errata/>.
 
-HTML - Interactions with XPath and XSLT
+HTML Standard - Interactions with XPath and XSLT
 <http://www.whatwg.org/specs/web-apps/current-work/#interactions-with-xpath-and-xslt>.
 
 The C</> at the beginning of the location path MUST select the root of

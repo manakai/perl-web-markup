@@ -33,7 +33,7 @@ test {
 test {
   my $c = shift;
   my $doc = new Web::DOM::Document;
-  my $el = $doc->create_element ('a');
+  my $el = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'a');
   my $parser = Web::XPath::Parser->new;
   my $expr = $parser->parse_char_string_as_expression ('/');
   my $eval = Web::XPath::Evaluator->new;
@@ -85,7 +85,7 @@ test {
   my $eval = Web::XPath::Evaluator->new;
   my $doc = new Web::DOM::Document;
   eq_or_diff $eval->to_string_value ($doc), {type => 'string', value => ''};
-  my $el = $doc->create_element ('a');
+  my $el = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'a');
   eq_or_diff $eval->to_string_value ($el), {type => 'string', value => ''};
   $el->text_content ('aagtw');
   eq_or_diff $eval->to_string_value ($el), {type => 'string', value => 'aagtw'};
@@ -255,7 +255,7 @@ test {
 test {
   my $c = shift;
   my $doc = new Web::DOM::Document;
-  my $e1 = $doc->create_element ('aa');
+  my $e1 = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'aa');
   my $parser = Web::XPath::Parser->new;
   my $eval = Web::XPath::Evaluator->new;
   $parser->variable_bindings->set_variable ('http://f/', 'ab-c' => $eval->to_xpath_node_set ([$e1, $doc, $doc]));
@@ -270,7 +270,7 @@ test {
 test {
   my $c = shift;
   my $doc = new Web::DOM::Document;
-  my $e1 = $doc->create_element ('aa');
+  my $e1 = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'aa');
   $doc->append_child ($e1);
   my $parser = Web::XPath::Parser->new;
   $parser->ns_resolver (sub { 'http://f/' });
@@ -286,7 +286,7 @@ test {
 test {
   my $c = shift;
   my $doc = new Web::DOM::Document;
-  my $e1 = $doc->create_element ('aa');
+  my $e1 = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'aa');
   my $parser = Web::XPath::Parser->new;
   $parser->ns_resolver (sub { 'http://f/' });
   my $eval = Web::XPath::Evaluator->new;
@@ -327,12 +327,12 @@ test {
   my $c = shift;
   my $doc1 = new Web::DOM::Document;
   $doc1->manakai_is_html (1);
-  my $el1 = $doc1->create_element ('hoge');
+  my $el1 = $doc1->create_element_ns ('http://www.w3.org/1999/xhtml', 'hoge');
   my $el3 = $doc1->create_element_ns (undef, 'hoge');
   $doc1->append_child ($el1);
   $el1->append_child ($el3);
   my $doc2 = new Web::DOM::Document;
-  my $el2 = $doc2->create_element ('hoge');
+  my $el2 = $doc2->create_element_ns ('http://www.w3.org/1999/xhtml', 'hoge');
   my $el4 = $doc2->create_element_ns (undef, 'hoge');
   $doc2->append_child ($el2);
   $el2->append_child ($el4);
