@@ -429,7 +429,7 @@ test {
   my $c = shift;
   my $doc = new Web::DOM::Document;
   $doc->strict_error_checking (0);
-  my $el = $doc->create_element ('hoge');
+  my $el = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'hoge');
   $el->set_attribute_ns (undef, [undef, 'xml:lang'] => 'abcd');
   my $validator = Web::HTML::Validator->new;
   my @error;
@@ -464,7 +464,7 @@ for my $test (
     my $c = shift;
     my $doc = new Web::DOM::Document;
     $doc->strict_error_checking (0);
-    my $el = $doc->create_element ('hoge');
+    my $el = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'hoge');
     $el->set_attribute_ns (undef, hoge => $test->[0]);
     my $validator = Web::HTML::Validator->new;
     my @error;
@@ -495,7 +495,7 @@ for my $test (
     my $c = shift;
     my $doc = new Web::DOM::Document;
     $doc->strict_error_checking (0);
-    my $el = $doc->create_element ('hoge');
+    my $el = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'hoge');
     $el->text_content ($test->[0]);
     my $validator = Web::HTML::Validator->new;
     my @error;
@@ -530,7 +530,7 @@ for my $test (
     my $c = shift;
     my $doc = new Web::DOM::Document;
     $doc->strict_error_checking (0);
-    my $el = $doc->create_element ('hoge');
+    my $el = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'hoge');
     $el->set_attribute_ns (undef, hoge => $test->[0]);
     my $validator = Web::HTML::Validator->new;
     my @error;
@@ -560,7 +560,7 @@ for my $test (
     my $doc = new Web::DOM::Document;
     $doc->strict_error_checking (0);
     $doc->manakai_is_html (1);
-    my $el = $doc->create_element ('hoge');
+    my $el = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'hoge');
     $el->set_attribute_ns (undef, hoge => $test->[0]);
     my $validator = Web::HTML::Validator->new;
     my @error;
@@ -589,7 +589,7 @@ for my $test (
     my $c = shift;
     my $doc = new Web::DOM::Document;
     $doc->strict_error_checking (0);
-    my $el = $doc->create_element ('hoge');
+    my $el = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'hoge');
     $el->text_content ($test->[0]);
     my $validator = Web::HTML::Validator->new;
     my @error;
@@ -616,7 +616,7 @@ for my $test (
     my $doc = new Web::DOM::Document;
     $doc->strict_error_checking (0);
     $doc->manakai_is_html (1);
-    my $el = $doc->create_element ('hoge');
+    my $el = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'hoge');
     $el->text_content ($test->[0]);
     my $validator = Web::HTML::Validator->new;
     my @error;
@@ -649,7 +649,7 @@ for my $test (
     my $doc = new Web::DOM::Document;
     $doc->input_encoding ($test->[0]);
     $doc->manakai_is_html (1);
-    my $el = $doc->create_element ('meta');
+    my $el = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'meta');
     $el->set_attribute (charset => $test->[1]);
     $doc->inner_html ('<!DOCTYPE html><html lang=en><title>a</title><body>a');
     $doc->manakai_head->append_child ($el);
@@ -673,7 +673,7 @@ for my $test (
     my $doc = new Web::DOM::Document;
     $doc->input_encoding ($test->[0]);
     $doc->manakai_is_html (1);
-    my $el = $doc->create_element ('meta');
+    my $el = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'meta');
     $el->http_equiv ('Content-type');
     $el->content ('text/html;charset=' . $test->[1]);
     $doc->inner_html ('<!DOCTYPE html><html lang=en><title>a</title><body>a');
@@ -882,18 +882,18 @@ for my $test (
   [sub { }, [{type => 'no document element', level => 'w', node => 'doc'}]],
   [sub {
      my $doc = $_[0];
-     my $p = $doc->append_child ($doc->create_element ('p'));
+     my $p = $doc->append_child ($doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'p'));
      $p->text_content ('b');
      return {p => $p};
    }, [{type => 'element not allowed:root', level => 'm', node => 'p'}]],
   [sub {
      my $doc = $_[0];
      $doc->dom_config->{manakai_strict_document_children} = 0;
-     my $p = $doc->append_child ($doc->create_element ('p'));
+     my $p = $doc->append_child ($doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'p'));
      $p->text_content ('b');
-     my $q = $doc->append_child ($doc->create_element ('q'));
+     my $q = $doc->append_child ($doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'q'));
      $q->text_content ('b');
-     my $s = $doc->append_child ($doc->create_element ('s'));
+     my $s = $doc->append_child ($doc->create_element_ns ('http://www.w3.org/1999/xhtml', 's'));
      $s->text_content ('s');
      return {p => $p, q => $q, s => $s};
    },
@@ -904,7 +904,7 @@ for my $test (
      my $doc = $_[0];
      $doc->dom_config->{manakai_strict_document_children} = 0;
      my $p = $doc->append_child ($doc->create_document_type_definition ('q'));
-     my $q = $doc->append_child ($doc->create_element ('q'));
+     my $q = $doc->append_child ($doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'q'));
      $q->text_content ('b');
      return {p => $p, q => $q};
    },
@@ -912,7 +912,7 @@ for my $test (
   [sub {
      my $doc = $_[0];
      $doc->dom_config->{manakai_strict_document_children} = 0;
-     my $q = $doc->append_child ($doc->create_element ('q'));
+     my $q = $doc->append_child ($doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'q'));
      $q->text_content ('b');
      my $p = $doc->append_child ($doc->create_document_type_definition ('q'));
      return {p => $p, q => $q};
@@ -924,7 +924,7 @@ for my $test (
      $doc->dom_config->{manakai_strict_document_children} = 0;
      my $p = $doc->append_child ($doc->create_document_type_definition ('q'));
      my $r = $doc->append_child ($doc->create_document_type_definition ('q'));
-     my $q = $doc->append_child ($doc->create_element ('q'));
+     my $q = $doc->append_child ($doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'q'));
      $q->text_content ('b');
      return {p => $p, q => $q, r => $r};
    },
@@ -1015,7 +1015,7 @@ for my $test (
      my $df = $doc->create_document_fragment;
      my $text = $doc->create_text_node ("\x{110000}");
      $df->append_child ($text);
-     my $el = $doc->create_element ('foo');
+     my $el = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'foo');
      $df->append_child ($el);
      return ($df, {df => $df, text => $text, foo => $el});
    },
@@ -1097,9 +1097,9 @@ for my $test (
     my $c = shift;
     my $doc = new Web::DOM::Document;
     $doc->manakai_is_html (1);
-    my $el1 = $doc->create_element ('head');
+    my $el1 = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'head');
     $el1->inner_html (q{<title>aa</title>});
-    my $el2 = $doc->create_element ('noscript');
+    my $el2 = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'noscript');
     $el2->manakai_append_indexed_string ([[$test->[0], 31, 0]]);
     $el1->append_child ($el2);
     my $validator = Web::HTML::Validator->new;

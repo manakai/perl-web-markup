@@ -249,7 +249,7 @@ for my $tag_name (qw(
   test {
     my $c = shift;
     my $doc = new Web::DOM::Document;
-    my $el = $doc->create_element ($tag_name);
+    my $el = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', $tag_name);
     is ${Web::HTML::Serializer->new->get_inner_html ([$el])}, qq{<$tag_name></$tag_name>};
     done $c;
   } n => 1, name => ['normal_element', $tag_name];

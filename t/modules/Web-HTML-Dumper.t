@@ -31,9 +31,9 @@ test {
 test {
   my $c = shift;
   my $doc = new Web::DOM::Document;
-  my $el = $doc->create_element ('template');
-  my $el1 = $doc->create_element ('p');
-  my $el2 = $doc->create_element ('q');
+  my $el = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'template');
+  my $el1 = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'p');
+  my $el2 = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'q');
   $el->append_child ($el1);
   $el->content->append_child ($el2);
   
@@ -47,11 +47,11 @@ content
 test {
   my $c = shift;
   my $doc = new Web::DOM::Document;
-  my $el0 = $doc->create_element ('hoge');
-  my $el = $doc->create_element ('template');
+  my $el0 = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'hoge');
+  my $el = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'template');
   $el0->append_child ($el);
-  my $el1 = $doc->create_element ('p');
-  my $el2 = $doc->create_element ('q');
+  my $el1 = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'p');
+  my $el2 = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'q');
   $el->append_child ($el1);
   $el->content->append_child ($el2);
   

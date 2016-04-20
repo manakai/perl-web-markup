@@ -51,7 +51,7 @@ sub _html_parser_change_the_encoding_fragment : Test(2) {
   });
   
   my $doc = new Web::DOM::Document;
-  my $el = $doc->create_element ('div');
+  my $el = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'div');
 
   $parser->parse_char_string_with_context
       ('<meta charset=shift_jis>', $el, Web::DOM::Document->new);
@@ -483,8 +483,8 @@ sub _parse_char_string_with_context_template_quirks : Test(2) {
   $doc->manakai_is_html (1);
   $doc->manakai_compat_mode ('quirks');
   my $parser = Web::HTML::Parser->new;
-  my $el = $doc->create_element ('template');
-  my $el2 = $doc->create_element ('hoge');
+  my $el = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'template');
+  my $el2 = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', 'hoge');
   $el->content->append_child ($el2);
   my $children = $parser->parse_char_string_with_context ('<p>aa<table>', $el2 => $doc);
   is $children->length, 2;
