@@ -13678,9 +13678,9 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -13723,9 +13723,9 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -13772,9 +13772,9 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -13817,9 +13817,9 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -13866,9 +13866,9 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -13944,13 +13944,13 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
         $Token = {type => DOCTYPE_TOKEN, tn => 0, 
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -13993,9 +13993,9 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -14042,9 +14042,9 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -14087,9 +14087,9 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -14136,9 +14136,9 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -14246,7 +14246,6 @@ if ($Input =~ /\G([\	\\ \
             return 1;
           }
         
-$State = RAWTEXT_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
@@ -14258,6 +14257,7 @@ $State = RAWTEXT_STATE;
                           di => $DI,
                           index => $TempIndex} if length $Temp;
         
+$State = RAWTEXT_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
@@ -14297,7 +14297,6 @@ $State = RAWTEXT_STATE_CR;
             return 1;
           }
         
-$State = RAWTEXT_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
@@ -14309,6 +14308,7 @@ $State = RAWTEXT_STATE;
                           di => $DI,
                           index => $TempIndex} if length $Temp;
         
+$State = RAWTEXT_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
@@ -14338,7 +14338,6 @@ $AnchoredIndex = $Offset + (pos $Input) - 1;
           return 1;
         }
       
-$State = RAWTEXT_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
@@ -14350,6 +14349,7 @@ $State = RAWTEXT_STATE;
                           di => $DI,
                           index => $TempIndex} if length $Temp;
         
+$State = RAWTEXT_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
@@ -14362,7 +14362,6 @@ $Temp .= $1;
 $Token->{q<tag_name>} .= $1;
 $Temp .= $1;
 } elsif ($Input =~ /\G([\ ])/gcs) {
-$State = RAWTEXT_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
@@ -14374,6 +14373,7 @@ $State = RAWTEXT_STATE;
                           di => $DI,
                           index => $TempIndex} if length $Temp;
         
+$State = RAWTEXT_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -14384,7 +14384,6 @@ $State = RAWTEXT_STATE;
                           di => $DI, index => $Offset + (pos $Input) - (length $1) - 0};
         
 } elsif ($Input =~ /\G(.)/gcs) {
-$State = RAWTEXT_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
@@ -14396,6 +14395,7 @@ $State = RAWTEXT_STATE;
                           di => $DI,
                           index => $TempIndex} if length $Temp;
         
+$State = RAWTEXT_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
@@ -14403,7 +14403,6 @@ $State = RAWTEXT_STATE;
         
 } else {
 if ($EOF) {
-$State = RAWTEXT_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
@@ -14415,6 +14414,7 @@ $State = RAWTEXT_STATE;
                           di => $DI,
                           index => $TempIndex} if length $Temp;
         
+$State = RAWTEXT_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -14466,12 +14466,12 @@ $State = RAWTEXT_END_TAG_NAME_STATE;
 $Token->{q<tag_name>} = $1;
 $Temp .= $1;
 } elsif ($Input =~ /\G([\ ])/gcs) {
-$State = RAWTEXT_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
                           di => $DI, index => $AnchoredIndex};
         
+$State = RAWTEXT_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -14482,12 +14482,12 @@ $State = RAWTEXT_STATE;
                           di => $DI, index => $Offset + (pos $Input) - (length $1) - 0};
         
 } elsif ($Input =~ /\G(.)/gcs) {
-$State = RAWTEXT_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
                           di => $DI, index => $AnchoredIndex};
         
+$State = RAWTEXT_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
@@ -14495,12 +14495,12 @@ $State = RAWTEXT_STATE;
         
 } else {
 if ($EOF) {
-$State = RAWTEXT_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
                           di => $DI, index => $AnchoredIndex};
         
+$State = RAWTEXT_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -14542,12 +14542,12 @@ $State = RAWTEXT_END_TAG_OPEN_STATE;
 $State = RAWTEXT_LESS_THAN_SIGN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\ ])/gcs) {
-$State = RAWTEXT_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
                           di => $DI, index => $AnchoredIndex};
         
+$State = RAWTEXT_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -14558,12 +14558,12 @@ $State = RAWTEXT_STATE;
                           di => $DI, index => $Offset + (pos $Input) - (length $1) - 0};
         
 } elsif ($Input =~ /\G(.)/gcs) {
-$State = RAWTEXT_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
                           di => $DI, index => $AnchoredIndex};
         
+$State = RAWTEXT_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
@@ -14571,12 +14571,12 @@ $State = RAWTEXT_STATE;
         
 } else {
 if ($EOF) {
-$State = RAWTEXT_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
                           di => $DI, index => $AnchoredIndex};
         
+$State = RAWTEXT_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -14690,7 +14690,6 @@ if ($Input =~ /\G([\	\\ \
             return 1;
           }
         
-$State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
@@ -14702,6 +14701,7 @@ $State = RCDATA_STATE;
                           di => $DI,
                           index => $TempIndex} if length $Temp;
         
+$State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
@@ -14754,7 +14754,6 @@ $State = CHARREF_IN_RCDATA_STATE;
             return 1;
           }
         
-$State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
@@ -14766,6 +14765,7 @@ $State = RCDATA_STATE;
                           di => $DI,
                           index => $TempIndex} if length $Temp;
         
+$State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
@@ -14795,7 +14795,6 @@ $AnchoredIndex = $Offset + (pos $Input) - 1;
           return 1;
         }
       
-$State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
@@ -14807,6 +14806,7 @@ $State = RCDATA_STATE;
                           di => $DI,
                           index => $TempIndex} if length $Temp;
         
+$State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
@@ -14819,7 +14819,6 @@ $Temp .= $1;
 $Token->{q<tag_name>} .= $1;
 $Temp .= $1;
 } elsif ($Input =~ /\G([\ ])/gcs) {
-$State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
@@ -14831,6 +14830,7 @@ $State = RCDATA_STATE;
                           di => $DI,
                           index => $TempIndex} if length $Temp;
         
+$State = RCDATA_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -14841,7 +14841,6 @@ $State = RCDATA_STATE;
                           di => $DI, index => $Offset + (pos $Input) - (length $1) - 0};
         
 } elsif ($Input =~ /\G(.)/gcs) {
-$State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
@@ -14853,6 +14852,7 @@ $State = RCDATA_STATE;
                           di => $DI,
                           index => $TempIndex} if length $Temp;
         
+$State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
@@ -14860,7 +14860,6 @@ $State = RCDATA_STATE;
         
 } else {
 if ($EOF) {
-$State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
@@ -14872,6 +14871,7 @@ $State = RCDATA_STATE;
                           di => $DI,
                           index => $TempIndex} if length $Temp;
         
+$State = RCDATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -14930,12 +14930,12 @@ $State = RCDATA_END_TAG_NAME_STATE;
 $Token->{q<tag_name>} = $1;
 $Temp .= $1;
 } elsif ($Input =~ /\G([\ ])/gcs) {
-$State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
                           di => $DI, index => $AnchoredIndex};
         
+$State = RCDATA_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -14946,12 +14946,12 @@ $State = RCDATA_STATE;
                           di => $DI, index => $Offset + (pos $Input) - (length $1) - 0};
         
 } elsif ($Input =~ /\G(.)/gcs) {
-$State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
                           di => $DI, index => $AnchoredIndex};
         
+$State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
@@ -14959,12 +14959,12 @@ $State = RCDATA_STATE;
         
 } else {
 if ($EOF) {
-$State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
                           di => $DI, index => $AnchoredIndex};
         
+$State = RCDATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -15013,12 +15013,12 @@ $State = RCDATA_END_TAG_OPEN_STATE;
 $State = RCDATA_LESS_THAN_SIGN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\ ])/gcs) {
-$State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
                           di => $DI, index => $AnchoredIndex};
         
+$State = RCDATA_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -15029,12 +15029,12 @@ $State = RCDATA_STATE;
                           di => $DI, index => $Offset + (pos $Input) - (length $1) - 0};
         
 } elsif ($Input =~ /\G(.)/gcs) {
-$State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
                           di => $DI, index => $AnchoredIndex};
         
+$State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
@@ -15042,12 +15042,12 @@ $State = RCDATA_STATE;
         
 } else {
 if ($EOF) {
-$State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
                           di => $DI, index => $AnchoredIndex};
         
+$State = RCDATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -16541,9 +16541,9 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -16573,12 +16573,12 @@ $State = BOGUS_DOCTYPE_STATE;
 } else {
 if ($EOF) {
 
-            push @$Errors, {type => 'parser:EOF', level => 'm',
+            push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
 $Token->{q<force_quirks_flag>} = 1;
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -16608,12 +16608,12 @@ $State = BOGUS_DOCTYPE_STATE;
 } else {
 if ($EOF) {
 
-            push @$Errors, {type => 'parser:EOF', level => 'm',
+            push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
 $Token->{q<force_quirks_flag>} = 1;
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -16643,12 +16643,12 @@ $State = BOGUS_DOCTYPE_STATE;
 } else {
 if ($EOF) {
 
-            push @$Errors, {type => 'parser:EOF', level => 'm',
+            push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
 $Token->{q<force_quirks_flag>} = 1;
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -16678,12 +16678,12 @@ $State = BOGUS_DOCTYPE_STATE;
 } else {
 if ($EOF) {
 
-            push @$Errors, {type => 'parser:EOF', level => 'm',
+            push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
 $Token->{q<force_quirks_flag>} = 1;
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -16711,12 +16711,12 @@ $State = BOGUS_DOCTYPE_STATE;
 } else {
 if ($EOF) {
 
-            push @$Errors, {type => 'parser:EOF', level => 'm',
+            push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
 $Token->{q<force_quirks_flag>} = 1;
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -16746,12 +16746,12 @@ $State = BOGUS_DOCTYPE_STATE;
 } else {
 if ($EOF) {
 
-            push @$Errors, {type => 'parser:EOF', level => 'm',
+            push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
 $Token->{q<force_quirks_flag>} = 1;
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -16781,12 +16781,12 @@ $State = BOGUS_DOCTYPE_STATE;
 } else {
 if ($EOF) {
 
-            push @$Errors, {type => 'parser:EOF', level => 'm',
+            push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
 $Token->{q<force_quirks_flag>} = 1;
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -16816,12 +16816,12 @@ $State = BOGUS_DOCTYPE_STATE;
 } else {
 if ($EOF) {
 
-            push @$Errors, {type => 'parser:EOF', level => 'm',
+            push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
 $Token->{q<force_quirks_flag>} = 1;
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -16851,12 +16851,12 @@ $State = BOGUS_DOCTYPE_STATE;
 } else {
 if ($EOF) {
 
-            push @$Errors, {type => 'parser:EOF', level => 'm',
+            push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
 $Token->{q<force_quirks_flag>} = 1;
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -16884,12 +16884,12 @@ $State = BOGUS_DOCTYPE_STATE;
 } else {
 if ($EOF) {
 
-            push @$Errors, {type => 'parser:EOF', level => 'm',
+            push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
 $Token->{q<force_quirks_flag>} = 1;
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -16936,9 +16936,9 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -16990,9 +16990,9 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -17023,9 +17023,9 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -17077,9 +17077,9 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -17382,6 +17382,1059 @@ if ($Input =~ /\G([^\	\\ \
 \\/\=\>ABCDEFGHJKNQRVWZILMOPSTUXY\ \"\'\<]+)/gcs) {
 $Attr->{q<name>} .= $1;
 
+} elsif ($Input =~ /\G[\	\
+\\\ ][\	\
+\\\ ]*\=[\	\
+\\\ ]*([^\ \	\
+\\\ \"\&\'\<\=\>\`])([^\ \	\
+\\\ \"\&\'\<\=\>\`]*)[\	\
+\\\ ][\	\
+\\\ ]*/gcs) {
+
+        if (defined $Token->{attrs}->{$Attr->{name}}) {
+          push @$Errors, {type => 'duplicate attribute',
+                          text => $Attr->{name},
+                          level => 'm',
+                          di => $Attr->{di},
+                          index => $Attr->{index}};
+        } else {
+          $Token->{attrs}->{$Attr->{name}} = $Attr;
+          push @{$Token->{attr_list} ||= []}, $Attr;
+          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
+        }
+      
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + $-[1]];
+push @{$Attr->{q<value>}}, [$2, $DI, $Offset + $-[2]];
+$State = B_ATTR_NAME_STATE;
+} elsif ($Input =~ /\G[\	\
+\\\ ][\	\
+\\\ ]*\=[\	\
+\\\ ]*([^\ \	\
+\\\ \"\&\'\<\=\>\`])([^\ \	\
+\\\ \"\&\'\<\=\>\`]*)\>/gcs) {
+
+        if (defined $Token->{attrs}->{$Attr->{name}}) {
+          push @$Errors, {type => 'duplicate attribute',
+                          text => $Attr->{name},
+                          level => 'm',
+                          di => $Attr->{di},
+                          index => $Attr->{index}};
+        } else {
+          $Token->{attrs}->{$Attr->{name}} = $Attr;
+          push @{$Token->{attr_list} ||= []}, $Attr;
+          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
+        }
+      
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + $-[1]];
+push @{$Attr->{q<value>}}, [$2, $DI, $Offset + $-[2]];
+$State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
+push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            ## <!Temma><HTML>
+            undef $InForeign;
+            ## </HTML></!Temma>
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            ## <!Temma><HTML>
+            undef $InForeign;
+            ## </HTML></!Temma>
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
+          }
+        
+} elsif ($Input =~ /\G\=[\	\
+\\\ ]*([^\ \	\
+\\\ \"\&\'\<\=\>\`])([^\ \	\
+\\\ \"\&\'\<\=\>\`]*)[\	\
+\\\ ][\	\
+\\\ ]*/gcs) {
+
+        if (defined $Token->{attrs}->{$Attr->{name}}) {
+          push @$Errors, {type => 'duplicate attribute',
+                          text => $Attr->{name},
+                          level => 'm',
+                          di => $Attr->{di},
+                          index => $Attr->{index}};
+        } else {
+          $Token->{attrs}->{$Attr->{name}} = $Attr;
+          push @{$Token->{attr_list} ||= []}, $Attr;
+          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
+        }
+      
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + $-[1]];
+push @{$Attr->{q<value>}}, [$2, $DI, $Offset + $-[2]];
+$State = B_ATTR_NAME_STATE;
+} elsif ($Input =~ /\G[\	\
+\\\ ][\	\
+\\\ ]*([^\ \	\
+\\\ \"\'\/\<\=\>A-Z])([^\ \	\
+\\\ \"\'\/\<\=\>A-Z]*)/gcs) {
+
+        if (defined $Token->{attrs}->{$Attr->{name}}) {
+          push @$Errors, {type => 'duplicate attribute',
+                          text => $Attr->{name},
+                          level => 'm',
+                          di => $Attr->{di},
+                          index => $Attr->{index}};
+        } else {
+          $Token->{attrs}->{$Attr->{name}} = $Attr;
+          push @{$Token->{attr_list} ||= []}, $Attr;
+          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
+        }
+      
+$State = A_ATTR_NAME_STATE;
+$Attr = {di => $DI};
+$Attr->{q<name>} = $1;
+$Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$State = ATTR_NAME_STATE;
+$Attr->{q<name>} .= $2;
+} elsif ($Input =~ /\G[\	\
+\\\ ][\	\
+\\\ ]*\=[\	\
+\\\ ]*\'([^\ \\&\']*)\'[\	\
+\\\ ][\	\
+\\\ ]*/gcs) {
+
+        if (defined $Token->{attrs}->{$Attr->{name}}) {
+          push @$Errors, {type => 'duplicate attribute',
+                          text => $Attr->{name},
+                          level => 'm',
+                          di => $Attr->{di},
+                          index => $Attr->{index}};
+        } else {
+          $Token->{attrs}->{$Attr->{name}} = $Attr;
+          push @{$Token->{attr_list} ||= []}, $Attr;
+          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
+        }
+      
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + $-[1]];
+$State = B_ATTR_NAME_STATE;
+} elsif ($Input =~ /\G[\	\
+\\\ ][\	\
+\\\ ]*\=[\	\
+\\\ ]*\"([^\ \\"\&]*)\"[\	\
+\\\ ][\	\
+\\\ ]*/gcs) {
+
+        if (defined $Token->{attrs}->{$Attr->{name}}) {
+          push @$Errors, {type => 'duplicate attribute',
+                          text => $Attr->{name},
+                          level => 'm',
+                          di => $Attr->{di},
+                          index => $Attr->{index}};
+        } else {
+          $Token->{attrs}->{$Attr->{name}} = $Attr;
+          push @{$Token->{attr_list} ||= []}, $Attr;
+          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
+        }
+      
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + $-[1]];
+$State = B_ATTR_NAME_STATE;
+} elsif ($Input =~ /\G\=[\	\
+\\\ ]*([^\ \	\
+\\\ \"\&\'\<\=\>\`])([^\ \	\
+\\\ \"\&\'\<\=\>\`]*)\>/gcs) {
+
+        if (defined $Token->{attrs}->{$Attr->{name}}) {
+          push @$Errors, {type => 'duplicate attribute',
+                          text => $Attr->{name},
+                          level => 'm',
+                          di => $Attr->{di},
+                          index => $Attr->{index}};
+        } else {
+          $Token->{attrs}->{$Attr->{name}} = $Attr;
+          push @{$Token->{attr_list} ||= []}, $Attr;
+          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
+        }
+      
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + $-[1]];
+push @{$Attr->{q<value>}}, [$2, $DI, $Offset + $-[2]];
+$State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
+push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            ## <!Temma><HTML>
+            undef $InForeign;
+            ## </HTML></!Temma>
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            ## <!Temma><HTML>
+            undef $InForeign;
+            ## </HTML></!Temma>
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
+          }
+        
+} elsif ($Input =~ /\G[\	\
+\\\ ][\	\
+\\\ ]*([A-Z])([^\ \	\
+\\\ \"\'\/\<\=\>A-Z]*)/gcs) {
+
+        if (defined $Token->{attrs}->{$Attr->{name}}) {
+          push @$Errors, {type => 'duplicate attribute',
+                          text => $Attr->{name},
+                          level => 'm',
+                          di => $Attr->{di},
+                          index => $Attr->{index}};
+        } else {
+          $Token->{attrs}->{$Attr->{name}} = $Attr;
+          push @{$Token->{attr_list} ||= []}, $Attr;
+          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
+        }
+      
+$State = A_ATTR_NAME_STATE;
+$Attr = {di => $DI};
+$Attr->{q<name>} = chr ((ord $1) + 32);
+$Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$State = ATTR_NAME_STATE;
+$Attr->{q<name>} .= $2;
+} elsif ($Input =~ /\G[\	\
+\\\ ][\	\
+\\\ ]*\=[\	\
+\\\ ]*\'([^\ \\&\']*)\'\/\>/gcs) {
+
+        if (defined $Token->{attrs}->{$Attr->{name}}) {
+          push @$Errors, {type => 'duplicate attribute',
+                          text => $Attr->{name},
+                          level => 'm',
+                          di => $Attr->{di},
+                          index => $Attr->{index}};
+        } else {
+          $Token->{attrs}->{$Attr->{name}} = $Attr;
+          push @{$Token->{attr_list} ||= []}, $Attr;
+          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
+        }
+      
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + $-[1]];
+$State = SELF_CLOSING_START_TAG_STATE;
+$Token->{q<self_closing_flag>} = 1;
+$State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
+push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            ## <!Temma><HTML>
+            undef $InForeign;
+            ## </HTML></!Temma>
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            ## <!Temma><HTML>
+            undef $InForeign;
+            ## </HTML></!Temma>
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
+          }
+        
+} elsif ($Input =~ /\G[\	\
+\\\ ][\	\
+\\\ ]*\=[\	\
+\\\ ]*\"([^\ \\"\&]*)\"\/\>/gcs) {
+
+        if (defined $Token->{attrs}->{$Attr->{name}}) {
+          push @$Errors, {type => 'duplicate attribute',
+                          text => $Attr->{name},
+                          level => 'm',
+                          di => $Attr->{di},
+                          index => $Attr->{index}};
+        } else {
+          $Token->{attrs}->{$Attr->{name}} = $Attr;
+          push @{$Token->{attr_list} ||= []}, $Attr;
+          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
+        }
+      
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + $-[1]];
+$State = SELF_CLOSING_START_TAG_STATE;
+$Token->{q<self_closing_flag>} = 1;
+$State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
+push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            ## <!Temma><HTML>
+            undef $InForeign;
+            ## </HTML></!Temma>
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            ## <!Temma><HTML>
+            undef $InForeign;
+            ## </HTML></!Temma>
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
+          }
+        
+} elsif ($Input =~ /\G[\	\
+\\\ ][\	\
+\\\ ]*\=[\	\
+\\\ ]*\"([^\ \\"\&]*)\"\>/gcs) {
+
+        if (defined $Token->{attrs}->{$Attr->{name}}) {
+          push @$Errors, {type => 'duplicate attribute',
+                          text => $Attr->{name},
+                          level => 'm',
+                          di => $Attr->{di},
+                          index => $Attr->{index}};
+        } else {
+          $Token->{attrs}->{$Attr->{name}} = $Attr;
+          push @{$Token->{attr_list} ||= []}, $Attr;
+          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
+        }
+      
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + $-[1]];
+$State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
+push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            ## <!Temma><HTML>
+            undef $InForeign;
+            ## </HTML></!Temma>
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            ## <!Temma><HTML>
+            undef $InForeign;
+            ## </HTML></!Temma>
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
+          }
+        
+} elsif ($Input =~ /\G[\	\
+\\\ ][\	\
+\\\ ]*\=[\	\
+\\\ ]*\'([^\ \\&\']*)\'\>/gcs) {
+
+        if (defined $Token->{attrs}->{$Attr->{name}}) {
+          push @$Errors, {type => 'duplicate attribute',
+                          text => $Attr->{name},
+                          level => 'm',
+                          di => $Attr->{di},
+                          index => $Attr->{index}};
+        } else {
+          $Token->{attrs}->{$Attr->{name}} = $Attr;
+          push @{$Token->{attr_list} ||= []}, $Attr;
+          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
+        }
+      
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + $-[1]];
+$State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
+push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            ## <!Temma><HTML>
+            undef $InForeign;
+            ## </HTML></!Temma>
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            ## <!Temma><HTML>
+            undef $InForeign;
+            ## </HTML></!Temma>
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
+          }
+        
+} elsif ($Input =~ /\G\=[\	\
+\\\ ]*\'([^\ \\&\']*)\'[\	\
+\\\ ][\	\
+\\\ ]*/gcs) {
+
+        if (defined $Token->{attrs}->{$Attr->{name}}) {
+          push @$Errors, {type => 'duplicate attribute',
+                          text => $Attr->{name},
+                          level => 'm',
+                          di => $Attr->{di},
+                          index => $Attr->{index}};
+        } else {
+          $Token->{attrs}->{$Attr->{name}} = $Attr;
+          push @{$Token->{attr_list} ||= []}, $Attr;
+          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
+        }
+      
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + $-[1]];
+$State = B_ATTR_NAME_STATE;
+} elsif ($Input =~ /\G\=[\	\
+\\\ ]*\"([^\ \\"\&]*)\"[\	\
+\\\ ][\	\
+\\\ ]*/gcs) {
+
+        if (defined $Token->{attrs}->{$Attr->{name}}) {
+          push @$Errors, {type => 'duplicate attribute',
+                          text => $Attr->{name},
+                          level => 'm',
+                          di => $Attr->{di},
+                          index => $Attr->{index}};
+        } else {
+          $Token->{attrs}->{$Attr->{name}} = $Attr;
+          push @{$Token->{attr_list} ||= []}, $Attr;
+          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
+        }
+      
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + $-[1]];
+$State = B_ATTR_NAME_STATE;
+} elsif ($Input =~ /\G\=[\	\
+\\\ ]*\"([^\ \\"\&]*)\"\/\>/gcs) {
+
+        if (defined $Token->{attrs}->{$Attr->{name}}) {
+          push @$Errors, {type => 'duplicate attribute',
+                          text => $Attr->{name},
+                          level => 'm',
+                          di => $Attr->{di},
+                          index => $Attr->{index}};
+        } else {
+          $Token->{attrs}->{$Attr->{name}} = $Attr;
+          push @{$Token->{attr_list} ||= []}, $Attr;
+          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
+        }
+      
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + $-[1]];
+$State = SELF_CLOSING_START_TAG_STATE;
+$Token->{q<self_closing_flag>} = 1;
+$State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
+push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            ## <!Temma><HTML>
+            undef $InForeign;
+            ## </HTML></!Temma>
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            ## <!Temma><HTML>
+            undef $InForeign;
+            ## </HTML></!Temma>
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
+          }
+        
+} elsif ($Input =~ /\G\=[\	\
+\\\ ]*\'([^\ \\&\']*)\'\/\>/gcs) {
+
+        if (defined $Token->{attrs}->{$Attr->{name}}) {
+          push @$Errors, {type => 'duplicate attribute',
+                          text => $Attr->{name},
+                          level => 'm',
+                          di => $Attr->{di},
+                          index => $Attr->{index}};
+        } else {
+          $Token->{attrs}->{$Attr->{name}} = $Attr;
+          push @{$Token->{attr_list} ||= []}, $Attr;
+          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
+        }
+      
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + $-[1]];
+$State = SELF_CLOSING_START_TAG_STATE;
+$Token->{q<self_closing_flag>} = 1;
+$State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
+push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            ## <!Temma><HTML>
+            undef $InForeign;
+            ## </HTML></!Temma>
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            ## <!Temma><HTML>
+            undef $InForeign;
+            ## </HTML></!Temma>
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
+          }
+        
+} elsif ($Input =~ /\G\=[\	\
+\\\ ]*\'([^\ \\&\']*)\'\>/gcs) {
+
+        if (defined $Token->{attrs}->{$Attr->{name}}) {
+          push @$Errors, {type => 'duplicate attribute',
+                          text => $Attr->{name},
+                          level => 'm',
+                          di => $Attr->{di},
+                          index => $Attr->{index}};
+        } else {
+          $Token->{attrs}->{$Attr->{name}} = $Attr;
+          push @{$Token->{attr_list} ||= []}, $Attr;
+          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
+        }
+      
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + $-[1]];
+$State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
+push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            ## <!Temma><HTML>
+            undef $InForeign;
+            ## </HTML></!Temma>
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            ## <!Temma><HTML>
+            undef $InForeign;
+            ## </HTML></!Temma>
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
+          }
+        
+} elsif ($Input =~ /\G\=[\	\
+\\\ ]*\"([^\ \\"\&]*)\"\>/gcs) {
+
+        if (defined $Token->{attrs}->{$Attr->{name}}) {
+          push @$Errors, {type => 'duplicate attribute',
+                          text => $Attr->{name},
+                          level => 'm',
+                          di => $Attr->{di},
+                          index => $Attr->{index}};
+        } else {
+          $Token->{attrs}->{$Attr->{name}} = $Attr;
+          push @{$Token->{attr_list} ||= []}, $Attr;
+          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
+        }
+      
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + $-[1]];
+$State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
+push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            ## <!Temma><HTML>
+            undef $InForeign;
+            ## </HTML></!Temma>
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            ## <!Temma><HTML>
+            undef $InForeign;
+            ## </HTML></!Temma>
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
+          }
+        
+} elsif ($Input =~ /\G[\	\
+\\\ ][\	\
+\\\ ]*\/\>/gcs) {
+
+        if (defined $Token->{attrs}->{$Attr->{name}}) {
+          push @$Errors, {type => 'duplicate attribute',
+                          text => $Attr->{name},
+                          level => 'm',
+                          di => $Attr->{di},
+                          index => $Attr->{index}};
+        } else {
+          $Token->{attrs}->{$Attr->{name}} = $Attr;
+          push @{$Token->{attr_list} ||= []}, $Attr;
+          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
+        }
+      
+$State = SELF_CLOSING_START_TAG_STATE;
+$Token->{q<self_closing_flag>} = 1;
+$State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
+push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            ## <!Temma><HTML>
+            undef $InForeign;
+            ## </HTML></!Temma>
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            ## <!Temma><HTML>
+            undef $InForeign;
+            ## </HTML></!Temma>
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
+          }
+        
+} elsif ($Input =~ /\G[\	\
+\\\ ][\	\
+\\\ ]*\>/gcs) {
+
+        if (defined $Token->{attrs}->{$Attr->{name}}) {
+          push @$Errors, {type => 'duplicate attribute',
+                          text => $Attr->{name},
+                          level => 'm',
+                          di => $Attr->{di},
+                          index => $Attr->{index}};
+        } else {
+          $Token->{attrs}->{$Attr->{name}} = $Attr;
+          push @{$Token->{attr_list} ||= []}, $Attr;
+          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
+        }
+      
+$State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
+push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            ## <!Temma><HTML>
+            undef $InForeign;
+            ## </HTML></!Temma>
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            ## <!Temma><HTML>
+            undef $InForeign;
+            ## </HTML></!Temma>
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
+          }
+        
+} elsif ($Input =~ /\G\/\>/gcs) {
+
+        if (defined $Token->{attrs}->{$Attr->{name}}) {
+          push @$Errors, {type => 'duplicate attribute',
+                          text => $Attr->{name},
+                          level => 'm',
+                          di => $Attr->{di},
+                          index => $Attr->{index}};
+        } else {
+          $Token->{attrs}->{$Attr->{name}} = $Attr;
+          push @{$Token->{attr_list} ||= []}, $Attr;
+          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
+        }
+      
+$State = SELF_CLOSING_START_TAG_STATE;
+$Token->{q<self_closing_flag>} = 1;
+$State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
+push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            ## <!Temma><HTML>
+            undef $InForeign;
+            ## </HTML></!Temma>
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            ## <!Temma><HTML>
+            undef $InForeign;
+            ## </HTML></!Temma>
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
+          }
+        
+} elsif ($Input =~ /\G\>/gcs) {
+
+        if (defined $Token->{attrs}->{$Attr->{name}}) {
+          push @$Errors, {type => 'duplicate attribute',
+                          text => $Attr->{name},
+                          level => 'm',
+                          di => $Attr->{di},
+                          index => $Attr->{index}};
+        } else {
+          $Token->{attrs}->{$Attr->{name}} = $Attr;
+          push @{$Token->{attr_list} ||= []}, $Attr;
+          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
+        }
+      
+$State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
+push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            ## <!Temma><HTML>
+            undef $InForeign;
+            ## </HTML></!Temma>
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            ## <!Temma><HTML>
+            undef $InForeign;
+            ## </HTML></!Temma>
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
+          }
+        
 } elsif ($Input =~ /\G([\	\\ \
 \])/gcs) {
 
@@ -22447,13 +23500,13 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
         $Token = {type => DOCTYPE_TOKEN, tn => 0, 
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -22496,9 +23549,9 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -22541,9 +23594,9 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -22559,465 +23612,14 @@ return 0;
 $StateActions->[B_ATTR_NAME_STATE] = sub {
 if ($Input =~ /\G([^\ \	\
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)[\	\
-\\\ ][\	\
-\\\ ]*\=[\	\
-\\\ ]*([^\ \	\
-\\\ \"\&\'\<\=\>\`])([^\ \	\
-\\\ \"\&\'\<\=\>\`]*)[\	\
-\\\ ][\	\
-\\\ ]*/gcs) {
-$Attr = {di => $DI};
-$Attr->{q<name>} = $1;
-$Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
-$State = B_ATTR_NAME_STATE;
-} elsif ($Input =~ /\G([^\ \	\
-\\\ \"\'\/\<\=\>A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)[\	\
-\\\ ][\	\
-\\\ ]*\=[\	\
-\\\ ]*([^\ \	\
-\\\ \"\&\'\<\=\>\`])([^\ \	\
-\\\ \"\&\'\<\=\>\`]*)\>/gcs) {
-$Attr = {di => $DI};
-$Attr->{q<name>} = $1;
-$Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
-$State = DATA_STATE;
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            if (keys %{$Token->{attrs} or {}}) {
-              push @$Errors, {type => 'end tag attribute',
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-            if ($Token->{self_closing_flag}) {
-              push @$Errors, {type => 'nestc',
-                              text => $Token->{tag_name},
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-          }
-        
-push @$Tokens, $Token;
-
-          if ($Token->{type} == START_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            if (not defined $LastStartTagName) { # "first start tag"
-              $LastStartTagName = $Token->{tag_name};
-              return 1;
-            } else {
-              $LastStartTagName = $Token->{tag_name};
-            }
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
-          }
-        
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
-          }
-        
-} elsif ($Input =~ /\G([A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)[\	\
-\\\ ][\	\
-\\\ ]*\=[\	\
-\\\ ]*([^\ \	\
-\\\ \"\&\'\<\=\>\`])([^\ \	\
-\\\ \"\&\'\<\=\>\`]*)[\	\
-\\\ ][\	\
-\\\ ]*/gcs) {
-$Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $1) + 32);
-$Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
-$Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
-$State = B_ATTR_NAME_STATE;
-} elsif ($Input =~ /\G([^\ \	\
-\\\ \"\'\/\<\=\>A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)\=[\	\
-\\\ ]*([^\ \	\
-\\\ \"\&\'\<\=\>\`])([^\ \	\
-\\\ \"\&\'\<\=\>\`]*)[\	\
-\\\ ][\	\
-\\\ ]*/gcs) {
-$Attr = {di => $DI};
-$Attr->{q<name>} = $1;
-$Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
-$State = B_ATTR_NAME_STATE;
-} elsif ($Input =~ /\G([^\ \	\
-\\\ \"\'\/\<\=\>A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)[\	\
-\\\ ][\	\
-\\\ ]*([^\ \	\
-\\\ \"\'\/\<\=\>A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)/gcs) {
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-$State = A_ATTR_NAME_STATE;
-$Attr = {di => $DI};
-$Attr->{q<name>} = $3;
-$Attr->{index} = $Offset + $-[3];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
-$Attr->{q<name>} .= $4;
-} elsif ($Input =~ /\G([^\ \	\
-\\\ \"\'\/\<\=\>A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)[\	\
-\\\ ][\	\
-\\\ ]*\=[\	\
-\\\ ]*\'([^\ \\&\']*)\'[\	\
-\\\ ][\	\
-\\\ ]*/gcs) {
-$Attr = {di => $DI};
-$Attr->{q<name>} = $1;
-$Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = B_ATTR_NAME_STATE;
-} elsif ($Input =~ /\G([^\ \	\
-\\\ \"\'\/\<\=\>A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)[\	\
-\\\ ][\	\
-\\\ ]*\=[\	\
-\\\ ]*\"([^\ \\"\&]*)\"[\	\
-\\\ ][\	\
-\\\ ]*/gcs) {
-$Attr = {di => $DI};
-$Attr->{q<name>} = $1;
-$Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = B_ATTR_NAME_STATE;
-} elsif ($Input =~ /\G([^\ \	\
-\\\ \"\'\/\<\=\>A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)\=[\	\
-\\\ ]*([^\ \	\
-\\\ \"\&\'\<\=\>\`])([^\ \	\
-\\\ \"\&\'\<\=\>\`]*)\>/gcs) {
-$Attr = {di => $DI};
-$Attr->{q<name>} = $1;
-$Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
-$State = DATA_STATE;
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            if (keys %{$Token->{attrs} or {}}) {
-              push @$Errors, {type => 'end tag attribute',
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-            if ($Token->{self_closing_flag}) {
-              push @$Errors, {type => 'nestc',
-                              text => $Token->{tag_name},
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-          }
-        
-push @$Tokens, $Token;
-
-          if ($Token->{type} == START_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            if (not defined $LastStartTagName) { # "first start tag"
-              $LastStartTagName = $Token->{tag_name};
-              return 1;
-            } else {
-              $LastStartTagName = $Token->{tag_name};
-            }
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
-          }
-        
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
-          }
-        
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)[\	\
-\\\ ][\	\
-\\\ ]*\=[\	\
-\\\ ]*([^\ \	\
-\\\ \"\&\'\<\=\>\`])([^\ \	\
-\\\ \"\&\'\<\=\>\`]*)\>/gcs) {
-$Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $1) + 32);
-$Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
-$Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
-$State = DATA_STATE;
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            if (keys %{$Token->{attrs} or {}}) {
-              push @$Errors, {type => 'end tag attribute',
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-            if ($Token->{self_closing_flag}) {
-              push @$Errors, {type => 'nestc',
-                              text => $Token->{tag_name},
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-          }
-        
-push @$Tokens, $Token;
-
-          if ($Token->{type} == START_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            if (not defined $LastStartTagName) { # "first start tag"
-              $LastStartTagName = $Token->{tag_name};
-              return 1;
-            } else {
-              $LastStartTagName = $Token->{tag_name};
-            }
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
-          }
-        
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
-          }
-        
-} elsif ($Input =~ /\G([A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)\=[\	\
-\\\ ]*([^\ \	\
-\\\ \"\&\'\<\=\>\`])([^\ \	\
-\\\ \"\&\'\<\=\>\`]*)[\	\
-\\\ ][\	\
-\\\ ]*/gcs) {
-$Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $1) + 32);
-$Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
-$Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
-$State = B_ATTR_NAME_STATE;
-} elsif ($Input =~ /\G([^\ \	\
-\\\ \"\'\/\<\=\>A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)[\	\
-\\\ ][\	\
-\\\ ]*([A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)/gcs) {
-$Attr = {di => $DI};
-$Attr->{q<name>} = $1;
-$Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-$State = A_ATTR_NAME_STATE;
-$Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $3) + 32);
-$Attr->{index} = $Offset + $-[3];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
-$Attr->{q<name>} .= $4;
-} elsif ($Input =~ /\G([A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)[\	\
-\\\ ][\	\
-\\\ ]*([^\ \	\
-\\\ \"\'\/\<\=\>A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)/gcs) {
 $Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
@@ -23025,1952 +23627,6 @@ $Attr->{index} = $Offset + $-[1];
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-$State = A_ATTR_NAME_STATE;
-$Attr = {di => $DI};
-$Attr->{q<name>} = $3;
-$Attr->{index} = $Offset + $-[3];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
-$Attr->{q<name>} .= $4;
-} elsif ($Input =~ /\G([^\ \	\
-\\\ \"\'\/\<\=\>A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)[\	\
-\\\ ][\	\
-\\\ ]*\=[\	\
-\\\ ]*\'([^\ \\&\']*)\'\/\>/gcs) {
-$Attr = {di => $DI};
-$Attr->{q<name>} = $1;
-$Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = SELF_CLOSING_START_TAG_STATE;
-$Token->{q<self_closing_flag>} = 1;
-$State = DATA_STATE;
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            if (keys %{$Token->{attrs} or {}}) {
-              push @$Errors, {type => 'end tag attribute',
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-            if ($Token->{self_closing_flag}) {
-              push @$Errors, {type => 'nestc',
-                              text => $Token->{tag_name},
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-          }
-        
-push @$Tokens, $Token;
-
-          if ($Token->{type} == START_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            if (not defined $LastStartTagName) { # "first start tag"
-              $LastStartTagName = $Token->{tag_name};
-              return 1;
-            } else {
-              $LastStartTagName = $Token->{tag_name};
-            }
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
-          }
-        
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
-          }
-        
-} elsif ($Input =~ /\G([^\ \	\
-\\\ \"\'\/\<\=\>A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)[\	\
-\\\ ][\	\
-\\\ ]*\=[\	\
-\\\ ]*\"([^\ \\"\&]*)\"\/\>/gcs) {
-$Attr = {di => $DI};
-$Attr->{q<name>} = $1;
-$Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = SELF_CLOSING_START_TAG_STATE;
-$Token->{q<self_closing_flag>} = 1;
-$State = DATA_STATE;
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            if (keys %{$Token->{attrs} or {}}) {
-              push @$Errors, {type => 'end tag attribute',
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-            if ($Token->{self_closing_flag}) {
-              push @$Errors, {type => 'nestc',
-                              text => $Token->{tag_name},
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-          }
-        
-push @$Tokens, $Token;
-
-          if ($Token->{type} == START_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            if (not defined $LastStartTagName) { # "first start tag"
-              $LastStartTagName = $Token->{tag_name};
-              return 1;
-            } else {
-              $LastStartTagName = $Token->{tag_name};
-            }
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
-          }
-        
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
-          }
-        
-} elsif ($Input =~ /\G([^\ \	\
-\\\ \"\'\/\<\=\>A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)[\	\
-\\\ ][\	\
-\\\ ]*\=[\	\
-\\\ ]*\'([^\ \\&\']*)\'\>/gcs) {
-$Attr = {di => $DI};
-$Attr->{q<name>} = $1;
-$Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = DATA_STATE;
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            if (keys %{$Token->{attrs} or {}}) {
-              push @$Errors, {type => 'end tag attribute',
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-            if ($Token->{self_closing_flag}) {
-              push @$Errors, {type => 'nestc',
-                              text => $Token->{tag_name},
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-          }
-        
-push @$Tokens, $Token;
-
-          if ($Token->{type} == START_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            if (not defined $LastStartTagName) { # "first start tag"
-              $LastStartTagName = $Token->{tag_name};
-              return 1;
-            } else {
-              $LastStartTagName = $Token->{tag_name};
-            }
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
-          }
-        
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
-          }
-        
-} elsif ($Input =~ /\G([^\ \	\
-\\\ \"\'\/\<\=\>A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)[\	\
-\\\ ][\	\
-\\\ ]*\=[\	\
-\\\ ]*\"([^\ \\"\&]*)\"\>/gcs) {
-$Attr = {di => $DI};
-$Attr->{q<name>} = $1;
-$Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = DATA_STATE;
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            if (keys %{$Token->{attrs} or {}}) {
-              push @$Errors, {type => 'end tag attribute',
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-            if ($Token->{self_closing_flag}) {
-              push @$Errors, {type => 'nestc',
-                              text => $Token->{tag_name},
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-          }
-        
-push @$Tokens, $Token;
-
-          if ($Token->{type} == START_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            if (not defined $LastStartTagName) { # "first start tag"
-              $LastStartTagName = $Token->{tag_name};
-              return 1;
-            } else {
-              $LastStartTagName = $Token->{tag_name};
-            }
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
-          }
-        
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
-          }
-        
-} elsif ($Input =~ /\G([^\ \	\
-\\\ \"\'\/\<\=\>A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)\=[\	\
-\\\ ]*\'([^\ \\&\']*)\'[\	\
-\\\ ][\	\
-\\\ ]*/gcs) {
-$Attr = {di => $DI};
-$Attr->{q<name>} = $1;
-$Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = B_ATTR_NAME_STATE;
-} elsif ($Input =~ /\G([A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)[\	\
-\\\ ][\	\
-\\\ ]*\=[\	\
-\\\ ]*\'([^\ \\&\']*)\'[\	\
-\\\ ][\	\
-\\\ ]*/gcs) {
-$Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $1) + 32);
-$Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
-$Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = B_ATTR_NAME_STATE;
-} elsif ($Input =~ /\G([^\ \	\
-\\\ \"\'\/\<\=\>A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)\=[\	\
-\\\ ]*\"([^\ \\"\&]*)\"[\	\
-\\\ ][\	\
-\\\ ]*/gcs) {
-$Attr = {di => $DI};
-$Attr->{q<name>} = $1;
-$Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = B_ATTR_NAME_STATE;
-} elsif ($Input =~ /\G([A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)[\	\
-\\\ ][\	\
-\\\ ]*\=[\	\
-\\\ ]*\"([^\ \\"\&]*)\"[\	\
-\\\ ][\	\
-\\\ ]*/gcs) {
-$Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $1) + 32);
-$Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
-$Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = B_ATTR_NAME_STATE;
-} elsif ($Input =~ /\G([A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)\=[\	\
-\\\ ]*([^\ \	\
-\\\ \"\&\'\<\=\>\`])([^\ \	\
-\\\ \"\&\'\<\=\>\`]*)\>/gcs) {
-$Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $1) + 32);
-$Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
-$Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
-$State = DATA_STATE;
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            if (keys %{$Token->{attrs} or {}}) {
-              push @$Errors, {type => 'end tag attribute',
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-            if ($Token->{self_closing_flag}) {
-              push @$Errors, {type => 'nestc',
-                              text => $Token->{tag_name},
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-          }
-        
-push @$Tokens, $Token;
-
-          if ($Token->{type} == START_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            if (not defined $LastStartTagName) { # "first start tag"
-              $LastStartTagName = $Token->{tag_name};
-              return 1;
-            } else {
-              $LastStartTagName = $Token->{tag_name};
-            }
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
-          }
-        
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
-          }
-        
-} elsif ($Input =~ /\G([A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)[\	\
-\\\ ][\	\
-\\\ ]*([A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)/gcs) {
-$Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $1) + 32);
-$Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
-$Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-$State = A_ATTR_NAME_STATE;
-$Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $3) + 32);
-$Attr->{index} = $Offset + $-[3];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
-$Attr->{q<name>} .= $4;
-} elsif ($Input =~ /\G([A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)[\	\
-\\\ ][\	\
-\\\ ]*\=[\	\
-\\\ ]*\'([^\ \\&\']*)\'\/\>/gcs) {
-$Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $1) + 32);
-$Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
-$Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = SELF_CLOSING_START_TAG_STATE;
-$Token->{q<self_closing_flag>} = 1;
-$State = DATA_STATE;
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            if (keys %{$Token->{attrs} or {}}) {
-              push @$Errors, {type => 'end tag attribute',
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-            if ($Token->{self_closing_flag}) {
-              push @$Errors, {type => 'nestc',
-                              text => $Token->{tag_name},
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-          }
-        
-push @$Tokens, $Token;
-
-          if ($Token->{type} == START_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            if (not defined $LastStartTagName) { # "first start tag"
-              $LastStartTagName = $Token->{tag_name};
-              return 1;
-            } else {
-              $LastStartTagName = $Token->{tag_name};
-            }
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
-          }
-        
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
-          }
-        
-} elsif ($Input =~ /\G([^\ \	\
-\\\ \"\'\/\<\=\>A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)\=[\	\
-\\\ ]*\'([^\ \\&\']*)\'\/\>/gcs) {
-$Attr = {di => $DI};
-$Attr->{q<name>} = $1;
-$Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = SELF_CLOSING_START_TAG_STATE;
-$Token->{q<self_closing_flag>} = 1;
-$State = DATA_STATE;
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            if (keys %{$Token->{attrs} or {}}) {
-              push @$Errors, {type => 'end tag attribute',
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-            if ($Token->{self_closing_flag}) {
-              push @$Errors, {type => 'nestc',
-                              text => $Token->{tag_name},
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-          }
-        
-push @$Tokens, $Token;
-
-          if ($Token->{type} == START_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            if (not defined $LastStartTagName) { # "first start tag"
-              $LastStartTagName = $Token->{tag_name};
-              return 1;
-            } else {
-              $LastStartTagName = $Token->{tag_name};
-            }
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
-          }
-        
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
-          }
-        
-} elsif ($Input =~ /\G([A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)[\	\
-\\\ ][\	\
-\\\ ]*\=[\	\
-\\\ ]*\"([^\ \\"\&]*)\"\/\>/gcs) {
-$Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $1) + 32);
-$Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
-$Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = SELF_CLOSING_START_TAG_STATE;
-$Token->{q<self_closing_flag>} = 1;
-$State = DATA_STATE;
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            if (keys %{$Token->{attrs} or {}}) {
-              push @$Errors, {type => 'end tag attribute',
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-            if ($Token->{self_closing_flag}) {
-              push @$Errors, {type => 'nestc',
-                              text => $Token->{tag_name},
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-          }
-        
-push @$Tokens, $Token;
-
-          if ($Token->{type} == START_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            if (not defined $LastStartTagName) { # "first start tag"
-              $LastStartTagName = $Token->{tag_name};
-              return 1;
-            } else {
-              $LastStartTagName = $Token->{tag_name};
-            }
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
-          }
-        
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
-          }
-        
-} elsif ($Input =~ /\G([^\ \	\
-\\\ \"\'\/\<\=\>A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)\=[\	\
-\\\ ]*\"([^\ \\"\&]*)\"\/\>/gcs) {
-$Attr = {di => $DI};
-$Attr->{q<name>} = $1;
-$Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = SELF_CLOSING_START_TAG_STATE;
-$Token->{q<self_closing_flag>} = 1;
-$State = DATA_STATE;
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            if (keys %{$Token->{attrs} or {}}) {
-              push @$Errors, {type => 'end tag attribute',
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-            if ($Token->{self_closing_flag}) {
-              push @$Errors, {type => 'nestc',
-                              text => $Token->{tag_name},
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-          }
-        
-push @$Tokens, $Token;
-
-          if ($Token->{type} == START_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            if (not defined $LastStartTagName) { # "first start tag"
-              $LastStartTagName = $Token->{tag_name};
-              return 1;
-            } else {
-              $LastStartTagName = $Token->{tag_name};
-            }
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
-          }
-        
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
-          }
-        
-} elsif ($Input =~ /\G([A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)[\	\
-\\\ ][\	\
-\\\ ]*\=[\	\
-\\\ ]*\"([^\ \\"\&]*)\"\>/gcs) {
-$Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $1) + 32);
-$Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
-$Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = DATA_STATE;
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            if (keys %{$Token->{attrs} or {}}) {
-              push @$Errors, {type => 'end tag attribute',
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-            if ($Token->{self_closing_flag}) {
-              push @$Errors, {type => 'nestc',
-                              text => $Token->{tag_name},
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-          }
-        
-push @$Tokens, $Token;
-
-          if ($Token->{type} == START_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            if (not defined $LastStartTagName) { # "first start tag"
-              $LastStartTagName = $Token->{tag_name};
-              return 1;
-            } else {
-              $LastStartTagName = $Token->{tag_name};
-            }
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
-          }
-        
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
-          }
-        
-} elsif ($Input =~ /\G([^\ \	\
-\\\ \"\'\/\<\=\>A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)\=[\	\
-\\\ ]*\"([^\ \\"\&]*)\"\>/gcs) {
-$Attr = {di => $DI};
-$Attr->{q<name>} = $1;
-$Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = DATA_STATE;
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            if (keys %{$Token->{attrs} or {}}) {
-              push @$Errors, {type => 'end tag attribute',
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-            if ($Token->{self_closing_flag}) {
-              push @$Errors, {type => 'nestc',
-                              text => $Token->{tag_name},
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-          }
-        
-push @$Tokens, $Token;
-
-          if ($Token->{type} == START_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            if (not defined $LastStartTagName) { # "first start tag"
-              $LastStartTagName = $Token->{tag_name};
-              return 1;
-            } else {
-              $LastStartTagName = $Token->{tag_name};
-            }
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
-          }
-        
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
-          }
-        
-} elsif ($Input =~ /\G([^\ \	\
-\\\ \"\'\/\<\=\>A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)\=[\	\
-\\\ ]*\'([^\ \\&\']*)\'\>/gcs) {
-$Attr = {di => $DI};
-$Attr->{q<name>} = $1;
-$Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = DATA_STATE;
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            if (keys %{$Token->{attrs} or {}}) {
-              push @$Errors, {type => 'end tag attribute',
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-            if ($Token->{self_closing_flag}) {
-              push @$Errors, {type => 'nestc',
-                              text => $Token->{tag_name},
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-          }
-        
-push @$Tokens, $Token;
-
-          if ($Token->{type} == START_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            if (not defined $LastStartTagName) { # "first start tag"
-              $LastStartTagName = $Token->{tag_name};
-              return 1;
-            } else {
-              $LastStartTagName = $Token->{tag_name};
-            }
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
-          }
-        
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
-          }
-        
-} elsif ($Input =~ /\G([A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)[\	\
-\\\ ][\	\
-\\\ ]*\=[\	\
-\\\ ]*\'([^\ \\&\']*)\'\>/gcs) {
-$Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $1) + 32);
-$Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
-$Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = DATA_STATE;
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            if (keys %{$Token->{attrs} or {}}) {
-              push @$Errors, {type => 'end tag attribute',
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-            if ($Token->{self_closing_flag}) {
-              push @$Errors, {type => 'nestc',
-                              text => $Token->{tag_name},
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-          }
-        
-push @$Tokens, $Token;
-
-          if ($Token->{type} == START_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            if (not defined $LastStartTagName) { # "first start tag"
-              $LastStartTagName = $Token->{tag_name};
-              return 1;
-            } else {
-              $LastStartTagName = $Token->{tag_name};
-            }
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
-          }
-        
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
-          }
-        
-} elsif ($Input =~ /\G([A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)\=[\	\
-\\\ ]*\'([^\ \\&\']*)\'[\	\
-\\\ ][\	\
-\\\ ]*/gcs) {
-$Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $1) + 32);
-$Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
-$Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = B_ATTR_NAME_STATE;
-} elsif ($Input =~ /\G([A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)\=[\	\
-\\\ ]*\"([^\ \\"\&]*)\"[\	\
-\\\ ][\	\
-\\\ ]*/gcs) {
-$Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $1) + 32);
-$Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
-$Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = B_ATTR_NAME_STATE;
-} elsif ($Input =~ /\G([^\ \	\
-\\\ \"\'\/\<\=\>A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)[\	\
-\\\ ][\	\
-\\\ ]*\/\>/gcs) {
-$Attr = {di => $DI};
-$Attr->{q<name>} = $1;
-$Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-$State = SELF_CLOSING_START_TAG_STATE;
-$Token->{q<self_closing_flag>} = 1;
-$State = DATA_STATE;
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            if (keys %{$Token->{attrs} or {}}) {
-              push @$Errors, {type => 'end tag attribute',
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-            if ($Token->{self_closing_flag}) {
-              push @$Errors, {type => 'nestc',
-                              text => $Token->{tag_name},
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-          }
-        
-push @$Tokens, $Token;
-
-          if ($Token->{type} == START_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            if (not defined $LastStartTagName) { # "first start tag"
-              $LastStartTagName = $Token->{tag_name};
-              return 1;
-            } else {
-              $LastStartTagName = $Token->{tag_name};
-            }
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
-          }
-        
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
-          }
-        
-} elsif ($Input =~ /\G([^\ \	\
-\\\ \"\'\/\<\=\>A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)[\	\
-\\\ ][\	\
-\\\ ]*\>/gcs) {
-$Attr = {di => $DI};
-$Attr->{q<name>} = $1;
-$Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-$State = DATA_STATE;
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            if (keys %{$Token->{attrs} or {}}) {
-              push @$Errors, {type => 'end tag attribute',
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-            if ($Token->{self_closing_flag}) {
-              push @$Errors, {type => 'nestc',
-                              text => $Token->{tag_name},
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-          }
-        
-push @$Tokens, $Token;
-
-          if ($Token->{type} == START_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            if (not defined $LastStartTagName) { # "first start tag"
-              $LastStartTagName = $Token->{tag_name};
-              return 1;
-            } else {
-              $LastStartTagName = $Token->{tag_name};
-            }
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
-          }
-        
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
-          }
-        
-} elsif ($Input =~ /\G([A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)\=[\	\
-\\\ ]*\'([^\ \\&\']*)\'\/\>/gcs) {
-$Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $1) + 32);
-$Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
-$Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = SELF_CLOSING_START_TAG_STATE;
-$Token->{q<self_closing_flag>} = 1;
-$State = DATA_STATE;
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            if (keys %{$Token->{attrs} or {}}) {
-              push @$Errors, {type => 'end tag attribute',
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-            if ($Token->{self_closing_flag}) {
-              push @$Errors, {type => 'nestc',
-                              text => $Token->{tag_name},
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-          }
-        
-push @$Tokens, $Token;
-
-          if ($Token->{type} == START_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            if (not defined $LastStartTagName) { # "first start tag"
-              $LastStartTagName = $Token->{tag_name};
-              return 1;
-            } else {
-              $LastStartTagName = $Token->{tag_name};
-            }
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
-          }
-        
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
-          }
-        
-} elsif ($Input =~ /\G([A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)\=[\	\
-\\\ ]*\"([^\ \\"\&]*)\"\/\>/gcs) {
-$Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $1) + 32);
-$Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
-$Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = SELF_CLOSING_START_TAG_STATE;
-$Token->{q<self_closing_flag>} = 1;
-$State = DATA_STATE;
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            if (keys %{$Token->{attrs} or {}}) {
-              push @$Errors, {type => 'end tag attribute',
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-            if ($Token->{self_closing_flag}) {
-              push @$Errors, {type => 'nestc',
-                              text => $Token->{tag_name},
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-          }
-        
-push @$Tokens, $Token;
-
-          if ($Token->{type} == START_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            if (not defined $LastStartTagName) { # "first start tag"
-              $LastStartTagName = $Token->{tag_name};
-              return 1;
-            } else {
-              $LastStartTagName = $Token->{tag_name};
-            }
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
-          }
-        
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
-          }
-        
-} elsif ($Input =~ /\G([A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)\=[\	\
-\\\ ]*\'([^\ \\&\']*)\'\>/gcs) {
-$Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $1) + 32);
-$Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
-$Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = DATA_STATE;
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            if (keys %{$Token->{attrs} or {}}) {
-              push @$Errors, {type => 'end tag attribute',
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-            if ($Token->{self_closing_flag}) {
-              push @$Errors, {type => 'nestc',
-                              text => $Token->{tag_name},
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-          }
-        
-push @$Tokens, $Token;
-
-          if ($Token->{type} == START_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            if (not defined $LastStartTagName) { # "first start tag"
-              $LastStartTagName = $Token->{tag_name};
-              return 1;
-            } else {
-              $LastStartTagName = $Token->{tag_name};
-            }
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
-          }
-        
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
-          }
-        
-} elsif ($Input =~ /\G([A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)\=[\	\
-\\\ ]*\"([^\ \\"\&]*)\"\>/gcs) {
-$Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $1) + 32);
-$Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
-$Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = DATA_STATE;
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            if (keys %{$Token->{attrs} or {}}) {
-              push @$Errors, {type => 'end tag attribute',
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-            if ($Token->{self_closing_flag}) {
-              push @$Errors, {type => 'nestc',
-                              text => $Token->{tag_name},
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-          }
-        
-push @$Tokens, $Token;
-
-          if ($Token->{type} == START_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            if (not defined $LastStartTagName) { # "first start tag"
-              $LastStartTagName = $Token->{tag_name};
-              return 1;
-            } else {
-              $LastStartTagName = $Token->{tag_name};
-            }
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
-          }
-        
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
-          }
-        
-} elsif ($Input =~ /\G([A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)[\	\
-\\\ ][\	\
-\\\ ]*\/\>/gcs) {
-$Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $1) + 32);
-$Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
-$Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-$State = SELF_CLOSING_START_TAG_STATE;
-$Token->{q<self_closing_flag>} = 1;
-$State = DATA_STATE;
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            if (keys %{$Token->{attrs} or {}}) {
-              push @$Errors, {type => 'end tag attribute',
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-            if ($Token->{self_closing_flag}) {
-              push @$Errors, {type => 'nestc',
-                              text => $Token->{tag_name},
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-          }
-        
-push @$Tokens, $Token;
-
-          if ($Token->{type} == START_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            if (not defined $LastStartTagName) { # "first start tag"
-              $LastStartTagName = $Token->{tag_name};
-              return 1;
-            } else {
-              $LastStartTagName = $Token->{tag_name};
-            }
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
-          }
-        
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
-          }
-        
-} elsif ($Input =~ /\G([^\ \	\
-\\\ \"\'\/\<\=\>A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)\/\>/gcs) {
-$Attr = {di => $DI};
-$Attr->{q<name>} = $1;
-$Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-$State = SELF_CLOSING_START_TAG_STATE;
-$Token->{q<self_closing_flag>} = 1;
-$State = DATA_STATE;
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            if (keys %{$Token->{attrs} or {}}) {
-              push @$Errors, {type => 'end tag attribute',
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-            if ($Token->{self_closing_flag}) {
-              push @$Errors, {type => 'nestc',
-                              text => $Token->{tag_name},
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-          }
-        
-push @$Tokens, $Token;
-
-          if ($Token->{type} == START_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            if (not defined $LastStartTagName) { # "first start tag"
-              $LastStartTagName = $Token->{tag_name};
-              return 1;
-            } else {
-              $LastStartTagName = $Token->{tag_name};
-            }
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
-          }
-        
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
-          }
-        
-} elsif ($Input =~ /\G([A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)[\	\
-\\\ ][\	\
-\\\ ]*\>/gcs) {
-$Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $1) + 32);
-$Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
-$Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-$State = DATA_STATE;
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            if (keys %{$Token->{attrs} or {}}) {
-              push @$Errors, {type => 'end tag attribute',
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-            if ($Token->{self_closing_flag}) {
-              push @$Errors, {type => 'nestc',
-                              text => $Token->{tag_name},
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-          }
-        
-push @$Tokens, $Token;
-
-          if ($Token->{type} == START_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            if (not defined $LastStartTagName) { # "first start tag"
-              $LastStartTagName = $Token->{tag_name};
-              return 1;
-            } else {
-              $LastStartTagName = $Token->{tag_name};
-            }
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
-          }
-        
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
-          }
-        
-} elsif ($Input =~ /\G([^\ \	\
-\\\ \"\'\/\<\=\>A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)\>/gcs) {
-$Attr = {di => $DI};
-$Attr->{q<name>} = $1;
-$Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-$State = DATA_STATE;
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            if (keys %{$Token->{attrs} or {}}) {
-              push @$Errors, {type => 'end tag attribute',
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-            if ($Token->{self_closing_flag}) {
-              push @$Errors, {type => 'nestc',
-                              text => $Token->{tag_name},
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-          }
-        
-push @$Tokens, $Token;
-
-          if ($Token->{type} == START_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            if (not defined $LastStartTagName) { # "first start tag"
-              $LastStartTagName = $Token->{tag_name};
-              return 1;
-            } else {
-              $LastStartTagName = $Token->{tag_name};
-            }
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
-          }
-        
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
-          }
-        
-} elsif ($Input =~ /\G([A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)\/\>/gcs) {
-$Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $1) + 32);
-$Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
-$Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-$State = SELF_CLOSING_START_TAG_STATE;
-$Token->{q<self_closing_flag>} = 1;
-$State = DATA_STATE;
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            if (keys %{$Token->{attrs} or {}}) {
-              push @$Errors, {type => 'end tag attribute',
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-            if ($Token->{self_closing_flag}) {
-              push @$Errors, {type => 'nestc',
-                              text => $Token->{tag_name},
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-          }
-        
-push @$Tokens, $Token;
-
-          if ($Token->{type} == START_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            if (not defined $LastStartTagName) { # "first start tag"
-              $LastStartTagName = $Token->{tag_name};
-              return 1;
-            } else {
-              $LastStartTagName = $Token->{tag_name};
-            }
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
-          }
-        
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
-          }
-        
-} elsif ($Input =~ /\G([A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)\>/gcs) {
-$Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $1) + 32);
-$Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
-$Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-$State = DATA_STATE;
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            if (keys %{$Token->{attrs} or {}}) {
-              push @$Errors, {type => 'end tag attribute',
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-            if ($Token->{self_closing_flag}) {
-              push @$Errors, {type => 'nestc',
-                              text => $Token->{tag_name},
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-          }
-        
-push @$Tokens, $Token;
-
-          if ($Token->{type} == START_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            if (not defined $LastStartTagName) { # "first start tag"
-              $LastStartTagName = $Token->{tag_name};
-              return 1;
-            } else {
-              $LastStartTagName = $Token->{tag_name};
-            }
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
-          }
-        
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            ## <!Temma><HTML>
-            undef $InForeign;
-            ## </HTML></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
-          }
-        
 } elsif ($Input =~ /\G\/\>/gcs) {
 $State = SELF_CLOSING_START_TAG_STATE;
 $Token->{q<self_closing_flag>} = 1;
@@ -25332,9 +23988,9 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -25355,8 +24011,8 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 } else {
 if ($EOF) {
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -25384,8 +24040,8 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 } else {
 if ($EOF) {
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -25417,8 +24073,8 @@ $State = BOGUS_COMMENT_STATE;
 push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -25690,8 +24346,8 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -25789,8 +24445,8 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -25835,8 +24491,8 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -25879,8 +24535,8 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -27476,12 +26132,12 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
                           di => $DI, index => $AnchoredIndex};
         
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -27568,8 +26224,8 @@ if ($EOF) {
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -27646,7 +26302,7 @@ push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
-            push @$Errors, {type => 'parser:EOF', level => 'm',
+            push @$Errors, {type => 'bogus comment', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
 
@@ -27655,8 +26311,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -27732,7 +26388,7 @@ push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
-            push @$Errors, {type => 'parser:EOF', level => 'm',
+            push @$Errors, {type => 'bogus comment', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
 
@@ -27741,8 +26397,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -27818,7 +26474,7 @@ push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
-            push @$Errors, {type => 'parser:EOF', level => 'm',
+            push @$Errors, {type => 'bogus comment', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
 
@@ -27827,8 +26483,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -27904,7 +26560,7 @@ push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
-            push @$Errors, {type => 'parser:EOF', level => 'm',
+            push @$Errors, {type => 'bogus comment', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
 
@@ -27913,8 +26569,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -27990,7 +26646,7 @@ push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
-            push @$Errors, {type => 'parser:EOF', level => 'm',
+            push @$Errors, {type => 'bogus comment', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
 
@@ -27999,8 +26655,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -28076,7 +26732,7 @@ push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
-            push @$Errors, {type => 'parser:EOF', level => 'm',
+            push @$Errors, {type => 'bogus comment', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
 
@@ -28085,8 +26741,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -28160,7 +26816,7 @@ push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
-            push @$Errors, {type => 'parser:EOF', level => 'm',
+            push @$Errors, {type => 'bogus comment', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
 
@@ -28169,8 +26825,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -28243,7 +26899,7 @@ push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
-            push @$Errors, {type => 'parser:EOF', level => 'm',
+            push @$Errors, {type => 'bogus comment', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
 
@@ -28252,8 +26908,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -28326,7 +26982,7 @@ push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
-            push @$Errors, {type => 'parser:EOF', level => 'm',
+            push @$Errors, {type => 'bogus comment', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
 
@@ -28335,8 +26991,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -28409,7 +27065,7 @@ push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
-            push @$Errors, {type => 'parser:EOF', level => 'm',
+            push @$Errors, {type => 'bogus comment', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
 
@@ -28418,8 +27074,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -28492,7 +27148,7 @@ push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
-            push @$Errors, {type => 'parser:EOF', level => 'm',
+            push @$Errors, {type => 'bogus comment', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
 
@@ -28501,8 +27157,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -28575,7 +27231,7 @@ push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
-            push @$Errors, {type => 'parser:EOF', level => 'm',
+            push @$Errors, {type => 'bogus comment', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
 
@@ -28584,8 +27240,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -28679,7 +27335,7 @@ push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
-            push @$Errors, {type => 'parser:EOF', level => 'm',
+            push @$Errors, {type => 'bogus comment', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
 
@@ -28688,8 +27344,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -29053,11 +27709,11 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
         
 } else {
 if ($EOF) {
-$State = DATA_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -29177,11 +27833,11 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
         
 } else {
 if ($EOF) {
-$State = DATA_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -29528,7 +28184,6 @@ if ($Input =~ /\G([\	\\ \
             return 1;
           }
         
-$State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
@@ -29540,6 +28195,7 @@ $State = SCRIPT_DATA_STATE;
                           di => $DI,
                           index => $TempIndex} if length $Temp;
         
+$State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
@@ -29579,7 +28235,6 @@ $State = SCRIPT_DATA_STATE_CR;
             return 1;
           }
         
-$State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
@@ -29591,6 +28246,7 @@ $State = SCRIPT_DATA_STATE;
                           di => $DI,
                           index => $TempIndex} if length $Temp;
         
+$State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
@@ -29620,7 +28276,6 @@ $AnchoredIndex = $Offset + (pos $Input) - 1;
           return 1;
         }
       
-$State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
@@ -29632,6 +28287,7 @@ $State = SCRIPT_DATA_STATE;
                           di => $DI,
                           index => $TempIndex} if length $Temp;
         
+$State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
@@ -29644,7 +28300,6 @@ $Temp .= $1;
 $Token->{q<tag_name>} .= $1;
 $Temp .= $1;
 } elsif ($Input =~ /\G([\ ])/gcs) {
-$State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
@@ -29656,6 +28311,7 @@ $State = SCRIPT_DATA_STATE;
                           di => $DI,
                           index => $TempIndex} if length $Temp;
         
+$State = SCRIPT_DATA_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -29666,7 +28322,6 @@ $State = SCRIPT_DATA_STATE;
                           di => $DI, index => $Offset + (pos $Input) - (length $1) - 0};
         
 } elsif ($Input =~ /\G(.)/gcs) {
-$State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
@@ -29678,6 +28333,7 @@ $State = SCRIPT_DATA_STATE;
                           di => $DI,
                           index => $TempIndex} if length $Temp;
         
+$State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
@@ -29685,7 +28341,6 @@ $State = SCRIPT_DATA_STATE;
         
 } else {
 if ($EOF) {
-$State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
@@ -29697,6 +28352,7 @@ $State = SCRIPT_DATA_STATE;
                           di => $DI,
                           index => $TempIndex} if length $Temp;
         
+$State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -29748,12 +28404,12 @@ $State = SCRIPT_DATA_END_TAG_NAME_STATE;
 $Token->{q<tag_name>} = $1;
 $Temp .= $1;
 } elsif ($Input =~ /\G([\ ])/gcs) {
-$State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
                           di => $DI, index => $AnchoredIndex};
         
+$State = SCRIPT_DATA_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -29764,12 +28420,12 @@ $State = SCRIPT_DATA_STATE;
                           di => $DI, index => $Offset + (pos $Input) - (length $1) - 0};
         
 } elsif ($Input =~ /\G(.)/gcs) {
-$State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
                           di => $DI, index => $AnchoredIndex};
         
+$State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
@@ -29777,12 +28433,12 @@ $State = SCRIPT_DATA_STATE;
         
 } else {
 if ($EOF) {
-$State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
                           di => $DI, index => $AnchoredIndex};
         
+$State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -30027,7 +28683,6 @@ if ($Input =~ /\G([\	\\ \
             return 1;
           }
         
-$State = SCRIPT_DATA_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
@@ -30039,6 +28694,7 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
                           di => $DI,
                           index => $TempIndex} if length $Temp;
         
+$State = SCRIPT_DATA_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
@@ -30096,7 +28752,6 @@ $State = SCRIPT_DATA_ESCAPED_DASH_STATE;
             return 1;
           }
         
-$State = SCRIPT_DATA_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
@@ -30108,6 +28763,7 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
                           di => $DI,
                           index => $TempIndex} if length $Temp;
         
+$State = SCRIPT_DATA_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
@@ -30137,7 +28793,6 @@ $AnchoredIndex = $Offset + (pos $Input) - 1;
           return 1;
         }
       
-$State = SCRIPT_DATA_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
@@ -30149,6 +28804,7 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
                           di => $DI,
                           index => $TempIndex} if length $Temp;
         
+$State = SCRIPT_DATA_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
@@ -30161,7 +28817,6 @@ $Temp .= $1;
 $Token->{q<tag_name>} .= $1;
 $Temp .= $1;
 } elsif ($Input =~ /\G([\ ])/gcs) {
-$State = SCRIPT_DATA_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
@@ -30173,6 +28828,7 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
                           di => $DI,
                           index => $TempIndex} if length $Temp;
         
+$State = SCRIPT_DATA_ESCAPED_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -30183,7 +28839,6 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
                           di => $DI, index => $Offset + (pos $Input) - (length $1) - 0};
         
 } elsif ($Input =~ /\G(.)/gcs) {
-$State = SCRIPT_DATA_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
@@ -30195,6 +28850,7 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
                           di => $DI,
                           index => $TempIndex} if length $Temp;
         
+$State = SCRIPT_DATA_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
@@ -30213,11 +28869,11 @@ if ($EOF) {
                           di => $DI,
                           index => $TempIndex} if length $Temp;
         
-$State = DATA_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -30281,12 +28937,12 @@ $State = SCRIPT_DATA_ESCAPED_END_TAG_NAME_STATE;
 $Token->{q<tag_name>} .= $1;
 $Temp .= $1;
 } elsif ($Input =~ /\G([\ ])/gcs) {
-$State = SCRIPT_DATA_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
                           di => $DI, index => $AnchoredIndex};
         
+$State = SCRIPT_DATA_ESCAPED_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -30297,12 +28953,12 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
                           di => $DI, index => $Offset + (pos $Input) - (length $1) - 0};
         
 } elsif ($Input =~ /\G(.)/gcs) {
-$State = SCRIPT_DATA_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
                           di => $DI, index => $AnchoredIndex};
         
+$State = SCRIPT_DATA_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
@@ -30315,11 +28971,11 @@ if ($EOF) {
                           value => q@</@,
                           di => $DI, index => $AnchoredIndex};
         
-$State = DATA_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -30377,12 +29033,12 @@ $AnchoredIndex = $Offset + (pos $Input) - 1;
         $Temp = '';
         $TempIndex = $Offset + (pos $Input);
       
-$State = SCRIPT_DATA_DOUBLE_ESCAPE_START_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
                           di => $DI, index => $AnchoredIndex};
         
+$State = SCRIPT_DATA_DOUBLE_ESCAPE_START_STATE;
 $Temp .= chr ((ord $1) + 32);
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -30394,12 +29050,12 @@ $Temp .= chr ((ord $1) + 32);
         $Temp = '';
         $TempIndex = $Offset + (pos $Input);
       
-$State = SCRIPT_DATA_DOUBLE_ESCAPE_START_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
                           di => $DI, index => $AnchoredIndex};
         
+$State = SCRIPT_DATA_DOUBLE_ESCAPE_START_STATE;
 $Temp .= $1;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -30407,12 +29063,12 @@ $Temp .= $1;
                           di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\ ])/gcs) {
-$State = SCRIPT_DATA_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
                           di => $DI, index => $AnchoredIndex};
         
+$State = SCRIPT_DATA_ESCAPED_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -30423,12 +29079,12 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
                           di => $DI, index => $Offset + (pos $Input) - (length $1) - 0};
         
 } elsif ($Input =~ /\G(.)/gcs) {
-$State = SCRIPT_DATA_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
                           di => $DI, index => $AnchoredIndex};
         
+$State = SCRIPT_DATA_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
@@ -30441,11 +29097,11 @@ if ($EOF) {
                           value => q@<@,
                           di => $DI, index => $AnchoredIndex};
         
-$State = DATA_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -30496,11 +29152,11 @@ $AnchoredIndex = $Offset + (pos $Input) - 1;
         
 } else {
 if ($EOF) {
-$State = DATA_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -30555,11 +29211,11 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
         
 } else {
 if ($EOF) {
-$State = DATA_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -30608,12 +29264,12 @@ $State = SCRIPT_DATA_END_TAG_OPEN_STATE;
 $State = SCRIPT_DATA_LESS_THAN_SIGN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\ ])/gcs) {
-$State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
                           di => $DI, index => $AnchoredIndex};
         
+$State = SCRIPT_DATA_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -30624,12 +29280,12 @@ $State = SCRIPT_DATA_STATE;
                           di => $DI, index => $Offset + (pos $Input) - (length $1) - 0};
         
 } elsif ($Input =~ /\G(.)/gcs) {
-$State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
                           di => $DI, index => $AnchoredIndex};
         
+$State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
@@ -30637,12 +29293,12 @@ $State = SCRIPT_DATA_STATE;
         
 } else {
 if ($EOF) {
-$State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
                           di => $DI, index => $AnchoredIndex};
         
+$State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -31611,12 +30267,12 @@ $Token->{q<tag_name>} = $1;
             push @$Errors, {type => 'bare stago', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
                           di => $DI, index => $AnchoredIndex};
         
+$State = DATA_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -31682,12 +30338,12 @@ $Token->{q<data>} = [[$1, $DI, $Offset + (pos $Input) - length $1]];
             push @$Errors, {type => 'bare stago', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
                           di => $DI, index => $AnchoredIndex};
         
+$State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
@@ -31699,12 +30355,12 @@ if ($EOF) {
             push @$Errors, {type => 'bare stago', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
                           di => $DI, index => $AnchoredIndex};
         
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
