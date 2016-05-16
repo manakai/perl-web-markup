@@ -1,13 +1,8 @@
-all: generated-pm-files lib/Web/HTML/Validator/_Defs.pm \
-    lib/Web/HTML/_SyntaxDefs.pm lib/Web/HTML/_NamedEntityList.pm \
-    lib/Web/HTML/Parser.pm lib/Web/XML/Parser.pm \
-    lib/Web/Temma/Tokenizer.pm \
-    data
+all: build
 clean: clean-json-ps
 	rm -fr local/*.json
 
-data: intermediate/validator-errors.json \
-    lib/Web/Feed/_Defs.pm
+data: intermediate/validator-errors.json
 
 updatenightly: update-submodules dataautoupdate-commit
 
@@ -47,6 +42,13 @@ pmbp-install: pmbp-upgrade
             --create-perl-command-shortcut prove
 
 ## ------ Build ------
+
+build: generated-pm-files lib/Web/HTML/Validator/_Defs.pm \
+    lib/Web/HTML/_SyntaxDefs.pm lib/Web/HTML/_NamedEntityList.pm \
+    lib/Web/HTML/Parser.pm lib/Web/XML/Parser.pm \
+    lib/Web/Temma/Tokenizer.pm \
+    data \
+    lib/Web/Feed/_Defs.pm
 
 ## Deprecated
 GENERATED_PM_FILES = lib/Web/HTML/Tokenizer.pm

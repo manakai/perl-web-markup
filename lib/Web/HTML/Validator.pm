@@ -138,8 +138,6 @@ my $GetNestedOnError = sub ($$) {
 ##                   |$self->{flag}->{has_labelable}| at the time of
 ##                   invocation of the method |check_start| for the 
 ##                   element being checked.
-##   has_non_style   Used by flow content checker to detect misplaced
-##                   |style| elements.
 ##   has_palpable    Set to true if a palpable content child is found.
 ##                   (Handled specially for <ruby>.)
 ##   has_phrasing    Has phrasing content (used for <summary> validation).
@@ -3172,27 +3170,13 @@ my %HTMLFlowContentChecker = (
   check_child_element => sub {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
-    if ($child_nsuri eq HTML_NS and $child_ln eq 'style') {
-      if ($element_state->{has_non_style}) {
-        $self->{onerror}->(node => $child_el,
-                           type => 'element not allowed:flow style',
-                           level => 'm');
-      }
-    } elsif ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln} or
-             $_Defs->{categories}->{'flow content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln}) {
-      $element_state->{has_non_style} = 1;
-    } else {
+    unless ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln} or
+            $_Defs->{categories}->{'flow content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln}) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:flow',
                          level => 'm');
     }
   }, # check_child_element
-  check_child_text => sub {
-    my ($self, $item, $child_node, $has_significant, $element_state) = @_;
-    if ($has_significant) {
-      $element_state->{has_non_style} = 1;
-    }
-  },
 ); # %HTMLFlowContentChecker
 
 my %HTMLPhrasingContentChecker = (
@@ -3246,23 +3230,8 @@ my %TransparentChecker = (
                            level => 'm');
       }
     } else { # flow content
-      if ($child_nsuri eq HTML_NS and $child_ln eq 'style') {
-        ## <style scoped> is only allowed as the first child elements
-        ## when the element is used as real flow content (i.e. is a
-        ## root element).
-        if ($element_state->{has_non_style} or
-            do {
-              my $parent = $item->{node}->parent_node;
-              ($parent and $parent->node_type == 1);
-            }) {
-          $self->{onerror}->(node => $child_el,
-                             type => 'element not allowed:flow style',
-                             level => 'm');
-        }
-      } elsif ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln} or
-               $_Defs->{categories}->{'flow content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln}) {
-        $element_state->{has_non_style} = 1;
-      } else {
+      unless ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln} or
+              $_Defs->{categories}->{'flow content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln}) {
         $self->{onerror}->(node => $child_el,
                            type => 'element not allowed:flow',
                            level => 'm');
@@ -4275,24 +4244,6 @@ $Element->{+HTML_NS}->{style} = {
   }, # check_start
   check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
-    if ($self->{flag}->{in_head}) {
-      my $scoped_attr = $item->{node}->get_attribute_node_ns (undef, 'scoped');
-      $self->{onerror}->(node => $scoped_attr,
-                         type => 'attribute not allowed',
-                         level => 'w')
-          if $scoped_attr;
-    } else {
-      my $parent = $item->{node}->parent_node;
-      if ($parent and $parent->node_type == 1) { # ELEMENT_NODE
-        unless ($item->{node}->has_attribute_ns (undef, 'scoped')) {
-          $self->{onerror}->(node => $item->{node},
-                             type => 'attribute missing',
-                             text => 'scoped',
-                             level => 'm');
-        }
-      }
-    }
-
     $element_state->{element_allowed} = 1
         if $element_state->{content_type} and
            $element_state->{content_type}->is_xml_mime_type;
@@ -4300,9 +4251,7 @@ $Element->{+HTML_NS}->{style} = {
   check_child_element => sub {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
-    if ($element_state->{element_allowed}) {
-      #
-    } else {
+    unless ($element_state->{element_allowed}) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed',
                          level => 'm');
@@ -4331,7 +4280,6 @@ $Element->{+HTML_NS}->{style} = {
     if (defined $element_state->{content_type} and
         ($element_state->{content_type}->as_valid_mime_type || '') eq 'text/css') {
       my $parser = $self->_css_parser ($item->{node}, $text, $text_sps);
-      # XXX $parser->context->scoped (has_attribute ('scoped'));
       my $ss = $parser->parse_char_string_as_ss ($text);
       # XXX Web::CSS::Checker->new->check_ss ($ss);
     } elsif (defined $element_state->{content_type}) {
@@ -5593,18 +5541,9 @@ $Element->{+HTML_NS}->{figure} = {
     if ($child_nsuri eq HTML_NS and $child_ln eq 'figcaption') {
       push @{$element_state->{figcaptions} ||= []}, $child_el;
     } else { # flow content
-      if ($child_nsuri eq HTML_NS and $child_ln eq 'style') {
-        if ($element_state->{has_non_style}) {
-          $self->{onerror}->(node => $child_el,
-                             type => 'element not allowed:flow style',
-                             level => 'm');
-        }
+      if ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln} or
+          $_Defs->{categories}->{'flow content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln}) {
         $element_state->{in_flow_content} = 1;
-        push @{$element_state->{figcaptions} ||= []}, 'flow';
-      } elsif ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln} or
-               $_Defs->{categories}->{'flow content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln}) {
-        $element_state->{in_flow_content} = 1;
-        $element_state->{has_non_style} = 1;
         push @{$element_state->{figcaptions} ||= []}, 'flow';
       } else {
         $self->{onerror}->(node => $child_el,
@@ -5617,7 +5556,6 @@ $Element->{+HTML_NS}->{figure} = {
     my ($self, $item, $child_node, $has_significant, $element_state) = @_;
     if ($has_significant) {
       push @{$element_state->{figcaptions} ||= []}, 'flow';
-      $element_state->{has_non_style} = 1;
       $element_state->{in_flow_content} = 1;
     }
   }, # check_child_text
@@ -6864,15 +6802,8 @@ $Element->{+HTML_NS}->{fieldset} = {
         $element_state->{in_flow_content} = 1;
       }
     } else { # flow content
-      if ($child_nsuri eq HTML_NS and $child_ln eq 'style') {
-        $self->{onerror}->(node => $child_el,
-                           type => 'element not allowed:flow style',
-                           level => 'm')
-            if $element_state->{has_non_style};
-        $element_state->{in_flow_content} = 1;
-      } elsif ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln} or
-               $_Defs->{categories}->{'flow content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln}) {
-        $element_state->{has_non_style} = 1;
+      if ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln} or
+          $_Defs->{categories}->{'flow content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln}) {
         $element_state->{in_flow_content} = 1;
       } else {
         $self->{onerror}->(node => $child_el,
@@ -6885,7 +6816,6 @@ $Element->{+HTML_NS}->{fieldset} = {
     my ($self, $item, $child_node, $has_significant, $element_state) = @_;
     if ($has_significant) {
       $element_state->{in_flow_content} = 1;
-      $element_state->{has_non_style} = 1;
     }
   }, # check_child_text
   check_end => sub {
@@ -7849,15 +7779,8 @@ $Element->{+HTML_NS}->{details} = {
       $element_state->{in_flow_content} = 1;
       $element_state->{has_summary} = 1;
     } else { # flow content
-      if ($child_nsuri eq HTML_NS and $child_ln eq 'style') {
-        $self->{onerror}->(node => $child_el,
-                           type => 'element not allowed:flow style',
-                           level => 'm')
-            if $element_state->{has_non_style};
-        $element_state->{in_flow_content} = 1;
-      } elsif ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln} or
-               $_Defs->{categories}->{'flow content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln}) {
-        $element_state->{has_non_style} = 1;
+      if ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln} or
+          $_Defs->{categories}->{'flow content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln}) {
         $element_state->{in_flow_content} = 1;
       } else {
         $self->{onerror}->(node => $child_el,
@@ -7870,7 +7793,6 @@ $Element->{+HTML_NS}->{details} = {
     my ($self, $item, $child_node, $has_significant, $element_state) = @_;
     if ($has_significant) {
       $element_state->{in_flow_content} = 1;
-      $element_state->{has_non_style} = 1;
     }
   }, # check_child_text
   check_end => sub {
@@ -9362,17 +9284,13 @@ $Element->{+HTML_NS}->{template} = {
             option => 'select',
             summary => 'details',
             menuitem => 'popup menu',
+            style => 'metadata',
           }->{$ln};
           last if defined $model;
 
           if ($ln eq 'tr') {
             $model = 'table'; #tr-container
             #not last;
-          } elsif ($ln eq 'style') {
-            unless ($child->has_attribute_ns (undef, 'scoped')) {
-              $model = 'metadata';
-              last;
-            }
           }
         }
         if ($_Defs->{categories}->{'metadata content'}->{elements}->{$ns}->{$ln} and
