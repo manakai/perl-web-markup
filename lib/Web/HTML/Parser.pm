@@ -19142,12 +19142,6 @@ if ($Input =~ /\G([\])/gcs) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    ## <HTML>
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
-                    ## </HTML>
                     last REF;
                   } else {
                     ## <HTML>
@@ -19201,12 +19195,6 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    ## <HTML>
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
-                    ## </HTML>
                     last REF;
                   } else {
                     ## <HTML>
@@ -19258,12 +19246,6 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    ## <HTML>
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
-                    ## </HTML>
                     last REF;
                   } else {
                     ## <HTML>
@@ -19320,12 +19302,6 @@ $Temp .= $1;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    ## <HTML>
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
-                    ## </HTML>
                     last REF;
                   } else {
                     ## <HTML>
@@ -19377,12 +19353,6 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (1) { # before_equals
-                    ## <HTML>
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
-                    ## </HTML>
                     last REF;
                   } else {
                     ## <HTML>
@@ -19439,12 +19409,6 @@ $Temp .= $1;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    ## <HTML>
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
-                    ## </HTML>
                     last REF;
                   } else {
                     ## <HTML>
@@ -19501,12 +19465,6 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    ## <HTML>
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
-                    ## </HTML>
                     last REF;
                   } else {
                     ## <HTML>
@@ -19560,12 +19518,6 @@ if ($EOF) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    ## <HTML>
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
-                    ## </HTML>
                     last REF;
                   } else {
                     ## <HTML>
@@ -20341,12 +20293,6 @@ if ($Input =~ /\G([\])/gcs) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    ## <HTML>
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
-                    ## </HTML>
                     last REF;
                   } else {
                     ## <HTML>
@@ -20400,12 +20346,6 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    ## <HTML>
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
-                    ## </HTML>
                     last REF;
                   } else {
                     ## <HTML>
@@ -20459,12 +20399,6 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    ## <HTML>
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
-                    ## </HTML>
                     last REF;
                   } else {
                     ## <HTML>
@@ -20519,12 +20453,6 @@ $Temp .= $1;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    ## <HTML>
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
-                    ## </HTML>
                     last REF;
                   } else {
                     ## <HTML>
@@ -20576,12 +20504,6 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (1) { # before_equals
-                    ## <HTML>
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
-                    ## </HTML>
                     last REF;
                   } else {
                     ## <HTML>
@@ -20638,12 +20560,6 @@ $Temp .= $1;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    ## <HTML>
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
-                    ## </HTML>
                     last REF;
                   } else {
                     ## <HTML>
@@ -20700,12 +20616,6 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    ## <HTML>
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
-                    ## </HTML>
                     last REF;
                   } else {
                     ## <HTML>
@@ -20759,12 +20669,6 @@ if ($EOF) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    ## <HTML>
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
-                    ## </HTML>
                     last REF;
                   } else {
                     ## <HTML>
@@ -22173,12 +22077,6 @@ if ($Input =~ /\G([\	\\ \
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    ## <HTML>
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
-                    ## </HTML>
                     last REF;
                   } else {
                     ## <HTML>
@@ -22230,12 +22128,6 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    ## <HTML>
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
-                    ## </HTML>
                     last REF;
                   } else {
                     ## <HTML>
@@ -22287,12 +22179,6 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    ## <HTML>
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
-                    ## </HTML>
                     last REF;
                   } else {
                     ## <HTML>
@@ -22349,12 +22235,6 @@ $Temp .= $1;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    ## <HTML>
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
-                    ## </HTML>
                     last REF;
                   } else {
                     ## <HTML>
@@ -22406,12 +22286,6 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    ## <HTML>
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
-                    ## </HTML>
                     last REF;
                   } else {
                     ## <HTML>
@@ -22511,12 +22385,6 @@ $Temp .= $1;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    ## <HTML>
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
-                    ## </HTML>
                     last REF;
                   } else {
                     ## <HTML>
@@ -22573,12 +22441,6 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    ## <HTML>
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
-                    ## </HTML>
                     last REF;
                   } else {
                     ## <HTML>
@@ -22635,12 +22497,6 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    ## <HTML>
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
-                    ## </HTML>
                     last REF;
                   } else {
                     ## <HTML>
@@ -22697,12 +22553,6 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    ## <HTML>
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
-                    ## </HTML>
                     last REF;
                   } else {
                     ## <HTML>
@@ -22759,12 +22609,6 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (1) { # before_equals
-                    ## <HTML>
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
-                    ## </HTML>
                     last REF;
                   } else {
                     ## <HTML>
@@ -22821,12 +22665,6 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    ## <HTML>
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
-                    ## </HTML>
                     last REF;
                   } else {
                     ## <HTML>
@@ -22883,12 +22721,6 @@ return 1 if $return;
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    ## <HTML>
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
-                    ## </HTML>
                     last REF;
                   } else {
                     ## <HTML>
@@ -22942,12 +22774,6 @@ if ($EOF) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (0) { # before_equals
-                    ## <HTML>
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
-                    ## </HTML>
                     last REF;
                   } else {
                     ## <HTML>

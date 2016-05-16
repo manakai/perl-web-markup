@@ -1159,12 +1159,6 @@ sub serialize_actions ($;%) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (%d) { # before_equals
-                    ## <HTML>
-                    push @$Errors, {type => 'no refc',
-                                    level => 'm',
-                                    di => $DI,
-                                    index => $TempIndex + $_};
-                    ## </HTML>
                     last REF;
                   } else {
                     ## <HTML>

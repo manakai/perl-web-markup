@@ -48,10 +48,9 @@ pmbp-install: pmbp-upgrade
 
 ## ------ Build ------
 
+## Deprecated
 GENERATED_PM_FILES = lib/Web/HTML/Tokenizer.pm
-
 generated-pm-files: $(GENERATED_PM_FILES)
-
 $(GENERATED_PM_FILES):: %: %.src bin/mkhtmlparser.pl local/bin/pmbp.pl
 	perl local/bin/pmbp.pl --create-perl-command-shortcut perl
 	perl bin/mkhtmlparser.pl $< > $@
