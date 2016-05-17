@@ -1,5 +1,35 @@
 {
    "errors" : {
+      "duplicate slot name" : {
+         "default_level" : "w",
+         "desc" : {
+            "en" : "\u003Cp>The slot name (i.e. the \u003Ccode>name\u003C/code> attribute value of a\u000A\u003Ccode>slot\u003C/code> element, if any, or the empty string), has to be\u000Aunique, otherwise the slot is ignored.\u003C/p>",
+            "ja" : "\u003Cp>スロット名 (\u003Ccode>slot\u003C/code> 要素の \u003Ccode>name\u003C/code>\u000A属性値か、なければ空文字列) は、\u000A他のスロットの名前と違っていなければいけません。\u000A重複したスロットは、無視されます。\u003C/p>"
+         },
+         "layer" : "feature",
+         "message" : {
+            "en" : "The slot name is also assigned to another slot",
+            "ja" : "このスロット名は他のスロットでも使われています"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "light slot" : {
+         "default_level" : "w",
+         "desc" : {
+            "en" : "\u003Cp>The \u003Ccode>slot\u003C/code> element not in the shadow tree has no effect.\u003C/p>",
+            "ja" : "\u003Cp>影木以外の \u003Ccode>slot\u003C/code> 要素は効果を持ちません。\u003C/p>"
+         },
+         "layer" : "feature",
+         "message" : {
+            "en" : "The slot is used in a light tree",
+            "ja" : "光木中にスロットがあります"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
       "script language" : {
          "default_level" : "s",
          "desc" : {
@@ -226,6 +256,24 @@
          "message" : {
             "en" : "The \u003Ccode>src\u003C/code> attribute has no effect",
             "ja" : "この \u003Ccode>src\u003C/code> 属性には意味がありません"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         },
+         "targets" : {
+            "attr" : 1
+         }
+      },
+      "slot:parent not host" : {
+         "default_level" : "w",
+         "desc" : {
+            "en" : "\u003Cp>The \u003Ccode>slot\u003C/code> attribute has no effect unless the parent\u000Anode is a shadow host.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>slot\u003C/code> 属性は、親節点が影ホストでなければ効果を持ちません。\u003C/p>"
+         },
+         "layer" : "feature",
+         "message" : {
+            "en" : "The parent is not a shadow host",
+            "ja" : "親が影ホストではありません"
          },
          "modules" : {
             "Web::HTML::Validator" : 1

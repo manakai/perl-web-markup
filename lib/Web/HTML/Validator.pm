@@ -113,6 +113,7 @@ my $GetNestedOnError = sub ($$) {
 ##   {ogp_has_prop}->{$prop} Set to true if the property is specified.
 ##   {ogp_required_prop}->{$prop} Set to $node if it requires $prop.
 ##   {ogtype}            The value of og:type property.
+##   {slots}->{$name}    Whether there is <slot name=$name> or not.
 
 ## $element_state
 ##
@@ -2758,6 +2759,7 @@ $ElementAttrChecker->{(HTML_NS)}->{a}->{''}->{directkey}
 $ElementAttrChecker->{(HTML_NS)}->{input}->{''}->{directkey}
     = $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{accesskey};
 
+# XXX superglobal
 $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{id} = sub {
   my ($self, $attr, $item, $element_state) = @_;
   my $value = $attr->value;
@@ -2794,12 +2796,7 @@ $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{id} = sub {
   }
 }; # id=""
 
-$ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{dir} = $GetHTMLEnumeratedAttrChecker->({
-  ltr => 1,
-  rtl => 1,
-  auto => 'last resort:good',
-}); # dir=""
-
+# XXX superglobal
 $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{class} = sub {
   my ($self, $attr) = @_;
     
@@ -2814,6 +2811,37 @@ $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{class} = sub {
       }
     }
 }; # class=""
+
+# XXX superglobal
+$ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{slot} = sub {
+  my ($self, $attr) = @_;
+
+  ## Any value.
+
+  my $oe = $attr->owner_element;
+  if (defined $oe) {
+    my $parent = $oe->parent_node;
+    if (defined $parent) {
+      if (($parent->node_type == 1 and # ELEMENT_NODE
+           $_Defs->{categories}->{'shadow_attachable'}->{elements}->{$parent->namespace_uri || ''}->{$parent->local_name}) or
+          ($parent->node_type == 11)) { # DOCUMENT_FRAGMENT_NODE # XXX bare DocumentFragment and template content, not shadow root
+        # XXX custom elements
+        # XXX and if $parent->shadow_root is not null
+        #
+      } else {
+        $self->{onerror}->(node => $attr,
+                           type => 'slot:parent not host',
+                           level => 'w');
+      }
+    }
+  }
+}; # slot=""
+
+$ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{dir} = $GetHTMLEnumeratedAttrChecker->({
+  ltr => 1,
+  rtl => 1,
+  auto => 'last resort:good',
+}); # dir=""
 
 $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{dropzone} = sub {
   ## Unordered set of space-separated tokens, ASCII case-insensitive.
@@ -4763,6 +4791,29 @@ $Element->{+HTML_NS}->{noscript} = {
     }
   }, # check_end
 }; # noscript
+
+$Element->{+HTML_NS}->{slot} = {
+  %TransparentChecker,
+  check_attrs2 => sub {
+    my ($self, $item, $element_state) = @_;
+    my $name = $item->{node}->get_attribute_node_ns (undef, 'name');
+    my $value = defined $name ? $name->value : '';
+    if ($self->{flag}->{slots}->{$value}) {
+      $self->{onerror}->(node => $name || $item->{node},
+                         type => 'duplicate slot name',
+                         value => $value,
+                         level => 'w');
+    } else {
+      $self->{flag}->{slots}->{$value} = 1;
+    }
+
+    unless ($self->{flag}->{is_template}) { # XXX or in_shadow_tree
+      $self->{onerror}->(node => $item->{node},
+                         type => 'light slot',
+                         level => 'w');
+    }
+  }, # check_attrs2
+}; # slot
 
 # ---- Sections ----
 

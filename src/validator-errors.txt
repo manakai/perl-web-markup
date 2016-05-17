@@ -342,3 +342,62 @@ data block <code><var>{value}</var></code> is not supported
     属性で指定されたスクリプト言語、あたはデータブロックの適合性検査には対応していません。</p>
     
     <p>内容が適合しているかどうかは<em>不明</em>です。</p>
+
+* duplicate slot name
+
+default_level=w
+layer=feature
+
+@en
+The slot name is also assigned to another slot
+@ja
+このスロット名は他のスロットでも使われています
+
+@en
+<p>The slot name (i.e. the <code>name</code> attribute value of a
+<code>slot</code> element, if any, or the empty string), has to be
+unique, otherwise the slot is ignored.
+
+@ja
+<p>スロット名 (<code>slot</code> 要素の <code>name</code>
+属性値か、なければ空文字列) は、
+他のスロットの名前と違っていなければいけません。
+重複したスロットは、無視されます。
+
+* light slot
+
+default_level=w
+layer=feature
+
+@en
+The slot is used in a light tree
+@ja
+光木中にスロットがあります
+
+@en
+
+<p>The <code>slot</code> element not in the shadow tree has no effect.
+
+@ja
+
+<p>影木以外の <code>slot</code> 要素は効果を持ちません。
+
+* slot:parent not host
+
+default_level=w
+layer=feature
+attr
+
+@en
+The parent is not a shadow host
+@ja
+親が影ホストではありません
+
+@en
+
+<p>The <code>slot</code> attribute has no effect unless the parent
+node is a shadow host.
+
+@ja
+
+<p><code>slot</code> 属性は、親節点が影ホストでなければ効果を持ちません。
