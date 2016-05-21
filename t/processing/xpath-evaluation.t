@@ -144,8 +144,16 @@ for my $f (grep { -f and /\.dat$/ } file (__FILE__)->dir->parent->parent->subdir
           if (not defined $r) {
             $actual = 'null';
           } elsif ($r->{type} eq 'number') {
-            $actual = $r->{value};
-            $actual = '0' if $actual eq '-0'; ## < Perl 5.14
+            $actual = {
+              '-0' => '0',
+              'inf' => 'Infinity',
+              'Inf' => 'Infinity',
+              '-inf' => '-Infinity',
+              '-Inf' => '-Infinity',
+              'nan' => 'NaN',
+              '-nan' => 'NaN',
+              'NaN' => 'NaN',
+            }->{$r->{value}} // $r->{value};
           } elsif ($r->{type} eq 'boolean') {
             $actual = $r->{value} ? 'true' : 'false';
           } elsif ($r->{type} eq 'string') {
@@ -171,7 +179,7 @@ run_tests;
 
 =head1 LICENSE
 
-Copyright 2013-2014 Wakaba <wakaba@suikawiki.org>.
+Copyright 2013-2016 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
