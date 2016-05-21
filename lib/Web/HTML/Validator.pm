@@ -360,7 +360,7 @@ sub _check_element_attrs ($$$;%) {
   $el_ns = '' unless defined $el_ns;
   my $el_ln = $item->{node}->local_name;
   my $allow_dataset = $el_ns eq HTML_NS;
-  my $is_embed = $el_ns eq HTML_NS && $el_ln eq 'embed';
+  my $allow_custom = $el_ns eq HTML_NS && ($el_ln eq 'embed' || $el_ln =~ /-/);
   my $input_type;
   if ($el_ns eq HTML_NS && $el_ln eq 'input') {
     $input_type = $item->{node}->get_attribute_ns (undef, 'type');
@@ -440,7 +440,7 @@ sub _check_element_attrs ($$$;%) {
     }
     my $value_type = $attr_def->{value_type} || '';
     $checker ||= $CheckerByType->{$value_type};
-    if ($is_embed and
+    if ($allow_custom and
         $attr_ns eq '' and
         $attr_ln !~ /[A-Z]/ and
         $attr_ln =~ /\A\p{InNCNameStartChar}\p{InNCNameChar}*\z/ and
