@@ -4406,7 +4406,6 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
-            ## 
           }
         
 } elsif ($Input =~ /\G([ABCDEFGHJKNQRVWZILMOPSTUXY])/gcs) {
@@ -4527,7 +4526,6 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
             ## 
           }
         
@@ -4745,7 +4743,6 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
             ## 
           }
         
@@ -7163,7 +7160,6 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
-            ## 
           }
         
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -7355,7 +7351,6 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
             ## 
           }
         
@@ -7729,7 +7724,6 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
             ## 
           }
         
@@ -8161,7 +8155,6 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
-            ## 
           }
         
 } elsif ($Input =~ /\G([\`])/gcs) {
@@ -8565,7 +8558,6 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
             ## 
           }
         
@@ -9170,7 +9162,6 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
-            ## 
           }
         
 } elsif ($Input =~ /\G([\`])/gcs) {
@@ -9278,7 +9269,6 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
             ## 
           }
         
@@ -9413,7 +9403,6 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
             ## 
           }
         
@@ -9745,7 +9734,6 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
-            ## 
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -9983,7 +9971,6 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
-            ## 
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -10057,7 +10044,6 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
             ## 
           }
         
@@ -10229,7 +10215,6 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
-            ## 
           }
         
 } elsif ($Input =~ /\G([^\ \	\
@@ -10305,7 +10290,6 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
-            ## 
           }
         
 } elsif ($Input =~ /\G([^\ \	\
@@ -10379,7 +10363,6 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
-            ## 
           }
         
 } elsif ($Input =~ /\G([^\ \	\
@@ -10452,7 +10435,6 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
             ## 
           }
         
@@ -10649,7 +10631,6 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
-            ## 
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -10755,7 +10736,6 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
-            ## 
           }
         
 } elsif ($Input =~ /\G([^\ \	\
@@ -10828,7 +10808,6 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
-            ## 
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -10903,7 +10882,6 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
-            ## 
           }
         
 } elsif ($Input =~ /\G([^\ \	\
@@ -10976,7 +10954,6 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
-            ## 
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -11049,7 +11026,6 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
-            ## 
           }
         
 } elsif ($Input =~ /\G([^\ \	\
@@ -11120,7 +11096,6 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
-            ## 
           }
         
 } elsif ($Input =~ /\G([^\ \	\
@@ -11190,7 +11165,6 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
             ## 
           }
         
@@ -11263,7 +11237,6 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
             ## 
           }
         
@@ -11393,7 +11366,6 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
-            ## 
           }
         
 } elsif ($Input =~ /\G([^\ \	\
@@ -11461,7 +11433,6 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
             ## 
           }
         
@@ -11534,7 +11505,6 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
-            ## 
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -11606,7 +11576,6 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
-            ## 
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -11675,7 +11644,6 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
             ## 
           }
         
@@ -11746,7 +11714,6 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
-            ## 
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -11816,7 +11783,6 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
-            ## 
           }
         
 } elsif ($Input =~ /\G([^\ \	\
@@ -11883,7 +11849,6 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
             ## 
           }
         
@@ -11952,7 +11917,6 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
-            ## 
           }
         
 } elsif ($Input =~ /\G([^\ \	\
@@ -12017,7 +11981,6 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
             ## 
           }
         
@@ -12085,7 +12048,6 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
-            ## 
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -12149,7 +12111,6 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
             ## 
           }
         
@@ -12197,7 +12158,6 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
-            ## 
           }
         
 } elsif ($Input =~ /\G\>/gcs) {
@@ -12241,7 +12201,6 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
             ## 
           }
         
@@ -12290,7 +12249,6 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
             ## 
           }
         
@@ -12452,7 +12410,6 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
             ## 
           }
         
@@ -14624,7 +14581,6 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
             ## 
           }
         
@@ -17985,7 +17941,6 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
-            ## 
           }
         
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -18161,7 +18116,6 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
             ## 
           }
         
@@ -18692,7 +18646,6 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
-            ## 
           }
         
 } elsif ($Input =~ /\G\/([A-Z])([^\ \	\
@@ -18747,7 +18700,6 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
             ## 
           }
         
@@ -18803,7 +18755,6 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
-            ## 
           }
         
 } elsif ($Input =~ /\G\/([a-z])([^\ \	\
@@ -18856,7 +18807,6 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
             ## 
           }
         
@@ -18912,7 +18862,6 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
-            ## 
           }
         
 } elsif ($Input =~ /\G\/([A-Z])([^\ \	\
@@ -18965,7 +18914,6 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
             ## 
           }
         
@@ -19051,7 +18999,6 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
-            ## 
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -19103,7 +19050,6 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
             ## 
           }
         
@@ -19157,7 +19103,6 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
             ## 
           }
         
