@@ -4819,6 +4819,26 @@ $Element->{+HTML_NS}->{slot} = {
 ## Autonomous custom elements
 $Element->{+HTML_NS}->{'*-*'} = {
   %TransparentChecker,
+  check_attrs2 => sub {
+    my ($self, $item, $element_state) = @_;
+
+    ## Local name MUST be a valid custom element name.
+    my $ln = $item->{node}->local_name;
+    unless ($ln =~ /\A[a-z]\p{InPCENChar}*\z/ and
+            $ln =~ /-/ and
+            not $_Defs->{not_custom_element_names}->{$ln}) {
+      $self->{onerror}->(node => $item->{node},
+                         type => 'not custom element name',
+                         value => $ln,
+                         level => 'm');
+    }
+
+    ## is="" not allowed
+    my $attr = $item->{node}->get_attribute_node_ns (undef, 'is');
+    $self->{onerror}->(node => $attr,
+                       type => 'attribute not allowed',
+                       level => 'm') if defined $attr;
+  }, # check_attrs2
 }; # *-*
 
 # ---- Sections ----

@@ -30,6 +30,21 @@
             "Web::HTML::Validator" : 1
          }
       },
+      "not custom element name" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>The local name of the element is not a valid custom element name.\u000AThe local name must be one of standard element names or valid custom\u000Aelement names.\u000A\u000A\u003C/p>\u003Cp>A valid custom element name is a string with following\u000Arestrictions:\u000A\u000A  \u003C/p>\u003Cul>\u000A\u000A  \u003Cli>Its first character must be one of ASCII lowercase letters\u000A  \u003Ccode>a\u003C/code>-z.\u000A\u000A  \u003C/li>\u003Cli>It can't contain ASCII uppercase letters\u000A  \u003Ccode>A\u003C/code>-\u003Ccode>Z\u003C/code>.\u000A\u000A  \u003C/li>\u003Cli>It must contain a \u003Ccode>-\u003C/code> character.\u000A\u000A  \u003C/li>\u003Cli>It can't be one of following reserved names:\u000A\u003Ccode>annotation-xml\u003C/code>,\u000A\u003Ccode>color-profile\u003C/code>,\u000A\u003Ccode>font-face\u003C/code>,\u000A\u003Ccode>font-face-src\u003C/code>,\u000A\u003Ccode>font-face-uri\u003C/code>,\u000A\u003Ccode>font-face-format\u003C/code>,\u000A\u003Ccode>font-face-name\u003C/code>, and\u000A\u003Ccode>missing-glyph\u003C/code>.\u000A\u000A  \u003C/li>\u003C/ul>",
+            "ja" : "\u003Cp>要素の局所名が妥当なカスタム要素名ではありません。\u000A局所名は標準の要素名か、妥当なカスタム要素名でなければいけません。\u000A\u000A\u003C/p>\u003Cp>妥当なカスタム要素名は、次の条件を満たす文字列です。\u000A\u000A  \u003C/p>\u003Cul>\u000A\u000A  \u003Cli>最初の文字は ASCII 小文字\u000A  \u003Ccode>a\u003C/code>-z のいずれかでなければいけません。\u000A\u000A  \u003C/li>\u003Cli>ASCII 大文字 \u003Ccode>A\u003C/code>-\u003Ccode>Z\u003C/code> は使えません。\u000A\u000A  \u003C/li>\u003Cli>文字 \u003Ccode>-\u003C/code> を含まなければいけません。\u000A\u000A  \u003C/li>\u003Cli>次の名前は予約されていて使えません:\u000A\u003Ccode>annotation-xml\u003C/code>,\u000A\u003Ccode>color-profile\u003C/code>,\u000A\u003Ccode>font-face\u003C/code>,\u000A\u003Ccode>font-face-src\u003C/code>,\u000A\u003Ccode>font-face-uri\u003C/code>,\u000A\u003Ccode>font-face-format\u003C/code>,\u000A\u003Ccode>font-face-name\u003C/code>,\u000A\u003Ccode>missing-glyph\u003C/code>。\u000A\u000A  \u003C/li>\u003C/ul>"
+         },
+         "layer" : "microsyntax",
+         "message" : {
+            "en" : "The element name is not a valid custom element name",
+            "ja" : "要素名が妥当なカスタム要素名ではありません"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
       "script language" : {
          "default_level" : "s",
          "desc" : {

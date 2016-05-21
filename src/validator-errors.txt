@@ -401,3 +401,72 @@ node is a shadow host.
 @ja
 
 <p><code>slot</code> 属性は、親節点が影ホストでなければ効果を持ちません。
+
+* not custom element name
+
+default_level=m
+layer=microsyntax
+
+@en
+The element name is not a valid custom element name
+@ja
+要素名が妥当なカスタム要素名ではありません
+
+@en
+
+<p>The local name of the element is not a valid custom element name.
+The local name must be one of standard element names or valid custom
+element names.
+
+<p>A valid custom element name is a string with following
+restrictions:
+
+  <ul>
+
+  <li>Its first character must be one of ASCII lowercase letters
+  <code>a</code>-</code>z</code>.
+
+  <li>It can't contain ASCII uppercase letters
+  <code>A</code>-<code>Z</code>.
+
+  <li>It must contain a <code>-</code> character.
+
+  <li>It can't be one of following reserved names:
+<code>annotation-xml</code>,
+<code>color-profile</code>,
+<code>font-face</code>,
+<code>font-face-src</code>,
+<code>font-face-uri</code>,
+<code>font-face-format</code>,
+<code>font-face-name</code>, and
+<code>missing-glyph</code>.
+
+  </ul>
+
+@ja
+
+<p>要素の局所名が妥当なカスタム要素名ではありません。
+局所名は標準の要素名か、妥当なカスタム要素名でなければいけません。
+
+<p>妥当なカスタム要素名は、次の条件を満たす文字列です。
+
+  <ul>
+
+  <li>最初の文字は ASCII 小文字
+  <code>a</code>-</code>z</code> のいずれかでなければいけません。
+
+  <li>ASCII 大文字 <code>A</code>-<code>Z</code> は使えません。
+
+  <li>文字 <code>-</code> を含まなければいけません。
+
+  <li>次の名前は予約されていて使えません:
+<code>annotation-xml</code>,
+<code>color-profile</code>,
+<code>font-face</code>,
+<code>font-face-src</code>,
+<code>font-face-uri</code>,
+<code>font-face-format</code>,
+<code>font-face-name</code>,
+<code>missing-glyph</code>。
+
+  </ul>
