@@ -1,6 +1,13 @@
+PERL = ./perl
+PROVE = ./prove
+CURL = curl
+WGET = wget
+GIT = git
+
 all: build
 clean: clean-json-ps
 	rm -fr local/*.json
+	rm -fr lib/Web/XML/_CharClasses.pm
 
 data: intermediate/validator-errors.json
 
@@ -10,18 +17,13 @@ update-submodules: local/bin/pmbp.pl
 	curl https://gist.githubusercontent.com/wakaba/34a71d3137a52abb562d/raw/gistfile1.txt | sh
 	git add modules t_deps/modules t_deps/tests
 	perl local/bin/pmbp.pl --update
-	git add config
+	git add config lib
 
 dataautoupdate-commit: clean all
 	git add lib
 
-PERL = ./perl
-PROVE = ./prove
-
 ## ------ Setup ------
 
-WGET = wget
-GIT = git
 JSON_PS = local/perl-latest/pm/lib/perl5/JSON/PS.pm
 
 deps: git-submodules pmbp-install
@@ -98,6 +100,17 @@ lib/Web/HTML/_NamedEntityList.pm: local/html-charrefs.json local/bin/pmbp.pl \
 	  print "$$pm\n1;\n# © Copyright 2004-2011 Apple Computer, Inc., Mozilla Foundation, and Opera Software ASA.\n# You are granted a license to use, reproduce and create derivative works of this document."; #\
 	' < local/html-charrefs.json > lib/Web/HTML/_NamedEntityList.pm
 	perl -c lib/Web/HTML/_NamedEntityList.pm
+
+lib/Web/XML/_CharClasses.pm:
+	echo 'package Web::XML::_CharClasses;use Carp;' > $@;
+	echo 'sub import{my $$from_class = shift;my ($$to_class, $$file, $$line) = caller;no strict 'refs';for (@_ ? @_ : qw(InNameStartChar InNameChar InNCNameStartChar InNCNameChar InPCENChar)) {my $$code = $$from_class->can ($$_) or croak qq{"$$_" is not exported by the $$from_class module at $$file line $$line};*{$$to_class . '::' . $$_} = $$code;}}' >> $@
+	$(CURL) -f -l https://chars.suikawiki.org/set/perlrevars?item=InNameStartChar=%24xml10-5e%3ANameStartChar >> $@
+	$(CURL) -f -l https://chars.suikawiki.org/set/perlrevars?item=InNameChar=%24xml10-5e%3ANameChar >> $@
+	$(CURL) -f -l https://chars.suikawiki.org/set/perlrevars?item=InNCNameStartChar=%24xml10-5e%3ANCNameStartChar >> $@
+	$(CURL) -f -l https://chars.suikawiki.org/set/perlrevars?item=InNCNameChar=%24xml10-5e%3ANCNameChar >> $@
+	$(CURL) -f -l https://chars.suikawiki.org/set/perlrevars?item=InPCENChar=%24html%3APCENChar >> $@
+	echo '1;' >> $@
+	$(PERL) -c $@
 
 lib/Web/Feed/_Defs.pm: bin/generate-feed-defs.pl local/elements.json
 	$(PERL) $< > $@

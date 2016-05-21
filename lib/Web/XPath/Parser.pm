@@ -2,8 +2,8 @@ package Web::XPath::Parser;
 use strict;
 use warnings;
 no warnings 'utf8';
-our $VERSION = '1.0';
-use Char::Class::XML qw(InXMLNCNameChar10_1 InXML_NCNameStartChar10_1);
+our $VERSION = '2.0';
+use Web::XML::_CharClasses;
 
 sub new ($) {
   return bless {}, $_[0];
@@ -75,7 +75,7 @@ sub tokenize ($$) {
       push @token, ['Literal', $length-($+[0]-$-[0])-length $input, $1];
     } elsif ($input =~ s/^'([^']*)'//) {
       push @token, ['Literal', $length-($+[0]-$-[0])-length $input, $1];
-    } elsif ($input =~ s/^(\p{InXML_NCNameStartChar10_1}\p{InXMLNCNameChar10_1}*)//) {
+    } elsif ($input =~ s/^(\p{InNCNameStartChar}\p{InNCNameChar}*)//) {
       push @token, ['NCName', $length-($+[0]-$-[0])-length $input, $1];
       $token[-1]->[3] = $input =~ s/^[\x09\x0A\x0D\x20]+//;
     } else {
@@ -562,7 +562,7 @@ sub parse_char_string_as_expression ($$) {
 
 =head1 LICENSE
 
-Copyright 2013 Wakaba <wakaba@suikawiki.org>.
+Copyright 2013-2016 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
