@@ -3,10 +3,11 @@ use strict;
 use warnings;
 use warnings FATAL => 'recursion';
 no warnings 'utf8';
-our $VERSION = '134.0';
+our $VERSION = '135.0';
 use Scalar::Util qw(refaddr);
 use Web::HTML::Validator::_Defs;
 use Web::HTML::SourceMap;
+use Web::XML::_CharClasses;
 
 ## ------ Constructor ------
 
@@ -413,7 +414,7 @@ sub _check_element_attrs ($$$;%) {
     my $status = $attr_def->{status} || '';
     if ($allow_dataset and
         $attr_ns eq '' and
-        $attr_ln =~ /^data-\p{InXMLNCNameChar10}+\z/ and
+        $attr_ln =~ /^data-\p{InNCNameChar}+\z/ and
         $attr_ln !~ /[A-Z]/) {
       ## |data-*=""| - XML-compatible + no uppercase letter
       $checker = $CheckerByType->{any};
@@ -441,7 +442,7 @@ sub _check_element_attrs ($$$;%) {
     if ($is_embed and
         $attr_ns eq '' and
         $attr_ln !~ /[A-Z]/ and
-        $attr_ln =~ /\A\p{InXML_NCNameStartChar10}\p{InXMLNCNameChar10}*\z/ and
+        $attr_ln =~ /\A\p{InNCNameStartChar}\p{InNCNameChar}*\z/ and
         not $attr_def->{non_conforming}) {
       ## XML-compatible + no uppercase letter
       $checker ||= $CheckerByType->{any};
@@ -2587,8 +2588,6 @@ sub _is_minus_element ($$$$) {
 } # _is_minus_element
 
 our $Element = {};
-
-use Char::Class::XML qw/InXML_NCNameStartChar10 InXMLNCNameChar10/;
 
 ## Check whether the labelable form-associated element is allowed to
 ## place there or not and mark the element ID, if any, might be used
@@ -9639,7 +9638,7 @@ sub _check_node ($$) {
           } elsif ($type eq 'url') {
             $CheckerByType->{URL}->($self, $attr, {}, {});
           } elsif ($type eq 'rdf-id') {
-            unless ($attr->value =~ /\A\p{InXML_NCNameStartChar10}\p{InXMLNCNameChar10}*\z/) {
+            unless ($attr->value =~ /\A\p{InNCNameStartChar}\p{InNCNameChar}*\z/) {
               $self->{onerror}->(node => $attr,
                                  type => 'rdf-id:syntax error',
                                  level => 'm'); # RDF/XML grammer

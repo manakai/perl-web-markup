@@ -1,9 +1,8 @@
 package Web::XML::DTDValidator;
 use strict;
 use warnings;
-our $VERSION = '8.0';
-use Char::Class::XML qw(InXMLNameStartChar InXMLNameChar
-                        InXMLNCNameStartChar InXMLNCNameChar);
+our $VERSION = '9.0';
+use Web::XML::_CharClasses;
 
 sub new ($) {
   return bless {}, $_[0];
@@ -28,8 +27,8 @@ sub onerror ($;$) {
 } # onerror
 
 my $XMLS = qr/[\x09\x0A\x0D\x20]/;
-my $XMLName = qr/\p{InXMLNameStartChar}\p{InXMLNameChar}*/;
-my $XMLNCName = qr/\p{InXMLNCNameStartChar}\p{InXMLNCNameChar}*/;
+my $XMLName = qr/\p{InNameStartChar}\p{InNameChar}*/;
+my $XMLNCName = qr/\p{InNCNameStartChar}\p{InNCNameChar}*/;
 my $GITEM; {
   use re 'eval';
   $GITEM = qr/(?>[^()*+?|,\x09\x0A\x0D\x20]+|\($XMLS*(??{$GITEM})$XMLS*(?>[|,]$XMLS*(??{$GITEM})$XMLS*)*\))(?>[*+?]|)/;
@@ -295,7 +294,7 @@ sub _validate_doctype ($$) {
                            node => $at, value => $_);
         } else {
           if ($declared_type == $at->ENUMERATION_ATTR) {
-            unless ($_ =~ /\A\p{InXMLNameChar}+\z/) {
+            unless ($_ =~ /\A\p{InNameChar}+\z/) {
               $self->onerror->(level => 'm',
                                type => 'xml:nmtoken syntax',
                                node => $at, value => $_);
@@ -378,7 +377,7 @@ sub _validate_doctype ($$) {
         if ($default_type == $at->EXPLICIT_DEFAULT or
             $default_type == $at->FIXED_DEFAULT) {
           ## VC:Attribute Default Value Syntactically Correct
-          unless ($dv =~ /\A\p{InXMLNameChar}+\z/o) {
+          unless ($dv =~ /\A\p{InNameChar}+\z/o) {
             $self->onerror->(level => 'm',
                              type => 'xml:nmtoken syntax',
                              node => $at, value => $dv);
@@ -388,7 +387,7 @@ sub _validate_doctype ($$) {
         if ($default_type == $at->EXPLICIT_DEFAULT or
             $default_type == $at->FIXED_DEFAULT) {
           ## VC:Attribute Default Value Syntactically Correct
-          unless ($dv =~ /\A\p{InXMLNameChar}+(?>\x20\p{InXMLNameChar}+)*\z/o) {
+          unless ($dv =~ /\A\p{InNameChar}+(?>\x20\p{InNameChar}+)*\z/o) {
             $self->onerror->(level => 'm',
                              type => 'xml:nmtokens syntax',
                              node => $at, value => $dv);
@@ -557,12 +556,12 @@ sub _validate_element ($$) {
             $self->onerror->(level => 'm',
                              type => 'xml:nmtoken syntax',
                              node => $attr, value => $value)
-                unless $value =~ /\A\p{InXMLNameChar}+\z/o;
+                unless $value =~ /\A\p{InNameChar}+\z/o;
           } elsif ($declared_type == $at->NMTOKENS_ATTR) {
             $self->onerror->(level => 'm',
                              type => 'xml:nmtokens syntax',
                              node => $attr, value => $value)
-                unless $value =~ /\A\p{InXMLNameChar}+(?>\x20\p{InXMLNameChar}+)*\z/o;
+                unless $value =~ /\A\p{InNameChar}+(?>\x20\p{InNameChar}+)*\z/o;
           } elsif ($declared_type == $at->ENTITY_ATTR) {
             my $ent = $dt->entities->{$value};
             if (defined $ent) {
@@ -725,7 +724,7 @@ sub _validate_element ($$) {
 
 =head1 LICENSE
 
-Copyright 2003-2015 Wakaba <wakaba@suikawiki.org>
+Copyright 2003-2016 Wakaba <wakaba@suikawiki.org>
 
 This program is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

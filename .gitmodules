@@ -22,10 +22,6 @@
 	path = t_deps/modules/web-dom
 	url = git://github.com/manakai/perl-web-dom
         track = master
-[submodule "modules/charclass"]
-	path = modules/charclass
-	url = git://github.com/wakaba/perl-charclass
-        track = master
 [submodule "t_deps/modules/web-langtag"]
 	path = t_deps/modules/web-langtag
 	url = git://github.com/manakai/perl-web-langtag
@@ -53,3 +49,8 @@
 [submodule "t_deps/modules/json-ps"]
 	path = t_deps/modules/json-ps
 	url = git://github.com/wakaba/perl-json-ps
+        track = master
+[submodule "t_deps/modules/charclass"]
+	path = t_deps/modules/charclass
+	url = git://github.com/wakaba/perl-charclass
+        track = master

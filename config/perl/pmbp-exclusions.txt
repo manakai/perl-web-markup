@@ -1,4 +1,3 @@
-- "../../modules/charclass" tests build
 - "../../modules/web-encodings" tests
 - "../../modules/web-url" tests
 - "../../t_deps/modules/regexp" tests visualizer visualizercgi
@@ -9,5 +8,5 @@
 - "../../t_deps/modules/web-dom" tests
 - "../../t_deps/modules/web-langtag" tests updater
 - "../../t_deps/modules/web-resource" tests updater
-
 - "../../t_deps/modules/json-ps" build tests
+- "../../t_deps/modules/charclass" build tests

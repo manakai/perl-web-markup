@@ -1,13 +1,12 @@
 package Web::XML::Parser::MinimumChecker;
 use strict;
 use warnings;
-our $VERSION = '1.0';
-use Char::Class::XML qw(InXMLNameChar InXMLNameStartChar
-                        InXMLNCNameChar InXMLNCNameStartChar);
+our $VERSION = '2.0';
+use Web::XML::_CharClasses;
 
 sub check_name ($%) {
   my ($class, %args) = @_;
-  unless ($args{name} =~ /\A\p{InXMLNameStartChar}\p{InXMLNameChar}*\z/) {
+  unless ($args{name} =~ /\A\p{InNameStartChar}\p{InNameChar}*\z/) {
     $args{onerror}->(type => 'xml:not name',
                      value => $args{name},
                      level => 'm');
@@ -16,12 +15,12 @@ sub check_name ($%) {
 
 sub check_qname ($%) {
   my ($class, %args) = @_;
-  if (not $args{name} =~ /\A\p{InXMLNameStartChar}\p{InXMLNameChar}*\z/) {
+  if (not $args{name} =~ /\A\p{InNameStartChar}\p{InNameChar}*\z/) {
     $args{onerror}->(type => 'xml:not name',
                      value => $args{name},
                      level => 'm');
   } elsif ($args{name} =~ /:/ and
-           not $args{name} =~ /\A\p{InXMLNCNameStartChar}\p{InXMLNCNameChar}*:\p{InXMLNCNameStartChar}\p{InXMLNCNameChar}*\z/) {
+           not $args{name} =~ /\A\p{InNCNameStartChar}\p{InNCNameChar}*:\p{InNCNameStartChar}\p{InNCNameChar}*\z/) {
     $args{onerror}->(type => 'xml:not qname',
                      value => $args{name},
                      level => 'm');
@@ -30,7 +29,7 @@ sub check_qname ($%) {
 
 sub check_nmtoken ($%) {
   my ($class, %args) = @_;
-  unless ($args{name} =~ /\A\p{InXMLNameChar}+\z/) {
+  unless ($args{name} =~ /\A\p{InNameChar}+\z/) {
     $args{onerror}->(type => 'xml:not nmtoken',
                      value => $args{name},
                      level => 'm');
@@ -126,3 +125,12 @@ sub check_ncnames ($%) {
 } # check_ncnames
 
 1;
+
+=head1 LICENSE
+
+Copyright 2003-2016 Wakaba <wakaba@suikawiki.org>
+
+This program is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut

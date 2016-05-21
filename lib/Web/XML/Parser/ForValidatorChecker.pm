@@ -1,10 +1,10 @@
 package Web::XML::Parser::ForValidatorChecker;
 use strict;
 use warnings;
-our $VERSION = '1.0';
+our $VERSION = '2.0';
 use Web::XML::Parser::MinimumChecker;
 push our @ISA, qw(Web::XML::Parser::MinimumChecker);
-use Char::Class::XML qw(InXMLNCNameChar InXMLNCNameStartChar);
+use Web::XML::_CharClasses;
 
 sub check_hidden_name ($%) {
   my $class = shift;
@@ -45,7 +45,7 @@ sub check_hidden_pubid ($%) {
 sub check_ncnames ($%) {
   my ($class, %args) = @_;
   for (keys %{$args{names}}) {
-    if (not /\A\p{InXMLNCNameStartChar}\p{InXMLNCNameChar}*\z/) {
+    if (not /\A\p{InNCNameStartChar}\p{InNCNameChar}*\z/) {
       $args{onerror}->(type => 'xml:not ncname',
                        di => $args{names}->{$_}->{di},
                        index => $args{names}->{$_}->{index},
@@ -56,3 +56,12 @@ sub check_ncnames ($%) {
 } # check_ncnames
 
 1;
+
+=head1 LICENSE
+
+Copyright 2003-2016 Wakaba <wakaba@suikawiki.org>
+
+This program is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut
