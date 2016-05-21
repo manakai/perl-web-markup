@@ -4396,6 +4396,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -4403,6 +4405,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -4515,6 +4518,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -4522,6 +4527,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -4730,6 +4736,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -4737,6 +4745,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -7144,6 +7153,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -7151,6 +7162,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -7334,6 +7346,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -7341,6 +7355,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -7705,6 +7720,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -7712,6 +7729,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -8133,6 +8151,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -8140,6 +8160,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -8535,6 +8556,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -8542,6 +8565,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -9136,6 +9160,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -9143,6 +9169,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -9242,6 +9269,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -9249,6 +9278,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -9374,6 +9404,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -9381,6 +9413,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -9702,6 +9735,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -9709,6 +9744,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -9937,6 +9973,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -9944,6 +9982,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -10009,6 +10048,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -10016,6 +10057,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -10177,6 +10219,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -10184,6 +10228,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -10250,6 +10295,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -10257,6 +10304,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -10321,6 +10369,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -10328,6 +10378,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -10392,6 +10443,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -10399,6 +10452,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -10585,6 +10639,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -10592,6 +10648,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -10688,6 +10745,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -10695,6 +10754,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -10758,6 +10818,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -10765,6 +10827,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -10830,6 +10893,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -10837,6 +10902,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -10900,6 +10966,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -10907,6 +10975,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -10970,6 +11039,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -10977,6 +11048,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -11038,6 +11110,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -11045,6 +11119,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -11106,6 +11181,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -11113,6 +11190,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -11176,6 +11254,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -11183,6 +11263,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -11302,6 +11383,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -11309,6 +11392,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -11368,6 +11452,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -11375,6 +11461,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -11437,6 +11524,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -11444,6 +11533,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -11506,6 +11596,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -11513,6 +11605,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -11573,6 +11666,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -11580,6 +11675,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -11640,6 +11736,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -11647,6 +11745,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -11707,6 +11806,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -11714,6 +11815,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -11772,6 +11874,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -11779,6 +11883,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -11837,6 +11942,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -11844,6 +11951,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -11900,6 +12008,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -11907,6 +12017,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -11964,6 +12075,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -11971,6 +12084,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -12026,6 +12140,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -12033,6 +12149,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -12070,6 +12187,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -12077,6 +12196,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -12112,6 +12232,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -12119,6 +12241,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -12158,6 +12281,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -12165,6 +12290,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -12317,6 +12443,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -12324,6 +12452,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -14495,6 +14624,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -17845,6 +17975,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -17852,6 +17984,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -18019,6 +18152,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -18026,6 +18161,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -18546,6 +18682,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -18553,6 +18691,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -18599,6 +18738,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -18606,6 +18747,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -18651,6 +18793,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -18658,6 +18802,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -18702,6 +18847,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -18709,6 +18856,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -18754,6 +18902,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -18761,6 +18911,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -18805,6 +18956,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -18812,6 +18965,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -18887,6 +19041,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -18894,6 +19050,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -18937,6 +19094,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -18944,6 +19103,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         
@@ -18997,6 +19157,7 @@ push @$Tokens, $Token;
             ## 
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
             ## 
           }
         

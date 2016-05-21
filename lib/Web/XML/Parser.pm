@@ -2426,6 +2426,7 @@ push @$OP, ['stop-parsing'];
           nsmap => $nsmap,
           ns => $ns, prefix => $prefix, local_name => $ln,
           attr_list => $token->{attr_list},
+          custom => scalar ($ln =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
           et => $Element2Type->{($nse)}->{$ln} || $Element2Type->{($nse)}->{'*'} || 0,
           aet => $Element2Type->{($nse)}->{$ln} || $Element2Type->{($nse)}->{'*'} || 0,
           cm_type => ($DTDDefs->{elements}->{$token->{tag_name}} || {})->{cm_type},
@@ -2776,6 +2777,7 @@ push @$OP, ['stop-parsing'];
           nsmap => $nsmap,
           ns => $ns, prefix => $prefix, local_name => $ln,
           attr_list => $token->{attr_list},
+          custom => scalar ($ln =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
           et => $Element2Type->{($nse)}->{$ln} || $Element2Type->{($nse)}->{'*'} || 0,
           aet => $Element2Type->{($nse)}->{$ln} || $Element2Type->{($nse)}->{'*'} || 0,
           cm_type => ($DTDDefs->{elements}->{$token->{tag_name}} || {})->{cm_type},
@@ -28376,6 +28378,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -28386,6 +28390,11 @@ push @$Tokens, $Token;
             ## <XML>
             return 1 if @$OE <= 1;
             ## </XML>
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY])/gcs) {
@@ -28465,6 +28474,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -28475,6 +28486,11 @@ push @$Tokens, $Token;
             ## <XML>
             return 1 if @$OE <= 1;
             ## </XML>
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -32610,6 +32626,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -32620,6 +32638,11 @@ push @$Tokens, $Token;
             ## <XML>
             return 1 if @$OE <= 1;
             ## </XML>
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G[\	\
@@ -32674,6 +32697,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -32684,6 +32709,11 @@ push @$Tokens, $Token;
             ## <XML>
             return 1 if @$OE <= 1;
             ## </XML>
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G[\	\
@@ -32736,6 +32766,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -32746,6 +32778,11 @@ push @$Tokens, $Token;
             ## <XML>
             return 1 if @$OE <= 1;
             ## </XML>
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G[\	\
@@ -32798,6 +32835,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -32808,6 +32847,11 @@ push @$Tokens, $Token;
             ## <XML>
             return 1 if @$OE <= 1;
             ## </XML>
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G\=[\	\
@@ -32900,6 +32944,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -32910,6 +32956,11 @@ push @$Tokens, $Token;
             ## <XML>
             return 1 if @$OE <= 1;
             ## </XML>
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G\=[\	\
@@ -32962,6 +33013,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -32972,6 +33025,11 @@ push @$Tokens, $Token;
             ## <XML>
             return 1 if @$OE <= 1;
             ## </XML>
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G\=[\	\
@@ -33022,6 +33080,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -33032,6 +33092,11 @@ push @$Tokens, $Token;
             ## <XML>
             return 1 if @$OE <= 1;
             ## </XML>
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G\=[\	\
@@ -33082,6 +33147,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -33092,6 +33159,11 @@ push @$Tokens, $Token;
             ## <XML>
             return 1 if @$OE <= 1;
             ## </XML>
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G([\	\\ \
@@ -33219,6 +33291,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -33229,6 +33303,11 @@ push @$Tokens, $Token;
             ## <XML>
             return 1 if @$OE <= 1;
             ## </XML>
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } else {
@@ -39093,6 +39172,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -39103,6 +39184,11 @@ push @$Tokens, $Token;
             ## <XML>
             return 1 if @$OE <= 1;
             ## </XML>
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -39285,6 +39371,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -39295,6 +39383,11 @@ push @$Tokens, $Token;
             ## <XML>
             return 1 if @$OE <= 1;
             ## </XML>
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G([\`])/gcs) {
@@ -39718,6 +39811,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -39728,6 +39823,11 @@ push @$Tokens, $Token;
             ## <XML>
             return 1 if @$OE <= 1;
             ## </XML>
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G([\`])/gcs) {
@@ -40226,6 +40326,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -40236,6 +40338,11 @@ push @$Tokens, $Token;
             ## <XML>
             return 1 if @$OE <= 1;
             ## </XML>
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G([\`])/gcs) {
@@ -41937,6 +42044,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -41947,6 +42056,11 @@ push @$Tokens, $Token;
             ## <XML>
             return 1 if @$OE <= 1;
             ## </XML>
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 return 1 if $return;
@@ -42375,6 +42489,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -42385,6 +42501,11 @@ push @$Tokens, $Token;
             ## <XML>
             return 1 if @$OE <= 1;
             ## </XML>
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G([X])/gcs) {
@@ -42566,6 +42687,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -42576,6 +42699,11 @@ push @$Tokens, $Token;
             ## <XML>
             return 1 if @$OE <= 1;
             ## </XML>
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G([\`])/gcs) {
@@ -42661,6 +42789,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -42671,6 +42801,11 @@ push @$Tokens, $Token;
             ## <XML>
             return 1 if @$OE <= 1;
             ## </XML>
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -56888,6 +57023,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -56898,6 +57035,11 @@ push @$Tokens, $Token;
             ## <XML>
             return 1 if @$OE <= 1;
             ## </XML>
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G\>/gcs) {
@@ -56932,6 +57074,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -56942,6 +57086,11 @@ push @$Tokens, $Token;
             ## <XML>
             return 1 if @$OE <= 1;
             ## </XML>
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G([\	\\ \
@@ -56980,6 +57129,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -56990,6 +57141,11 @@ push @$Tokens, $Token;
             ## <XML>
             return 1 if @$OE <= 1;
             ## </XML>
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY])/gcs) {
@@ -57157,6 +57313,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -57167,6 +57325,11 @@ push @$Tokens, $Token;
             ## <XML>
             return 1 if @$OE <= 1;
             ## </XML>
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G([\`])/gcs) {
@@ -73444,6 +73607,11 @@ push @$Tokens, $Token;
             ## <XML>
             return 1 if @$OE <= 1;
             ## </XML>
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -76638,6 +76806,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -76648,6 +76818,11 @@ push @$Tokens, $Token;
             ## <XML>
             return 1 if @$OE <= 1;
             ## </XML>
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -76814,6 +76989,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -76824,6 +77001,11 @@ push @$Tokens, $Token;
             ## <XML>
             return 1 if @$OE <= 1;
             ## </XML>
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY]+)/gcs) {
@@ -76924,6 +77106,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -76934,6 +77118,11 @@ push @$Tokens, $Token;
             ## <XML>
             return 1 if @$OE <= 1;
             ## </XML>
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\>])([^\ \\-]*)\-([^\ \\-])([^\ \\-]*)/gcs) {
@@ -77000,6 +77189,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -77010,6 +77201,11 @@ push @$Tokens, $Token;
             ## <XML>
             return 1 if @$OE <= 1;
             ## </XML>
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G\!(\-)\-([^\ \\-\>])([^\ \\-]*)\-([^\ \\-])([^\ \\-]*)/gcs) {
@@ -77076,6 +77272,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -77086,6 +77284,11 @@ push @$Tokens, $Token;
             ## <XML>
             return 1 if @$OE <= 1;
             ## </XML>
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G\/([^\ \	\
@@ -77130,6 +77333,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -77140,6 +77345,11 @@ push @$Tokens, $Token;
             ## <XML>
             return 1 if @$OE <= 1;
             ## </XML>
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\>])([^\ \\-]*)\-\-\>/gcs) {
@@ -78174,7 +78384,8 @@ $Scripting = $self->{Scripting};
                       #di => $token->{di}, index => $token->{index},
                       ns => HTMLNS,
                       local_name => $node_ln,
-                      attr_list => {}, # not relevant
+                      attr_list => [], # not relevant
+                      custom => scalar ($node_ln =~ /-/),
                       et => $Element2Type->{(HTMLNS)}->{$node_ln} || $Element2Type->{(HTMLNS)}->{'*'},
                       aet => $Element2Type->{(HTMLNS)}->{$node_ln} || $Element2Type->{(HTMLNS)}->{'*'}};
         ## 
@@ -78184,7 +78395,8 @@ $Scripting = $self->{Scripting};
                       #di => $token->{di}, index => $token->{index},
                       ns => 0,
                       local_name => $node_ln,
-                      attr_list => {}, # not relevant
+                      attr_list => [], # not relevant
+                      custom => 0,
                       et => 0,
                       aet => 0};
         }
@@ -78228,7 +78440,8 @@ $Scripting = $self->{Scripting};
                  ns => $CONTEXT->{ns},
                  local_name => $CONTEXT->{local_name},
                  nsmap => $CONTEXT->{nsmap},
-                 attr_list => {},
+                 attr_list => [],
+                 custom => scalar ($CONTEXT->{local_name} =~ /-/),
                  et => $CONTEXT->{et},
                  aet => $CONTEXT->{aet}});
         ## </XML>
@@ -78721,7 +78934,8 @@ $Scripting = $self->{Scripting};
              #di => $token->{di}, index => $token->{index},
              ns => undef,
              local_name => 'dummy',
-             attr_list => {},
+             attr_list => [],
+             custom => 0,
              nsmap => $main->{saved_lists}->{OE}->[-1]->{nsmap},
              cm_type => $main->{saved_lists}->{OE}->[-1]->{cm_type},
              et => 0,
@@ -78807,7 +79021,8 @@ $Scripting = $self->{Scripting};
              #di => $token->{di}, index => $token->{index},
              ns => undef,
              local_name => 'dummy',
-             attr_list => {},
+             attr_list => [],
+             custom => 0,
              nsmap => $main->{saved_lists}->{OE}->[-1]->{nsmap},
              et => 0,
              aet => 0});

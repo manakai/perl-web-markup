@@ -1240,6 +1240,7 @@ return;
                  ns => HTMLNS,
                  local_name => 'body',
                  attr_list => [],
+                 custom => scalar ('body' =~ /-/ || (grep { $_->{name} eq 'is' } @{[]})),
                  et => (BODY_EL), aet => (BODY_EL) };
       
 
@@ -1266,6 +1267,7 @@ push @$OE, $node_body;
                  ns => HTMLNS,
                  local_name => 'body',
                  attr_list => [],
+                 custom => scalar ('body' =~ /-/ || (grep { $_->{name} eq 'is' } @{[]})),
                  et => (BODY_EL), aet => (BODY_EL) };
       
 
@@ -1292,6 +1294,7 @@ push @$OE, $node_body;
                  ns => HTMLNS,
                  local_name => 'body',
                  attr_list => [],
+                 custom => scalar ('body' =~ /-/ || (grep { $_->{name} eq 'is' } @{[]})),
                  et => (BODY_EL), aet => (BODY_EL) };
       
 
@@ -1323,6 +1326,7 @@ push @$OE, $HEAD_ELEMENT;
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
+                 custom => scalar ($token->{tag_name} =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'}, aet => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'} };
       
 
@@ -1349,6 +1353,7 @@ push @$OE, $HEAD_ELEMENT;
                  ns => HTMLNS,
                  local_name => 'body',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('body' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (BODY_EL), aet => (BODY_EL) };
       
 
@@ -1383,6 +1388,7 @@ push @$OE, $node;
                  ns => HTMLNS,
                  local_name => 'frameset',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('frameset' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (FRAMESET_EL), aet => (FRAMESET_EL) };
       
 
@@ -1437,6 +1443,7 @@ push @$OE, $HEAD_ELEMENT;
                  ns => HTMLNS,
                  local_name => 'meta',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('meta' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
       
 
@@ -1490,6 +1497,7 @@ push @$OE, $HEAD_ELEMENT;
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
+                 custom => scalar ($token->{tag_name} =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'}, aet => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'} };
       
 
@@ -1529,6 +1537,7 @@ push @$OE, $HEAD_ELEMENT;
                  ns => HTMLNS,
                  local_name => 'script',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('script' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (SCRIPT_EL), aet => (SCRIPT_EL) , script_flags => 1};
       
 
@@ -1568,6 +1577,7 @@ push @$OE, $HEAD_ELEMENT;
                  ns => HTMLNS,
                  local_name => 'template',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('template' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (TEMPLATE_EL), aet => (TEMPLATE_EL) };
       
 
@@ -1612,6 +1622,7 @@ push @$OE, $HEAD_ELEMENT;
                  ns => HTMLNS,
                  local_name => 'title',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('title' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
       
 
@@ -1654,6 +1665,7 @@ $ORIGINAL_IM = $IM;
                  ns => HTMLNS,
                  local_name => 'body',
                  attr_list => [],
+                 custom => scalar ('body' =~ /-/ || (grep { $_->{name} eq 'is' } @{[]})),
                  et => (BODY_EL), aet => (BODY_EL) };
       
 
@@ -1710,6 +1722,7 @@ return;
                  ns => HTMLNS,
                  local_name => 'head',
                  attr_list => [],
+                 custom => scalar ('head' =~ /-/ || (grep { $_->{name} eq 'is' } @{[]})),
                  et => (HEAD_EL), aet => (HEAD_EL) };
       
 
@@ -1737,6 +1750,7 @@ $HEAD_ELEMENT = $node_head;
                  ns => HTMLNS,
                  local_name => 'head',
                  attr_list => [],
+                 custom => scalar ('head' =~ /-/ || (grep { $_->{name} eq 'is' } @{[]})),
                  et => (HEAD_EL), aet => (HEAD_EL) };
       
 
@@ -1764,6 +1778,7 @@ $HEAD_ELEMENT = $node_head;
                  ns => HTMLNS,
                  local_name => 'head',
                  attr_list => [],
+                 custom => scalar ('head' =~ /-/ || (grep { $_->{name} eq 'is' } @{[]})),
                  et => (HEAD_EL), aet => (HEAD_EL) };
       
 
@@ -1791,6 +1806,7 @@ $HEAD_ELEMENT = $node_head;
                  ns => HTMLNS,
                  local_name => 'head',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('head' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (HEAD_EL), aet => (HEAD_EL) };
       
 
@@ -1829,6 +1845,7 @@ $HEAD_ELEMENT = $node;
                  ns => HTMLNS,
                  local_name => 'head',
                  attr_list => [],
+                 custom => scalar ('head' =~ /-/ || (grep { $_->{name} eq 'is' } @{[]})),
                  et => (HEAD_EL), aet => (HEAD_EL) };
       
 
@@ -1853,6 +1870,7 @@ push @$OP, ['popped', [pop @$OE]];
                  ns => HTMLNS,
                  local_name => 'body',
                  attr_list => [],
+                 custom => scalar ('body' =~ /-/ || (grep { $_->{name} eq 'is' } @{[]})),
                  et => (BODY_EL), aet => (BODY_EL) };
       
 
@@ -1909,6 +1927,7 @@ return;
                     ns => HTMLNS,
                     local_name => 'html',
                     attr_list => [],
+                    custom => scalar ('html' =~ /-/ || (grep { $_->{name} eq 'is' } @{[]})),
                     et => (HTML_EL), aet => (HTML_EL)};
       
 push @$OP, ['insert', $node => 0];
@@ -1933,6 +1952,7 @@ push @$OP, ['appcache'];
                     ns => HTMLNS,
                     local_name => 'html',
                     attr_list => [],
+                    custom => scalar ('html' =~ /-/ || (grep { $_->{name} eq 'is' } @{[]})),
                     et => (HTML_EL), aet => (HTML_EL)};
       
 push @$OP, ['insert', $node => 0];
@@ -1957,6 +1977,7 @@ push @$OP, ['appcache'];
                     ns => HTMLNS,
                     local_name => 'html',
                     attr_list => [],
+                    custom => scalar ('html' =~ /-/ || (grep { $_->{name} eq 'is' } @{[]})),
                     et => (HTML_EL), aet => (HTML_EL)};
       
 push @$OP, ['insert', $node => 0];
@@ -1981,6 +2002,7 @@ push @$OP, ['appcache'];
                     ns => HTMLNS,
                     local_name => 'html',
                     attr_list => $token->{attr_list},
+                    custom => scalar ('html' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                     et => (HTML_EL), aet => (HTML_EL)};
       
 push @$OP, ['insert', $node => 0];
@@ -2016,6 +2038,7 @@ push @$OP, ['appcache', $token->{attrs}->{manifest}];
                     ns => HTMLNS,
                     local_name => 'html',
                     attr_list => [],
+                    custom => scalar ('html' =~ /-/ || (grep { $_->{name} eq 'is' } @{[]})),
                     et => (HTML_EL), aet => (HTML_EL)};
       
 push @$OP, ['insert', $node => 0];
@@ -2032,6 +2055,7 @@ push @$OP, ['appcache'];
                  ns => HTMLNS,
                  local_name => 'head',
                  attr_list => [],
+                 custom => scalar ('head' =~ /-/ || (grep { $_->{name} eq 'is' } @{[]})),
                  et => (HEAD_EL), aet => (HEAD_EL) };
       
 
@@ -2056,6 +2080,7 @@ push @$OP, ['popped', [pop @$OE]];
                  ns => HTMLNS,
                  local_name => 'body',
                  attr_list => [],
+                 custom => scalar ('body' =~ /-/ || (grep { $_->{name} eq 'is' } @{[]})),
                  et => (BODY_EL), aet => (BODY_EL) };
       
 
@@ -2331,6 +2356,7 @@ push @$Errors, {type => '</br>',
                  ns => HTMLNS,
                  local_name => 'br',
                  attr_list => [],
+                 custom => scalar ('br' =~ /-/ || (grep { $_->{name} eq 'is' } @{[]})),
                  et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
       
 
@@ -2670,6 +2696,7 @@ return;
                  ns => HTMLNS,
                  local_name => 'p',
                  attr_list => [],
+                 custom => scalar ('p' =~ /-/ || (grep { $_->{name} eq 'is' } @{[]})),
                  et => (P_EL), aet => (P_EL) };
       
 
@@ -2823,6 +2850,7 @@ push @$OP, ['stop-parsing'];
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
+                 custom => scalar ($token->{tag_name} =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'}, aet => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'} };
       
 
@@ -2890,6 +2918,7 @@ aaa ($token, 'a', remove_from_afe_and_oe => 1);
                  ns => HTMLNS,
                  local_name => 'a',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('a' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (A_EL), aet => (A_EL) };
       
 
@@ -2978,6 +3007,7 @@ push @$OE, $node;
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
+                 custom => scalar ($token->{tag_name} =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'}, aet => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'} };
       
 
@@ -3024,6 +3054,7 @@ push @$OE, $node;
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
+                 custom => scalar ($token->{tag_name} =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'}, aet => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'} };
       
 
@@ -3074,6 +3105,7 @@ push @$AFE, '#marker';
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
+                 custom => scalar ($token->{tag_name} =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'}, aet => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'} };
       
 
@@ -3121,6 +3153,7 @@ push @$AFE, '#marker';
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
+                 custom => scalar ($token->{tag_name} =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'}, aet => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'} };
       
 
@@ -3250,6 +3283,7 @@ pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | MEN_ELS | OPT_OPT_E
                  ns => HTMLNS,
                  local_name => 'button',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('button' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (BUTTON_EL), aet => (BUTTON_EL) };
       
 
@@ -3400,6 +3434,7 @@ last;
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
+                 custom => scalar ($token->{tag_name} =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'}, aet => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'} };
       
 
@@ -3478,6 +3513,7 @@ push @$OE, $node;
                  ns => HTMLNS,
                  local_name => 'form',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('form' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (FORM_EL), aet => (FORM_EL) };
       
 
@@ -3547,6 +3583,7 @@ push @$Errors, {type => 'in body',
                  ns => HTMLNS,
                  local_name => 'frameset',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('frameset' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (FRAMESET_EL), aet => (FRAMESET_EL) };
       
 
@@ -3620,6 +3657,7 @@ push @$OP, ['popped', [pop @$OE]];
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
+                 custom => scalar ($token->{tag_name} =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'}, aet => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'} };
       
 
@@ -3683,6 +3721,7 @@ push @$OE, $node;
                  ns => HTMLNS,
                  local_name => 'hr',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('hr' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
       
 
@@ -3753,6 +3792,7 @@ push @$Errors, {type => 'duplicate body/html tag',
                  ns => HTMLNS,
                  local_name => 'iframe',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('iframe' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
       
 
@@ -3791,6 +3831,7 @@ push @$Errors, {type => 'image',
                  ns => HTMLNS,
                  local_name => 'img',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('img' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (HTML_NS_ELS | IMG_ELS), aet => (HTML_NS_ELS | IMG_ELS) };
       
 
@@ -3820,6 +3861,7 @@ push @$Errors, {type => 'image',
                  ns => HTMLNS,
                  local_name => 'input',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('input' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (HTML_NS_ELS | FIE_INP_SEL_ELS), aet => (HTML_NS_ELS | FIE_INP_SEL_ELS) };
       
 
@@ -3942,6 +3984,7 @@ last;
                  ns => HTMLNS,
                  local_name => 'li',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('li' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (LI_EL), aet => (LI_EL) };
       
 
@@ -4000,6 +4043,7 @@ push @$OE, $node;
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
+                 custom => scalar ($token->{tag_name} =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'}, aet => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'} };
       
 
@@ -4036,6 +4080,7 @@ my $ns = MATHMLNS;
                     ns => $ns,
                     local_name => $token->{tag_name},
                     attr_list => $token->{attr_list},
+                    custom => 0,
                     et => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0,
                     aet => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0};
       
@@ -4133,6 +4178,7 @@ delete $token->{self_closing_flag};
                  ns => HTMLNS,
                  local_name => 'menu',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('menu' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (MENU_EL), aet => (MENU_EL) };
       
 
@@ -4165,6 +4211,7 @@ push @$OE, $node;
                  ns => HTMLNS,
                  local_name => 'menuitem',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('menuitem' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (MENUITEM_EL), aet => (MENUITEM_EL) };
       
 
@@ -4215,6 +4262,7 @@ aaa ($token, 'nobr');
                  ns => HTMLNS,
                  local_name => 'nobr',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('nobr' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (NOBR_EL), aet => (NOBR_EL) };
       
 
@@ -4272,6 +4320,7 @@ push @$OE, $node;
                  ns => HTMLNS,
                  local_name => 'noembed',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('noembed' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
       
 
@@ -4307,6 +4356,7 @@ $ORIGINAL_IM = $IM;
                  ns => HTMLNS,
                  local_name => 'noscript',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('noscript' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
       
 
@@ -4329,6 +4379,7 @@ $ORIGINAL_IM = $IM;
                  ns => HTMLNS,
                  local_name => 'noscript',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('noscript' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
       
 
@@ -4364,6 +4415,7 @@ push @$OE, $node;
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
+                 custom => scalar ($token->{tag_name} =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'}, aet => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'} };
       
 
@@ -4391,6 +4443,7 @@ push @$OE, $node;
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
+                 custom => scalar ($token->{tag_name} =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'}, aet => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'} };
       
 
@@ -4447,6 +4500,7 @@ push @$OE, $node;
                  ns => HTMLNS,
                  local_name => 'plaintext',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('plaintext' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
       
 
@@ -4500,6 +4554,7 @@ $State = PLAINTEXT_STATE;
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
+                 custom => scalar ($token->{tag_name} =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'}, aet => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'} };
       
 
@@ -4552,6 +4607,7 @@ push @$OE, $node;
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
+                 custom => scalar ($token->{tag_name} =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'}, aet => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'} };
       
 
@@ -4580,6 +4636,7 @@ push @$OE, $node;
                  ns => HTMLNS,
                  local_name => 'select',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('select' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (SELECT_EL), aet => (SELECT_EL) };
       
 
@@ -4639,6 +4696,7 @@ my $ns = SVGNS;
                     ns => $ns,
                     local_name => $token->{tag_name},
                     attr_list => $token->{attr_list},
+                    custom => 0,
                     et => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0,
                     aet => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0};
       
@@ -4732,6 +4790,7 @@ delete $token->{self_closing_flag};
                  ns => HTMLNS,
                  local_name => 'table',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('table' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (TABLE_EL), aet => (TABLE_EL) };
       
 
@@ -4766,6 +4825,7 @@ push @$OE, $node;
                  ns => HTMLNS,
                  local_name => 'textarea',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('textarea' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (HTML_NS_ELS | TEX_ELS), aet => (HTML_NS_ELS | TEX_ELS) };
       
 
@@ -4854,6 +4914,7 @@ $ORIGINAL_IM = $IM;
                  ns => HTMLNS,
                  local_name => 'xmp',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('xmp' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (HTML_NS_ELS), aet => (HTML_NS_ELS) };
       
 
@@ -5481,6 +5542,7 @@ return;
                  ns => HTMLNS,
                  local_name => 'col',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('col' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
       
 
@@ -5723,6 +5785,7 @@ last;
                     ns => $ns,
                     local_name => $token->{tag_name},
                     attr_list => $token->{attr_list},
+                    custom => 0,
                     et => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0,
                     aet => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0};
       
@@ -5823,6 +5886,7 @@ push @$Errors, {type => 'element not closed before implied ancestor end tag',
                     ns => $ns,
                     local_name => $token->{tag_name},
                     attr_list => $token->{attr_list},
+                    custom => 0,
                     et => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0,
                     aet => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0};
       
@@ -5939,6 +6003,7 @@ $token->{attrs}->{q@size@}) {
                     ns => $ns,
                     local_name => $token->{tag_name},
                     attr_list => $token->{attr_list},
+                    custom => 0,
                     et => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0,
                     aet => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0};
       
@@ -6041,6 +6106,7 @@ delete $token->{self_closing_flag};
                     ns => $ns,
                     local_name => $token->{tag_name},
                     attr_list => $token->{attr_list},
+                    custom => 0,
                     et => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0,
                     aet => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0};
       
@@ -6259,6 +6325,7 @@ return;
                  ns => HTMLNS,
                  local_name => 'frame',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('frame' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
       
 
@@ -6284,6 +6351,7 @@ return;
                  ns => HTMLNS,
                  local_name => 'frameset',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('frameset' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (FRAMESET_EL), aet => (FRAMESET_EL) };
       
 
@@ -6459,6 +6527,7 @@ push @$OP, ['popped', [pop @$OE]];
                  ns => HTMLNS,
                  local_name => 'body',
                  attr_list => [],
+                 custom => scalar ('body' =~ /-/ || (grep { $_->{name} eq 'is' } @{[]})),
                  et => (BODY_EL), aet => (BODY_EL) };
       
 
@@ -6611,6 +6680,7 @@ push @$OP, ['popped', [pop @$OE]];
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
+                 custom => scalar ($token->{tag_name} =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'}, aet => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'} };
       
 
@@ -6654,6 +6724,7 @@ return;
                  ns => HTMLNS,
                  local_name => 'meta',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('meta' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
       
 
@@ -6701,6 +6772,7 @@ return;
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
+                 custom => scalar ($token->{tag_name} =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'}, aet => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'} };
       
 
@@ -6736,6 +6808,7 @@ $ORIGINAL_IM = $IM;
                  ns => HTMLNS,
                  local_name => 'noscript',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('noscript' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
       
 
@@ -6757,6 +6830,7 @@ $ORIGINAL_IM = $IM;
                  ns => HTMLNS,
                  local_name => 'noscript',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('noscript' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
       
 
@@ -6790,6 +6864,7 @@ push @$OE, $node;
                  ns => HTMLNS,
                  local_name => 'script',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('script' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (SCRIPT_EL), aet => (SCRIPT_EL) , script_flags => 1};
       
 
@@ -6823,6 +6898,7 @@ $ORIGINAL_IM = $IM;
                  ns => HTMLNS,
                  local_name => 'template',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('template' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (TEMPLATE_EL), aet => (TEMPLATE_EL) };
       
 
@@ -6861,6 +6937,7 @@ push @$AFE, '#marker';
                  ns => HTMLNS,
                  local_name => 'title',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('title' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
       
 
@@ -6907,6 +6984,7 @@ $ORIGINAL_IM = $IM;
                  ns => HTMLNS,
                  local_name => 'body',
                  attr_list => [],
+                 custom => scalar ('body' =~ /-/ || (grep { $_->{name} eq 'is' } @{[]})),
                  et => (BODY_EL), aet => (BODY_EL) };
       
 
@@ -7132,6 +7210,7 @@ push @$OP, ['popped', [pop @$OE]];
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
+                 custom => scalar ($token->{tag_name} =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'}, aet => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'} };
       
 
@@ -7532,6 +7611,7 @@ return;
                  ns => HTMLNS,
                  local_name => 'optgroup',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('optgroup' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (OPTGROUP_EL), aet => (OPTGROUP_EL) };
       
 
@@ -7564,6 +7644,7 @@ push @$OE, $node;
                  ns => HTMLNS,
                  local_name => 'option',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('option' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (OPTION_EL), aet => (OPTION_EL) };
       
 
@@ -7805,6 +7886,7 @@ push @$Errors, {type => 'no <tr>',
                  ns => HTMLNS,
                  local_name => 'tr',
                  attr_list => [],
+                 custom => scalar ('tr' =~ /-/ || (grep { $_->{name} eq 'is' } @{[]})),
                  et => (TR_EL), aet => (TR_EL) };
       
 
@@ -7836,6 +7918,7 @@ push @$OE, $node_tr;
                  ns => HTMLNS,
                  local_name => 'tr',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('tr' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (TR_EL), aet => (TR_EL) };
       
 
@@ -8638,6 +8721,7 @@ push @$Errors, {type => '</br>',
                  ns => HTMLNS,
                  local_name => 'br',
                  attr_list => [],
+                 custom => scalar ('br' =~ /-/ || (grep { $_->{name} eq 'is' } @{[]})),
                  et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
       
 
@@ -8703,6 +8787,7 @@ push @$Errors, {type => 'in table',
                  ns => HTMLNS,
                  local_name => 'p',
                  attr_list => [],
+                 custom => scalar ('p' =~ /-/ || (grep { $_->{name} eq 'is' } @{[]})),
                  et => (P_EL), aet => (P_EL) };
       
 
@@ -8793,6 +8878,7 @@ push @$Errors, {type => 'in table',
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
+                 custom => scalar ($token->{tag_name} =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'}, aet => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'} };
       
 
@@ -8879,6 +8965,7 @@ aaa_foster ($token, 'a', remove_from_afe_and_oe => 1);
                  ns => HTMLNS,
                  local_name => 'a',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('a' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (A_EL), aet => (A_EL) };
       
 
@@ -8986,6 +9073,7 @@ push @$Errors, {type => 'in table',
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
+                 custom => scalar ($token->{tag_name} =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'}, aet => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'} };
       
 
@@ -9051,6 +9139,7 @@ push @$Errors, {type => 'in table',
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
+                 custom => scalar ($token->{tag_name} =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'}, aet => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'} };
       
 
@@ -9120,6 +9209,7 @@ push @$Errors, {type => 'in table',
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
+                 custom => scalar ($token->{tag_name} =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'}, aet => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'} };
       
 
@@ -9186,6 +9276,7 @@ push @$Errors, {type => 'in table',
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
+                 custom => scalar ($token->{tag_name} =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'}, aet => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'} };
       
 
@@ -9262,6 +9353,7 @@ push @$Errors, {type => 'in table',
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
+                 custom => scalar ($token->{tag_name} =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'}, aet => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'} };
       
 
@@ -9382,6 +9474,7 @@ pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | MEN_ELS | OPT_OPT_E
                  ns => HTMLNS,
                  local_name => 'button',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('button' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (BUTTON_EL), aet => (BUTTON_EL) };
       
 
@@ -9447,6 +9540,7 @@ push @$AFE, '#marker';
                  ns => HTMLNS,
                  local_name => 'caption',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('caption' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (CAPTION_EL), aet => (CAPTION_EL) };
       
 
@@ -9483,6 +9577,7 @@ push @$OE, $node;
                  ns => HTMLNS,
                  local_name => 'colgroup',
                  attr_list => [],
+                 custom => scalar ('colgroup' =~ /-/ || (grep { $_->{name} eq 'is' } @{[]})),
                  et => (COLGROUP_EL), aet => (COLGROUP_EL) };
       
 
@@ -9514,6 +9609,7 @@ push @$OE, $node_colgroup;
                  ns => HTMLNS,
                  local_name => 'colgroup',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('colgroup' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (COLGROUP_EL), aet => (COLGROUP_EL) };
       
 
@@ -9637,6 +9733,7 @@ last;
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
+                 custom => scalar ($token->{tag_name} =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'}, aet => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'} };
       
 
@@ -9700,6 +9797,7 @@ push @$Errors, {type => 'in table',
                  ns => HTMLNS,
                  local_name => 'form',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('form' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (FORM_EL), aet => (FORM_EL) };
       
 
@@ -9780,6 +9878,7 @@ push @$Errors, {type => 'in body',
                  ns => HTMLNS,
                  local_name => 'frameset',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('frameset' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (FRAMESET_EL), aet => (FRAMESET_EL) };
       
 
@@ -9872,6 +9971,7 @@ push @$OP, ['popped', [pop @$OE]];
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
+                 custom => scalar ($token->{tag_name} =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'}, aet => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'} };
       
 
@@ -9954,6 +10054,7 @@ push @$Errors, {type => 'in table',
                  ns => HTMLNS,
                  local_name => 'hr',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('hr' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
       
 
@@ -10047,6 +10148,7 @@ push @$Errors, {type => 'in table',
                  ns => HTMLNS,
                  local_name => 'iframe',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('iframe' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
       
 
@@ -10104,6 +10206,7 @@ push @$Errors, {type => 'image',
                  ns => HTMLNS,
                  local_name => 'img',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('img' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (HTML_NS_ELS | IMG_ELS), aet => (HTML_NS_ELS | IMG_ELS) };
       
 
@@ -10163,6 +10266,7 @@ push @$Errors, {type => 'image',
                  ns => HTMLNS,
                  local_name => 'input',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('input' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (HTML_NS_ELS | FIE_INP_SEL_ELS), aet => (HTML_NS_ELS | FIE_INP_SEL_ELS) };
       
 
@@ -10233,6 +10337,7 @@ push @$Errors, {type => 'image',
                  ns => HTMLNS,
                  local_name => 'input',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('input' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (HTML_NS_ELS | FIE_INP_SEL_ELS), aet => (HTML_NS_ELS | FIE_INP_SEL_ELS) };
       
 
@@ -10345,6 +10450,7 @@ last;
                  ns => HTMLNS,
                  local_name => 'li',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('li' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (LI_EL), aet => (LI_EL) };
       
 
@@ -10422,6 +10528,7 @@ push @$Errors, {type => 'in table',
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
+                 custom => scalar ($token->{tag_name} =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'}, aet => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'} };
       
 
@@ -10477,6 +10584,7 @@ my $ns = MATHMLNS;
                     ns => $ns,
                     local_name => $token->{tag_name},
                     attr_list => $token->{attr_list},
+                    custom => 0,
                     et => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0,
                     aet => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0};
       
@@ -10593,6 +10701,7 @@ push @$Errors, {type => 'in table',
                  ns => HTMLNS,
                  local_name => 'menu',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('menu' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (MENU_EL), aet => (MENU_EL) };
       
 
@@ -10644,6 +10753,7 @@ push @$Errors, {type => 'in table',
                  ns => HTMLNS,
                  local_name => 'menuitem',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('menuitem' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (MENUITEM_EL), aet => (MENUITEM_EL) };
       
 
@@ -10690,6 +10800,7 @@ push @$Errors, {type => 'in table',
                  ns => HTMLNS,
                  local_name => 'meta',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('meta' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
       
 
@@ -10779,6 +10890,7 @@ aaa_foster ($token, 'nobr');
                  ns => HTMLNS,
                  local_name => 'nobr',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('nobr' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (NOBR_EL), aet => (NOBR_EL) };
       
 
@@ -10855,6 +10967,7 @@ push @$Errors, {type => 'in table',
                  ns => HTMLNS,
                  local_name => 'noembed',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('noembed' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
       
 
@@ -10907,6 +11020,7 @@ push @$Errors, {type => 'in table',
                  ns => HTMLNS,
                  local_name => 'noframes',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('noframes' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
       
 
@@ -10961,6 +11075,7 @@ push @$Errors, {type => 'in table',
                  ns => HTMLNS,
                  local_name => 'noscript',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('noscript' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
       
 
@@ -10998,6 +11113,7 @@ $ORIGINAL_IM = $IM;
                  ns => HTMLNS,
                  local_name => 'noscript',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('noscript' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
       
 
@@ -11052,6 +11168,7 @@ push @$Errors, {type => 'in table',
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
+                 custom => scalar ($token->{tag_name} =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'}, aet => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'} };
       
 
@@ -11098,6 +11215,7 @@ push @$Errors, {type => 'in table',
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
+                 custom => scalar ($token->{tag_name} =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'}, aet => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'} };
       
 
@@ -11173,6 +11291,7 @@ push @$Errors, {type => 'in table',
                  ns => HTMLNS,
                  local_name => 'plaintext',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('plaintext' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
       
 
@@ -11245,6 +11364,7 @@ push @$Errors, {type => 'in table',
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
+                 custom => scalar ($token->{tag_name} =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'}, aet => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'} };
       
 
@@ -11316,6 +11436,7 @@ push @$Errors, {type => 'in table',
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
+                 custom => scalar ($token->{tag_name} =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'}, aet => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'} };
       
 
@@ -11363,6 +11484,7 @@ push @$Errors, {type => 'in table',
                  ns => HTMLNS,
                  local_name => 'select',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('select' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (SELECT_EL), aet => (SELECT_EL) };
       
 
@@ -11441,6 +11563,7 @@ my $ns = SVGNS;
                     ns => $ns,
                     local_name => $token->{tag_name},
                     attr_list => $token->{attr_list},
+                    custom => 0,
                     et => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0,
                     aet => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0};
       
@@ -11567,6 +11690,7 @@ return;
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
+                 custom => scalar ($token->{tag_name} =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'}, aet => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'} };
       
 
@@ -11603,6 +11727,7 @@ push @$OE, $node;
                  ns => HTMLNS,
                  local_name => 'tbody',
                  attr_list => [],
+                 custom => scalar ('tbody' =~ /-/ || (grep { $_->{name} eq 'is' } @{[]})),
                  et => (TBODY_EL), aet => (TBODY_EL) };
       
 
@@ -11633,6 +11758,7 @@ push @$Errors, {type => 'in table',
                  ns => HTMLNS,
                  local_name => 'textarea',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('textarea' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (HTML_NS_ELS | TEX_ELS), aet => (HTML_NS_ELS | TEX_ELS) };
       
 
@@ -11705,6 +11831,7 @@ push @$Errors, {type => 'in table',
                  ns => HTMLNS,
                  local_name => 'title',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('title' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
       
 
@@ -11792,6 +11919,7 @@ push @$Errors, {type => 'in table',
                  ns => HTMLNS,
                  local_name => 'xmp',
                  attr_list => $token->{attr_list},
+                 custom => scalar ('xmp' =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
                  et => (HTML_NS_ELS), aet => (HTML_NS_ELS) };
       
 
@@ -12331,6 +12459,7 @@ push @$OP, ['doctype', $token => 0]; $NEXT_ID++;
                     ns => HTMLNS,
                     local_name => 'html',
                     attr_list => [],
+                    custom => scalar ('html' =~ /-/ || (grep { $_->{name} eq 'is' } @{[]})),
                     et => (HTML_EL), aet => (HTML_EL)};
       
 push @$OP, ['insert', $node => 0];
@@ -12347,6 +12476,7 @@ push @$OP, ['appcache'];
                  ns => HTMLNS,
                  local_name => 'head',
                  attr_list => [],
+                 custom => scalar ('head' =~ /-/ || (grep { $_->{name} eq 'is' } @{[]})),
                  et => (HEAD_EL), aet => (HEAD_EL) };
       
 
@@ -12371,6 +12501,7 @@ push @$OP, ['popped', [pop @$OE]];
                  ns => HTMLNS,
                  local_name => 'body',
                  attr_list => [],
+                 custom => scalar ('body' =~ /-/ || (grep { $_->{name} eq 'is' } @{[]})),
                  et => (BODY_EL), aet => (BODY_EL) };
       
 
@@ -12705,6 +12836,8 @@ my $ResetIMByETUnlessLast = {  (HEAD_EL) => IN_HEAD_IM,
                    ns => HTMLNS,
                    local_name => $node->{token}->{tag_name},
                    attr_list => $node->{token}->{attr_list},
+                   custom => scalar ($node->{token}->{tag_name} =~ /-/ ||
+                                     (grep { $_->{name} eq 'is' } @{$node->{token}->{attr_list}})),
                    et => $Element2Type->[HTMLNS]->{$node->{token}->{tag_name}} || $Element2Type->[HTMLNS]->{'*'}};
           $node->{aet} = $node->{et};
           $AFE->[$node_afe_i] = $node;
@@ -12737,6 +12870,8 @@ my $ResetIMByETUnlessLast = {  (HEAD_EL) => IN_HEAD_IM,
                                ns => HTMLNS,
                                local_name => $formatting_element->{token}->{tag_name},
                                attr_list => $formatting_element->{token}->{attr_list},
+                               custom => scalar ($formatting_element->{token}->{tag_name} =~ /-/ ||
+                                                 (grep { $_->{name} eq 'is' } @{$formatting_element->{token}->{attr_list}})),
                                et => $Element2Type->[HTMLNS]->{$formatting_element->{token}->{tag_name}} || $Element2Type->[HTMLNS]->{'*'}};
             $new_element->{aet} = $new_element->{et};
             push @$OP,
@@ -12911,6 +13046,8 @@ my $ResetIMByETUnlessLast = {  (HEAD_EL) => IN_HEAD_IM,
                    ns => HTMLNS,
                    local_name => $node->{token}->{tag_name},
                    attr_list => $node->{token}->{attr_list},
+                   custom => scalar ($node->{token}->{tag_name} =~ /-/ ||
+                                     (grep { $_->{name} eq 'is' } @{$node->{token}->{attr_list}})),
                    et => $Element2Type->[HTMLNS]->{$node->{token}->{tag_name}} || $Element2Type->[HTMLNS]->{'*'}};
           $node->{aet} = $node->{et};
           $AFE->[$node_afe_i] = $node;
@@ -12958,6 +13095,8 @@ my $ResetIMByETUnlessLast = {  (HEAD_EL) => IN_HEAD_IM,
                                ns => HTMLNS,
                                local_name => $formatting_element->{token}->{tag_name},
                                attr_list => $formatting_element->{token}->{attr_list},
+                               custom => scalar ($formatting_element->{token}->{tag_name} =~ /-/ ||
+                                                 (grep { $_->{name} eq 'is' } @{$formatting_element->{token}->{attr_list}})),
                                et => $Element2Type->[HTMLNS]->{$formatting_element->{token}->{tag_name}} || $Element2Type->[HTMLNS]->{'*'}};
             $new_element->{aet} = $new_element->{et};
             push @$OP,
@@ -13023,6 +13162,8 @@ my $ResetIMByETUnlessLast = {  (HEAD_EL) => IN_HEAD_IM,
                         ns => HTMLNS,
                         local_name => $entry->{token}->{tag_name},
                         attr_list => $entry->{token}->{attr_list},
+                        custom => scalar ($entry->{token}->{tag_name} =~ /-/ ||
+                                          (grep { $_->{name} eq 'is' } @{$entry->{token}->{attr_list}})),
                         et => $Element2Type->[HTMLNS]->{$entry->{token}->{tag_name}} || $Element2Type->[HTMLNS]->{'*'}};
             $node->{aet} = $node->{et};
             
@@ -13065,6 +13206,8 @@ my $ResetIMByETUnlessLast = {  (HEAD_EL) => IN_HEAD_IM,
                         ns => HTMLNS,
                         local_name => $entry->{token}->{tag_name},
                         attr_list => $entry->{token}->{attr_list},
+                        custom => scalar ($entry->{token}->{tag_name} =~ /-/ ||
+                                          (grep { $_->{name} eq 'is' } @{$entry->{token}->{attr_list}})),
                         et => $Element2Type->[HTMLNS]->{$entry->{token}->{tag_name}} || $Element2Type->[HTMLNS]->{'*'}};
             $node->{aet} = $node->{et};
             
@@ -17131,6 +17274,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -17141,6 +17286,11 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G([ABCDEFGHJKNQRVWZILMOPSTUXY])/gcs) {
@@ -17254,6 +17404,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -17264,6 +17416,11 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -17458,6 +17615,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -17468,6 +17627,11 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G\=[\	\
@@ -17611,6 +17775,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -17621,6 +17787,11 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G[\	\
@@ -17700,6 +17871,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -17710,6 +17883,11 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G[\	\
@@ -17765,6 +17943,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -17775,6 +17955,11 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G[\	\
@@ -17828,6 +18013,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -17838,6 +18025,11 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G[\	\
@@ -17891,6 +18083,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -17901,6 +18095,11 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G\=[\	\
@@ -17992,6 +18191,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -18002,6 +18203,11 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G\=[\	\
@@ -18055,6 +18261,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -18065,6 +18273,11 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G\=[\	\
@@ -18116,6 +18329,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -18126,6 +18341,11 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G\=[\	\
@@ -18177,6 +18397,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -18187,6 +18409,11 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G[\	\
@@ -18240,6 +18467,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -18250,6 +18479,11 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G[\	\
@@ -18301,6 +18535,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -18311,6 +18547,11 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G\/\>/gcs) {
@@ -18362,6 +18603,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -18372,6 +18615,11 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G\>/gcs) {
@@ -18421,6 +18669,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -18431,6 +18681,11 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G([\	\\ \
@@ -18526,6 +18781,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -18536,6 +18793,11 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G([ABCDEFGHJKNQRVWZILMOPSTUXY])/gcs) {
@@ -20944,6 +21206,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -20954,6 +21218,11 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -21138,6 +21407,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -21148,6 +21419,11 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G([\`])/gcs) {
@@ -21513,6 +21789,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -21523,6 +21801,11 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G([\`])/gcs) {
@@ -21945,6 +22228,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -21955,6 +22240,11 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G([\`])/gcs) {
@@ -22351,6 +22641,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -22361,6 +22653,11 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 return 1 if $return;
@@ -22956,6 +23253,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -22966,6 +23265,11 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G([\`])/gcs) {
@@ -23066,6 +23370,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -23076,6 +23382,11 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G([ABCDEFGHJKNQRVWZILMOPSTUXY])/gcs) {
@@ -23202,6 +23513,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -23212,6 +23525,11 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -23487,6 +23805,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -23497,6 +23817,11 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G\>/gcs) {
@@ -23533,6 +23858,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -23543,6 +23870,11 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G([\	\\ \
@@ -23583,6 +23915,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -23593,6 +23927,11 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G([ABCDEFGHJKNQRVWZILMOPSTUXY])/gcs) {
@@ -23746,6 +24085,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -23756,6 +24097,11 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G([\`])/gcs) {
@@ -29262,6 +29608,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -29272,6 +29620,11 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -29440,6 +29793,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -29450,6 +29805,11 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G([ABCDEFGHJKNQRVWZILMOPSTUXY])/gcs) {
@@ -29652,6 +30012,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -29662,6 +30024,11 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G\/([A-Z])([^\ \	\
@@ -29709,6 +30076,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -29719,6 +30088,11 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G([a-z])([^\ \	\
@@ -29764,6 +30138,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -29774,6 +30150,11 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G\/([a-z])([^\ \	\
@@ -29818,6 +30199,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -29828,6 +30211,11 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -29874,6 +30262,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -29884,6 +30274,11 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G\/([A-Z])([^\ \	\
@@ -29929,6 +30324,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -29939,6 +30336,11 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G([a-z])([^\ \	\
@@ -29982,6 +30384,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -29992,6 +30396,11 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -30036,6 +30445,8 @@ push @$Tokens, $Token;
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         
 
@@ -30046,6 +30457,11 @@ push @$Tokens, $Token;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             ## 
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         
 } elsif ($Input =~ /\G\!(\-)\-\-\-\>/gcs) {
@@ -30671,7 +31087,8 @@ $Scripting = $self->{Scripting};
                       #di => $token->{di}, index => $token->{index},
                       ns => HTMLNS,
                       local_name => $node_ln,
-                      attr_list => {}, # not relevant
+                      attr_list => [], # not relevant
+                      custom => scalar ($node_ln =~ /-/),
                       et => $Element2Type->[HTMLNS]->{$node_ln} || $Element2Type->[HTMLNS]->{'*'},
                       aet => $Element2Type->[HTMLNS]->{$node_ln} || $Element2Type->[HTMLNS]->{'*'}};
         ## <HTML>
@@ -30681,7 +31098,8 @@ $Scripting = $self->{Scripting};
                       #di => $token->{di}, index => $token->{index},
                       ns => SVGNS,
                       local_name => $node_ln,
-                      attr_list => {}, # not relevant
+                      attr_list => [], # not relevant
+                      custom => 0,
                       et => $Element2Type->[SVGNS]->{$node_ln} || $Element2Type->[SVGNS]->{'*'},
                       aet => $Element2Type->[SVGNS]->{$node_ln} || $Element2Type->[SVGNS]->{'*'}};
         } elsif ($node_ns eq 'http://www.w3.org/1998/Math/MathML') {
@@ -30690,7 +31108,8 @@ $Scripting = $self->{Scripting};
                       #di => $token->{di}, index => $token->{index},
                       ns => MATHMLNS,
                       local_name => $node_ln,
-                      attr_list => {}, # not relevant
+                      attr_list => [], # not relevant
+                      custom => 0,
                       et => $Element2Type->[MATHMLNS]->{$node_ln} || $Element2Type->[MATHMLNS]->{'*'},
                       aet => $Element2Type->[MATHMLNS]->{$node_ln} || $Element2Type->[MATHMLNS]->{'*'}};
           if ($node_ln eq 'annotation-xml') {
@@ -30711,7 +31130,8 @@ $Scripting = $self->{Scripting};
                       #di => $token->{di}, index => $token->{index},
                       ns => 0,
                       local_name => $node_ln,
-                      attr_list => {}, # not relevant
+                      attr_list => [], # not relevant
+                      custom => 0,
                       et => 0,
                       aet => 0};
         }
@@ -30734,7 +31154,8 @@ $Scripting = $self->{Scripting};
                  #di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'html',
-                 attr_list => {},
+                 attr_list => [],
+                 custom => 0,
                  et => $Element2Type->[HTMLNS]->{html},
                  aet => $CONTEXT->{aet}});
         ## </HTML>
@@ -30768,7 +31189,8 @@ $Scripting = $self->{Scripting};
                                #di => $token->{di}, index => $token->{index},
                                ns => HTMLNS,
                                local_name => 'form',
-                               attr_list => {}, # not relevant
+                               attr_list => [], # not relevant
+                               custom => 0,
                                et => $Element2Type->[HTMLNS]->{form},
                                aet => $Element2Type->[HTMLNS]->{form}};
             }

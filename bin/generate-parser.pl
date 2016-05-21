@@ -757,6 +757,8 @@ sub serialize_actions ($;%) {
             }
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
             return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
           }
         };
       }
@@ -771,6 +773,11 @@ sub serialize_actions ($;%) {
             ## <XML>
             return 1 if @$OE <= 1;
             ## </XML>
+            ## <!Temma>
+            for (@$OE) {
+              return 1 if $_->{custom};
+            }
+            ## </!Temma>
           }
         };
       }
@@ -2710,9 +2717,12 @@ sub actions_to_code ($;%) {
                  ns => HTMLNS,
                  local_name => %s,
                  attr_list => %s,
+                 custom => scalar (%s =~ /-/ || (grep { $_->{name} eq 'is' } @{%s})),
                  et => %s, aet => %s %s};
       },
           $var,
+          (defined $tag_name ? "'$tag_name'" : '$token->{tag_name}'),
+          (defined $act->{attrs} ? $act->{attrs} eq 'none' ? '[]' : (die $act->{attrs}) : '$token->{attr_list}'),
           (defined $tag_name ? "'$tag_name'" : '$token->{tag_name}'),
           (defined $act->{attrs} ? $act->{attrs} eq 'none' ? '[]' : (die $act->{attrs}) : '$token->{attr_list}'),
           $et_code, $et_code,
@@ -2785,8 +2795,11 @@ sub actions_to_code ($;%) {
                     ns => HTMLNS,
                     local_name => %s,
                     attr_list => %s,
+                    custom => scalar (%s =~ /-/ || (grep { $_->{name} eq 'is' } @{%s})),
                     et => %s, aet => %s};
       },
+          (defined $tag_name ? "'$tag_name'" : '$token->{tag_name}'),
+          (defined $act->{attrs} ? $act->{attrs} eq 'none' ? '[]' : 'XX'.'X' : '$token->{attr_list}'),
           (defined $tag_name ? "'$tag_name'" : '$token->{tag_name}'),
           (defined $act->{attrs} ? $act->{attrs} eq 'none' ? '[]' : 'XX'.'X' : '$token->{attr_list}'),
           $et_code, $et_code;
@@ -2813,6 +2826,7 @@ sub actions_to_code ($;%) {
                     ns => $ns,
                     local_name => $token->{tag_name},
                     attr_list => $token->{attr_list},
+                    custom => 0,
                     et => %s->{$token->{tag_name}} || %s->{'*'} || 0,
                     aet => %s->{$token->{tag_name}} || %s->{'*'} || 0};
       }, E2Tns '$ns', E2Tns '$ns', E2Tns '$ns', E2Tns '$ns';
@@ -2973,6 +2987,7 @@ sub actions_to_code ($;%) {
           nsmap => $nsmap,
           ns => $ns, prefix => $prefix, local_name => $ln,
           attr_list => $token->{attr_list},
+          custom => scalar ($ln =~ /-/ || (grep { $_->{name} eq 'is' } @{$token->{attr_list}})),
           et => %s->{$ln} || %s->{'*'} || 0,
           aet => %s->{$ln} || %s->{'*'} || 0,
           cm_type => ($DTDDefs->{elements}->{$token->{tag_name}} || {})->{cm_type},
@@ -4633,6 +4648,8 @@ sub generate_tree_constructor ($) {
                    ns => HTMLNS,
                    local_name => $node->{token}->{tag_name},
                    attr_list => $node->{token}->{attr_list},
+                   custom => scalar ($node->{token}->{tag_name} =~ /-/ ||
+                                     (grep { $_->{name} eq 'is' } @{$node->{token}->{attr_list}})),
                    et => %s->{$node->{token}->{tag_name}} || %s->{'*'}};
           $node->{aet} = $node->{et};
           $AFE->[$node_afe_i] = $node;
@@ -4663,6 +4680,8 @@ sub generate_tree_constructor ($) {
                                ns => HTMLNS,
                                local_name => $formatting_element->{token}->{tag_name},
                                attr_list => $formatting_element->{token}->{attr_list},
+                               custom => scalar ($formatting_element->{token}->{tag_name} =~ /-/ ||
+                                                 (grep { $_->{name} eq 'is' } @{$formatting_element->{token}->{attr_list}})),
                                et => $Element2Type->[HTMLNS]->{$formatting_element->{token}->{tag_name}} || $Element2Type->[HTMLNS]->{'*'}};
             $new_element->{aet} = $new_element->{et};
             push @$OP,
@@ -4741,6 +4760,8 @@ sub generate_tree_constructor ($) {
                         ns => HTMLNS,
                         local_name => $entry->{token}->{tag_name},
                         attr_list => $entry->{token}->{attr_list},
+                        custom => scalar ($entry->{token}->{tag_name} =~ /-/ ||
+                                          (grep { $_->{name} eq 'is' } @{$entry->{token}->{attr_list}})),
                         et => %s->{$entry->{token}->{tag_name}} || %s->{'*'}};
             $node->{aet} = $node->{et};
             %s
@@ -5485,7 +5506,8 @@ sub generate_api ($) {
                       #di => $token->{di}, index => $token->{index},
                       ns => HTMLNS,
                       local_name => $node_ln,
-                      attr_list => {}, # not relevant
+                      attr_list => [], # not relevant
+                      custom => scalar ($node_ln =~ /-/),
                       et => %s->{$node_ln} || %s->{'*'},
                       aet => %s->{$node_ln} || %s->{'*'}};
         ## <HTML>
@@ -5495,7 +5517,8 @@ sub generate_api ($) {
                       #di => $token->{di}, index => $token->{index},
                       ns => SVGNS,
                       local_name => $node_ln,
-                      attr_list => {}, # not relevant
+                      attr_list => [], # not relevant
+                      custom => 0,
                       et => %s->{$node_ln} || %s->{'*'},
                       aet => %s->{$node_ln} || %s->{'*'}};
         } elsif ($node_ns eq 'http://www.w3.org/1998/Math/MathML') {
@@ -5504,7 +5527,8 @@ sub generate_api ($) {
                       #di => $token->{di}, index => $token->{index},
                       ns => MATHMLNS,
                       local_name => $node_ln,
-                      attr_list => {}, # not relevant
+                      attr_list => [], # not relevant
+                      custom => 0,
                       et => %s->{$node_ln} || %s->{'*'},
                       aet => %s->{$node_ln} || %s->{'*'}};
           if ($node_ln eq 'annotation-xml') {
@@ -5525,7 +5549,8 @@ sub generate_api ($) {
                       #di => $token->{di}, index => $token->{index},
                       ns => 0,
                       local_name => $node_ln,
-                      attr_list => {}, # not relevant
+                      attr_list => [], # not relevant
+                      custom => 0,
                       et => 0,
                       aet => 0};
         }
@@ -5571,7 +5596,8 @@ sub generate_api ($) {
                  #di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'html',
-                 attr_list => {},
+                 attr_list => [],
+                 custom => 0,
                  et => %s->{html},
                  aet => $CONTEXT->{aet}});
         ## </HTML>
@@ -5582,7 +5608,8 @@ sub generate_api ($) {
                  ns => $CONTEXT->{ns},
                  local_name => $CONTEXT->{local_name},
                  nsmap => $CONTEXT->{nsmap},
-                 attr_list => {},
+                 attr_list => [],
+                 custom => scalar ($CONTEXT->{local_name} =~ /-/),
                  et => $CONTEXT->{et},
                  aet => $CONTEXT->{aet}});
         ## </XML>
@@ -5617,7 +5644,8 @@ sub generate_api ($) {
                                #di => $token->{di}, index => $token->{index},
                                ns => HTMLNS,
                                local_name => 'form',
-                               attr_list => {}, # not relevant
+                               attr_list => [], # not relevant
+                               custom => 0,
                                et => %s->{form},
                                aet => %s->{form}};
             }
@@ -6042,7 +6070,8 @@ sub generate_api ($) {
              #di => $token->{di}, index => $token->{index},
              ns => undef,
              local_name => 'dummy',
-             attr_list => {},
+             attr_list => [],
+             custom => 0,
              nsmap => $main->{saved_lists}->{OE}->[-1]->{nsmap},
              cm_type => $main->{saved_lists}->{OE}->[-1]->{cm_type},
              et => 0,
@@ -6118,7 +6147,8 @@ sub generate_api ($) {
              #di => $token->{di}, index => $token->{index},
              ns => undef,
              local_name => 'dummy',
-             attr_list => {},
+             attr_list => [],
+             custom => 0,
              nsmap => $main->{saved_lists}->{OE}->[-1]->{nsmap},
              et => 0,
              aet => 0});
