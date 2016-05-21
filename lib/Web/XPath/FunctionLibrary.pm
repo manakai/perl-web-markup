@@ -235,13 +235,13 @@ my $Functions = {
       my $n1 = $self->to_number ($args->[1]) or return undef;
       my $n2 = $args->[2] ? $self->to_number ($args->[2]) || return undef : undef;
       $n1 = -1 + _round $n1->{value};
-      return {type => 'string', value => ''} if $n1 eq '-inf';
+      return {type => 'string', value => ''} if $n1 eq '-Inf' or $n1 eq '-inf';
       if (defined $n2) {
         $n2 = $n1 + _round $n2->{value};
         $n2 = 1 if $n2 < 1;
         $n1 = 0 if $n1 < 0;
         $n2 = $n2 - $n1;
-        $n2 = undef if $n2 eq 'inf';
+        $n2 = undef if $n2 eq 'Inf' or $n2 eq 'inf';
       } else {
         $n1 = 0 if $n1 < 0;
       }
@@ -444,7 +444,7 @@ sub get_code ($$$) {
 
 =head1 LICENSE
 
-Copyright 2013-2014 Wakaba <wakaba@suikawiki.org>.
+Copyright 2013-2016 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
