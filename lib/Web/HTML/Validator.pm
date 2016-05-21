@@ -407,7 +407,8 @@ sub _check_element_attrs ($$$;%) {
         $ElementAttrChecker->{$el_ns}->{'*'}->{$attr_ns}->{$attr_ln} ||
         $NamespacedAttrChecker->{$attr_ns}->{$attr_ln} ||
         $NamespacedAttrChecker->{$attr_ns}->{''};
-    my $attr_def = $_Defs->{elements}->{$el_ns}->{$el_ln}->{attrs}->{$attr_ns}->{$attr_ln} ||
+    my $attr_def = ($_Defs->{elements}->{$el_ns}->{$el_ln} or {})->{attrs}->{$attr_ns}->{$attr_ln} ||
+        # $el_ns -> *-*
         $_Defs->{elements}->{$el_ns}->{'*'}->{attrs}->{$attr_ns}->{$attr_ln} ||
         $_Defs->{elements}->{'*'}->{'*'}->{attrs}->{$attr_ns}->{$attr_ln};
     my $conforming = $attr_def->{conforming};
@@ -1692,7 +1693,7 @@ sub _validate_aria ($$) {
       my $ns = $node->namespace_uri || '';
       my $ln = $node->local_name;
       if ($ns eq HTML_NS or $ns eq SVG_NS) {
-        if ($_Defs->{elements}->{$ns}->{$ln}->{aria} or
+        if (($_Defs->{elements}->{$ns}->{$ln} or {})->{aria} or
             $ln eq 'input' or
             $node->has_attribute_ns (undef, 'role')) {
           push @relevant, $node;
@@ -1819,7 +1820,7 @@ sub _validate_aria ($$) {
       }
     } # role=""
 
-    my $aria_defs = $_Defs->{elements}->{$ns}->{$ln}->{aria};
+    my $aria_defs = ($_Defs->{elements}->{$ns}->{$ln} or {})->{aria};
     if ($ns eq HTML_NS and $ln eq 'input') {
       $aria_defs = $_Defs->{input}->{aria}->{$node->type};
     }
@@ -3198,7 +3199,8 @@ my %HTMLFlowContentChecker = (
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
     unless ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln} or
-            $_Defs->{categories}->{'flow content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln}) {
+            $_Defs->{categories}->{'flow content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln} or
+            ($child_nsuri eq HTML_NS and $child_ln =~ /-/)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:flow',
                          level => 'm');
@@ -3219,10 +3221,9 @@ my %HTMLPhrasingContentChecker = (
   check_child_element => sub {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
-    if ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln} or
-             $_Defs->{categories}->{'phrasing content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln}) {
-      #
-    } else {
+    unless ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln} or
+            $_Defs->{categories}->{'phrasing content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln} or
+            ($child_nsuri eq HTML_NS and $child_ln =~ /-/)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:phrasing',
                          level => 'm');
@@ -3258,7 +3259,8 @@ my %TransparentChecker = (
       }
     } else { # flow content
       unless ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln} or
-              $_Defs->{categories}->{'flow content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln}) {
+              $_Defs->{categories}->{'flow content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln} or
+              ($child_nsuri eq HTML_NS and $child_ln =~ /-/)) {
         $self->{onerror}->(node => $child_el,
                            type => 'element not allowed:flow',
                            level => 'm');
@@ -3303,8 +3305,8 @@ my %PropContainerChecker = (
   },
   check_end => sub {
     my ($self, $item, $element_state) = @_;
-    my $children = $_Defs->{elements}
-        ->{$item->{node}->namespace_uri || ''}->{$item->{node}->local_name}
+    my $children = ($_Defs->{elements}
+        ->{$item->{node}->namespace_uri || ''}->{$item->{node}->local_name} or {})
         ->{child_elements};
     for my $ns (keys %$children) {
       for my $ln (keys %{$children->{$ns} or {}}) {
@@ -4814,6 +4816,11 @@ $Element->{+HTML_NS}->{slot} = {
   }, # check_attrs2
 }; # slot
 
+## Autonomous custom elements
+$Element->{+HTML_NS}->{'*-*'} = {
+  %TransparentChecker,
+}; # *-*
+
 # ---- Sections ----
 
 $Element->{+HTML_NS}->{$_}->{check_start} = sub {
@@ -5280,6 +5287,7 @@ $Element->{+HTML_NS}->{$_}->{check_end} = sub {
 
 # XXX broken
 # XXX update error descriptions
+# XXX has_paplable checking is somewhat broken
 $Element->{+HTML_NS}->{ruby} = {
   %HTMLPhrasingContentChecker,
   check_start => sub {
@@ -5294,7 +5302,8 @@ $Element->{+HTML_NS}->{ruby} = {
         $child_is_transparent, $element_state) = @_;
     if ($element_state->{phase} eq 'before-rb') {
       if ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln} or
-          $_Defs->{categories}->{'phrasing content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln}) {
+          $_Defs->{categories}->{'phrasing content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln} or
+          ($child_nsuri eq HTML_NS and $child_ln =~ /-/)) {
         $element_state->{phase} = 'in-rb';
       } elsif ($child_ln eq 'rt' and $child_nsuri eq HTML_NS) {
         $self->{onerror}->(node => $child_el,
@@ -5314,7 +5323,8 @@ $Element->{+HTML_NS}->{ruby} = {
       }
     } elsif ($element_state->{phase} eq 'in-rb') {
       if ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln} or
-          $_Defs->{categories}->{'phrasing content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln}) {
+          $_Defs->{categories}->{'phrasing content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln} or
+          ($child_nsuri eq HTML_NS and $child_ln =~ /-/)) {
         #$element_state->{phase} = 'in-rb';
       } elsif ($child_ln eq 'rt' and $child_nsuri eq HTML_NS) {
         unless (delete $element_state->{has_palpable}) {
@@ -5338,7 +5348,8 @@ $Element->{+HTML_NS}->{ruby} = {
       }
     } elsif ($element_state->{phase} eq 'after-rt') {
       if ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln} or
-          $_Defs->{categories}->{'phrasing content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln}) {
+          $_Defs->{categories}->{'phrasing content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln} or
+          ($child_nsuri eq HTML_NS and $child_ln =~ /-/)) {
         $element_state->{phase} = 'in-rb';
       } elsif ($child_ln eq 'rp' and $child_nsuri eq HTML_NS) {
         $self->{onerror}->(node => $child_el,
@@ -5375,7 +5386,8 @@ $Element->{+HTML_NS}->{ruby} = {
                            text => 'rp',
                            level => 'm');
         unless ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln} or
-                $_Defs->{categories}->{'phrasing content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln}) {
+                $_Defs->{categories}->{'phrasing content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln} or
+                ($child_nsuri eq HTML_NS and $child_ln =~ /-/)) {
           $self->{onerror}->(node => $child_el,
                              type => 'element not allowed:ruby base',
                              level => 'm');
@@ -5400,7 +5412,8 @@ $Element->{+HTML_NS}->{ruby} = {
                            text => 'rp',
                            level => 'm');
         unless ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln} or
-                $_Defs->{categories}->{'phrasing content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln}) {
+                $_Defs->{categories}->{'phrasing content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln} or
+                ($child_nsuri eq HTML_NS and $child_ln =~ /-/)) {
           $self->{onerror}->(node => $child_el,
                              type => 'element not allowed:ruby base',
                              level => 'm');
@@ -5409,7 +5422,8 @@ $Element->{+HTML_NS}->{ruby} = {
       }
     } elsif ($element_state->{phase} eq 'after-rp2') {
       if ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln} or
-          $_Defs->{categories}->{'phrasing content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln}) {
+          $_Defs->{categories}->{'phrasing content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln} or
+          ($child_ln eq HTML_NS and $child_ln =~ /-/)) {
         $element_state->{phase} = 'in-rb';
       } elsif ($child_ln eq 'rt' and $child_nsuri eq HTML_NS) {
         $self->{onerror}->(node => $child_el,
@@ -5592,7 +5606,8 @@ $Element->{+HTML_NS}->{figure} = {
       push @{$element_state->{figcaptions} ||= []}, $child_el;
     } else { # flow content
       if ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln} or
-          $_Defs->{categories}->{'flow content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln}) {
+          $_Defs->{categories}->{'flow content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln} or
+          ($child_nsuri eq HTML_NS and $child_ln =~ /-/)) {
         $element_state->{in_flow_content} = 1;
         push @{$element_state->{figcaptions} ||= []}, 'flow';
       } else {
@@ -6853,7 +6868,8 @@ $Element->{+HTML_NS}->{fieldset} = {
       }
     } else { # flow content
       if ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln} or
-          $_Defs->{categories}->{'flow content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln}) {
+          $_Defs->{categories}->{'flow content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln} or
+          ($child_nsuri eq HTML_NS and $child_ln =~ /-/)) {
         $element_state->{in_flow_content} = 1;
       } else {
         $self->{onerror}->(node => $child_el,
@@ -7830,7 +7846,8 @@ $Element->{+HTML_NS}->{details} = {
       $element_state->{has_summary} = 1;
     } else { # flow content
       if ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln} or
-          $_Defs->{categories}->{'flow content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln}) {
+          $_Defs->{categories}->{'flow content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln} or
+          ($child_nsuri eq HTML_NS and $child_ln =~ /-/)) {
         $element_state->{in_flow_content} = 1;
       } else {
         $self->{onerror}->(node => $child_el,
@@ -7957,7 +7974,8 @@ $Element->{+HTML_NS}->{menu} = {
       } elsif ($_Defs->{categories}->{'script-supporting elements'}->{elements}->{$child_nsuri}->{$child_ln}) {
         #
       } elsif ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln} or
-               $_Defs->{categories}->{'flow content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln}) {
+               $_Defs->{categories}->{'flow content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln} or
+               ($child_nsuri eq HTML_NS and $child_ln =~ /-/)) {
         $element_state->{phase} = 'toolbar-flow';
       } else {
         $self->{onerror}->(node => $child_el,
@@ -9555,7 +9573,9 @@ sub _check_node ($$) {
       my $el_ln = $el->local_name;
       
       my $element_state = {};
-      my $eldef = $Element->{$el_nsuri}->{$el_ln} ||
+      my $e_eldef = $Element->{$el_nsuri}->{$el_ln} ||
+          ($el_ln =~ /-/ ? $Element->{$el_nsuri}->{'*-*'} : undef);
+      my $eldef = $e_eldef ||
           $Element->{$el_nsuri}->{''} ||
           $ElementDefault;
 
@@ -9578,6 +9598,10 @@ sub _check_node ($$) {
                            text => $el_nsuri,
                            level => 'w');
       }
+
+      my $el_def = $_Defs->{elements}->{$el_nsuri}->{$el_ln};
+      $el_def ||= $_Defs->{elements}->{$el_nsuri}->{'*-*'} if $el_ln =~ /-/;
+      $el_def ||= {};
 
       ## <http://suika.suikawiki.org/www/markup/xml/validation-langs#checking-an-element>.
       my $mode = $item->{validation_mode};
@@ -9739,13 +9763,10 @@ sub _check_node ($$) {
         # XXX if $mode eq 'RSS1'
         # XXX if $self->{rss2}
 
-        my $el_def = $_Defs->{elements}->{$el_nsuri}->{$el_ln};
         if ($el_def->{conforming}) {
-          unless ($Element->{$el_nsuri}->{$el_ln}) {
-            ## According to the attribute list, this element is
-            ## conforming.  However, current version of the validator
-            ## does not support the element.  The conformance is
-            ## unknown.
+          unless (defined $e_eldef) {
+            ## Though the element is conforming, we does not support
+            ## the validation of the element yet.
             $self->{onerror}->(node => $el,
                                type => 'unknown element',
                                level => 'u');
@@ -9809,7 +9830,8 @@ sub _check_node ($$) {
 
           if ($element_state->{has_palpable}) {
             #
-          } elsif ($_Defs->{categories}->{'palpable content'}->{elements}->{$child_nsuri}->{$child_ln}) {
+          } elsif ($_Defs->{categories}->{'palpable content'}->{elements}->{$child_nsuri}->{$child_ln} or
+                   ($child_nsuri eq HTML_NS and $child_ln =~ /-/)) {
             $element_state->{has_palpable} = 1
                 if not $child_nsuri eq HTML_NS or
                    not $child->has_attribute_ns (undef, 'hidden');
@@ -9848,7 +9870,7 @@ sub _check_node ($$) {
       push @new_item, {type => '_remove_minus_elements',
                        element_state => $element_state}
           if $disallowed;
-      my $cm = $_Defs->{elements}->{$el_nsuri}->{$el_ln}->{content_model} || '';
+      my $cm = $el_def->{content_model} || '';
       push @new_item, {type => 'check_palpable_content',
                        node => $el,
                        element_state => $element_state}
@@ -9967,7 +9989,7 @@ sub _check_node ($$) {
             ## <http://suika.suikawiki.org/www/markup/xml/validation-langs#document-element>.
             if ($mode eq 'XSLT') {
               if ($nsurl eq XSLT_NS and
-                  $_Defs->{elements}->{$nsurl}->{$ln}->{root}) {
+                  ($_Defs->{elements}->{$nsurl}->{$ln} or {})->{root}) {
                 #
               } elsif (0 and 'XXX is XSLT literal result element') {
                 $self->{onerror}->(node => $node,
@@ -9995,7 +10017,7 @@ sub _check_node ($$) {
                                    level => 'm');
               }
             } else { # default
-              if ($_Defs->{elements}->{$nsurl}->{$ln}->{root}) {
+              if (($_Defs->{elements}->{$nsurl}->{$ln} or {})->{root}) {
                 #
               } elsif ($nsurl eq '' and $ln eq 'rss') {
                 # XXX $self->{rss2} = 1;
