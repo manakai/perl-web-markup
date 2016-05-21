@@ -2,7 +2,7 @@ package Web::XPath::Evaluator;
 use strict;
 use warnings;
 no warnings 'utf8';
-our $VERSION = '2.0';
+our $VERSION = '3.0';
 use POSIX ();
 use Scalar::Util qw(refaddr);
 
@@ -162,7 +162,9 @@ my %Op = (
     my $left = $self->to_number ($_[1]) or return undef;
     my $right = $self->to_number ($_[2]) or return undef;
     return {type => 'number', value => 0+'nan'}
-        if $left->{value} eq 'nan';
+        if $left->{value} eq 'NaN' or
+           $left->{value} eq 'nan' or
+           $left->{value} eq '-nan';
     my $n = eval { $left->{value} / $right->{value} };
     if (not defined $n) {
       my $neg = $left->{value} < 0;
@@ -260,7 +262,9 @@ sub to_boolean ($$) {
     return {type => 'boolean', value => !!@{$value->{value}}};
   } elsif ($value->{type} eq 'number') {
     return {type => 'boolean',
-            value => not ($value->{value} eq 'nan' or
+            value => not ($value->{value} eq 'NaN' or
+                          $value->{value} eq 'nan' or
+                          $value->{value} eq '-nan' or
                           $value->{value} eq '-0' or ## < Perl 5.14
                           not $value->{value})};
   } elsif ($value->{type} eq 'string') {
