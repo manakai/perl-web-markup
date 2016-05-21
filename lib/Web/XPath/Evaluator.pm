@@ -2,7 +2,7 @@ package Web::XPath::Evaluator;
 use strict;
 use warnings;
 no warnings 'utf8';
-our $VERSION = '1.0';
+our $VERSION = '2.0';
 use POSIX ();
 use Scalar::Util qw(refaddr);
 
@@ -291,11 +291,11 @@ sub to_string ($$) {
               _string_value $_;
             } @node};
   } elsif ($value->{type} eq 'number') {
-    if ($value->{value} eq 'nan' or $value->{value} eq '-nan') {
+    if ($value->{value} =~ /\A-?[Nn]a[Nn]\z/) {
       return {type => 'string', value => 'NaN'};
-    } elsif ($value->{value} eq 'inf') {
+    } elsif ($value->{value} =~ /\A[Ii]nf\z/) {
       return {type => 'string', value => 'Infinity'};
-    } elsif ($value->{value} eq '-inf') {
+    } elsif ($value->{value} =~ /\A-[Ii]nf\z/) {
       return {type => 'string', value => '-Infinity'};
     } else {
       my $n = $value->{value};
@@ -744,7 +744,7 @@ sub evaluate ($$$;%) {
 
 =head1 LICENSE
 
-Copyright 2013-2014 Wakaba <wakaba@suikawiki.org>.
+Copyright 2013-2016 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
