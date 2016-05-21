@@ -15,6 +15,21 @@
             "Web::HTML::Validator" : 1
          }
       },
+      "is:not custom element name" : {
+         "default_level" : "w",
+         "desc" : {
+            "en" : "\u003Cp>The \u003Ccode>is\u003C/code> attribute value of the element is not a valid\u000Acustom element name.  The value has to be a valid custom element\u000Anames, otherwise it is ignored.\u000A\u000A\u003C/p>\u003Cp>A valid custom element name is a string with following\u000Arestrictions:\u000A\u000A  \u003C/p>\u003Cul>\u000A\u000A  \u003Cli>Its first character must be one of ASCII lowercase letters\u000A  \u003Ccode>a\u003C/code>-\u003Ccode>z\u003C/code>.\u000A\u000A  \u003C/li>\u003Cli>It can't contain ASCII uppercase letters\u000A  \u003Ccode>A\u003C/code>-\u003Ccode>Z\u003C/code>.\u000A\u000A  \u003C/li>\u003Cli>It must contain a \u003Ccode>-\u003C/code> character.\u000A\u000A  \u003C/li>\u003Cli>No character that is not a \u003Ca href=\u0022https://chars.suikawiki.org/set/%24html%3APCENChar\u0022>\u003Ccode>PCENChar\u003C/code>\u003C/a>\u000A  can be used.\u000A\u000A  \u003C/li>\u003Cli>It can't be one of following reserved names:\u000A\u003Ccode>annotation-xml\u003C/code>,\u000A\u003Ccode>color-profile\u003C/code>,\u000A\u003Ccode>font-face\u003C/code>,\u000A\u003Ccode>font-face-src\u003C/code>,\u000A\u003Ccode>font-face-uri\u003C/code>,\u000A\u003Ccode>font-face-format\u003C/code>,\u000A\u003Ccode>font-face-name\u003C/code>, and\u000A\u003Ccode>missing-glyph\u003C/code>.\u000A\u000A  \u003C/li>\u003C/ul>",
+            "ja" : "\u003Cp>要素の \u003Ccode>is\u003C/code> 属性値が妥当なカスタム要素名ではありません。\u000A属性値が妥当なカスタム要素名でなければ、無視されます。\u000A\u000A\u003C/p>\u003Cp>妥当なカスタム要素名は、次の条件を満たす文字列です。\u000A\u000A  \u003C/p>\u003Cul>\u000A\u000A  \u003Cli>最初の文字は ASCII 小文字\u000A  \u003Ccode>a\u003C/code>-\u003Ccode>z\u003C/code> のいずれかでなければいけません。\u000A\u000A  \u003C/li>\u003Cli>ASCII 大文字 \u003Ccode>A\u003C/code>-\u003Ccode>Z\u003C/code> は使えません。\u000A\u000A  \u003C/li>\u003Cli>文字 \u003Ccode>-\u003C/code> を含まなければいけません。\u000A\u000A  \u003C/li>\u003Cli>\u003Ca href=\u0022https://chars.suikawiki.org/set/%24html%3APCENChar\u0022>\u003Ccode>PCENChar\u003C/code>\u003C/a>\u000A  でない文字は使えません。\u000A\u000A  \u003C/li>\u003Cli>次の名前は予約されていて使えません:\u000A\u003Ccode>annotation-xml\u003C/code>,\u000A\u003Ccode>color-profile\u003C/code>,\u000A\u003Ccode>font-face\u003C/code>,\u000A\u003Ccode>font-face-src\u003C/code>,\u000A\u003Ccode>font-face-uri\u003C/code>,\u000A\u003Ccode>font-face-format\u003C/code>,\u000A\u003Ccode>font-face-name\u003C/code>,\u000A\u003Ccode>missing-glyph\u003C/code>。\u000A\u000A  \u003C/li>\u003C/ul>"
+         },
+         "layer" : "microsyntax",
+         "message" : {
+            "en" : "The custom element name is not valid",
+            "ja" : "カスタム要素名が妥当ではありません"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
       "light slot" : {
          "default_level" : "w",
          "desc" : {

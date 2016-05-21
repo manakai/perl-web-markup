@@ -2941,6 +2941,27 @@ $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{xmlns} = sub {
     }
 }; # xmlns=""
 
+$ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{is} = sub {
+  my ($self, $attr) = @_;
+
+  my $value = $attr->value;
+  unless ($value =~ /\A[a-z]\p{InPCENChar}*\z/ and
+          $value =~ /-/ and
+          not $_Defs->{not_custom_element_names}->{$value}) {
+    $self->{onerror}->(node => $attr,
+                       type => 'is:not custom element name',
+                       value => $value,
+                       level => 'w');
+  }
+
+  ## XXX autonomous custom element's local names and is="" attribute
+  ## values share same namespace.  Warn if is="" value is also used
+  ## for local names.
+  
+  ## is="" can't be specified on autonomous custom elements.  This is
+  ## checked by |*-*|'s |check_attrs2|.
+}; # is=""
+
 ## ------ ------
 
 my $NameAttrChecker = sub {

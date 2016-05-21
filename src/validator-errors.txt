@@ -478,3 +478,80 @@ restrictions:
 <code>missing-glyph</code>。
 
   </ul>
+
+* is:not custom element name
+
+default_level=w
+layer=microsyntax
+
+@en
+The custom element name is not valid
+@ja
+カスタム要素名が妥当ではありません
+
+@en
+
+<p>The <code>is</code> attribute value of the element is not a valid
+custom element name.  The value has to be a valid custom element
+names, otherwise it is ignored.
+
+<p>A valid custom element name is a string with following
+restrictions:
+
+  <ul>
+
+  <li>Its first character must be one of ASCII lowercase letters
+  <code>a</code>-<code>z</code>.
+
+  <li>It can't contain ASCII uppercase letters
+  <code>A</code>-<code>Z</code>.
+
+  <li>It must contain a <code>-</code> character.
+
+  <li>No character that is not a <a
+  href=https://chars.suikawiki.org/set/%24html%3APCENChar><code>PCENChar</code></a>
+  can be used.
+
+  <li>It can't be one of following reserved names:
+<code>annotation-xml</code>,
+<code>color-profile</code>,
+<code>font-face</code>,
+<code>font-face-src</code>,
+<code>font-face-uri</code>,
+<code>font-face-format</code>,
+<code>font-face-name</code>, and
+<code>missing-glyph</code>.
+
+  </ul>
+
+@ja
+
+<p>要素の <code>is</code> 属性値が妥当なカスタム要素名ではありません。
+属性値が妥当なカスタム要素名でなければ、無視されます。
+
+<p>妥当なカスタム要素名は、次の条件を満たす文字列です。
+
+  <ul>
+
+  <li>最初の文字は ASCII 小文字
+  <code>a</code>-<code>z</code> のいずれかでなければいけません。
+
+  <li>ASCII 大文字 <code>A</code>-<code>Z</code> は使えません。
+
+  <li>文字 <code>-</code> を含まなければいけません。
+
+  <li><a
+  href=https://chars.suikawiki.org/set/%24html%3APCENChar><code>PCENChar</code></a>
+  でない文字は使えません。
+
+  <li>次の名前は予約されていて使えません:
+<code>annotation-xml</code>,
+<code>color-profile</code>,
+<code>font-face</code>,
+<code>font-face-src</code>,
+<code>font-face-uri</code>,
+<code>font-face-format</code>,
+<code>font-face-name</code>,
+<code>missing-glyph</code>。
+
+  </ul>
