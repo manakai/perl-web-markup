@@ -1,4 +1,4 @@
-Capture::Tiny~0.36
+Capture::Tiny~0.40
 JE~0.066
 Test::NoWarnings~1.04
 Encode~2.84
@@ -28,7 +28,7 @@ Unicode::Normalize~1.25
 Algorithm::Diff~1.1903
 MRO::Compat~0.12
 Perl::OSType~1.009
-Path::Tiny~0.090
+Path::Tiny~0.094
 ExtUtils::CBuilder~0.280224
 Parse::CPAN::Meta~1.4417
 version~0.9916
