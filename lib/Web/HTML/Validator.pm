@@ -5184,7 +5184,7 @@ $Element->{+HTML_NS}->{a} = {
       $self->{flag}->{in_a_href} = 1;
     } else {
       for (qw(
-        target ping rel hreflang type
+        target ping rel hreflang type referrerpolicy
         ilet iswf irst ib ifb ijam ista
         email telbook kana memoryname
         lcs
@@ -6484,7 +6484,7 @@ $Element->{+HTML_NS}->{area} = {
                            level => 'm');
       }
     } else {
-      for (qw/target ping rel alt/) {
+      for (qw/target ping rel alt referrerpolicy/) {
         if (defined $attr{$_}) {
           $self->{onerror}->(node => $attr{$_},
                              type => 'attribute not allowed',
@@ -6512,6 +6512,9 @@ $Element->{+HTML_NS}->{area} = {
     }
   },
 }; # area
+
+#XXX
+$_Defs->{elements}->{+HTML_NS}->{area}->{attrs}->{''}->{referrerpolicy}->{conforming} = 1;
 
 # ---- Tabular data ----
 
