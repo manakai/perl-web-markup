@@ -3979,8 +3979,63 @@ $HTTPEquivChecker->{'content-language'} = $CheckerByType->{'language tag'};
 ## XXX set-cookie-string [OBSVOCAB]
 #$HTTPEquivChecker->{'set-cookie'}
 
+## <meta name> content validators
 my $CheckerByMetadataName = { };
 $CheckerByMetadataName->{keywords} = sub { };
+
+$CheckerByMetadataName->{'referrer'} = sub {
+  my ($self, $attr) = @_;
+  my $value = $attr->value;
+  $value =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
+  if (length $value and ($_Defs->{elements}->{+HTML_NS}->{a}->{attrs}->{''}->{referrerpolicy}->{enumerated}->{$value} || {})->{conforming}) {
+    #
+  } elsif ($value eq 'always' or $value eq 'default' or $value eq 'never') {
+    $self->{onerror}->(node => $attr,
+                       type => 'enumerated:non-conforming',
+                       level => 'm');
+  } else {
+    $self->{onerror}->(node => $attr,
+                       type => 'enumerated:invalid',
+                       level => 'm');
+  }
+
+  my $oe = $attr->owner_element;
+  if (defined $oe) {
+    my $parent = $oe->parent_node;
+    if (defined $parent and
+        $parent->node_type == 1) { # ELEMENT_NODE
+      unless ($parent eq $oe->owner_document->head) {
+        $self->{onerror}->(node => $oe,
+                           type => 'element not allowed',
+                           level => 'w');
+      }
+    }
+  }
+}; # referrer
+
+$CheckerByMetadataName->{'theme-color'} = sub {
+  my ($self, $attr) = @_;
+  require Web::CSS::Parser;
+  my $parser = Web::CSS::Parser->new;
+  $parser->media_resolver->set_supported (all => 1);
+  $parser->init_parser;
+  $parser->onerror ($GetNestedOnError->($self->onerror, $attr));
+  my $parsed = $parser->parse_char_string_as_prop_value ('color', $attr->value);
+  if (not defined $parsed) {
+    ## Reported to $parser->onerror
+    #
+  } else {
+    my $value = $parsed->{prop_values}->{color};
+    if ($value->[0] eq 'KEYWORD' and
+        {
+          inherit => 1, initial => 1, # XXX non-<color> values
+        }->{$value->[1]}) {
+      $self->{onerror}->(node => $attr,
+                         type => 'css:color:syntax error',
+                         level => 'm');
+    }
+  }
+}; # theme-color
 
 $Element->{+HTML_NS}->{meta} = {
   %HTMLEmptyChecker,
