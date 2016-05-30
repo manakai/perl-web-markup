@@ -2,7 +2,7 @@ Capture::Tiny~0.40
 JE~0.066
 Test::NoWarnings~1.04
 Encode~2.84
-Test::Builder~1.302019
+Test::Builder~1.302022
 CPAN::Meta~2.150005
 Module::Build~0.4218
 Try::Tiny~0.24
@@ -15,7 +15,7 @@ ExtUtils::ParseXS~3.30
 Data::Dumper~2.154
 Date::Parse~2.30
 Text::Diff~1.44
-Test::More~1.302019
+Test::More~1.302022
 Test::Differences~0.64
 CPAN::Meta::Requirements~2.140
 Path::Class~0.36
@@ -31,8 +31,8 @@ Perl::OSType~1.009
 Path::Tiny~0.094
 ExtUtils::CBuilder~0.280224
 Parse::CPAN::Meta~1.4417
-version~0.9916
-Test::Tester~1.302019
+version~0.9917
+Test::Tester~1.302022
 CPAN::Meta::YAML~0.018
 Exporter~5.72
 TAP::Harness~3.36
