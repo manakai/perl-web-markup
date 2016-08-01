@@ -278,61 +278,67 @@ sub CHARREF_IN_RCDATA_STATE () { 85 }
 sub CHARREF_IN_DATA_STATE () { 86 }
 sub COMMENT_END_BANG_STATE () { 87 }
 sub COMMENT_END_DASH_STATE () { 88 }
-sub COMMENT_END_STATE () { 89 }
-sub COMMENT_START_DASH_STATE () { 90 }
-sub COMMENT_START_STATE () { 91 }
-sub COMMENT_STATE () { 92 }
-sub COMMENT_STATE_CR () { 93 }
-sub DATA_STATE () { 94 }
-sub DATA_STATE___CHARREF_BEFORE_HEX_NUM_STATE () { 95 }
-sub DATA_STATE___CHARREF_DECIMAL_NUM_STATE () { 96 }
-sub DATA_STATE___CHARREF_HEX_NUM_STATE () { 97 }
-sub DATA_STATE___CHARREF_NAME_STATE () { 98 }
-sub DATA_STATE___CHARREF_NUM_STATE () { 99 }
-sub DATA_STATE___CHARREF_STATE () { 100 }
-sub DATA_STATE___CHARREF_STATE_CR () { 101 }
-sub DATA_STATE_CR () { 102 }
-sub END_TAG_OPEN_STATE () { 103 }
-sub MDO_STATE () { 104 }
-sub MDO_STATE__ () { 105 }
-sub MDO_STATE_D () { 106 }
-sub MDO_STATE_DO () { 107 }
-sub MDO_STATE_DOC () { 108 }
-sub MDO_STATE_DOCT () { 109 }
-sub MDO_STATE_DOCTY () { 110 }
-sub MDO_STATE_DOCTYP () { 111 }
-sub MDO_STATE__5B () { 112 }
-sub MDO_STATE__5BC () { 113 }
-sub MDO_STATE__5BCD () { 114 }
-sub MDO_STATE__5BCDA () { 115 }
-sub MDO_STATE__5BCDAT () { 116 }
-sub MDO_STATE__5BCDATA () { 117 }
-sub SCRIPT_DATA_DOUBLE_ESCAPE_END_STATE () { 118 }
-sub SCRIPT_DATA_DOUBLE_ESCAPE_END_STATE_CR () { 119 }
-sub SCRIPT_DATA_DOUBLE_ESCAPE_START_STATE () { 120 }
-sub SCRIPT_DATA_DOUBLE_ESCAPE_START_STATE_CR () { 121 }
-sub SCRIPT_DATA_DOUBLE_ESCAPED_DASH_DASH_STATE () { 122 }
-sub SCRIPT_DATA_DOUBLE_ESCAPED_DASH_STATE () { 123 }
-sub SCRIPT_DATA_DOUBLE_ESCAPED_LESS_THAN_SIGN_STATE () { 124 }
-sub SCRIPT_DATA_DOUBLE_ESCAPED_STATE () { 125 }
-sub SCRIPT_DATA_DOUBLE_ESCAPED_STATE_CR () { 126 }
-sub SCRIPT_DATA_END_TAG_NAME_STATE () { 127 }
-sub SCRIPT_DATA_END_TAG_OPEN_STATE () { 128 }
-sub SCRIPT_DATA_ESCAPE_START_DASH_STATE () { 129 }
-sub SCRIPT_DATA_ESCAPE_START_STATE () { 130 }
-sub SCRIPT_DATA_ESCAPED_DASH_DASH_STATE () { 131 }
-sub SCRIPT_DATA_ESCAPED_DASH_STATE () { 132 }
-sub SCRIPT_DATA_ESCAPED_END_TAG_NAME_STATE () { 133 }
-sub SCRIPT_DATA_ESCAPED_END_TAG_OPEN_STATE () { 134 }
-sub SCRIPT_DATA_ESCAPED_LESS_THAN_SIGN_STATE () { 135 }
-sub SCRIPT_DATA_ESCAPED_STATE () { 136 }
-sub SCRIPT_DATA_ESCAPED_STATE_CR () { 137 }
-sub SCRIPT_DATA_LESS_THAN_SIGN_STATE () { 138 }
-sub SCRIPT_DATA_STATE () { 139 }
-sub SCRIPT_DATA_STATE_CR () { 140 }
-sub SELF_CLOSING_START_TAG_STATE () { 141 }
-sub TAG_NAME_STATE () { 142 }
-sub TAG_OPEN_STATE () { 143 }
+sub COMMENT_END_DASH_STATE_CR () { 89 }
+sub COMMENT_END_STATE () { 90 }
+sub COMMENT_END_STATE_CR () { 91 }
+sub COMMENT_LESS_THAN_SIGN_BANG_DASH_DASH_STATE () { 92 }
+sub COMMENT_LESS_THAN_SIGN_BANG_DASH_STATE () { 93 }
+sub COMMENT_LESS_THAN_SIGN_BANG_STATE () { 94 }
+sub COMMENT_LESS_THAN_SIGN_STATE () { 95 }
+sub COMMENT_START_DASH_STATE () { 96 }
+sub COMMENT_START_STATE () { 97 }
+sub COMMENT_STATE () { 98 }
+sub COMMENT_STATE_CR () { 99 }
+sub DATA_STATE () { 100 }
+sub DATA_STATE___CHARREF_BEFORE_HEX_NUM_STATE () { 101 }
+sub DATA_STATE___CHARREF_DECIMAL_NUM_STATE () { 102 }
+sub DATA_STATE___CHARREF_HEX_NUM_STATE () { 103 }
+sub DATA_STATE___CHARREF_NAME_STATE () { 104 }
+sub DATA_STATE___CHARREF_NUM_STATE () { 105 }
+sub DATA_STATE___CHARREF_STATE () { 106 }
+sub DATA_STATE___CHARREF_STATE_CR () { 107 }
+sub DATA_STATE_CR () { 108 }
+sub END_TAG_OPEN_STATE () { 109 }
+sub MDO_STATE () { 110 }
+sub MDO_STATE__ () { 111 }
+sub MDO_STATE_D () { 112 }
+sub MDO_STATE_DO () { 113 }
+sub MDO_STATE_DOC () { 114 }
+sub MDO_STATE_DOCT () { 115 }
+sub MDO_STATE_DOCTY () { 116 }
+sub MDO_STATE_DOCTYP () { 117 }
+sub MDO_STATE__5B () { 118 }
+sub MDO_STATE__5BC () { 119 }
+sub MDO_STATE__5BCD () { 120 }
+sub MDO_STATE__5BCDA () { 121 }
+sub MDO_STATE__5BCDAT () { 122 }
+sub MDO_STATE__5BCDATA () { 123 }
+sub SCRIPT_DATA_DOUBLE_ESCAPE_END_STATE () { 124 }
+sub SCRIPT_DATA_DOUBLE_ESCAPE_END_STATE_CR () { 125 }
+sub SCRIPT_DATA_DOUBLE_ESCAPE_START_STATE () { 126 }
+sub SCRIPT_DATA_DOUBLE_ESCAPE_START_STATE_CR () { 127 }
+sub SCRIPT_DATA_DOUBLE_ESCAPED_DASH_DASH_STATE () { 128 }
+sub SCRIPT_DATA_DOUBLE_ESCAPED_DASH_STATE () { 129 }
+sub SCRIPT_DATA_DOUBLE_ESCAPED_LESS_THAN_SIGN_STATE () { 130 }
+sub SCRIPT_DATA_DOUBLE_ESCAPED_STATE () { 131 }
+sub SCRIPT_DATA_DOUBLE_ESCAPED_STATE_CR () { 132 }
+sub SCRIPT_DATA_END_TAG_NAME_STATE () { 133 }
+sub SCRIPT_DATA_END_TAG_OPEN_STATE () { 134 }
+sub SCRIPT_DATA_ESCAPE_START_DASH_STATE () { 135 }
+sub SCRIPT_DATA_ESCAPE_START_STATE () { 136 }
+sub SCRIPT_DATA_ESCAPED_DASH_DASH_STATE () { 137 }
+sub SCRIPT_DATA_ESCAPED_DASH_STATE () { 138 }
+sub SCRIPT_DATA_ESCAPED_END_TAG_NAME_STATE () { 139 }
+sub SCRIPT_DATA_ESCAPED_END_TAG_OPEN_STATE () { 140 }
+sub SCRIPT_DATA_ESCAPED_LESS_THAN_SIGN_STATE () { 141 }
+sub SCRIPT_DATA_ESCAPED_STATE () { 142 }
+sub SCRIPT_DATA_ESCAPED_STATE_CR () { 143 }
+sub SCRIPT_DATA_LESS_THAN_SIGN_STATE () { 144 }
+sub SCRIPT_DATA_STATE () { 145 }
+sub SCRIPT_DATA_STATE_CR () { 146 }
+sub SELF_CLOSING_START_TAG_STATE () { 147 }
+sub TAG_NAME_STATE () { 148 }
+sub TAG_OPEN_STATE () { 149 }
  sub cant_expand_extentref ($$$) { } 
 
 my $TokenizerAbortingTagNames = {
@@ -5040,7 +5046,7 @@ push @$Tokens, $Token;
 } elsif ($Input =~ /\G[\	\
 \\\ ][\	\
 \\\ ]*\=[\	\
-\\\ ]*\"([^\ \\"\&]*)\"\>/gcs) {
+\\\ ]*\'([^\ \\&\']*)\'\>/gcs) {
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -5101,7 +5107,7 @@ push @$Tokens, $Token;
 } elsif ($Input =~ /\G[\	\
 \\\ ][\	\
 \\\ ]*\=[\	\
-\\\ ]*\'([^\ \\&\']*)\'\>/gcs) {
+\\\ ]*\"([^\ \\"\&]*)\"\>/gcs) {
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -5198,7 +5204,7 @@ $State = B_ATTR_NAME_STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + $-[1]];
 $State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G\=[\	\
-\\\ ]*\"([^\ \\"\&]*)\"\/\>/gcs) {
+\\\ ]*\'([^\ \\&\']*)\'\/\>/gcs) {
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -5259,7 +5265,7 @@ push @$Tokens, $Token;
           }
         
 } elsif ($Input =~ /\G\=[\	\
-\\\ ]*\'([^\ \\&\']*)\'\/\>/gcs) {
+\\\ ]*\"([^\ \\"\&]*)\"\/\>/gcs) {
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -11364,20 +11370,30 @@ $State = COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\-])/gcs) {
 push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - (length $1) - 3];
 $State = COMMENT_END_DASH_STATE;
-} elsif ($Input =~ /\G([\>])/gcs) {
-$State = DATA_STATE;
-push @$Tokens, $Token;
+} elsif ($Input =~ /\G([\<])/gcs) {
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - (length $1) - 3];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\ ])/gcs) {
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - (length $1) - 3];
+$State = COMMENT_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<data>}}, [q@--!�@, $DI, $Offset + (pos $Input) - (length $1) - 3];
-$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'parser:comment not closed', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = DATA_STATE;
+push @$Tokens, $Token;
 } elsif ($Input =~ /\G(.)/gcs) {
 push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - (length $1) - 3];
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 $State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -11406,25 +11422,79 @@ push @{$Token->{q<data>}}, [q@
 $State = COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\-])/gcs) {
 $State = COMMENT_END_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + (pos $Input) - (length $1) - 1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\ ])/gcs) {
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + (pos $Input) - (length $1) - 1];
+$State = COMMENT_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<data>}}, [q@-�@, $DI, $Offset + (pos $Input) - (length $1) - 1];
-$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G(.)/gcs) {
 push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + (pos $Input) - (length $1) - 1];
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 $State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+        
+return 1;
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[COMMENT_END_DASH_STATE_CR] = sub {
+if ($Input =~ /\G([\
+])/gcs) {
+$State = COMMENT_END_DASH_STATE;
+} elsif ($Input =~ /\G([\])/gcs) {
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + (pos $Input) - (length $1) - 1];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
+$State = COMMENT_STATE_CR;
+} elsif ($Input =~ /\G([\-])/gcs) {
+$State = COMMENT_END_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + (pos $Input) - (length $1) - 1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + (pos $Input) - (length $1) - 1];
+$State = COMMENT_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
+} elsif ($Input =~ /\G(.)/gcs) {
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + (pos $Input) - (length $1) - 1];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -11438,16 +11508,125 @@ return 1;
 return 0;
 };
 $StateActions->[COMMENT_END_STATE] = sub {
+if ($Input =~ /\G([\])/gcs) {
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + (pos $Input) - (length $1) - 2];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
+$State = COMMENT_STATE_CR;
+} elsif ($Input =~ /\G([\!])/gcs) {
+$State = COMMENT_END_BANG_STATE;
+} elsif ($Input =~ /\G([\-])/gcs) {
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + (pos $Input) - (length $1) - 0];
+} elsif ($Input =~ /\G([\<])/gcs) {
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + (pos $Input) - (length $1) - 2];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = DATA_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + (pos $Input) - (length $1) - 2];
+$State = COMMENT_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
+} elsif ($Input =~ /\G(.)/gcs) {
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + (pos $Input) - (length $1) - 2];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+        
+return 1;
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[COMMENT_END_STATE_CR] = sub {
+if ($Input =~ /\G([\
+])/gcs) {
+$State = COMMENT_END_STATE;
+} elsif ($Input =~ /\G([\])/gcs) {
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + (pos $Input) - (length $1) - 2];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
+$State = COMMENT_STATE_CR;
+} elsif ($Input =~ /\G([\!])/gcs) {
+$State = COMMENT_END_BANG_STATE;
+} elsif ($Input =~ /\G([\-])/gcs) {
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + (pos $Input) - (length $1) - 0];
+} elsif ($Input =~ /\G([\<])/gcs) {
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + (pos $Input) - (length $1) - 2];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = DATA_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + (pos $Input) - (length $1) - 2];
+$State = COMMENT_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
+} elsif ($Input =~ /\G(.)/gcs) {
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + (pos $Input) - (length $1) - 2];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+        
+return 1;
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[COMMENT_LESS_THAN_SIGN_BANG_DASH_DASH_STATE] = sub {
 if ($Input =~ /\G([\>])/gcs) {
 $State = DATA_STATE;
 push @$Tokens, $Token;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
+            push @$Errors, {type => 'parser:comment not closed', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + (pos $Input) - (length $1) - 2];
+$State = COMMENT_STATE;
+
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<data>}}, [q@--�@, $DI, $Offset + (pos $Input) - (length $1) - 2];
-$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'parser:comment not closed', level => 'm',
@@ -11468,15 +11647,153 @@ $State = COMMENT_END_BANG_STATE;
             push @$Errors, {type => 'parser:comment not closed', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
+$State = COMMENT_END_STATE;
 push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + (pos $Input) - (length $1) - 0];
-} elsif ($Input =~ /\G(.)/gcs) {
+} elsif ($Input =~ /\G([\<])/gcs) {
 
             push @$Errors, {type => 'parser:comment not closed', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + (pos $Input) - (length $1) - 2];
 push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+            push @$Errors, {type => 'parser:comment not closed', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + (pos $Input) - (length $1) - 2];
 $State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+        
+return 1;
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[COMMENT_LESS_THAN_SIGN_BANG_DASH_STATE] = sub {
+if ($Input =~ /\G([\])/gcs) {
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + (pos $Input) - (length $1) - 1];
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
+$State = COMMENT_STATE_CR;
+} elsif ($Input =~ /\G([\-])/gcs) {
+$State = COMMENT_LESS_THAN_SIGN_BANG_DASH_DASH_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + (pos $Input) - (length $1) - 1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + (pos $Input) - (length $1) - 1];
+$State = COMMENT_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
+} elsif ($Input =~ /\G(.)/gcs) {
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + (pos $Input) - (length $1) - 1];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+        
+return 1;
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[COMMENT_LESS_THAN_SIGN_BANG_STATE] = sub {
+if ($Input =~ /\G([\])/gcs) {
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
+$State = COMMENT_STATE_CR;
+} elsif ($Input =~ /\G([\-])/gcs) {
+$State = COMMENT_LESS_THAN_SIGN_BANG_DASH_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$State = COMMENT_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+        
+return 1;
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[COMMENT_LESS_THAN_SIGN_STATE] = sub {
+if ($Input =~ /\G([\])/gcs) {
+push @{$Token->{q<data>}}, [q@
+@, $DI, $Offset + (pos $Input) - (length $1) - 0];
+$State = COMMENT_STATE_CR;
+} elsif ($Input =~ /\G([\!])/gcs) {
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
+$State = COMMENT_LESS_THAN_SIGN_BANG_STATE;
+} elsif ($Input =~ /\G([\-])/gcs) {
+$State = COMMENT_END_DASH_STATE;
+} elsif ($Input =~ /\G([\<]+)/gcs) {
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$State = COMMENT_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -11505,13 +11822,19 @@ push @{$Token->{q<data>}}, [q@
 $State = COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\-])/gcs) {
 $State = COMMENT_END_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + (pos $Input) - (length $1) - 1];
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\ ])/gcs) {
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + (pos $Input) - (length $1) - 1];
+$State = COMMENT_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-push @{$Token->{q<data>}}, [q@-�@, $DI, $Offset + (pos $Input) - (length $1) - 1];
-$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'parser:comment closed', level => 'm',
@@ -11521,8 +11844,8 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 } elsif ($Input =~ /\G(.)/gcs) {
 push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + (pos $Input) - (length $1) - 1];
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 $State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -11550,13 +11873,17 @@ push @{$Token->{q<data>}}, [q@
 $State = COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\-])/gcs) {
 $State = COMMENT_START_DASH_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\ ])/gcs) {
+$State = COMMENT_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
-$State = COMMENT_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'parser:comment closed', level => 'm',
@@ -11565,8 +11892,8 @@ $State = COMMENT_STATE;
 $State = DATA_STATE;
 push @$Tokens, $Token;
 } elsif ($Input =~ /\G(.)/gcs) {
-push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 $State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
 
@@ -11588,7 +11915,7 @@ return 1;
 return 0;
 };
 $StateActions->[COMMENT_STATE] = sub {
-if ($Input =~ /\G([^\\-\ ]+)/gcs) {
+if ($Input =~ /\G([^\\-\<\ ]+)/gcs) {
 push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 
 } elsif ($Input =~ /\G([\])/gcs) {
@@ -11597,6 +11924,10 @@ push @{$Token->{q<data>}}, [q@
 $State = COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\-])/gcs) {
 $State = COMMENT_END_DASH_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'NULL', level => 'm',
@@ -11609,8 +11940,8 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -11633,6 +11964,10 @@ push @{$Token->{q<data>}}, [q@
 $State = COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\-])/gcs) {
 $State = COMMENT_END_DASH_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 $State = COMMENT_STATE;
 
@@ -11649,8 +11984,8 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -16695,7 +17030,587 @@ return 1;
 return 0;
 };
 $StateActions->[TAG_OPEN_STATE] = sub {
-if ($Input =~ /\G\!(\-)\-\-([^\ \\-\>])([^\ \\-]*)\-([^\ \\-])([^\ \\-]*)/gcs) {
+if ($Input =~ /\G\!(\-)\-\-(\<)(\<*)(\!)\-([^\ \\-\<])([^\ \\-\<]*)\-\-\!([^\ \\-\<\>])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[5] - 1];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[7] - 3];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-([^\ \\!\-\<\>])([^\ \\-\<]*)\-(\<)(\<*)(\!)\-([^\ \\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[2] - 2];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[7] - 1];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-(\<)(\<*)(\!)\-([^\ \\-\<])([^\ \\-\<]*)\-\-([^\ \\!\-\<\>])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[5] - 1];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[7] - 2];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\<\>])([^\ \\-\<]*)\-\-\!(\<)(\<*)(\!)\-([^\ \\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[4] - 3];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[7] - 1];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!([^\ \\-\<\>])([^\ \\-\<]*)\-(\<)(\<*)(\!)\-([^\ \\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[2] - 3];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[7] - 1];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-(\<)(\<*)(\!)([^\ \\-\<])([^\ \\-\<]*)\-\-([^\ \\!\-\<\>])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[7] - 2];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-([^\ \\!\-\<\>])([^\ \\-\<]*)(\<)(\<*)(\!)\-([^\ \\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[2] - 2];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[7] - 1];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-([^\ \\!\-\<\>])([^\ \\-\<]*)\-(\<)(\<*)(\!)([^\ \\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[2] - 2];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-(\<)(\<*)(\!)([^\ \\-\<])([^\ \\-\<]*)\-\-\!([^\ \\-\<\>])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[7] - 3];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-(\<)(\<*)(\!)\-([^\ \\-\<])([^\ \\-\<]*)\-\-\!([^\ \\-\<\>])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[5] - 1];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[7] - 3];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!(\<)(\<*)(\!)\-([^\ \\-\<])([^\ \\-\<]*)\-([^\ \\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[2] - 3];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[5] - 1];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[7] - 1];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!([^\ \\-\<\>])([^\ \\-\<]*)(\<)(\<*)(\!)\-([^\ \\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[2] - 3];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[7] - 1];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\<\>])([^\ \\-\<]*)\-\-\!(\<)(\<*)(\!)([^\ \\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[4] - 3];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-(\<)(\<*)(\!)\-([^\ \\-\<])([^\ \\-\<]*)\-\-([^\ \\!\-\<\>])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[5] - 1];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[7] - 2];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\<\>])([^\ \\-\<]*)\-\-(\<)(\<*)(\!)\-([^\ \\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[4] - 2];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[7] - 1];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!\-([^\ \\-\<])([^\ \\-\<]*)(\<)(\<*)(\!)\-([^\ \\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - (length $1) - 3];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[7] - 1];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!([^\ \\-\<\>])([^\ \\-\<]*)\-(\<)(\<*)(\!)([^\ \\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[2] - 3];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-([^\ \\-\<\>])([^\ \\-\<]*)\-\-\!(\<)(\<*)(\!)\-([^\ \\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[4] - 3];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[7] - 1];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-([^\ \\-\<\>])([^\ \\-\<]*)\-\-(\<)(\<*)(\!)\-([^\ \\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[4] - 2];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[7] - 1];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-(\<)(\<*)(\!)([^\ \\-\<])([^\ \\-\<]*)\-\-\!([^\ \\-\<\>])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[7] - 3];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\<\>])([^\ \\-\<]*)\-\-(\<)(\<*)(\!)([^\ \\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[4] - 2];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\<\>])([^\ \\-\<]*)\-\-\!(\<)(\<*)([^\ \\!\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[4] - 3];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\<\>])([^\ \\-\<]*)\-(\<)(\<*)(\!)\-([^\ \\-\<])([^\ \\-\<]*)/gcs) {
 
         $Temp = '';
         $TempIndex = $Offset + (pos $Input);
@@ -16716,8 +17631,3554 @@ push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
 $State = COMMENT_END_DASH_STATE;
 push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
 push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
-$State = COMMENT_STATE;
 push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[7] - 1];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-([^\ \\-\<\>])([^\ \\-\<]*)\-\-\!(\<)(\<*)(\!)([^\ \\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[4] - 3];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\<\>])([^\ \\-\<]*)(\<)(\<*)\-\-([^\ \\!\-\<\>])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[6] - 2];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!([^\ \\-\<\>])([^\ \\-\<]*)\-(\<)(\<*)([^\ \\!\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[2] - 3];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!([^\ \\-\<\>])([^\ \\-\<]*)(\<)(\<*)(\!)([^\ \\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[2] - 3];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\<\>])([^\ \\-\<]*)(\<)(\<*)\-\-\!([^\ \\-\<\>])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[6] - 3];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-(\<)(\<*)(\!)([^\ \\-\<])([^\ \\-\<]*)\-\-([^\ \\!\-\<\>])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[7] - 2];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-([^\ \\!\-\<\>])([^\ \\-\<]*)\-(\<)(\<*)([^\ \\!\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[2] - 2];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-(\<)(\<*)(\!)\-([^\ \\-\<])([^\ \\-\<]*)\-([^\ \\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[2] - 2];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[5] - 1];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[7] - 1];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!(\<)(\<*)(\!)([^\ \\-\<])([^\ \\-\<]*)\-([^\ \\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[2] - 3];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[7] - 1];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!\-([^\ \\-\<])([^\ \\-\<]*)(\<)(\<*)(\!)([^\ \\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - (length $1) - 3];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-([^\ \\!\-\<\>])([^\ \\-\<]*)(\<)(\<*)(\!)([^\ \\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[2] - 2];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-(\<)(\<*)([^\ \\!\-\<])([^\ \\-\<]*)\-\-([^\ \\!\-\<\>])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[6] - 2];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-\-(\<)(\<*)([^\ \\!\-\<])([^\ \\-\<]*)\-\-\!([^\ \\-\<\>])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[6] - 3];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-(\<)(\<*)([^\ \\!\-\<])([^\ \\-\<]*)\-\-([^\ \\!\-\<\>])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[6] - 2];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\<\>])([^\ \\-\<]*)(\<)(\<*)(\!)\-([^\ \\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[7] - 1];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-([^\ \\-\<\>])([^\ \\-\<]*)(\<)(\<*)\-\-\!([^\ \\-\<\>])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[6] - 3];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-\-(\<)(\<*)(\!)\-([^\ \\-\<])([^\ \\-\<]*)\-([^\ \\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[5] - 1];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[7] - 1];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-(\<)(\<*)([^\ \\!\-\<])([^\ \\-\<]*)\-\-\!([^\ \\-\<\>])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[6] - 3];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!([^\ \\-\<\>])([^\ \\-\<]*)(\<)(\<*)([^\ \\!\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[2] - 3];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!\-([^\ \\-\<])([^\ \\-\<]*)(\<)(\<*)([^\ \\!\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - (length $1) - 3];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\<\>])([^\ \\-\<]*)\-\-(\<)(\<*)([^\ \\!\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[4] - 2];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!([^\ \\-\<\>])([^\ \\-\<]*)(\<)(\<*)\-([^\ \\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[2] - 3];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[6] - 1];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-(\<)(\<*)(\!)([^\ \\-\<])([^\ \\-\<]*)\-([^\ \\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[2] - 2];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[7] - 1];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-([^\ \\!\-\<\>])([^\ \\-\<]*)(\<)(\<*)\-([^\ \\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[2] - 2];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[6] - 1];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-([^\ \\-\<\>])([^\ \\-\<]*)\-\-(\<)(\<*)(\!)([^\ \\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[4] - 2];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!(\<)(\<*)([^\ \\!\-\<])([^\ \\-\<]*)\-([^\ \\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[2] - 3];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[6] - 1];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-([^\ \\-\<\>])([^\ \\-\<]*)(\<)(\<*)\-\-([^\ \\!\-\<\>])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[6] - 2];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-([^\ \\-\<\>])([^\ \\-\<]*)\-\-\!(\<)(\<*)([^\ \\!\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[4] - 3];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-([^\ \\!\-\<\>])([^\ \\-\<]*)(\<)(\<*)([^\ \\!\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[2] - 2];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-([^\ \\-\<\>])([^\ \\-\<]*)\-(\<)(\<*)(\!)\-([^\ \\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[7] - 1];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\<\>])([^\ \\-\<]*)\-(\<)(\<*)(\!)([^\ \\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-([^\ \\-\<\>])([^\ \\-\<]*)\-(\<)(\<*)(\!)([^\ \\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-(\<)(\<*)(\!)\-([^\ \\-\<])([^\ \\-\<]*)\-([^\ \\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[5] - 1];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[7] - 1];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-([^\ \\-\<\>])([^\ \\-\<]*)\-\-(\<)(\<*)([^\ \\!\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[4] - 2];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\<\>])([^\ \\-\<]*)(\<)(\<*)(\!)([^\ \\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-(\<)(\<*)([^\ \\!\-\<])([^\ \\-\<]*)\-([^\ \\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[2] - 2];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[6] - 1];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-([^\ \\-\<\>])([^\ \\-\<]*)(\<)(\<*)(\!)\-([^\ \\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[7] - 1];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-(\<)(\<*)(\!)([^\ \\-\<])([^\ \\-\<]*)\-([^\ \\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[7] - 1];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\<\>])([^\ \\-\<]*)\-(\<)(\<*)([^\ \\!\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-([^\ \\-\<\>])([^\ \\-\<]*)\-(\<)(\<*)([^\ \\!\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\<\>])([^\ \\-\<]*)(\<)(\<*)\-([^\ \\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[6] - 1];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-\-(\<)(\<*)([^\ \\!\-\<])([^\ \\-\<]*)\-([^\ \\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[6] - 1];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\<\>])([^\ \\-\<]*)(\<)(\<*)([^\ \\!\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-(\<)(\<*)(\!)([^\ \\-\<])([^\ \\-\<]*)\-([^\ \\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[7] - 1];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-([^\ \\-\<\>])([^\ \\-\<]*)(\<)(\<*)(\!)([^\ \\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-([^\ \\-\<\>])([^\ \\-\<]*)(\<)(\<*)([^\ \\!\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-([^\ \\-\<\>])([^\ \\-\<]*)(\<)(\<*)\-([^\ \\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[6] - 1];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-(\<)(\<*)([^\ \\!\-\<])([^\ \\-\<]*)\-([^\ \\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[6] - 1];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\<\>])([^\ \\-\<]*)\-\-([^\ \\!\-\<\>])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[4] - 2];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+} elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\<\>])([^\ \\-\<]*)\-\-\!([^\ \\-\<\>])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[4] - 3];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+} elsif ($Input =~ /\G\!(\-)\-([^\ \\-\<\>])([^\ \\-\<]*)\-\-([^\ \\!\-\<\>])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[4] - 2];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-([^\ \\!\-\<\>])([^\ \\-\<]*)\-([^\ \\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[2] - 2];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+} elsif ($Input =~ /\G\!(\-)\-([^\ \\-\<\>])([^\ \\-\<]*)\-\-\!([^\ \\-\<\>])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[4] - 3];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!([^\ \\-\<\>])([^\ \\-\<]*)\-([^\ \\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[2] - 3];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+} elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\<\>])([^\ \\-\<]*)\-\-\!(\<)(\<*)(\!)\-(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[4] - 3];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[7] - 1];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-([^\ \\!\-\<\>])([^\ \\-\<]*)\-(\<)(\<*)(\!)\-(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[2] - 2];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[7] - 1];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!([^\ \\-\<\>])([^\ \\-\<]*)\-(\<)(\<*)(\!)\-(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[2] - 3];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[7] - 1];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\<\>])([^\ \\-\<]*)\-([^\ \\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+} elsif ($Input =~ /\G\!(\-)\-([^\ \\-\<\>])([^\ \\-\<]*)\-\-\!(\<)(\<*)(\!)\-(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[4] - 3];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[7] - 1];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!\-([^\ \\-\<])([^\ \\-\<]*)(\<)(\<*)(\!)\-(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - (length $1) - 3];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[7] - 1];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!(\<)(\<*)(\!)\-([^\ \\-\<])([^\ \\-\<]*)\-(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[2] - 3];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[5] - 1];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[7] - 1];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\<\>])([^\ \\-\<]*)\-\-(\<)(\<*)(\!)\-(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[4] - 2];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[7] - 1];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-([^\ \\!\-\<\>])([^\ \\-\<]*)\-(\<)(\<*)(\!)(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[2] - 2];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-([^\ \\!\-\<\>])([^\ \\-\<]*)(\<)(\<*)(\!)\-(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[2] - 2];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[7] - 1];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!\-(\<)(\<*)(\!)\-([^\ \\-\<])([^\ \\-\<]*)(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - (length $1) - 3];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[5] - 1];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!([^\ \\-\<\>])([^\ \\-\<]*)(\<)(\<*)(\!)\-(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[2] - 3];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[7] - 1];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-(\<)(\<*)(\!)\-([^\ \\-\<])([^\ \\-\<]*)\-\-\!(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[5] - 1];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[7] - 3];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!([^\ \\-\<\>])([^\ \\-\<]*)\-(\<)(\<*)(\!)(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[2] - 3];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\<\>])([^\ \\-\<]*)\-\-\!(\<)(\<*)(\!)(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[4] - 3];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-([^\ \\-\<\>])([^\ \\-\<]*)\-([^\ \\-\<])([^\ \\-\<]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+} elsif ($Input =~ /\G\!(\-)\-([^\ \\-\<\>])([^\ \\-\<]*)\-\-\!(\<)(\<*)(\!)(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[4] - 3];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-(\<)(\<*)(\!)\-([^\ \\-\<])([^\ \\-\<]*)\-\-\!(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[5] - 1];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[7] - 3];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-([^\ \\!\-\<\>])([^\ \\-\<]*)(\<)(\<*)(\!)(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[2] - 2];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\<\>])([^\ \\-\<]*)\-\-(\<)(\<*)(\!)(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[4] - 2];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-(\<)(\<*)(\!)\-([^\ \\-\<])([^\ \\-\<]*)\-(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[2] - 2];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[5] - 1];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[7] - 1];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-([^\ \\-\<\>])([^\ \\-\<]*)\-\-(\<)(\<*)(\!)\-(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[4] - 2];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[7] - 1];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!(\<)(\<*)(\!)\-([^\ \\-\<])([^\ \\-\<]*)(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[2] - 3];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[5] - 1];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!\-(\<)(\<*)(\!)([^\ \\-\<])([^\ \\-\<]*)(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - (length $1) - 3];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!(\<)(\<*)(\!)([^\ \\-\<])([^\ \\-\<]*)\-(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[2] - 3];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[7] - 1];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!\-([^\ \\-\<])([^\ \\-\<]*)(\<)(\<*)(\!)(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - (length $1) - 3];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-(\<)(\<*)(\!)([^\ \\-\<])([^\ \\-\<]*)\-\-\!(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[7] - 3];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-(\<)(\<*)(\!)\-([^\ \\-\<])([^\ \\-\<]*)\-\-(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[5] - 1];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[7] - 2];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\<\>])([^\ \\-\<]*)\-(\<)(\<*)(\!)\-(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[7] - 1];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!([^\ \\-\<\>])([^\ \\-\<]*)(\<)(\<*)(\!)(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[2] - 3];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-([^\ \\!\-\<\>])([^\ \\-\<]*)\-(\<)(\<*)(\!)\-\-\>/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[2] - 2];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = DATA_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!([^\ \\-\<\>])([^\ \\-\<]*)\-(\<)(\<*)(\!)\-\-\>/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[2] - 3];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = DATA_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\<\>])([^\ \\-\<]*)\-\-\!(\<)(\<*)(\!)\-\-\>/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[4] - 3];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = DATA_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G\!(\-)\-\-(\<)(\<*)(\!)([^\ \\-\<])([^\ \\-\<]*)\-\-(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[7] - 2];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-([^\ \\-\<\>])([^\ \\-\<]*)\-\-(\<)(\<*)(\!)(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[4] - 2];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\<\>])([^\ \\-\<]*)\-(\<)(\<*)(\!)(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-(\<)(\<*)(\!)\-([^\ \\-\<])([^\ \\-\<]*)\-(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[5] - 1];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[7] - 1];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-([^\ \\!\-\<\>])([^\ \\-\<]*)(\<)(\<*)\-(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[2] - 2];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[6] - 1];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-\-(\<)(\<*)\-\-([^\ \\!\-\<\>])([^\ \\-\<]*)(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[4] - 2];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\<\>])([^\ \\-\<]*)(\<)(\<*)\-\-\!(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[6] - 3];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\<\>])([^\ \\-\<]*)(\<)(\<*)(\!)\-(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[7] - 1];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-([^\ \\-\<\>])([^\ \\-\<]*)\-(\<)(\<*)(\!)\-(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[7] - 1];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-(\<)(\<*)(\!)([^\ \\-\<])([^\ \\-\<]*)\-\-\!(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[7] - 3];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!([^\ \\-\<\>])([^\ \\-\<]*)(\<)(\<*)\-(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[2] - 3];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[6] - 1];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-(\<)(\<*)(\!)\-([^\ \\-\<])([^\ \\-\<]*)(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[2] - 2];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[5] - 1];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!\-(\<)(\<*)([^\ \\!\-\<])([^\ \\-\<]*)(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - (length $1) - 3];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-\-(\<)(\<*)\-\-\!([^\ \\-\<\>])([^\ \\-\<]*)(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[4] - 3];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!(\<)(\<*)([^\ \\!\-\<])([^\ \\-\<]*)\-(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[2] - 3];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[6] - 1];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-\-(\<)(\<*)([^\ \\!\-\<])([^\ \\-\<]*)\-\-\!(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[6] - 3];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-(\<)(\<*)(\!)\-([^\ \\-\<])([^\ \\-\<]*)\-\-(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[5] - 1];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[7] - 2];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-(\<)(\<*)(\!)([^\ \\-\<])([^\ \\-\<]*)\-(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[2] - 2];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[7] - 1];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!(\<)(\<*)(\!)([^\ \\-\<])([^\ \\-\<]*)(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[2] - 3];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-([^\ \\!\-\<\>])([^\ \\-\<]*)(\<)(\<*)(\!)\-\-\>/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[2] - 2];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = DATA_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!\-([^\ \\-\<])([^\ \\-\<]*)(\<)(\<*)(\!)\-\-\>/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - (length $1) - 3];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = DATA_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G\!(\-)\-([^\ \\-\<\>])([^\ \\-\<]*)\-\-\!(\<)(\<*)(\!)\-\-\>/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[4] - 3];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = DATA_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!([^\ \\-\<\>])([^\ \\-\<]*)(\<)(\<*)(\!)\-\-\>/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[2] - 3];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = DATA_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\<\>])([^\ \\-\<]*)\-\-(\<)(\<*)(\!)\-\-\>/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[4] - 2];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = DATA_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G\!(\-)\-\-\-(\<)(\<*)([^\ \\!\-\<])([^\ \\-\<]*)\-(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[2] - 2];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[6] - 1];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-([^\ \\-\<\>])([^\ \\-\<]*)\-(\<)(\<*)(\!)(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-(\<)(\<*)\-\-\!([^\ \\-\<\>])([^\ \\-\<]*)(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[4] - 3];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-\-(\<)(\<*)(\!)\-([^\ \\-\<])([^\ \\-\<]*)(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[5] - 1];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-(\<)(\<*)(\!)([^\ \\-\<])([^\ \\-\<]*)\-(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[7] - 1];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-([^\ \\-\<\>])([^\ \\-\<]*)(\<)(\<*)(\!)\-(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[7] - 1];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-(\<)(\<*)([^\ \\!\-\<])([^\ \\-\<]*)\-\-\!(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[6] - 3];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-(\<)(\<*)(\!)\-([^\ \\-\<])([^\ \\-\<]*)\-(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[5] - 1];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[7] - 1];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\<\>])([^\ \\-\<]*)(\<)(\<*)(\!)(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-(\<)(\<*)(\!)([^\ \\-\<])([^\ \\-\<]*)(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[2] - 2];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-(\<)(\<*)\-\-([^\ \\!\-\<\>])([^\ \\-\<]*)(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[4] - 2];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-(\<)(\<*)(\!)([^\ \\-\<])([^\ \\-\<]*)\-\-(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[7] - 2];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-(\<)(\<*)([^\ \\!\-\<])([^\ \\-\<]*)\-\-(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[6] - 2];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!(\<)(\<*)\-([^\ \\-\<])([^\ \\-\<]*)(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[2] - 3];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-([^\ \\-\<\>])([^\ \\-\<]*)(\<)(\<*)\-\-\!(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[6] - 3];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!(\<)(\<*)([^\ \\!\-\<])([^\ \\-\<]*)(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[2] - 3];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\<\>])([^\ \\-\<]*)(\<)(\<*)\-\-(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[6] - 2];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-\-(\<)(\<*)(\!)\-([^\ \\-\<])([^\ \\-\<]*)\-\-\!\-/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[5] - 1];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - (length $1) - 3];
+$State = COMMENT_END_DASH_STATE;
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!\-(\<)(\<*)(\!)\-([^\ \\-\<])([^\ \\-\<]*)\-/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - (length $1) - 3];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[5] - 1];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_DASH_STATE;
+} elsif ($Input =~ /\G\!(\-)\-([^\ \\-\<\>])([^\ \\-\<]*)\-\-(\<)(\<*)(\!)\-\-\>/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[4] - 2];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = DATA_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!(\<)(\<*)(\!)\-([^\ \\-\<])([^\ \\-\<]*)\-\-/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[2] - 3];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[5] - 1];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_STATE;
+} elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\<\>])([^\ \\-\<]*)\-(\<)(\<*)(\!)\-\-\>/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = DATA_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G\!(\-)\-(\<)(\<*)(\!)\-([^\ \\-\<])([^\ \\-\<]*)(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[5] - 1];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-(\<)(\<*)([^\ \\!\-\<])([^\ \\-\<]*)\-(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[6] - 1];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\/([a-z])([^\ \	\
+\\\ \/\>A-Z]*)[\	\
+\\\ ][\	\
+\\\ ]*/gcs) {
+$State = END_TAG_OPEN_STATE;
+
+        $Token = {type => END_TAG_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<tag_name>} = $1;
+$Token->{q<tag_name>} .= $2;
+$State = B_ATTR_NAME_STATE;
+} elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\<\>])([^\ \\-\<]*)(\<)(\<*)\-(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[6] - 1];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-(\<)(\<*)([^\ \\!\-\<])([^\ \\-\<]*)\-\-(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[6] - 2];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-(\<)(\<*)\-([^\ \\-\<])([^\ \\-\<]*)(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[2] - 2];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-(\<)(\<*)([^\ \\!\-\<])([^\ \\-\<]*)(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[2] - 2];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-(\<)(\<*)(\!)([^\ \\-\<])([^\ \\-\<]*)\-(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[7] - 1];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-([^\ \\-\<\>])([^\ \\-\<]*)(\<)(\<*)\-\-(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[6] - 2];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
 } elsif ($Input =~ /\G\/([A-Z])([^\ \	\
 \\\ \/\>A-Z]*)[\	\
 \\\ ][\	\
@@ -16731,18 +21192,99 @@ $State = TAG_NAME_STATE;
 $Token->{q<tag_name>} = chr ((ord $1) + 32);
 $Token->{q<tag_name>} .= $2;
 $State = B_ATTR_NAME_STATE;
-} elsif ($Input =~ /\G\/([a-z])([^\ \	\
-\\\ \/\>A-Z]*)[\	\
-\\\ ][\	\
-\\\ ]*/gcs) {
-$State = END_TAG_OPEN_STATE;
+} elsif ($Input =~ /\G\!(\-)\-([^\ \\-\<\>])([^\ \\-\<]*)(\<)(\<*)(\!)(\<)(\<*)/gcs) {
 
-        $Token = {type => END_TAG_TOKEN, tn => 0, 
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<tag_name>} = $1;
-$Token->{q<tag_name>} .= $2;
-$State = B_ATTR_NAME_STATE;
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-(\<)(\<*)(\!)([^\ \\-\<])([^\ \\-\<]*)(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-(\<)(\<*)(\!)([^\ \\-\<])([^\ \\-\<]*)\-\-\!\-/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - (length $1) - 3];
+$State = COMMENT_END_DASH_STATE;
+} elsif ($Input =~ /\G\!(\-)\-([^\ \\-\<\>])([^\ \\-\<]*)\-(\<)(\<*)(\!)\-\-\>/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = DATA_STATE;
+push @$Tokens, $Token;
 } elsif ($Input =~ /\G\!(\[)(C)(D)(A)(T)(A)\[([^\\]]*)\]\]([^\\>\]])([^\\]]*)/gcs) {
 
         $Temp = '';
@@ -16784,7 +21326,665 @@ $State = CDATA_SECTION_STATE;
                           value => $9,
                           di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
-} elsif ($Input =~ /\G\!(\-)\-([^\ \\-\>])([^\ \\-]*)\-([^\ \\-])([^\ \\-]*)/gcs) {
+} elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\<\>])([^\ \\-\<]*)(\<)(\<*)(\!)\-\-\>/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = DATA_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G\!(\-)\-\-(\<)(\<*)(\!)\-([^\ \\-\<])([^\ \\-\<]*)\-\-\>/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[5] - 1];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = DATA_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G\!(\-)\-\-\-(\<)(\<*)(\!)\-([^\ \\-\<])([^\ \\-\<]*)\-\-/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[2] - 2];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[5] - 1];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_STATE;
+} elsif ($Input =~ /\G\!(\-)\-(\<)(\<*)(\!)\-([^\ \\-\<])([^\ \\-\<]*)\-\-\!\-/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[5] - 1];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - (length $1) - 3];
+$State = COMMENT_END_DASH_STATE;
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!\-(\<)(\<*)(\!)([^\ \\-\<])([^\ \\-\<]*)\-/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - (length $1) - 3];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_DASH_STATE;
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!(\<)(\<*)(\!)([^\ \\-\<])([^\ \\-\<]*)\-\-/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[2] - 3];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_STATE;
+} elsif ($Input =~ /\G([a-z])([^\ \	\
+\\\ \/\>A-Z]*)[\	\
+\\\ ][\	\
+\\\ ]*/gcs) {
+
+        $Token = {type => START_TAG_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<tag_name>} = $1;
+$Token->{q<tag_name>} .= $2;
+$State = B_ATTR_NAME_STATE;
+} elsif ($Input =~ /\G\!(\-)\-(\<)(\<*)([^\ \\!\-\<])([^\ \\-\<]*)\-(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[6] - 1];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-([^\ \\-\<\>])([^\ \\-\<]*)(\<)(\<*)\-(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[6] - 1];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-\-(\<)(\<*)\-([^\ \\-\<])([^\ \\-\<]*)(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-\-(\<)(\<*)([^\ \\!\-\<])([^\ \\-\<]*)(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G([A-Z])([^\ \	\
+\\\ \/\>A-Z]*)[\	\
+\\\ ][\	\
+\\\ ]*/gcs) {
+
+        $Token = {type => START_TAG_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$State = TAG_NAME_STATE;
+$Token->{q<tag_name>} = chr ((ord $1) + 32);
+$Token->{q<tag_name>} .= $2;
+$State = B_ATTR_NAME_STATE;
+} elsif ($Input =~ /\G\!(\-)\-(\<)(\<*)(\!)([^\ \\-\<])([^\ \\-\<]*)(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$8, $DI, $Offset + $-[8]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!(\<)(\<*)([^\ \\!\-\<])([^\ \\-\<]*)\-\-/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[2] - 3];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_STATE;
+} elsif ($Input =~ /\G\!(\-)\-\-(\<)(\<*)(\!)([^\ \\-\<])([^\ \\-\<]*)\-\-\>/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = DATA_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\<\>])([^\ \\-\<]*)\-\-\!(\<)(\<*)\-/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[4] - 3];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_DASH_STATE;
+} elsif ($Input =~ /\G\!(\-)\-(\<)(\<*)(\!)([^\ \\-\<])([^\ \\-\<]*)\-\-\!\-/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - (length $1) - 3];
+$State = COMMENT_END_DASH_STATE;
+} elsif ($Input =~ /\G\!(\-)\-\-\-([^\ \\!\-\<\>])([^\ \\-\<]*)(\<)(\<*)\-\-/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[2] - 2];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_STATE;
+} elsif ($Input =~ /\G\!(\-)\-\-(\<)(\<*)\-\-([^\ \\!\-\<\>])([^\ \\-\<]*)\-/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[4] - 2];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_DASH_STATE;
+} elsif ($Input =~ /\G\!(\-)\-(\<)(\<*)(\!)\-([^\ \\-\<])([^\ \\-\<]*)\-\-\>/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[5] - 1];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = DATA_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\<\>])([^\ \\-\<]*)(\<)(\<*)\-\-\!\-/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - (length $1) - 3];
+$State = COMMENT_END_DASH_STATE;
+} elsif ($Input =~ /\G\!(\-)\-\-(\<)(\<*)([^\ \\!\-\<])([^\ \\-\<]*)\-\-\!\-/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - (length $1) - 3];
+$State = COMMENT_END_DASH_STATE;
+} elsif ($Input =~ /\G\!(\-)\-\-(\<)(\<*)\-\-\!([^\ \\-\<\>])([^\ \\-\<]*)\-/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[4] - 3];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_DASH_STATE;
+} elsif ($Input =~ /\G\!(\-)\-([^\ \\-\<\>])([^\ \\-\<]*)(\<)(\<*)(\!)\-\-\>/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = DATA_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!([^\ \\-\<\>])([^\ \\-\<]*)(\<)(\<*)\-\-/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[2] - 3];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_STATE;
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!([^\ \\-\<\>])([^\ \\-\<]*)\-(\<)(\<*)\-/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[2] - 3];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_DASH_STATE;
+} elsif ($Input =~ /\G\!(\-)\-\-\-(\<)(\<*)(\!)([^\ \\-\<])([^\ \\-\<]*)\-\-/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[2] - 2];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_END_STATE;
+} elsif ($Input =~ /\G\!(\-)\-\-\-([^\ \\!\-\<\>])([^\ \\-\<]*)\-(\<)(\<*)\-/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[2] - 2];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_DASH_STATE;
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!\-(\<)(\<*)([^\ \\!\-\<])([^\ \\-\<]*)\-/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - (length $1) - 3];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_DASH_STATE;
+} elsif ($Input =~ /\G\!(\-)\-(\<)(\<*)([^\ \\!\-\<])([^\ \\-\<]*)(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-(\<)(\<*)\-([^\ \\-\<])([^\ \\-\<]*)(\<)(\<*)/gcs) {
 
         $Temp = '';
         $TempIndex = $Offset + (pos $Input);
@@ -16802,31 +22002,73 @@ push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
 $State = COMMENT_END_DASH_STATE;
 push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
 push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
-$State = COMMENT_STATE;
 push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
-} elsif ($Input =~ /\G([a-z])([^\ \	\
-\\\ \/\>A-Z]*)[\	\
-\\\ ][\	\
-\\\ ]*/gcs) {
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$7, $DI, $Offset + $-[7]];
+} elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\<\>])([^\ \\-\<]*)(\<)(\<*)\-\-\>/gcs) {
 
-        $Token = {type => START_TAG_TOKEN, tn => 0, 
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<tag_name>} = $1;
-$Token->{q<tag_name>} .= $2;
-$State = B_ATTR_NAME_STATE;
-} elsif ($Input =~ /\G([A-Z])([^\ \	\
-\\\ \/\>A-Z]*)[\	\
-\\\ ][\	\
-\\\ ]*/gcs) {
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = DATA_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G\!(\-)\-(\<)(\<*)(\!)([^\ \\-\<])([^\ \\-\<]*)\-\-\>/gcs) {
 
-        $Token = {type => START_TAG_TOKEN, tn => 0, 
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
                   di => $DI, index => $AnchoredIndex};
       
-$State = TAG_NAME_STATE;
-$Token->{q<tag_name>} = chr ((ord $1) + 32);
-$Token->{q<tag_name>} .= $2;
-$State = B_ATTR_NAME_STATE;
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+$State = DATA_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G\!(\-)\-(\<)(\<*)([^\ \\!\-\<])([^\ \\-\<]*)\-\-\!\-/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - (length $1) - 3];
+$State = COMMENT_END_DASH_STATE;
 } elsif ($Input =~ /\G\!(\[)(C)(D)(A)(T)(A)\[([^\\]]*)\]([^\\]])([^\\]]*)/gcs) {
 
         $Temp = '';
@@ -16868,6 +22110,302 @@ $State = CDATA_SECTION_STATE;
                           value => $9,
                           di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
+} elsif ($Input =~ /\G\!(\-)\-\-\-(\<)(\<*)([^\ \\!\-\<])([^\ \\-\<]*)\-\-/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[2] - 2];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_STATE;
+} elsif ($Input =~ /\G\!(\-)\-([^\ \\-\<\>])([^\ \\-\<]*)\-\-\!(\<)(\<*)\-/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[4] - 3];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_DASH_STATE;
+} elsif ($Input =~ /\G\!(\-)\-([^\ \\-\<\>])([^\ \\-\<]*)(\<)(\<*)\-\-\!\-/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - (length $1) - 3];
+$State = COMMENT_END_DASH_STATE;
+} elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\<\>])([^\ \\-\<]*)\-\-(\<)(\<*)\-/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[4] - 2];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_DASH_STATE;
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!\-([^\ \\-\<])([^\ \\-\<]*)(\<)(\<*)\-/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - (length $1) - 3];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_DASH_STATE;
+} elsif ($Input =~ /\G\!(\-)\-(\<)(\<*)\-\-\!([^\ \\-\<\>])([^\ \\-\<]*)\-/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[4] - 3];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_DASH_STATE;
+} elsif ($Input =~ /\G\!(\-)\-\-(\<)(\<*)([^\ \\!\-\<])([^\ \\-\<]*)\-\-\>/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = DATA_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!(\<)(\<*)\-([^\ \\-\<])([^\ \\-\<]*)\-/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[2] - 3];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_DASH_STATE;
+} elsif ($Input =~ /\G\!(\-)\-(\<)(\<*)\-\-([^\ \\!\-\<\>])([^\ \\-\<]*)\-/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[4] - 2];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_DASH_STATE;
+} elsif ($Input =~ /\G\!(\-)\-([^\ \\-\<\>])([^\ \\-\<]*)\-\-(\<)(\<*)\-/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[4] - 2];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_DASH_STATE;
+} elsif ($Input =~ /\G\!(\-)\-(\<)(\<*)([^\ \\!\-\<])([^\ \\-\<]*)\-\-\>/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = DATA_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\<\>])([^\ \\-\<]*)\-(\<)(\<*)\-/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_DASH_STATE;
+} elsif ($Input =~ /\G\!(\-)\-([^\ \\-\<\>])([^\ \\-\<]*)(\<)(\<*)\-\-\>/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = DATA_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G\!(\-)\-\-\-(\<)(\<*)\-([^\ \\-\<])([^\ \\-\<]*)\-/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[2] - 2];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_DASH_STATE;
 } elsif ($Input =~ /\G\!(\[)(C)(D)(A)(T)(A)\[([^\\]]*)([^\\]])([^\\]]*)/gcs) {
 
         $Temp = '';
@@ -16902,7 +22440,150 @@ $State = CDATA_SECTION_STATE;
                           value => $9,
                           di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
-} elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\>])([^\ \\-]*)\-\-\>/gcs) {
+} elsif ($Input =~ /\G\!(\-)\-([^\ \\-\<\>])([^\ \\-\<]*)\-(\<)(\<*)\-/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_DASH_STATE;
+} elsif ($Input =~ /\G\!(\-)\-\-(\<)(\<*)\-([^\ \\-\<])([^\ \\-\<]*)\-/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_DASH_STATE;
+} elsif ($Input =~ /\G\!(\-)\-(\<)(\<*)\-([^\ \\-\<])([^\ \\-\<]*)\-/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_END_DASH_STATE;
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!([^\ \\-\<\>])([^\ \\-\<]*)\-\-/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[2] - 3];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_STATE;
+} elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\<\>])([^\ \\-\<]*)\-\-\!\-/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - (length $1) - 3];
+$State = COMMENT_END_DASH_STATE;
+} elsif ($Input =~ /\G\!(\-)\-\-\-([^\ \\!\-\<\>])([^\ \\-\<]*)\-\-/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[2] - 2];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_STATE;
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!\-([^\ \\-\<])([^\ \\-\<]*)\-/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - (length $1) - 3];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_DASH_STATE;
+} elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\<\>])([^\ \\-\<]*)\-\-\>/gcs) {
 
         $Temp = '';
         $TempIndex = $Offset + (pos $Input);
@@ -16922,6 +22603,93 @@ push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
 push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
 $State = DATA_STATE;
 push @$Tokens, $Token;
+} elsif ($Input =~ /\G\!(\-)\-([^\ \\-\<\>])([^\ \\-\<]*)\-\-\!\-/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - (length $1) - 3];
+$State = COMMENT_END_DASH_STATE;
+} elsif ($Input =~ /\G\!(\-)\-([^\ \\-\<\>])([^\ \\-\<]*)\-\-\>/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = DATA_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!\-(\<)(\<*)(\!)\-(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - (length $1) - 3];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[5] - 1];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+} elsif ($Input =~ /\G\!(\[)(C)(D)(A)(T)(A)\[([^\\]]*)\]\]\>/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__5B;
+$Temp .= $2;
+$State = MDO_STATE__5BC;
+$Temp .= $3;
+$State = MDO_STATE__5BCD;
+$Temp .= $4;
+$State = MDO_STATE__5BCDA;
+$Temp .= $5;
+$State = MDO_STATE__5BCDAT;
+$Temp .= $6;
+$State = CDATA_SECTION_STATE;
+
+          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                          value => $7,
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
+        
+$State = DATA_STATE;
 } elsif ($Input =~ /\G\!(\[)(C)(D)(A)(T)(A)\[([^\\]]*)\]\]\]/gcs) {
 
         $Temp = '';
@@ -16952,48 +22720,6 @@ $State = CDATA_SECTION_END_STATE;
                           value => q@]@,
                           di => $DI, index => $Offset + (pos $Input) - (length $1) - 2};
         
-} elsif ($Input =~ /\G\!(\-)\-([^\ \\-\>])([^\ \\-]*)\-\-\>/gcs) {
-
-        $Temp = '';
-        $TempIndex = $Offset + (pos $Input);
-      
-$State = MDO_STATE;
-$Temp = $1;
-$TempIndex = $Offset + (pos $Input) - (length $1);
-$State = MDO_STATE__;
-
-        $Token = {type => COMMENT_TOKEN, tn => 0, 
-                  di => $DI, index => $AnchoredIndex};
-      
-$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
-push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
-$State = DATA_STATE;
-push @$Tokens, $Token;
-} elsif ($Input =~ /\G\!(\[)(C)(D)(A)(T)(A)\[([^\\]]*)\]\]\>/gcs) {
-
-        $Temp = '';
-        $TempIndex = $Offset + (pos $Input);
-      
-$State = MDO_STATE;
-$Temp = $1;
-$TempIndex = $Offset + (pos $Input) - (length $1);
-$State = MDO_STATE__5B;
-$Temp .= $2;
-$State = MDO_STATE__5BC;
-$Temp .= $3;
-$State = MDO_STATE__5BCD;
-$Temp .= $4;
-$State = MDO_STATE__5BCDA;
-$Temp .= $5;
-$State = MDO_STATE__5BCDAT;
-$Temp .= $6;
-$State = CDATA_SECTION_STATE;
-
-          push @$Tokens, {type => TEXT_TOKEN, tn => 0,
-                          value => $7,
-                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
-        
-$State = DATA_STATE;
 } elsif ($Input =~ /\G\!(\[)(C)(D)(A)(T)(A)\[([^\\]]*)\]\]\/gcs) {
 
         $Temp = '';
@@ -17032,60 +22758,6 @@ $State = CDATA_SECTION_STATE;
                           di => $DI, index => $Offset + (pos $Input) - (length $1) - 0};
         
 $State = CDATA_SECTION_STATE_CR;
-} elsif ($Input =~ /\G\/([a-z])([^\ \	\
-\\\ \/\>A-Z]*)\/\>/gcs) {
-$State = END_TAG_OPEN_STATE;
-
-        $Token = {type => END_TAG_TOKEN, tn => 0, 
-                  di => $DI, index => $AnchoredIndex};
-      
-$Token->{q<tag_name>} = $1;
-$Token->{q<tag_name>} .= $2;
-$State = SELF_CLOSING_START_TAG_STATE;
-$Token->{q<self_closing_flag>} = 1;
-$State = DATA_STATE;
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            if (keys %{$Token->{attrs} or {}}) {
-              push @$Errors, {type => 'end tag attribute',
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-            if ($Token->{self_closing_flag}) {
-              push @$Errors, {type => 'nestc',
-                              text => $Token->{tag_name},
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-          }
-        
-push @$Tokens, $Token;
-
-          if ($Token->{type} == START_TAG_TOKEN) {
-            ## 
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            if (not defined $LastStartTagName) { # "first start tag"
-              $LastStartTagName = $Token->{tag_name};
-              return 1;
-            } else {
-              $LastStartTagName = $Token->{tag_name};
-            }
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
-            return 1 if $Token->{tag_name} =~ /-/;
-            return 1 if $Token->{attrs}->{is};
-          }
-        
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            ## 
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
-          }
-        
 } elsif ($Input =~ /\G\/([A-Z])([^\ \	\
 \\\ \/\>A-Z]*)\/\>/gcs) {
 $State = END_TAG_OPEN_STATE;
@@ -17141,6 +22813,110 @@ push @$Tokens, $Token;
             ## 
           }
         
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!(\<)(\<*)(\!)\-(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[2] - 3];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[5] - 1];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+} elsif ($Input =~ /\G\/([a-z])([^\ \	\
+\\\ \/\>A-Z]*)\/\>/gcs) {
+$State = END_TAG_OPEN_STATE;
+
+        $Token = {type => END_TAG_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<tag_name>} = $1;
+$Token->{q<tag_name>} .= $2;
+$State = SELF_CLOSING_START_TAG_STATE;
+$Token->{q<self_closing_flag>} = 1;
+$State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
+push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            ## 
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            ## 
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
+          }
+        
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!\-(\<)(\<*)(\!)(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - (length $1) - 3];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
 } elsif ($Input =~ /\G\!(\[)(C)(D)(A)(T)(A)\[([^\\]]*)\]\/gcs) {
 
         $Temp = '';
@@ -17179,16 +22955,16 @@ $State = CDATA_SECTION_STATE;
                           di => $DI, index => $Offset + (pos $Input) - (length $1) - 0};
         
 $State = CDATA_SECTION_STATE_CR;
-} elsif ($Input =~ /\G([a-z])([^\ \	\
-\\\ \/\>A-Z]*)\/\>/gcs) {
+} elsif ($Input =~ /\G\/([A-Z])([^\ \	\
+\\\ \/\>A-Z]*)\>/gcs) {
+$State = END_TAG_OPEN_STATE;
 
-        $Token = {type => START_TAG_TOKEN, tn => 0, 
+        $Token = {type => END_TAG_TOKEN, tn => 0, 
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<tag_name>} = $1;
+$State = TAG_NAME_STATE;
+$Token->{q<tag_name>} = chr ((ord $1) + 32);
 $Token->{q<tag_name>} .= $2;
-$State = SELF_CLOSING_START_TAG_STATE;
-$Token->{q<self_closing_flag>} = 1;
 $State = DATA_STATE;
 
           if ($Token->{type} == END_TAG_TOKEN) {
@@ -17284,6 +23060,107 @@ push @$Tokens, $Token;
             ## 
           }
         
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!(\<)(\<*)(\!)(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[2] - 3];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+} elsif ($Input =~ /\G([a-z])([^\ \	\
+\\\ \/\>A-Z]*)\/\>/gcs) {
+
+        $Token = {type => START_TAG_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<tag_name>} = $1;
+$Token->{q<tag_name>} .= $2;
+$State = SELF_CLOSING_START_TAG_STATE;
+$Token->{q<self_closing_flag>} = 1;
+$State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
+push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            ## 
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            ## 
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## 
+          }
+        
+} elsif ($Input =~ /\G\!(\-)\-\-\-(\<)(\<*)(\!)\-(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[2] - 2];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[5] - 1];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
 \\\ \/\>A-Z]*)\/\>/gcs) {
 
@@ -17338,59 +23215,29 @@ push @$Tokens, $Token;
             ## 
           }
         
-} elsif ($Input =~ /\G\/([A-Z])([^\ \	\
-\\\ \/\>A-Z]*)\>/gcs) {
-$State = END_TAG_OPEN_STATE;
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!\-(\<)(\<*)(\!)\-\-\>/gcs) {
 
-        $Token = {type => END_TAG_TOKEN, tn => 0, 
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
                   di => $DI, index => $AnchoredIndex};
       
-$State = TAG_NAME_STATE;
-$Token->{q<tag_name>} = chr ((ord $1) + 32);
-$Token->{q<tag_name>} .= $2;
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - (length $1) - 3];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
 $State = DATA_STATE;
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            if (keys %{$Token->{attrs} or {}}) {
-              push @$Errors, {type => 'end tag attribute',
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-            if ($Token->{self_closing_flag}) {
-              push @$Errors, {type => 'nestc',
-                              text => $Token->{tag_name},
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-          }
-        
 push @$Tokens, $Token;
-
-          if ($Token->{type} == START_TAG_TOKEN) {
-            ## 
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            if (not defined $LastStartTagName) { # "first start tag"
-              $LastStartTagName = $Token->{tag_name};
-              return 1;
-            } else {
-              $LastStartTagName = $Token->{tag_name};
-            }
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
-            return 1 if $Token->{tag_name} =~ /-/;
-            return 1 if $Token->{attrs}->{is};
-          }
-        
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            ## 
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## 
-          }
-        
 } elsif ($Input =~ /\G\!(\[)(C)(D)(A)(T)(A)\[([^\\]]*)\/gcs) {
 
         $Temp = '';
@@ -17473,6 +23320,29 @@ push @$Tokens, $Token;
             ## 
           }
         
+} elsif ($Input =~ /\G\!(\-)\-\-\-(\<)(\<*)(\!)(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[2] - 2];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
 \\\ \/\>A-Z]*)\>/gcs) {
 
@@ -17525,6 +23395,512 @@ push @$Tokens, $Token;
             ## 
           }
         
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!(\<)(\<*)\-(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[2] - 3];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+} elsif ($Input =~ /\G\!(\-)\-\-(\<)(\<*)(\!)\-(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[5] - 1];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+} elsif ($Input =~ /\G\!(\-)\-\-(\<)(\<*)\-\-\!(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[4] - 3];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!(\<)(\<*)(\!)\-\-\>/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[2] - 3];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+$State = DATA_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G\!(\-)\-\-(\<)(\<*)\-\-(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[4] - 2];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+} elsif ($Input =~ /\G\!(\-)\-(\<)(\<*)\-\-\!(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[4] - 3];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-(\<)(\<*)\-(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[2] - 2];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+} elsif ($Input =~ /\G\!(\-)\-\-(\<)(\<*)(\!)(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+} elsif ($Input =~ /\G\!(\-)\-(\<)(\<*)(\!)\-(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[5] - 1];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+} elsif ($Input =~ /\G\!(\-)\-\-\-(\<)(\<*)(\!)\-\-\>/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[2] - 2];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+$State = DATA_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G\!(\-)\-\-(\<)(\<*)\-(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+} elsif ($Input =~ /\G\!(\-)\-(\<)(\<*)(\!)(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$6, $DI, $Offset + $-[6]];
+} elsif ($Input =~ /\G\!(\-)\-(\<)(\<*)\-\-(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[4] - 2];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+} elsif ($Input =~ /\G\!(\-)\-\-(\<)(\<*)(\!)\-\-\>/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+$State = DATA_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G\!(\-)\-(\<)(\<*)\-(\<)(\<*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+$State = COMMENT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+} elsif ($Input =~ /\G\!(\-)\-(\<)(\<*)(\!)\-\-\>/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+$State = DATA_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!\-(\<)(\<*)\-/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - (length $1) - 3];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_DASH_STATE;
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!(\<)(\<*)\-\-/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + $-[2] - 3];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_STATE;
+} elsif ($Input =~ /\G\!(\-)\-\-(\<)(\<*)\-\-\!\-/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - (length $1) - 3];
+$State = COMMENT_END_DASH_STATE;
+} elsif ($Input =~ /\G\!(\-)\-(\<)(\<*)\-\-\!\-/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - (length $1) - 3];
+$State = COMMENT_END_DASH_STATE;
+} elsif ($Input =~ /\G\!(\-)\-\-(\<)(\<*)\-\-\>/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = DATA_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G\!(\-)\-\-\-(\<)(\<*)\-\-/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_STATE;
+push @{$Token->{q<data>}}, [q@--@, $DI, $Offset + $-[2] - 2];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_STATE;
+} elsif ($Input =~ /\G\!(\-)\-(\<)(\<*)\-\-\>/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = DATA_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G\!(\-)\-\-\-\!\-\-/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, 
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_END_BANG_STATE;
+push @{$Token->{q<data>}}, [q@--!@, $DI, $Offset + (pos $Input) - (length $1) - 3];
+$State = COMMENT_END_STATE;
 } elsif ($Input =~ /\G\!(\-)\-\-\-\>/gcs) {
 
         $Temp = '';
