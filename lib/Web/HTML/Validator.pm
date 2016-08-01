@@ -576,6 +576,22 @@ $CheckerByType->{enumerated} = sub {
                      level => 'm');
 }; # enumerated
 
+$CheckerByType->{'case-sensitive enumerated'} = sub {
+  my ($self, $attr, undef, undef, $def) = @_;
+  my $value = $attr->value;
+  if ($def->{enumerated}->{$value} and not $value =~ /^#/) {
+    if ($def->{enumerated}->{$value}->{conforming}) {
+      return;
+    } elsif ($def->{enumerated}->{$value}->{non_conforming}) {
+      $self->{onerror}->(node => $attr, type => 'enumerated:non-conforming',
+                         level => 'm');
+      return;
+    }
+  }
+  $self->{onerror}->(node => $attr, type => 'enumerated:invalid',
+                     level => 'm');
+}; # case-sensitive enumerated
+
 ## Integer [HTML]
 $CheckerByType->{integer} = sub {
   my ($self, $attr, $item, $element_state) = @_;
@@ -2619,6 +2635,7 @@ my $FAECheckAttrs2 = sub {
 
 ## ---- XXX Common attribute syntacx checkers ----
 
+# XXX deprecated
 my $GetHTMLEnumeratedAttrChecker = sub {
   my $states = shift; # {value => conforming ? 1 : -1}
   return sub {
@@ -3875,11 +3892,18 @@ $Element->{+HTML_NS}->{link} = {
                          text => 'itemprop',
                          level => 'm');
     }
-    
-    if ($item->{node}->has_attribute_ns (undef, 'sizes') and
-        not $rel->{link_types}->{icon}) {
-      $self->{onerror}->(node => $item->{node}->get_attribute_node_ns (undef, 'sizes'),
-                         type => 'attribute not allowed',
+
+    my $sizes_attr = $item->{node}->get_attribute_node_ns (undef, 'sizes');
+    if (defined $sizes_attr and not $rel->{link_types}->{icon}) {
+      $self->{onerror}->(node => $sizes_attr,
+                         type => 'link:sizes:not icon',
+                         level => 'm');
+    }
+
+    my $as_attr = $item->{node}->get_attribute_node_ns (undef, 'as');
+    if (defined $as_attr and not $rel->{link_types}->{preload}) {
+      $self->{onerror}->(node => $as_attr,
+                         type => 'link:as:not preload',
                          level => 'm');
     }
 
@@ -4984,18 +5008,6 @@ $Element->{+HTML_NS}->{dir} = {
     }
   },
 }; # ul ol dir
-
-$ElementAttrChecker->{(HTML_NS)}->{ol}->{''}->{type} = sub {
-  my ($self, $attr) = @_;
-  my $value = $attr->value;
-  unless ({
-    1 => 1, a => 1, A => 1, i => 1, I => 1,
-  }->{$value}) {
-    $self->{onerror}->(node => $attr,
-                       type => 'oltype:invalid',
-                       level => 'm');
-  }
-}; # <ol type="">
 
 $ElementAttrChecker->{(HTML_NS)}->{ul}->{''}->{type} = sub {
   my ($self, $attr) = @_;
