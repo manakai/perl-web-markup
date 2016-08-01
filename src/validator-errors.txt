@@ -621,3 +621,26 @@ attribute value, must not be <code>isindex</code>.
 @ja
 <p>歴史的理由により、制御子名 (<code>name</code> 属性値) は
 <code>isindex</code> ではいけません。
+
+* tabindex:indexed
+
+default_level=s
+layer=feature
+
+@en
+The <code>tabindex</code> value is not <code>-1</code> or <code>0</code>
+@ja
+<code>tabindex</code> 値が <code>-1</code> でも <code>0</code> でもありません
+
+@en
+<p>The <code>tabindex</code> attribute value can be any non-negative
+integer.  However, use of value other than <code>0</code>
+(is focusable) or <code>-1</code> (not focusable) is not easy.
+Such values should not be used unless you completely understand
+their implications.
+
+@ja
+<p><code>tabindex</code> 属性値は非負整数です。しかし
+<code>0</code> (フォーカス可能) と <code>-1</code> (フォーカス不能)
+以外の値を使うのは簡単ではありません。
+何を表しているか理解している自信がなければ、他の値を使うべきではありません。

@@ -616,6 +616,22 @@ $ItemValueChecker->{integer} = sub {
   }
 }; # integer
 
+$ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{tabindex} = sub {
+  my ($self, $attr) = @_;
+  my $value = $attr->value;
+  if ($value =~ /\A-0*[01]\z/ or $value =~ /\A0+\z/) {
+    #
+  } elsif ($value =~ /\A-?[0-9]+\z/) {
+    $self->{onerror}->(node => $attr,
+                       type => 'tabindex:indexed',
+                       level => 's');
+  } else {
+    $self->{onerror}->(node => $attr,
+                       type => 'integer:syntax error',
+                       level => 'm');
+  }
+}; # tabindex=""
+
 ## Non-negative integer [HTML]
 $CheckerByType->{'non-negative integer'} = sub {
   my ($self, $attr, $item, $element_state) = @_;
