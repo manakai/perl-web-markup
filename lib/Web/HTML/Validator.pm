@@ -715,33 +715,6 @@ $ItemValueChecker->{'floating-point number'} = sub {
   }
 }; # floating-point number
 
-## Two floating-point numbers, separated by just a COMMA character
-$CheckerByType->{'one or two floating-point numbers'} = sub {
-  ## <input type=range> is handled by "floating-point number" checker
-  ## (see <input>'s code).  This checker only handles <input
-  ## type=range multiple> case, where two floating-point numbers are
-  ## required.
-  my ($self, $attr, $item, $element_state) = @_;
-  my $value = $attr->value;
-  if ($value =~ /\A
-    (-? (?> [0-9]+ (?>(?:\.[0-9]+))? | \.[0-9]+))
-    (?>[Ee] ([+-]?[0-9]+) )?
-    ,
-    (-? (?> [0-9]+ (?>(?:\.[0-9]+))? | \.[0-9]+))
-    (?>[Ee] ([+-]?[0-9]+) )?
-  \z/x) {
-    my $num1 = 0+$1;
-    $num1 *= 10 ** ($2 + 0) if $2;
-    my $num2 = 0+$3;
-    $num2 *= 10 ** ($4 + 0) if $4;
-    $element_state->{number_values}->{$attr->name} = [$num1, $num2];
-  } else {
-    $self->{onerror}->(node => $attr,
-                       type => 'two floats:syntax error',
-                       level => 'm');
-  }
-}; # one or two floating-point numbers
-
 $ElementAttrChecker->{(HTML_NS)}->{input}->{''}->{step} = sub {
   my ($self, $attr) = @_;
   my $value = $attr->value;
@@ -1841,8 +1814,6 @@ sub _validate_aria ($$) {
         if ($self->{flag}->{node_is_hyperlink}->{refaddr $node}) {
           $adef = $aria_defs->{'hyperlink'};
         }
-      } elsif ($ln eq 'input' and $node->type eq 'range') {
-        $adef = $aria_defs->{multiple} if $node->multiple;
       } elsif ($ln eq 'select') {
         my $type = $node->multiple ? 'multilist' : $node->size > 1 ? 'singlelist' : 'dropdown';
         $adef = $aria_defs->{$type};
@@ -4004,7 +3975,8 @@ $CheckerByMetadataName->{'referrer'} = sub {
     my $parent = $oe->parent_node;
     if (defined $parent and
         $parent->node_type == 1) { # ELEMENT_NODE
-      unless ($parent eq $oe->owner_document->head) {
+      my $head = $oe->owner_document->head;
+      unless (defined $head and $parent eq $head) {
         $self->{onerror}->(node => $oe,
                            type => 'element not allowed',
                            level => 'w');
@@ -7104,9 +7076,6 @@ $Element->{+HTML_NS}->{input} = {
           };
           $checker = $CheckerByType->{'e-mail address'}
               if $input_type eq 'email' and
-                 not $item->{node}->has_attribute_ns (undef, 'multiple');
-          $checker = $CheckerByType->{'floating-point number'}
-              if $input_type eq 'range' and
                  not $item->{node}->has_attribute_ns (undef, 'multiple');
           $checker->($self, $attr, $item, $element_state);
         }
