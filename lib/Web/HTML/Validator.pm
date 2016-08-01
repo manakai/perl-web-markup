@@ -3908,10 +3908,20 @@ $Element->{+HTML_NS}->{link} = {
     } elsif (not $itemprop_attr and
              not $self->{flag}->{in_head} and
              not $item->{is_root}) {
-      $self->{onerror}->(node => $item->{node},
-                         type => 'attribute missing',
-                         text => 'itemprop',
-                         level => 'm');
+      my $body_ok = 1;
+      for (keys %{$rel->{link_types}}) {
+        my $def = $Web::HTML::Validator::_Defs->{link_types}->{$_} || {};
+        unless ($def->{body_ok}) {
+          $body_ok = 0;
+          last;
+        }
+      }
+      unless ($body_ok) {
+        $self->{onerror}->(node => $item->{node},
+                           type => 'link:not body-ok',
+                           text => $rel_attr->value,
+                           level => 'm');
+      }
     }
 
     my $sizes_attr = $item->{node}->get_attribute_node_ns (undef, 'sizes');

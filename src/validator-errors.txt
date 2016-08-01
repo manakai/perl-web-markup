@@ -644,3 +644,30 @@ their implications.
 <code>0</code> (フォーカス可能) と <code>-1</code> (フォーカス不能)
 以外の値を使うのは簡単ではありません。
 何を表しているか理解している自信がなければ、他の値を使うべきではありません。
+
+* link:not body-ok
+
+default_level=m
+layer=content-model
+
+@en
+A <code>link</code> element is not a child of the <code>head</code> element
+@ja
+<code>link</code> 要素が <code>head</code> 要素の子供ではありません
+
+@en
+<p>Most <code>link</code> elements must be children of
+the <code>head</code> element of the document.  Exceptions
+are microdata <code>link</code> elements (i.e. <code>link</code>
+elements with <code>itemprop</code> attributes) and
+<code>link</code> elements whose <code>rel</code> attribute
+has one of "body-ok" link types such as <code>stylesheet</code>.
+
+@ja
+<p>ほとんどの <code>link</code> 要素は、文書の <code>head</code>
+要素の子供でなければいけません。例外は、マイクロデータの
+<code>link</code> 要素 (<code>itemprop</code> 属性のある
+<code>link</code> 要素) と、 <code>rel</code>
+属性に <code>body</code> 内でも使えるリンク型
+(<code>stylesheet</code> など) が指定されている
+<code>link</code> 要素だけです。
