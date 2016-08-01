@@ -2687,10 +2687,15 @@ my $GetHTMLNonNegativeIntegerAttrChecker = sub {
 
 my $FormControlNameAttrChecker = sub {
   my ($self, $attr) = @_;
-  
-  unless (length $attr->value) {
+
+  my $value = $attr->value;
+  if ($value eq '') {
     $self->{onerror}->(node => $attr,
                        type => 'empty control name',
+                       level => 'm');
+  } elsif ($value eq 'isindex') {
+    $self->{onerror}->(node => $attr,
+                       type => 'control name:isindex',
                        level => 'm');
   }
   

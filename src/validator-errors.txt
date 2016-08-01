@@ -603,3 +603,21 @@ attribute is ignored.
 <code>rel</code> 属性にリンク型 <code>icon</code>
 を指定しなければいけません。そうでなければ、 <code>sizes</code>
 属性は無視されます。
+
+* control name:isindex
+
+default_level=m
+layer=microsyntax
+
+@en
+The control name is <code>isindex</code>
+@ja
+制御子名が <code>isindex</code> です
+
+@en
+<p>For historical reason, the control name, i.e. the <code>name</code>
+attribute value, must not be <code>isindex</code>.
+
+@ja
+<p>歴史的理由により、制御子名 (<code>name</code> 属性値) は
+<code>isindex</code> ではいけません。
