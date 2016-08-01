@@ -32695,8 +32695,8 @@ push @$Tokens, $Token;
 } elsif ($Input =~ /\G[\	\
 \\\ ][\	\
 \\\ ]*\=[\	\
-\\\ ]*\"([^\ \	\
-\\\ \"\&\<]*)\"\>/gcs) {
+\\\ ]*\'([^\ \	\
+\\\ \&\'\<]*)\'\>/gcs) {
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -32759,8 +32759,8 @@ push @$Tokens, $Token;
 } elsif ($Input =~ /\G[\	\
 \\\ ][\	\
 \\\ ]*\=[\	\
-\\\ ]*\'([^\ \	\
-\\\ \&\'\<]*)\'\>/gcs) {
+\\\ ]*\"([^\ \	\
+\\\ \"\&\<]*)\"\>/gcs) {
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -32820,26 +32820,6 @@ push @$Tokens, $Token;
             ## </XML>
           }
         
-} elsif ($Input =~ /\G\=[\	\
-\\\ ]*\'([^\ \	\
-\\\ \&\'\<]*)\'[\	\
-\\\ ][\	\
-\\\ ]*/gcs) {
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-push @{$Attr->{q<value>}}, [$1, $DI, $Offset + $-[1]];
-$State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G\=[\	\
 \\\ ]*\"([^\ \	\
 \\\ \"\&\<]*)\"[\	\
@@ -32861,8 +32841,10 @@ $State = B_ATTR_NAME_STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + $-[1]];
 $State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G\=[\	\
-\\\ ]*\"([^\ \	\
-\\\ \"\&\<]*)\"\/\>/gcs) {
+\\\ ]*\'([^\ \	\
+\\\ \&\'\<]*)\'[\	\
+\\\ ][\	\
+\\\ ]*/gcs) {
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -32877,53 +32859,7 @@ $State = B_ATTR_NAME_STATE;
         }
       
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + $-[1]];
-$State = SELF_CLOSING_START_TAG_STATE;
-$Token->{q<self_closing_flag>} = 1;
-$State = DATA_STATE;
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            if (keys %{$Token->{attrs} or {}}) {
-              push @$Errors, {type => 'end tag attribute',
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-            if ($Token->{self_closing_flag}) {
-              push @$Errors, {type => 'nestc',
-                              text => $Token->{tag_name},
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-          }
-        
-push @$Tokens, $Token;
-
-          if ($Token->{type} == START_TAG_TOKEN) {
-            ## <!Temma></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            if (not defined $LastStartTagName) { # "first start tag"
-              $LastStartTagName = $Token->{tag_name};
-              return 1;
-            } else {
-              $LastStartTagName = $Token->{tag_name};
-            }
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
-            return 1 if $Token->{tag_name} =~ /-/;
-            return 1 if $Token->{attrs}->{is};
-          }
-        
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            ## <!Temma></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## <XML>
-            return 1 if @$OE <= 1;
-            ## </XML>
-          }
-        
+$State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G\=[\	\
 \\\ ]*\'([^\ \	\
 \\\ \&\'\<]*)\'\/\>/gcs) {
@@ -32989,8 +32925,72 @@ push @$Tokens, $Token;
           }
         
 } elsif ($Input =~ /\G\=[\	\
-\\\ ]*\'([^\ \	\
-\\\ \&\'\<]*)\'\>/gcs) {
+\\\ ]*\"([^\ \	\
+\\\ \"\&\<]*)\"\/\>/gcs) {
+
+        if (defined $Token->{attrs}->{$Attr->{name}}) {
+          push @$Errors, {type => 'duplicate attribute',
+                          text => $Attr->{name},
+                          level => 'm',
+                          di => $Attr->{di},
+                          index => $Attr->{index}};
+        } else {
+          $Token->{attrs}->{$Attr->{name}} = $Attr;
+          push @{$Token->{attr_list} ||= []}, $Attr;
+          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
+        }
+      
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + $-[1]];
+$State = SELF_CLOSING_START_TAG_STATE;
+$Token->{q<self_closing_flag>} = 1;
+$State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
+push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            ## <!Temma></!Temma>
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            ## <!Temma></!Temma>
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## <XML>
+            return 1 if @$OE <= 1;
+            ## </XML>
+          }
+        
+} elsif ($Input =~ /\G\=[\	\
+\\\ ]*\"([^\ \	\
+\\\ \"\&\<]*)\"\>/gcs) {
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -33051,8 +33051,8 @@ push @$Tokens, $Token;
           }
         
 } elsif ($Input =~ /\G\=[\	\
-\\\ ]*\"([^\ \	\
-\\\ \"\&\<]*)\"\>/gcs) {
+\\\ ]*\'([^\ \	\
+\\\ \&\'\<]*)\'\>/gcs) {
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -76986,61 +76986,6 @@ push @$Tokens, $Token;
             ## </XML>
           }
         
-} elsif ($Input =~ /\G([^\ \	\
-\\\ \!\/\>\?])([^\ \	\
-\\\ \/\>A-Z]*)([A-Z]*)\>/gcs) {
-
-        $Token = {type => START_TAG_TOKEN, tn => 0, DTDMode => $DTDMode,
-                  di => $DI, index => $AnchoredIndex};
-      
-$Token->{q<tag_name>} = $1;
-$Token->{q<tag_name>} .= $2;
-$Token->{q<tag_name>} .= $3;
-$State = DATA_STATE;
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            if (keys %{$Token->{attrs} or {}}) {
-              push @$Errors, {type => 'end tag attribute',
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-            if ($Token->{self_closing_flag}) {
-              push @$Errors, {type => 'nestc',
-                              text => $Token->{tag_name},
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-          }
-        
-push @$Tokens, $Token;
-
-          if ($Token->{type} == START_TAG_TOKEN) {
-            ## <!Temma></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            if (not defined $LastStartTagName) { # "first start tag"
-              $LastStartTagName = $Token->{tag_name};
-              return 1;
-            } else {
-              $LastStartTagName = $Token->{tag_name};
-            }
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
-            return 1 if $Token->{tag_name} =~ /-/;
-            return 1 if $Token->{attrs}->{is};
-          }
-        
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            ## <!Temma></!Temma>
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            ## <XML>
-            return 1 if @$OE <= 1;
-            ## </XML>
-          }
-        
 } elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\>])([^\ \\-]*)\-([^\ \\-])([^\ \\-]*)/gcs) {
 
         $Temp = '';
@@ -77064,19 +77009,16 @@ push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
 push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
 $State = COMMENT_STATE;
 push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
-} elsif ($Input =~ /\G\/([^\ \	\
-\\\ \>])([^\ \	\
-\\\ \/\>A-Z]*)([A-Z]*)\/\>/gcs) {
-$State = END_TAG_OPEN_STATE;
+} elsif ($Input =~ /\G([^\ \	\
+\\\ \!\/\>\?])([^\ \	\
+\\\ \/\>A-Z]*)([A-Z]*)\>/gcs) {
 
-        $Token = {type => END_TAG_TOKEN, tn => 0, DTDMode => $DTDMode,
+        $Token = {type => START_TAG_TOKEN, tn => 0, DTDMode => $DTDMode,
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<tag_name>} = $1;
 $Token->{q<tag_name>} .= $2;
 $Token->{q<tag_name>} .= $3;
-$State = SELF_CLOSING_START_TAG_STATE;
-$Token->{q<self_closing_flag>} = 1;
 $State = DATA_STATE;
 
           if ($Token->{type} == END_TAG_TOKEN) {
@@ -77142,6 +77084,64 @@ push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
 push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
 $State = COMMENT_STATE;
 push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+} elsif ($Input =~ /\G\/([^\ \	\
+\\\ \>])([^\ \	\
+\\\ \/\>A-Z]*)([A-Z]*)\/\>/gcs) {
+$State = END_TAG_OPEN_STATE;
+
+        $Token = {type => END_TAG_TOKEN, tn => 0, DTDMode => $DTDMode,
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<tag_name>} = $1;
+$Token->{q<tag_name>} .= $2;
+$Token->{q<tag_name>} .= $3;
+$State = SELF_CLOSING_START_TAG_STATE;
+$Token->{q<self_closing_flag>} = 1;
+$State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
+push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            ## <!Temma></!Temma>
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+            return 1 if $Token->{tag_name} =~ /-/;
+            return 1 if $Token->{attrs}->{is};
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            ## <!Temma></!Temma>
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            ## <XML>
+            return 1 if @$OE <= 1;
+            ## </XML>
+          }
+        
 } elsif ($Input =~ /\G\/([^\ \	\
 \\\ \>])([^\ \	\
 \\\ \/\>A-Z]*)([A-Z]*)\>/gcs) {
