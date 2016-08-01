@@ -5497,8 +5497,8 @@ push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 $State = DOCTYPE_COMMENT_STATE;
 } else {
 if ($EOF) {
-push @$Tokens, $Token;
 $State = DTD_STATE;
+push @$Tokens, $Token;
 
             if (@$OpenMarkedSections) {
               push @$Errors, {type => 'parser:EOF', level => 'm',
@@ -5638,8 +5638,8 @@ push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 $State = DOCTYPE_COMMENT_STATE;
 } else {
 if ($EOF) {
-push @$Tokens, $Token;
 $State = DTD_STATE;
+push @$Tokens, $Token;
 
             if (@$OpenMarkedSections) {
               push @$Errors, {type => 'parser:EOF', level => 'm',
@@ -5705,8 +5705,8 @@ push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 $State = DOCTYPE_COMMENT_STATE;
 } else {
 if ($EOF) {
-push @$Tokens, $Token;
 $State = DTD_STATE;
+push @$Tokens, $Token;
 
             if (@$OpenMarkedSections) {
               push @$Errors, {type => 'parser:EOF', level => 'm',
@@ -5770,8 +5770,8 @@ push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 $State = DOCTYPE_COMMENT_STATE;
 } else {
 if ($EOF) {
-push @$Tokens, $Token;
 $State = DTD_STATE;
+push @$Tokens, $Token;
 
             if (@$OpenMarkedSections) {
               push @$Errors, {type => 'parser:EOF', level => 'm',
@@ -32519,8 +32519,8 @@ $Attr->{q<name>} .= $1;
 } elsif ($Input =~ /\G[\	\
 \\\ ][\	\
 \\\ ]*\=[\	\
-\\\ ]*\"([^\ \	\
-\\\ \"\&\<]*)\"[\	\
+\\\ ]*\'([^\ \	\
+\\\ \&\'\<]*)\'[\	\
 \\\ ][\	\
 \\\ ]*/gcs) {
 
@@ -32541,8 +32541,8 @@ $State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G[\	\
 \\\ ][\	\
 \\\ ]*\=[\	\
-\\\ ]*\'([^\ \	\
-\\\ \&\'\<]*)\'[\	\
+\\\ ]*\"([^\ \	\
+\\\ \"\&\<]*)\"[\	\
 \\\ ][\	\
 \\\ ]*/gcs) {
 
@@ -32989,8 +32989,8 @@ push @$Tokens, $Token;
           }
         
 } elsif ($Input =~ /\G\=[\	\
-\\\ ]*\'([^\ \	\
-\\\ \&\'\<]*)\'\>/gcs) {
+\\\ ]*\"([^\ \	\
+\\\ \"\&\<]*)\"\>/gcs) {
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -33051,8 +33051,8 @@ push @$Tokens, $Token;
           }
         
 } elsif ($Input =~ /\G\=[\	\
-\\\ ]*\"([^\ \	\
-\\\ \"\&\<]*)\"\>/gcs) {
+\\\ ]*\'([^\ \	\
+\\\ \&\'\<]*)\'\>/gcs) {
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -60331,8 +60331,8 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
 $State = DATA_STATE;
+push @$Tokens, $Token;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -60430,8 +60430,8 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
 $State = DATA_STATE;
+push @$Tokens, $Token;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -60476,8 +60476,8 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
 $State = DATA_STATE;
+push @$Tokens, $Token;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -60520,8 +60520,8 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
 $State = DATA_STATE;
+push @$Tokens, $Token;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -76986,29 +76986,6 @@ push @$Tokens, $Token;
             ## </XML>
           }
         
-} elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\>])([^\ \\-]*)\-([^\ \\-])([^\ \\-]*)/gcs) {
-
-        $Temp = '';
-        $TempIndex = $Offset + (pos $Input);
-      
-$State = MDO_STATE;
-$Temp = $1;
-$TempIndex = $Offset + (pos $Input) - (length $1);
-$State = MDO_STATE__;
-
-        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
-                  di => $DI, index => $AnchoredIndex};
-      
-$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
-$State = COMMENT_START_DASH_STATE;
-push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
-push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
-push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
-$State = COMMENT_END_DASH_STATE;
-push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
-push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
-$State = COMMENT_STATE;
-push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
 } elsif ($Input =~ /\G([^\ \	\
 \\\ \!\/\>\?])([^\ \	\
 \\\ \/\>A-Z]*)([A-Z]*)\>/gcs) {
@@ -77064,6 +77041,29 @@ push @$Tokens, $Token;
             ## </XML>
           }
         
+} elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\>])([^\ \\-]*)\-([^\ \\-])([^\ \\-]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
 } elsif ($Input =~ /\G\!(\-)\-([^\ \\-\>])([^\ \\-]*)\-([^\ \\-])([^\ \\-]*)/gcs) {
 
         $Temp = '';
