@@ -3,6 +3,7 @@ AnyEvent~7.12
 Capture::Tiny~0.42
 Carp~1.38
 Data::Dumper~2.161
+Date::Parse~2.30
 Encode~2.84
 Exporter~5.72
 Exporter::Lite~0.08
@@ -21,7 +22,6 @@ Test::NoWarnings~1.04
 Test::Tester~1.302049
 Text::Diff~1.44
 Time::HiRes~1.9739
-Time::Zone~2.24
 Try::Tiny~0.24
 Unicode::Normalize~1.25
 Unicode::Stringprep~1.105
