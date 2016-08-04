@@ -32519,8 +32519,8 @@ $Attr->{q<name>} .= $1;
 } elsif ($Input =~ /\G[\	\
 \\\ ][\	\
 \\\ ]*\=[\	\
-\\\ ]*\"([^\ \	\
-\\\ \"\&\<]*)\"[\	\
+\\\ ]*\'([^\ \	\
+\\\ \&\'\<]*)\'[\	\
 \\\ ][\	\
 \\\ ]*/gcs) {
 
@@ -32541,8 +32541,8 @@ $State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G[\	\
 \\\ ][\	\
 \\\ ]*\=[\	\
-\\\ ]*\'([^\ \	\
-\\\ \&\'\<]*)\'[\	\
+\\\ ]*\"([^\ \	\
+\\\ \"\&\<]*)\"[\	\
 \\\ ][\	\
 \\\ ]*/gcs) {
 
@@ -32821,26 +32821,6 @@ push @$Tokens, $Token;
           }
         
 } elsif ($Input =~ /\G\=[\	\
-\\\ ]*\"([^\ \	\
-\\\ \"\&\<]*)\"[\	\
-\\\ ][\	\
-\\\ ]*/gcs) {
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-push @{$Attr->{q<value>}}, [$1, $DI, $Offset + $-[1]];
-$State = B_ATTR_NAME_STATE;
-} elsif ($Input =~ /\G\=[\	\
 \\\ ]*\'([^\ \	\
 \\\ \&\'\<]*)\'[\	\
 \\\ ][\	\
@@ -32861,8 +32841,28 @@ $State = B_ATTR_NAME_STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + $-[1]];
 $State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G\=[\	\
-\\\ ]*\'([^\ \	\
-\\\ \&\'\<]*)\'\/\>/gcs) {
+\\\ ]*\"([^\ \	\
+\\\ \"\&\<]*)\"[\	\
+\\\ ][\	\
+\\\ ]*/gcs) {
+
+        if (defined $Token->{attrs}->{$Attr->{name}}) {
+          push @$Errors, {type => 'duplicate attribute',
+                          text => $Attr->{name},
+                          level => 'm',
+                          di => $Attr->{di},
+                          index => $Attr->{index}};
+        } else {
+          $Token->{attrs}->{$Attr->{name}} = $Attr;
+          push @{$Token->{attr_list} ||= []}, $Attr;
+          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
+        }
+      
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + $-[1]];
+$State = B_ATTR_NAME_STATE;
+} elsif ($Input =~ /\G\=[\	\
+\\\ ]*\"([^\ \	\
+\\\ \"\&\<]*)\"\/\>/gcs) {
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -32925,8 +32925,8 @@ push @$Tokens, $Token;
           }
         
 } elsif ($Input =~ /\G\=[\	\
-\\\ ]*\"([^\ \	\
-\\\ \"\&\<]*)\"\/\>/gcs) {
+\\\ ]*\'([^\ \	\
+\\\ \&\'\<]*)\'\/\>/gcs) {
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -76986,29 +76986,6 @@ push @$Tokens, $Token;
             ## </XML>
           }
         
-} elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\>])([^\ \\-]*)\-([^\ \\-])([^\ \\-]*)/gcs) {
-
-        $Temp = '';
-        $TempIndex = $Offset + (pos $Input);
-      
-$State = MDO_STATE;
-$Temp = $1;
-$TempIndex = $Offset + (pos $Input) - (length $1);
-$State = MDO_STATE__;
-
-        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
-                  di => $DI, index => $AnchoredIndex};
-      
-$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
-$State = COMMENT_START_DASH_STATE;
-push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
-push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
-push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
-$State = COMMENT_END_DASH_STATE;
-push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
-push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
-$State = COMMENT_STATE;
-push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
 } elsif ($Input =~ /\G([^\ \	\
 \\\ \!\/\>\?])([^\ \	\
 \\\ \/\>A-Z]*)([A-Z]*)\>/gcs) {
@@ -77064,6 +77041,49 @@ push @$Tokens, $Token;
             ## </XML>
           }
         
+} elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\>])([^\ \\-]*)\-([^\ \\-])([^\ \\-]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = COMMENT_START_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[2] - 1];
+push @{$Token->{q<data>}}, [$2, $DI, $Offset + $-[2]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
+} elsif ($Input =~ /\G\!(\-)\-([^\ \\-\>])([^\ \\-]*)\-([^\ \\-])([^\ \\-]*)/gcs) {
+
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input);
+      
+$State = MDO_STATE;
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = MDO_STATE__;
+
+        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
+push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
+$State = COMMENT_END_DASH_STATE;
+push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
+push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
+$State = COMMENT_STATE;
+push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
 } elsif ($Input =~ /\G\/([^\ \	\
 \\\ \>])([^\ \	\
 \\\ \/\>A-Z]*)([A-Z]*)\/\>/gcs) {
@@ -77122,26 +77142,6 @@ push @$Tokens, $Token;
             ## </XML>
           }
         
-} elsif ($Input =~ /\G\!(\-)\-([^\ \\-\>])([^\ \\-]*)\-([^\ \\-])([^\ \\-]*)/gcs) {
-
-        $Temp = '';
-        $TempIndex = $Offset + (pos $Input);
-      
-$State = MDO_STATE;
-$Temp = $1;
-$TempIndex = $Offset + (pos $Input) - (length $1);
-$State = MDO_STATE__;
-
-        $Token = {type => COMMENT_TOKEN, tn => 0, DTDMode => $DTDMode,
-                  di => $DI, index => $AnchoredIndex};
-      
-$Token->{q<data>} = [[$2, $DI, $Offset + $-[2]]];
-push @{$Token->{q<data>}}, [$3, $DI, $Offset + $-[3]];
-$State = COMMENT_END_DASH_STATE;
-push @{$Token->{q<data>}}, [q@-@, $DI, $Offset + $-[4] - 1];
-push @{$Token->{q<data>}}, [$4, $DI, $Offset + $-[4]];
-$State = COMMENT_STATE;
-push @{$Token->{q<data>}}, [$5, $DI, $Offset + $-[5]];
 } elsif ($Input =~ /\G\/([^\ \	\
 \\\ \>])([^\ \	\
 \\\ \/\>A-Z]*)([A-Z]*)\>/gcs) {
