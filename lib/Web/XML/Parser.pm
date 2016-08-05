@@ -32519,28 +32519,6 @@ $Attr->{q<name>} .= $1;
 } elsif ($Input =~ /\G[\	\
 \\\ ][\	\
 \\\ ]*\=[\	\
-\\\ ]*\'([^\ \	\
-\\\ \&\'\<]*)\'[\	\
-\\\ ][\	\
-\\\ ]*/gcs) {
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-push @{$Attr->{q<value>}}, [$1, $DI, $Offset + $-[1]];
-$State = B_ATTR_NAME_STATE;
-} elsif ($Input =~ /\G[\	\
-\\\ ][\	\
-\\\ ]*\=[\	\
 \\\ ]*\"([^\ \	\
 \\\ \"\&\<]*)\"[\	\
 \\\ ][\	\
@@ -32564,7 +32542,29 @@ $State = B_ATTR_NAME_STATE;
 \\\ ][\	\
 \\\ ]*\=[\	\
 \\\ ]*\'([^\ \	\
-\\\ \&\'\<]*)\'\/\>/gcs) {
+\\\ \&\'\<]*)\'[\	\
+\\\ ][\	\
+\\\ ]*/gcs) {
+
+        if (defined $Token->{attrs}->{$Attr->{name}}) {
+          push @$Errors, {type => 'duplicate attribute',
+                          text => $Attr->{name},
+                          level => 'm',
+                          di => $Attr->{di},
+                          index => $Attr->{index}};
+        } else {
+          $Token->{attrs}->{$Attr->{name}} = $Attr;
+          push @{$Token->{attr_list} ||= []}, $Attr;
+          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
+        }
+      
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + $-[1]];
+$State = B_ATTR_NAME_STATE;
+} elsif ($Input =~ /\G[\	\
+\\\ ][\	\
+\\\ ]*\=[\	\
+\\\ ]*\"([^\ \	\
+\\\ \"\&\<]*)\"\/\>/gcs) {
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -32629,8 +32629,8 @@ push @$Tokens, $Token;
 } elsif ($Input =~ /\G[\	\
 \\\ ][\	\
 \\\ ]*\=[\	\
-\\\ ]*\"([^\ \	\
-\\\ \"\&\<]*)\"\/\>/gcs) {
+\\\ ]*\'([^\ \	\
+\\\ \&\'\<]*)\'\/\>/gcs) {
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -32821,8 +32821,8 @@ push @$Tokens, $Token;
           }
         
 } elsif ($Input =~ /\G\=[\	\
-\\\ ]*\'([^\ \	\
-\\\ \&\'\<]*)\'[\	\
+\\\ ]*\"([^\ \	\
+\\\ \"\&\<]*)\"[\	\
 \\\ ][\	\
 \\\ ]*/gcs) {
 
@@ -32841,8 +32841,8 @@ push @$Tokens, $Token;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + $-[1]];
 $State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G\=[\	\
-\\\ ]*\"([^\ \	\
-\\\ \"\&\<]*)\"[\	\
+\\\ ]*\'([^\ \	\
+\\\ \&\'\<]*)\'[\	\
 \\\ ][\	\
 \\\ ]*/gcs) {
 
