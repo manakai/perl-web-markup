@@ -1708,7 +1708,7 @@ sub generate_tokenizer {
     my $non_else_chars = '';
     my $cond_has_error = {};
     my @case;
-    for my $cond (keys %{$defs->{states}->{$state}->{conds}}) {
+    for my $cond (sort { $a cmp $b } keys %{$defs->{states}->{$state}->{conds}}) {
       if ($cond =~ /EOF/) {
         $cond_has_error->{$cond} = 1;
         next;
@@ -1720,7 +1720,7 @@ sub generate_tokenizer {
         }
       }
     }
-    for my $pattern (sort { length $b <=> length $a } keys %{$defs->{states}->{$state}->{compound_conds} or {}}) {
+    for my $pattern (sort { length $b <=> length $a || $a cmp $b } keys %{$defs->{states}->{$state}->{compound_conds} or {}}) {
       my $case = sprintf q[if ($Input =~ /\G%s/gcs) {]."\n", $pattern;
       $case .= serialize_actions ($defs->{states}->{$state}->{compound_conds}->{$pattern});
       $case .= q[} els];
@@ -4362,9 +4362,9 @@ sub generate_tree_constructor ($) {
   ## ---- IM/token -> action mapping ----
   {
     my $map = [];
-    for my $im_name (keys %{$defs->{ims}}) {
+    for my $im_name (sort { $a cmp $b } keys %{$defs->{ims}}) {
       my $im_id = $im_to_id->{$im_name} or die "IM |$im_name| has no ID";
-      for my $cond (keys %{$defs->{ims}->{$im_name}->{conds}}) {
+      for my $cond (sort { $a cmp $b } keys %{$defs->{ims}->{$im_name}->{conds}}) {
         my $short_token_type;
         my $tn_id = 0;
         if ($cond =~ /^(START|END)-ELSE$/) {
@@ -4406,7 +4406,7 @@ sub generate_tree_constructor ($) {
 
     for my $key ('always', 'last_is_false') {
       my $map = {};
-      for my $el_name (keys %{$defs->{reset_im_by_html_element}->{$key}}) {
+      for my $el_name (sort { $a cmp $b } keys %{$defs->{reset_im_by_html_element}->{$key}}) {
         my $im = $defs->{reset_im_by_html_element}->{$key}->{$el_name};
         my $im_const = im_const $im;
         my $el_expr = $ElementToElementGroupExpr->{HTML}->{$el_name};
