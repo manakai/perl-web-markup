@@ -16,9 +16,9 @@ Path::Tiny~0.096
 Regexp::Parser~0.21
 Scalar::Util~1.45
 Term::ANSIColor~4.05
+Test::Builder~1.302049
 Test::Class~0.50
 Test::Differences~0.64
-Test::More~1.302049
 Test::NoWarnings~1.04
 Test::Tester~1.302049
 Text::Diff~1.44
