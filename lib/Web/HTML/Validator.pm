@@ -4015,7 +4015,10 @@ $CheckerByMetadataName->{'referrer'} = sub {
   $value =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
   if (length $value and ($_Defs->{elements}->{+HTML_NS}->{a}->{attrs}->{''}->{referrerpolicy}->{enumerated}->{$value} || {})->{conforming}) {
     #
-  } elsif ($value eq 'always' or $value eq 'default' or $value eq 'never') {
+  } elsif ($value eq 'always' or
+           $value eq 'default' or
+           $value eq 'never' or
+           $value eq 'origin-when-crossorigin') {
     $self->{onerror}->(node => $attr,
                        type => 'enumerated:non-conforming',
                        level => 'm');
