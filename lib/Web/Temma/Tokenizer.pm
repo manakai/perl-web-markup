@@ -777,11 +777,11 @@ if ($EOF) {
                           value => q@]@,
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
+$State = CDATA_SECTION_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -835,11 +835,11 @@ if ($EOF) {
                           value => q@]]@,
                           di => $DI, index => $Offset + (pos $Input) - 2};
         
+$State = CDATA_SECTION_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -876,7 +876,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -912,11 +911,11 @@ $State = CDATA_SECTION_STATE;
         
 } else {
 if ($EOF) {
+$State = CDATA_SECTION_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -956,7 +955,6 @@ if ($EOF) {
           
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -1001,7 +999,6 @@ if ($EOF) {
           
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -1044,13 +1041,13 @@ $State = DOCTYPE_PUBLIC_ID__DQ__STATE;
 $Token->{q<public_identifier>} .= $1;
 } else {
 if ($EOF) {
+$State = DOCTYPE_PUBLIC_ID__DQ__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -1095,7 +1092,6 @@ if ($EOF) {
           
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -1138,13 +1134,13 @@ $State = DOCTYPE_PUBLIC_ID__SQ__STATE;
 $Token->{q<public_identifier>} .= $1;
 } else {
 if ($EOF) {
+$State = DOCTYPE_PUBLIC_ID__SQ__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -1226,7 +1222,6 @@ if ($EOF) {
       
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -1271,7 +1266,6 @@ if ($EOF) {
           
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -1314,13 +1308,13 @@ $State = DOCTYPE_SYSTEM_ID__DQ__STATE;
 $Token->{q<system_identifier>} .= $1;
 } else {
 if ($EOF) {
+$State = DOCTYPE_SYSTEM_ID__DQ__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -1365,7 +1359,6 @@ if ($EOF) {
           
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -1408,13 +1401,13 @@ $State = DOCTYPE_SYSTEM_ID__SQ__STATE;
 $Token->{q<system_identifier>} .= $1;
 } else {
 if ($EOF) {
+$State = DOCTYPE_SYSTEM_ID__SQ__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -3819,7 +3812,6 @@ if ($EOF) {
           
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -3853,8 +3845,8 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 $Token->{q<force_quirks_flag>} = 1;
+$State = BOGUS_DOCTYPE_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -3888,8 +3880,8 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 $Token->{q<force_quirks_flag>} = 1;
+$State = BOGUS_DOCTYPE_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -3923,8 +3915,8 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 $Token->{q<force_quirks_flag>} = 1;
+$State = BOGUS_DOCTYPE_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -3958,8 +3950,8 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 $Token->{q<force_quirks_flag>} = 1;
+$State = BOGUS_DOCTYPE_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -3991,8 +3983,8 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 $Token->{q<force_quirks_flag>} = 1;
+$State = BOGUS_DOCTYPE_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -4026,8 +4018,8 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 $Token->{q<force_quirks_flag>} = 1;
+$State = BOGUS_DOCTYPE_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -4061,8 +4053,8 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 $Token->{q<force_quirks_flag>} = 1;
+$State = BOGUS_DOCTYPE_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -4096,8 +4088,8 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 $Token->{q<force_quirks_flag>} = 1;
+$State = BOGUS_DOCTYPE_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -4131,8 +4123,8 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 $Token->{q<force_quirks_flag>} = 1;
+$State = BOGUS_DOCTYPE_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -4164,8 +4156,8 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 $Token->{q<force_quirks_flag>} = 1;
+$State = BOGUS_DOCTYPE_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -4214,7 +4206,6 @@ if ($EOF) {
           
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -4268,7 +4259,6 @@ if ($EOF) {
           
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -4301,7 +4291,6 @@ if ($EOF) {
           
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -4355,7 +4344,6 @@ if ($EOF) {
           
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -4477,7 +4465,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -4636,7 +4623,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -5823,11 +5809,11 @@ if ($EOF) {
           $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
         }
       
+$State = A_ATTR_NAME_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -5866,7 +5852,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -5935,11 +5920,11 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__DQ__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -6143,11 +6128,11 @@ if ($EOF) {
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__DQ__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -6351,11 +6336,11 @@ if ($EOF) {
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__DQ__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -6794,11 +6779,11 @@ if ($EOF) {
           } # REF
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__DQ__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -6873,11 +6858,11 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__DQ__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -6931,11 +6916,11 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__DQ__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -6974,11 +6959,11 @@ $State = ATTR_VALUE__DQ__STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
+$State = ATTR_VALUE__DQ__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -7017,7 +7002,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -7086,11 +7070,11 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__SQ__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -7294,11 +7278,11 @@ if ($EOF) {
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__SQ__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -7502,11 +7486,11 @@ if ($EOF) {
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__SQ__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -7945,11 +7929,11 @@ if ($EOF) {
           } # REF
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__SQ__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -8024,11 +8008,11 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__SQ__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -8082,11 +8066,11 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__SQ__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -8125,11 +8109,11 @@ $State = ATTR_VALUE__SQ__STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
+$State = ATTR_VALUE__SQ__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -8240,7 +8224,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -8417,11 +8400,11 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__UNQUOTED__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -8847,11 +8830,11 @@ if ($EOF) {
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__UNQUOTED__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -9277,11 +9260,11 @@ if ($EOF) {
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__UNQUOTED__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -10040,11 +10023,11 @@ if ($EOF) {
           } # REF
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__UNQUOTED__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -10227,11 +10210,11 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__UNQUOTED__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -10369,11 +10352,11 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__UNQUOTED__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -10489,11 +10472,11 @@ $State = ATTR_VALUE__UNQUOTED__STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
+$State = ATTR_VALUE__UNQUOTED__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -10558,7 +10541,6 @@ if ($EOF) {
       
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -10603,7 +10585,6 @@ if ($EOF) {
           
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -10648,7 +10629,6 @@ if ($EOF) {
           
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -10881,11 +10861,11 @@ $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 } else {
 if ($EOF) {
+$State = A_ATTR_NAME_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -10990,11 +10970,11 @@ $State = ATTR_VALUE__UNQUOTED__STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
+$State = ATTR_VALUE__UNQUOTED__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -11034,7 +11014,6 @@ if ($EOF) {
           
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -11056,7 +11035,6 @@ push @$Tokens, $Token;
 } else {
 if ($EOF) {
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -11085,7 +11063,6 @@ push @$Tokens, $Token;
 } else {
 if ($EOF) {
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -11117,8 +11094,8 @@ $State = BOGUS_COMMENT_STATE;
 push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
+$State = BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -11401,7 +11378,6 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -11446,7 +11422,6 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -11489,12 +11464,12 @@ $State = COMMENT_STATE;
 push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
+$State = COMMENT_END_DASH_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -11544,7 +11519,6 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -11593,12 +11567,12 @@ $State = COMMENT_STATE;
 push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
+$State = COMMENT_END_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -11668,12 +11642,12 @@ $State = COMMENT_STATE;
 push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
+$State = COMMENT_END_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -11713,12 +11687,12 @@ $State = COMMENT_STATE;
 push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
+$State = COMMENT_END_DASH_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -11754,12 +11728,12 @@ $State = COMMENT_STATE;
 push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
+$State = COMMENT_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -11796,12 +11770,12 @@ $State = COMMENT_STATE;
 push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
+$State = COMMENT_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -11853,7 +11827,6 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -11896,12 +11869,12 @@ $State = COMMENT_STATE;
 push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
+$State = COMMENT_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -11941,7 +11914,6 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -11980,12 +11952,12 @@ $State = COMMENT_STATE;
 push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
+$State = COMMENT_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -13537,7 +13509,6 @@ if ($EOF) {
                           value => q@</@,
                           di => $DI, index => $AnchoredIndex};
         
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -13624,8 +13595,8 @@ if ($EOF) {
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -13711,8 +13682,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+$State = BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -13797,8 +13768,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+$State = BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -13883,8 +13854,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+$State = BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -13969,8 +13940,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+$State = BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -14055,8 +14026,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+$State = BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -14141,8 +14112,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+$State = BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -14225,8 +14196,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+$State = BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -14308,8 +14279,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+$State = BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -14391,8 +14362,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+$State = BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -14474,8 +14445,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+$State = BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -14557,8 +14528,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+$State = BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -14640,8 +14611,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+$State = BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -14722,8 +14693,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+$State = BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -14841,11 +14812,11 @@ $State = SCRIPT_DATA_DOUBLE_ESCAPED_STATE;
         
 } else {
 if ($EOF) {
+$State = SCRIPT_DATA_DOUBLE_ESCAPED_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -14970,11 +14941,11 @@ $State = SCRIPT_DATA_DOUBLE_ESCAPED_STATE;
         
 } else {
 if ($EOF) {
+$State = SCRIPT_DATA_DOUBLE_ESCAPED_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -15087,11 +15058,11 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
         
 } else {
 if ($EOF) {
+$State = SCRIPT_DATA_ESCAPED_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -15211,11 +15182,11 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
         
 } else {
 if ($EOF) {
+$State = SCRIPT_DATA_ESCAPED_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -15282,7 +15253,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -15343,7 +15313,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -15411,11 +15380,11 @@ $State = SCRIPT_DATA_DOUBLE_ESCAPED_STATE;
         
 } else {
 if ($EOF) {
+$State = SCRIPT_DATA_DOUBLE_ESCAPED_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -15475,7 +15444,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -15535,11 +15503,11 @@ $State = SCRIPT_DATA_DOUBLE_ESCAPED_STATE;
         
 } else {
 if ($EOF) {
+$State = SCRIPT_DATA_DOUBLE_ESCAPED_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -15982,7 +15950,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -16038,7 +16005,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -16247,11 +16213,11 @@ if ($EOF) {
                           di => $DI,
                           index => $TempIndex} if length $Temp;
         
+$State = SCRIPT_DATA_ESCAPED_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -16349,11 +16315,11 @@ if ($EOF) {
                           value => q@</@,
                           di => $DI, index => $AnchoredIndex};
         
+$State = SCRIPT_DATA_ESCAPED_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -16475,11 +16441,11 @@ if ($EOF) {
                           value => q@<@,
                           di => $DI, index => $AnchoredIndex};
         
+$State = SCRIPT_DATA_ESCAPED_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -16534,7 +16500,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -16589,11 +16554,11 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
         
 } else {
 if ($EOF) {
+$State = SCRIPT_DATA_ESCAPED_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -16935,7 +16900,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -17016,7 +16980,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,

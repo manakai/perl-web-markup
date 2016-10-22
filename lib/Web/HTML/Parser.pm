@@ -579,8 +579,8 @@ $TagName2Group->{q@xmp@} = 64;
         sub APP_ELS () { 8 }
       
 
-        ## HTML:area,HTML:article,HTML:aside,HTML:base,HTML:basefont,HTML:bgsound,HTML:blockquote,HTML:br,HTML:center,HTML:col,HTML:details,HTML:dir,HTML:dl,HTML:embed,HTML:figcaption,HTML:figure,HTML:footer,HTML:form,HTML:frame,HTML:frameset,HTML:head,HTML:header,HTML:hgroup,HTML:hr,HTML:iframe,HTML:link,HTML:listing,HTML:main,HTML:menu,HTML:meta,HTML:nav,HTML:noembed,HTML:noframes,HTML:noscript,HTML:param,HTML:plaintext,HTML:pre,HTML:script,HTML:section,HTML:source,HTML:summary,HTML:title,HTML:track,HTML:wbr
-        sub AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS () { 16 }
+        ## HTML:area,HTML:article,HTML:aside,HTML:base,HTML:basefont,HTML:bgsound,HTML:blockquote,HTML:br,HTML:center,HTML:col,HTML:details,HTML:dir,HTML:dl,HTML:embed,HTML:figcaption,HTML:figure,HTML:footer,HTML:form,HTML:frame,HTML:frameset,HTML:head,HTML:header,HTML:hgroup,HTML:hr,HTML:iframe,HTML:link,HTML:listing,HTML:main,HTML:menu,HTML:meta,HTML:nav,HTML:noembed,HTML:noframes,HTML:noscript,HTML:param,HTML:plaintext,HTML:pre,HTML:script,HTML:section,HTML:source,HTML:summary,HTML:title,HTML:track,HTML:wbr,HTML:xmp
+        sub AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS () { 16 }
       
 
         ## HTML:audio,HTML:video
@@ -726,79 +726,79 @@ $Element2Type->[HTMLNS]->{q@*@} = HTML_NS_ELS;
 sub A_EL () { HTML_NS_ELS | ABBCEFINSSSSTU_ELS | 1099511627776 } $Element2Type->[HTMLNS]->{q@a@} = A_EL;
 sub ADDRESS_EL () { HTML_NS_ELS | ADD_DIV_ELS | 1099511627776 } $Element2Type->[HTMLNS]->{q@address@} = ADDRESS_EL;
 sub APPLET_EL () { HTML_NS_ELS | APP_ELS } $Element2Type->[HTMLNS]->{q@applet@} = APPLET_EL;
-$Element2Type->[HTMLNS]->{q@area@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS;
-sub ARTICLE_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS | 1099511627776 } $Element2Type->[HTMLNS]->{q@article@} = ARTICLE_EL;
-sub ASIDE_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS | 2199023255552 } $Element2Type->[HTMLNS]->{q@aside@} = ASIDE_EL;
+$Element2Type->[HTMLNS]->{q@area@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS;
+sub ARTICLE_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS | 1099511627776 } $Element2Type->[HTMLNS]->{q@article@} = ARTICLE_EL;
+sub ASIDE_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS | 2199023255552 } $Element2Type->[HTMLNS]->{q@aside@} = ASIDE_EL;
 $Element2Type->[HTMLNS]->{q@audio@} = HTML_NS_ELS | AUD_VID_ELS;
 $Element2Type->[HTMLNS]->{q@b@} = HTML_NS_ELS | ABBCEFINSSSSTU_ELS;
-$Element2Type->[HTMLNS]->{q@base@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS;
-$Element2Type->[HTMLNS]->{q@basefont@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS;
-$Element2Type->[HTMLNS]->{q@bgsound@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS;
+$Element2Type->[HTMLNS]->{q@base@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS;
+$Element2Type->[HTMLNS]->{q@basefont@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS;
+$Element2Type->[HTMLNS]->{q@bgsound@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS;
 $Element2Type->[HTMLNS]->{q@big@} = HTML_NS_ELS | ABBCEFINSSSSTU_ELS;
-sub BLOCKQUOTE_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS | 3298534883328 } $Element2Type->[HTMLNS]->{q@blockquote@} = BLOCKQUOTE_EL;
+sub BLOCKQUOTE_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS | 3298534883328 } $Element2Type->[HTMLNS]->{q@blockquote@} = BLOCKQUOTE_EL;
 sub BODY_EL () { HTML_NS_ELS | BOD_ELS } $Element2Type->[HTMLNS]->{q@body@} = BODY_EL;
-$Element2Type->[HTMLNS]->{q@br@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS;
+$Element2Type->[HTMLNS]->{q@br@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS;
 sub BUTTON_EL () { HTML_NS_ELS | BUT_ELS } $Element2Type->[HTMLNS]->{q@button@} = BUTTON_EL;
 sub CAPTION_EL () { HTML_NS_ELS | CAP_ELS } $Element2Type->[HTMLNS]->{q@caption@} = CAPTION_EL;
-sub CENTER_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS | 4398046511104 } $Element2Type->[HTMLNS]->{q@center@} = CENTER_EL;
+sub CENTER_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS | 4398046511104 } $Element2Type->[HTMLNS]->{q@center@} = CENTER_EL;
 $Element2Type->[HTMLNS]->{q@code@} = HTML_NS_ELS | ABBCEFINSSSSTU_ELS;
-$Element2Type->[HTMLNS]->{q@col@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS;
+$Element2Type->[HTMLNS]->{q@col@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS;
 sub COLGROUP_EL () { HTML_NS_ELS | COL_ELS } $Element2Type->[HTMLNS]->{q@colgroup@} = COLGROUP_EL;
 sub DD_EL () { HTML_NS_ELS | DD_ELS } $Element2Type->[HTMLNS]->{q@dd@} = DD_EL;
-sub DETAILS_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS | 5497558138880 } $Element2Type->[HTMLNS]->{q@details@} = DETAILS_EL;
+sub DETAILS_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS | 5497558138880 } $Element2Type->[HTMLNS]->{q@details@} = DETAILS_EL;
 sub DIALOG_EL () { HTML_NS_ELS | 1099511627776 } $Element2Type->[HTMLNS]->{q@dialog@} = DIALOG_EL;
-sub DIR_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS | 6597069766656 } $Element2Type->[HTMLNS]->{q@dir@} = DIR_EL;
+sub DIR_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS | 6597069766656 } $Element2Type->[HTMLNS]->{q@dir@} = DIR_EL;
 sub DIV_EL () { HTML_NS_ELS | ADD_DIV_ELS | 2199023255552 } $Element2Type->[HTMLNS]->{q@div@} = DIV_EL;
-sub DL_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS | 7696581394432 } $Element2Type->[HTMLNS]->{q@dl@} = DL_EL;
+sub DL_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS | 7696581394432 } $Element2Type->[HTMLNS]->{q@dl@} = DL_EL;
 sub DT_EL () { HTML_NS_ELS | DT_ELS } $Element2Type->[HTMLNS]->{q@dt@} = DT_EL;
 $Element2Type->[HTMLNS]->{q@em@} = HTML_NS_ELS | ABBCEFINSSSSTU_ELS;
-$Element2Type->[HTMLNS]->{q@embed@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS;
+$Element2Type->[HTMLNS]->{q@embed@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS;
 sub FIELDSET_EL () { HTML_NS_ELS | FIE_INP_SEL_ELS | 1099511627776 } $Element2Type->[HTMLNS]->{q@fieldset@} = FIELDSET_EL;
-sub FIGCAPTION_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS | 8796093022208 } $Element2Type->[HTMLNS]->{q@figcaption@} = FIGCAPTION_EL;
-sub FIGURE_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS | 9895604649984 } $Element2Type->[HTMLNS]->{q@figure@} = FIGURE_EL;
+sub FIGCAPTION_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS | 8796093022208 } $Element2Type->[HTMLNS]->{q@figcaption@} = FIGCAPTION_EL;
+sub FIGURE_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS | 9895604649984 } $Element2Type->[HTMLNS]->{q@figure@} = FIGURE_EL;
 $Element2Type->[HTMLNS]->{q@font@} = HTML_NS_ELS | ABBCEFINSSSSTU_ELS;
-sub FOOTER_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS | 10995116277760 } $Element2Type->[HTMLNS]->{q@footer@} = FOOTER_EL;
-sub FORM_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS | 12094627905536 } $Element2Type->[HTMLNS]->{q@form@} = FORM_EL;
-$Element2Type->[HTMLNS]->{q@frame@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS;
-sub FRAMESET_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS | 13194139533312 } $Element2Type->[HTMLNS]->{q@frameset@} = FRAMESET_EL;
+sub FOOTER_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS | 10995116277760 } $Element2Type->[HTMLNS]->{q@footer@} = FOOTER_EL;
+sub FORM_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS | 12094627905536 } $Element2Type->[HTMLNS]->{q@form@} = FORM_EL;
+$Element2Type->[HTMLNS]->{q@frame@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS;
+sub FRAMESET_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS | 13194139533312 } $Element2Type->[HTMLNS]->{q@frameset@} = FRAMESET_EL;
 sub H1_EL () { HTML_NS_ELS | HHHHHH_ELS | 1099511627776 } $Element2Type->[HTMLNS]->{q@h1@} = H1_EL;
 sub H2_EL () { HTML_NS_ELS | HHHHHH_ELS | 2199023255552 } $Element2Type->[HTMLNS]->{q@h2@} = H2_EL;
 sub H3_EL () { HTML_NS_ELS | HHHHHH_ELS | 3298534883328 } $Element2Type->[HTMLNS]->{q@h3@} = H3_EL;
 sub H4_EL () { HTML_NS_ELS | HHHHHH_ELS | 4398046511104 } $Element2Type->[HTMLNS]->{q@h4@} = H4_EL;
 sub H5_EL () { HTML_NS_ELS | HHHHHH_ELS | 5497558138880 } $Element2Type->[HTMLNS]->{q@h5@} = H5_EL;
 sub H6_EL () { HTML_NS_ELS | HHHHHH_ELS | 6597069766656 } $Element2Type->[HTMLNS]->{q@h6@} = H6_EL;
-sub HEAD_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS | 14293651161088 } $Element2Type->[HTMLNS]->{q@head@} = HEAD_EL;
-sub HEADER_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS | 15393162788864 } $Element2Type->[HTMLNS]->{q@header@} = HEADER_EL;
-sub HGROUP_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS | 16492674416640 } $Element2Type->[HTMLNS]->{q@hgroup@} = HGROUP_EL;
-$Element2Type->[HTMLNS]->{q@hr@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS;
+sub HEAD_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS | 14293651161088 } $Element2Type->[HTMLNS]->{q@head@} = HEAD_EL;
+sub HEADER_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS | 15393162788864 } $Element2Type->[HTMLNS]->{q@header@} = HEADER_EL;
+sub HGROUP_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS | 16492674416640 } $Element2Type->[HTMLNS]->{q@hgroup@} = HGROUP_EL;
+$Element2Type->[HTMLNS]->{q@hr@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS;
 sub HTML_EL () { HTML_NS_ELS | HTM_ELS } $Element2Type->[HTMLNS]->{q@html@} = HTML_EL;
 $Element2Type->[HTMLNS]->{q@i@} = HTML_NS_ELS | ABBCEFINSSSSTU_ELS;
-$Element2Type->[HTMLNS]->{q@iframe@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS;
+$Element2Type->[HTMLNS]->{q@iframe@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS;
 $Element2Type->[HTMLNS]->{q@img@} = HTML_NS_ELS | IMG_ELS;
 $Element2Type->[HTMLNS]->{q@input@} = HTML_NS_ELS | FIE_INP_SEL_ELS;
 $Element2Type->[HTMLNS]->{q@keygen@} = HTML_NS_ELS | KEY_OUT_ELS;
 sub LI_EL () { HTML_NS_ELS | LI_ELS } $Element2Type->[HTMLNS]->{q@li@} = LI_EL;
-$Element2Type->[HTMLNS]->{q@link@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS;
-sub LISTING_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS | 17592186044416 } $Element2Type->[HTMLNS]->{q@listing@} = LISTING_EL;
-sub MAIN_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS | 18691697672192 } $Element2Type->[HTMLNS]->{q@main@} = MAIN_EL;
+$Element2Type->[HTMLNS]->{q@link@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS;
+sub LISTING_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS | 17592186044416 } $Element2Type->[HTMLNS]->{q@listing@} = LISTING_EL;
+sub MAIN_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS | 18691697672192 } $Element2Type->[HTMLNS]->{q@main@} = MAIN_EL;
 sub MARQUEE_EL () { HTML_NS_ELS | MAR_M_ANN_ELS } $Element2Type->[HTMLNS]->{q@marquee@} = MARQUEE_EL;
-sub MENU_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS | 19791209299968 } $Element2Type->[HTMLNS]->{q@menu@} = MENU_EL;
+sub MENU_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS | 19791209299968 } $Element2Type->[HTMLNS]->{q@menu@} = MENU_EL;
 sub MENUITEM_EL () { HTML_NS_ELS | MEN_ELS } $Element2Type->[HTMLNS]->{q@menuitem@} = MENUITEM_EL;
-$Element2Type->[HTMLNS]->{q@meta@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS;
-sub NAV_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS | 20890720927744 } $Element2Type->[HTMLNS]->{q@nav@} = NAV_EL;
+$Element2Type->[HTMLNS]->{q@meta@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS;
+sub NAV_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS | 20890720927744 } $Element2Type->[HTMLNS]->{q@nav@} = NAV_EL;
 sub NOBR_EL () { HTML_NS_ELS | ABBCEFINSSSSTU_ELS | 2199023255552 } $Element2Type->[HTMLNS]->{q@nobr@} = NOBR_EL;
-$Element2Type->[HTMLNS]->{q@noembed@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS;
-$Element2Type->[HTMLNS]->{q@noframes@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS;
-$Element2Type->[HTMLNS]->{q@noscript@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS;
+$Element2Type->[HTMLNS]->{q@noembed@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS;
+$Element2Type->[HTMLNS]->{q@noframes@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS;
+$Element2Type->[HTMLNS]->{q@noscript@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS;
 sub OBJECT_EL () { HTML_NS_ELS | OBJ_ELS } $Element2Type->[HTMLNS]->{q@object@} = OBJECT_EL;
 sub OL_EL () { HTML_NS_ELS | OL_UL_ELS | 1099511627776 } $Element2Type->[HTMLNS]->{q@ol@} = OL_EL;
 sub OPTGROUP_EL () { HTML_NS_ELS | OPT_OPT_ELS | 1099511627776 } $Element2Type->[HTMLNS]->{q@optgroup@} = OPTGROUP_EL;
 sub OPTION_EL () { HTML_NS_ELS | OPT_OPT_ELS | 2199023255552 } $Element2Type->[HTMLNS]->{q@option@} = OPTION_EL;
 $Element2Type->[HTMLNS]->{q@output@} = HTML_NS_ELS | KEY_OUT_ELS;
 sub P_EL () { HTML_NS_ELS | P_ELS } $Element2Type->[HTMLNS]->{q@p@} = P_EL;
-$Element2Type->[HTMLNS]->{q@param@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS;
-$Element2Type->[HTMLNS]->{q@plaintext@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS;
-sub PRE_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS | 21990232555520 } $Element2Type->[HTMLNS]->{q@pre@} = PRE_EL;
+$Element2Type->[HTMLNS]->{q@param@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS;
+$Element2Type->[HTMLNS]->{q@plaintext@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS;
+sub PRE_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS | 21990232555520 } $Element2Type->[HTMLNS]->{q@pre@} = PRE_EL;
 $Element2Type->[HTMLNS]->{q@rb@} = HTML_NS_ELS | RB_RP_RT_ELS;
 $Element2Type->[HTMLNS]->{q@rp@} = HTML_NS_ELS | RB_RP_RT_ELS;
 $Element2Type->[HTMLNS]->{q@rt@} = HTML_NS_ELS | RB_RP_RT_ELS;
@@ -806,15 +806,15 @@ $Element2Type->[HTMLNS]->{q@rtc@} = HTML_NS_ELS | RTC_ELS;
 sub RUBY_EL () { HTML_NS_ELS | RUB_ELS } $Element2Type->[HTMLNS]->{q@ruby@} = RUBY_EL;
 $Element2Type->[HTMLNS]->{q@s@} = HTML_NS_ELS | ABBCEFINSSSSTU_ELS;
 sub SARCASM_EL () { HTML_NS_ELS | 2199023255552 } $Element2Type->[HTMLNS]->{q@sarcasm@} = SARCASM_EL;
-sub SCRIPT_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS | 23089744183296 } $Element2Type->[HTMLNS]->{q@script@} = SCRIPT_EL;
-sub SECTION_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS | 24189255811072 } $Element2Type->[HTMLNS]->{q@section@} = SECTION_EL;
+sub SCRIPT_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS | 23089744183296 } $Element2Type->[HTMLNS]->{q@script@} = SCRIPT_EL;
+sub SECTION_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS | 24189255811072 } $Element2Type->[HTMLNS]->{q@section@} = SECTION_EL;
 sub SELECT_EL () { HTML_NS_ELS | FIE_INP_SEL_ELS | 2199023255552 } $Element2Type->[HTMLNS]->{q@select@} = SELECT_EL;
 $Element2Type->[HTMLNS]->{q@small@} = HTML_NS_ELS | ABBCEFINSSSSTU_ELS;
-$Element2Type->[HTMLNS]->{q@source@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS;
+$Element2Type->[HTMLNS]->{q@source@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS;
 $Element2Type->[HTMLNS]->{q@strike@} = HTML_NS_ELS | ABBCEFINSSSSTU_ELS;
 $Element2Type->[HTMLNS]->{q@strong@} = HTML_NS_ELS | ABBCEFINSSSSTU_ELS;
 $Element2Type->[HTMLNS]->{q@style@} = HTML_NS_ELS | STY_ELS;
-sub SUMMARY_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS | 25288767438848 } $Element2Type->[HTMLNS]->{q@summary@} = SUMMARY_EL;
+sub SUMMARY_EL () { HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS | 25288767438848 } $Element2Type->[HTMLNS]->{q@summary@} = SUMMARY_EL;
 sub TABLE_EL () { HTML_NS_ELS | TAB_ELS } $Element2Type->[HTMLNS]->{q@table@} = TABLE_EL;
 sub TBODY_EL () { HTML_NS_ELS | TBO_TFO_THE_ELS | 1099511627776 } $Element2Type->[HTMLNS]->{q@tbody@} = TBODY_EL;
 sub TD_EL () { HTML_NS_ELS | TD_TH_ELS | 1099511627776 } $Element2Type->[HTMLNS]->{q@td@} = TD_EL;
@@ -823,14 +823,15 @@ $Element2Type->[HTMLNS]->{q@textarea@} = HTML_NS_ELS | TEX_ELS;
 sub TFOOT_EL () { HTML_NS_ELS | TBO_TFO_THE_ELS | 2199023255552 } $Element2Type->[HTMLNS]->{q@tfoot@} = TFOOT_EL;
 sub TH_EL () { HTML_NS_ELS | TD_TH_ELS | 2199023255552 } $Element2Type->[HTMLNS]->{q@th@} = TH_EL;
 sub THEAD_EL () { HTML_NS_ELS | TBO_TFO_THE_ELS | 3298534883328 } $Element2Type->[HTMLNS]->{q@thead@} = THEAD_EL;
-$Element2Type->[HTMLNS]->{q@title@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS;
+$Element2Type->[HTMLNS]->{q@title@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS;
 sub TR_EL () { HTML_NS_ELS | TR_ELS } $Element2Type->[HTMLNS]->{q@tr@} = TR_EL;
-$Element2Type->[HTMLNS]->{q@track@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS;
+$Element2Type->[HTMLNS]->{q@track@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS;
 $Element2Type->[HTMLNS]->{q@tt@} = HTML_NS_ELS | ABBCEFINSSSSTU_ELS;
 $Element2Type->[HTMLNS]->{q@u@} = HTML_NS_ELS | ABBCEFINSSSSTU_ELS;
 sub UL_EL () { HTML_NS_ELS | OL_UL_ELS | 2199023255552 } $Element2Type->[HTMLNS]->{q@ul@} = UL_EL;
 $Element2Type->[HTMLNS]->{q@video@} = HTML_NS_ELS | AUD_VID_ELS;
-$Element2Type->[HTMLNS]->{q@wbr@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS;
+$Element2Type->[HTMLNS]->{q@wbr@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS;
+$Element2Type->[HTMLNS]->{q@xmp@} = HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS;
 $Element2Type->[MATHMLNS]->{q@*@} = MATHML_NS_ELS;
 $Element2Type->[MATHMLNS]->{q@annotation-xml@} = MATHML_NS_ELS | MAR_M_ANN_ELS | M_ANN_ELS;
 $Element2Type->[MATHMLNS]->{q@mi@} = MATHML_NS_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS;
@@ -1443,7 +1444,7 @@ push @$OE, $HEAD_ELEMENT;
                  ns => HTMLNS,
                  local_name => 'meta',
                  attr_list => $token->{attr_list},
-                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
+                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS) };
       
 
       push @$OP, ['insert', $node => $OE->[-1]->{id}];
@@ -1618,7 +1619,7 @@ push @$OE, $HEAD_ELEMENT;
                  ns => HTMLNS,
                  local_name => 'title',
                  attr_list => $token->{attr_list},
-                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
+                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS) };
       
 
       push @$OP, ['insert', $node => $OE->[-1]->{id}];
@@ -2162,7 +2163,7 @@ return;
 return;
           } else {
             
-          if ($_node->{et} & (ADD_DIV_ELS | APP_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS | BOD_ELS | BUT_ELS | CAP_ELS | COL_ELS | DD_ELS | DT_ELS | FIE_INP_SEL_ELS | HHHHHH_ELS | HTM_ELS | IMG_ELS | LI_ELS | MAR_M_ANN_ELS | OBJ_ELS | OL_UL_ELS | P_ELS | STY_ELS | TAB_ELS | TBO_TFO_THE_ELS | TD_TH_ELS | TEM_ELS | TEX_ELS | TR_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS | S_DES_S_FOR_S_TIT_ELS)) {
+          if ($_node->{et} & (ADD_DIV_ELS | APP_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS | BOD_ELS | BUT_ELS | CAP_ELS | COL_ELS | DD_ELS | DT_ELS | FIE_INP_SEL_ELS | HHHHHH_ELS | HTM_ELS | IMG_ELS | LI_ELS | MAR_M_ANN_ELS | OBJ_ELS | OL_UL_ELS | P_ELS | STY_ELS | TAB_ELS | TBO_TFO_THE_ELS | TD_TH_ELS | TEM_ELS | TEX_ELS | TR_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS | S_DES_S_FOR_S_TIT_ELS)) {
             push @$Errors, {type => 'stray end tag',
                                             level => 'm',
                                             value => $token->{tag_name},di => $token->{di},
@@ -2337,7 +2338,7 @@ push @$Errors, {type => '</br>',
                  ns => HTMLNS,
                  local_name => 'br',
                  attr_list => [],
-                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
+                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS) };
       
 
       push @$OP, ['insert', $node_br => $OE->[-1]->{id}];
@@ -2735,7 +2736,7 @@ pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | MEN_ELS | OPT_OPT_E
 return;
           } else {
             
-          if ($_node->{et} & (ADD_DIV_ELS | APP_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS | BOD_ELS | BUT_ELS | CAP_ELS | COL_ELS | DD_ELS | DT_ELS | FIE_INP_SEL_ELS | HHHHHH_ELS | HTM_ELS | IMG_ELS | LI_ELS | MAR_M_ANN_ELS | OBJ_ELS | OL_UL_ELS | P_ELS | STY_ELS | TAB_ELS | TBO_TFO_THE_ELS | TD_TH_ELS | TEM_ELS | TEX_ELS | TR_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS | S_DES_S_FOR_S_TIT_ELS)) {
+          if ($_node->{et} & (ADD_DIV_ELS | APP_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS | BOD_ELS | BUT_ELS | CAP_ELS | COL_ELS | DD_ELS | DT_ELS | FIE_INP_SEL_ELS | HHHHHH_ELS | HTM_ELS | IMG_ELS | LI_ELS | MAR_M_ANN_ELS | OBJ_ELS | OL_UL_ELS | P_ELS | STY_ELS | TAB_ELS | TBO_TFO_THE_ELS | TD_TH_ELS | TEM_ELS | TEX_ELS | TR_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS | S_DES_S_FOR_S_TIT_ELS)) {
             push @$Errors, {type => 'stray end tag',
                                             level => 'm',
                                             value => $token->{tag_name},di => $token->{di},
@@ -2885,7 +2886,7 @@ push @$OE, $node;
                                             level => 'm',
                                             value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
-aaa ($token, 'a', remove_from_afe_and_oe => 1);
+aaa ($token, $token->{tag_name});
           }
         
 &reconstruct_afe if @$AFE and ref $AFE->[-1];
@@ -3356,7 +3357,7 @@ last;
 last;
           } else {
             
-          if ($_node->{et} & (APP_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS | BOD_ELS | BUT_ELS | CAP_ELS | COL_ELS | DD_ELS | DT_ELS | FIE_INP_SEL_ELS | HHHHHH_ELS | HTM_ELS | IMG_ELS | LI_ELS | MAR_M_ANN_ELS | OBJ_ELS | OL_UL_ELS | STY_ELS | TAB_ELS | TBO_TFO_THE_ELS | TD_TH_ELS | TEM_ELS | TEX_ELS | TR_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS | S_DES_S_FOR_S_TIT_ELS)) {
+          if ($_node->{et} & (APP_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS | BOD_ELS | BUT_ELS | CAP_ELS | COL_ELS | DD_ELS | DT_ELS | FIE_INP_SEL_ELS | HHHHHH_ELS | HTM_ELS | IMG_ELS | LI_ELS | MAR_M_ANN_ELS | OBJ_ELS | OL_UL_ELS | STY_ELS | TAB_ELS | TBO_TFO_THE_ELS | TD_TH_ELS | TEM_ELS | TEX_ELS | TR_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS | S_DES_S_FOR_S_TIT_ELS)) {
             last;
           } else {
             
@@ -3689,7 +3690,7 @@ push @$OE, $node;
                  ns => HTMLNS,
                  local_name => 'hr',
                  attr_list => $token->{attr_list},
-                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
+                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS) };
       
 
       push @$OP, ['insert', $node => $OE->[-1]->{id}];
@@ -3759,7 +3760,7 @@ push @$Errors, {type => 'duplicate body/html tag',
                  ns => HTMLNS,
                  local_name => 'iframe',
                  attr_list => $token->{attr_list},
-                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
+                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS) };
       
 
       push @$OP, ['insert', $node => $OE->[-1]->{id}];
@@ -3900,7 +3901,7 @@ push @$Errors, {type => 'image',
 last;
           } else {
             
-          if ($_node->{et} & (APP_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS | BOD_ELS | BUT_ELS | CAP_ELS | COL_ELS | DD_ELS | DT_ELS | FIE_INP_SEL_ELS | HHHHHH_ELS | HTM_ELS | IMG_ELS | LI_ELS | MAR_M_ANN_ELS | OBJ_ELS | OL_UL_ELS | STY_ELS | TAB_ELS | TBO_TFO_THE_ELS | TD_TH_ELS | TEM_ELS | TEX_ELS | TR_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS | S_DES_S_FOR_S_TIT_ELS)) {
+          if ($_node->{et} & (APP_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS | BOD_ELS | BUT_ELS | CAP_ELS | COL_ELS | DD_ELS | DT_ELS | FIE_INP_SEL_ELS | HHHHHH_ELS | HTM_ELS | IMG_ELS | LI_ELS | MAR_M_ANN_ELS | OBJ_ELS | OL_UL_ELS | STY_ELS | TAB_ELS | TBO_TFO_THE_ELS | TD_TH_ELS | TEM_ELS | TEX_ELS | TR_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS | S_DES_S_FOR_S_TIT_ELS)) {
             last;
           } else {
             
@@ -4164,6 +4165,7 @@ push @$OE, $node;
             push @$OP, ['popped', [pop @$OE]];
           }
         
+&reconstruct_afe if @$AFE and ref $AFE->[-1];
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
@@ -4210,7 +4212,7 @@ push @$OE, $node;
                                             level => 'm',
                                             value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
-aaa ($token, 'nobr');
+aaa ($token, $token->{tag_name});
 &reconstruct_afe if @$AFE and ref $AFE->[-1];
           }
         
@@ -4278,7 +4280,7 @@ push @$OE, $node;
                  ns => HTMLNS,
                  local_name => 'noembed',
                  attr_list => $token->{attr_list},
-                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
+                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS) };
       
 
       push @$OP, ['insert', $node => $OE->[-1]->{id}];
@@ -4313,7 +4315,7 @@ $ORIGINAL_IM = $IM;
                  ns => HTMLNS,
                  local_name => 'noscript',
                  attr_list => $token->{attr_list},
-                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
+                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS) };
       
 
       push @$OP, ['insert', $node => $OE->[-1]->{id}];
@@ -4335,7 +4337,7 @@ $ORIGINAL_IM = $IM;
                  ns => HTMLNS,
                  local_name => 'noscript',
                  attr_list => $token->{attr_list},
-                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
+                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS) };
       
 
       push @$OP, ['insert', $node => $OE->[-1]->{id}];
@@ -4453,7 +4455,7 @@ push @$OE, $node;
                  ns => HTMLNS,
                  local_name => 'plaintext',
                  attr_list => $token->{attr_list},
-                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
+                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS) };
       
 
       push @$OP, ['insert', $node => $OE->[-1]->{id}];
@@ -4860,7 +4862,7 @@ $ORIGINAL_IM = $IM;
                  ns => HTMLNS,
                  local_name => 'xmp',
                  attr_list => $token->{attr_list},
-                 et => (HTML_NS_ELS), aet => (HTML_NS_ELS) };
+                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS) };
       
 
       push @$OP, ['insert', $node => $OE->[-1]->{id}];
@@ -5487,7 +5489,7 @@ return;
                  ns => HTMLNS,
                  local_name => 'col',
                  attr_list => $token->{attr_list},
-                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
+                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS) };
       
 
       push @$OP, ['insert', $node => $OE->[-1]->{id}];
@@ -6265,7 +6267,7 @@ return;
                  ns => HTMLNS,
                  local_name => 'frame',
                  attr_list => $token->{attr_list},
-                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
+                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS) };
       
 
       push @$OP, ['insert', $node => $OE->[-1]->{id}];
@@ -6660,7 +6662,7 @@ return;
                  ns => HTMLNS,
                  local_name => 'meta',
                  attr_list => $token->{attr_list},
-                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
+                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS) };
       
 
       push @$OP, ['insert', $node => $OE->[-1]->{id}];
@@ -6742,7 +6744,7 @@ $ORIGINAL_IM = $IM;
                  ns => HTMLNS,
                  local_name => 'noscript',
                  attr_list => $token->{attr_list},
-                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
+                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS) };
       
 
       push @$OP, ['insert', $node => $OE->[-1]->{id}];
@@ -6763,7 +6765,7 @@ $ORIGINAL_IM = $IM;
                  ns => HTMLNS,
                  local_name => 'noscript',
                  attr_list => $token->{attr_list},
-                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
+                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS) };
       
 
       push @$OP, ['insert', $node => $OE->[-1]->{id}];
@@ -6867,7 +6869,7 @@ push @$AFE, '#marker';
                  ns => HTMLNS,
                  local_name => 'title',
                  attr_list => $token->{attr_list},
-                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
+                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS) };
       
 
       push @$OP, ['insert', $node => $OE->[-1]->{id}];
@@ -8644,7 +8646,7 @@ push @$Errors, {type => '</br>',
                  ns => HTMLNS,
                  local_name => 'br',
                  attr_list => [],
-                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
+                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS) };
       
 
       if ($OE->[-1]->{et} & (TAB_ELS | TBO_TFO_THE_ELS | TR_ELS)) { # table* context
@@ -8874,7 +8876,7 @@ push @$Errors, {type => 'in table',
                                             level => 'm',
                                             value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
-aaa_foster ($token, 'a', remove_from_afe_and_oe => 1);
+aaa_foster ($token, $token->{tag_name});
           }
         
 &reconstruct_afe_foster if @$AFE and ref $AFE->[-1];
@@ -9593,7 +9595,7 @@ last;
 last;
           } else {
             
-          if ($_node->{et} & (APP_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS | BOD_ELS | BUT_ELS | CAP_ELS | COL_ELS | DD_ELS | DT_ELS | FIE_INP_SEL_ELS | HHHHHH_ELS | HTM_ELS | IMG_ELS | LI_ELS | MAR_M_ANN_ELS | OBJ_ELS | OL_UL_ELS | STY_ELS | TAB_ELS | TBO_TFO_THE_ELS | TD_TH_ELS | TEM_ELS | TEX_ELS | TR_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS | S_DES_S_FOR_S_TIT_ELS)) {
+          if ($_node->{et} & (APP_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS | BOD_ELS | BUT_ELS | CAP_ELS | COL_ELS | DD_ELS | DT_ELS | FIE_INP_SEL_ELS | HHHHHH_ELS | HTM_ELS | IMG_ELS | LI_ELS | MAR_M_ANN_ELS | OBJ_ELS | OL_UL_ELS | STY_ELS | TAB_ELS | TBO_TFO_THE_ELS | TD_TH_ELS | TEM_ELS | TEX_ELS | TR_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS | S_DES_S_FOR_S_TIT_ELS)) {
             last;
           } else {
             
@@ -9960,7 +9962,7 @@ push @$Errors, {type => 'in table',
                  ns => HTMLNS,
                  local_name => 'hr',
                  attr_list => $token->{attr_list},
-                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
+                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS) };
       
 
       if ($OE->[-1]->{et} & (TAB_ELS | TBO_TFO_THE_ELS | TR_ELS)) { # table* context
@@ -10053,7 +10055,7 @@ push @$Errors, {type => 'in table',
                  ns => HTMLNS,
                  local_name => 'iframe',
                  attr_list => $token->{attr_list},
-                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
+                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS) };
       
 
       if ($OE->[-1]->{et} & (TAB_ELS | TBO_TFO_THE_ELS | TR_ELS)) { # table* context
@@ -10303,7 +10305,7 @@ push @$Errors, {type => 'in table',
 last;
           } else {
             
-          if ($_node->{et} & (APP_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS | BOD_ELS | BUT_ELS | CAP_ELS | COL_ELS | DD_ELS | DT_ELS | FIE_INP_SEL_ELS | HHHHHH_ELS | HTM_ELS | IMG_ELS | LI_ELS | MAR_M_ANN_ELS | OBJ_ELS | OL_UL_ELS | STY_ELS | TAB_ELS | TBO_TFO_THE_ELS | TD_TH_ELS | TEM_ELS | TEX_ELS | TR_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS | S_DES_S_FOR_S_TIT_ELS)) {
+          if ($_node->{et} & (APP_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS | BOD_ELS | BUT_ELS | CAP_ELS | COL_ELS | DD_ELS | DT_ELS | FIE_INP_SEL_ELS | HHHHHH_ELS | HTM_ELS | IMG_ELS | LI_ELS | MAR_M_ANN_ELS | OBJ_ELS | OL_UL_ELS | STY_ELS | TAB_ELS | TBO_TFO_THE_ELS | TD_TH_ELS | TEM_ELS | TEX_ELS | TR_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS | S_DES_S_FOR_S_TIT_ELS)) {
             last;
           } else {
             
@@ -10643,6 +10645,7 @@ push @$Errors, {type => 'in table',
             push @$OP, ['popped', [pop @$OE]];
           }
         
+&reconstruct_afe_foster if @$AFE and ref $AFE->[-1];
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
@@ -10696,7 +10699,7 @@ push @$Errors, {type => 'in table',
                  ns => HTMLNS,
                  local_name => 'meta',
                  attr_list => $token->{attr_list},
-                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
+                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS) };
       
 
       if ($OE->[-1]->{et} & (TAB_ELS | TBO_TFO_THE_ELS | TR_ELS)) { # table* context
@@ -10774,7 +10777,7 @@ push @$Errors, {type => 'in table',
                                             level => 'm',
                                             value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
-aaa_foster ($token, 'nobr');
+aaa_foster ($token, $token->{tag_name});
 &reconstruct_afe_foster if @$AFE and ref $AFE->[-1];
           }
         
@@ -10861,7 +10864,7 @@ push @$Errors, {type => 'in table',
                  ns => HTMLNS,
                  local_name => 'noembed',
                  attr_list => $token->{attr_list},
-                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
+                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS) };
       
 
       if ($OE->[-1]->{et} & (TAB_ELS | TBO_TFO_THE_ELS | TR_ELS)) { # table* context
@@ -10913,7 +10916,7 @@ push @$Errors, {type => 'in table',
                  ns => HTMLNS,
                  local_name => 'noframes',
                  attr_list => $token->{attr_list},
-                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
+                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS) };
       
 
       if ($OE->[-1]->{et} & (TAB_ELS | TBO_TFO_THE_ELS | TR_ELS)) { # table* context
@@ -10967,7 +10970,7 @@ push @$Errors, {type => 'in table',
                  ns => HTMLNS,
                  local_name => 'noscript',
                  attr_list => $token->{attr_list},
-                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
+                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS) };
       
 
       if ($OE->[-1]->{et} & (TAB_ELS | TBO_TFO_THE_ELS | TR_ELS)) { # table* context
@@ -11004,7 +11007,7 @@ $ORIGINAL_IM = $IM;
                  ns => HTMLNS,
                  local_name => 'noscript',
                  attr_list => $token->{attr_list},
-                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
+                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS) };
       
 
       if ($OE->[-1]->{et} & (TAB_ELS | TBO_TFO_THE_ELS | TR_ELS)) { # table* context
@@ -11179,7 +11182,7 @@ push @$Errors, {type => 'in table',
                  ns => HTMLNS,
                  local_name => 'plaintext',
                  attr_list => $token->{attr_list},
-                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
+                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS) };
       
 
       if ($OE->[-1]->{et} & (TAB_ELS | TBO_TFO_THE_ELS | TR_ELS)) { # table* context
@@ -11711,7 +11714,7 @@ push @$Errors, {type => 'in table',
                  ns => HTMLNS,
                  local_name => 'title',
                  attr_list => $token->{attr_list},
-                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS) };
+                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS) };
       
 
       if ($OE->[-1]->{et} & (TAB_ELS | TBO_TFO_THE_ELS | TR_ELS)) { # table* context
@@ -11798,7 +11801,7 @@ push @$Errors, {type => 'in table',
                  ns => HTMLNS,
                  local_name => 'xmp',
                  attr_list => $token->{attr_list},
-                 et => (HTML_NS_ELS), aet => (HTML_NS_ELS) };
+                 et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS) };
       
 
       if ($OE->[-1]->{et} & (TAB_ELS | TBO_TFO_THE_ELS | TR_ELS)) { # table* context
@@ -12632,7 +12635,7 @@ my $ResetIMByETUnlessLast = {  (HEAD_EL) => IN_HEAD_IM,
                 if ($OE->[$_]->{et} & (APP_ELS | CAP_ELS | HTM_ELS | MAR_M_ANN_ELS | OBJ_ELS | TAB_ELS | TD_TH_ELS | TEM_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS | S_DES_S_FOR_S_TIT_ELS)) {
                   $beyond_scope = 1;
                 }
-                if ($OE->[$_]->{et} & (ADD_DIV_ELS | APP_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS | BOD_ELS | BUT_ELS | CAP_ELS | COL_ELS | DD_ELS | DT_ELS | FIE_INP_SEL_ELS | HHHHHH_ELS | HTM_ELS | IMG_ELS | LI_ELS | MAR_M_ANN_ELS | OBJ_ELS | OL_UL_ELS | P_ELS | STY_ELS | TAB_ELS | TBO_TFO_THE_ELS | TD_TH_ELS | TEM_ELS | TEX_ELS | TR_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS | S_DES_S_FOR_S_TIT_ELS)) {
+                if ($OE->[$_]->{et} & (ADD_DIV_ELS | APP_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS | BOD_ELS | BUT_ELS | CAP_ELS | COL_ELS | DD_ELS | DT_ELS | FIE_INP_SEL_ELS | HHHHHH_ELS | HTM_ELS | IMG_ELS | LI_ELS | MAR_M_ANN_ELS | OBJ_ELS | OL_UL_ELS | P_ELS | STY_ELS | TAB_ELS | TBO_TFO_THE_ELS | TD_TH_ELS | TEM_ELS | TEX_ELS | TR_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS | S_DES_S_FOR_S_TIT_ELS)) {
                   $furthest_block = $OE->[$_];
                   $furthest_block_i = $_;
                 }
@@ -12838,7 +12841,7 @@ my $ResetIMByETUnlessLast = {  (HEAD_EL) => IN_HEAD_IM,
                 if ($OE->[$_]->{et} & (APP_ELS | CAP_ELS | HTM_ELS | MAR_M_ANN_ELS | OBJ_ELS | TAB_ELS | TD_TH_ELS | TEM_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS | S_DES_S_FOR_S_TIT_ELS)) {
                   $beyond_scope = 1;
                 }
-                if ($OE->[$_]->{et} & (ADD_DIV_ELS | APP_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTW_ELS | BOD_ELS | BUT_ELS | CAP_ELS | COL_ELS | DD_ELS | DT_ELS | FIE_INP_SEL_ELS | HHHHHH_ELS | HTM_ELS | IMG_ELS | LI_ELS | MAR_M_ANN_ELS | OBJ_ELS | OL_UL_ELS | P_ELS | STY_ELS | TAB_ELS | TBO_TFO_THE_ELS | TD_TH_ELS | TEM_ELS | TEX_ELS | TR_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS | S_DES_S_FOR_S_TIT_ELS)) {
+                if ($OE->[$_]->{et} & (ADD_DIV_ELS | APP_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMNNNNPPPSSSSTTWX_ELS | BOD_ELS | BUT_ELS | CAP_ELS | COL_ELS | DD_ELS | DT_ELS | FIE_INP_SEL_ELS | HHHHHH_ELS | HTM_ELS | IMG_ELS | LI_ELS | MAR_M_ANN_ELS | OBJ_ELS | OL_UL_ELS | P_ELS | STY_ELS | TAB_ELS | TBO_TFO_THE_ELS | TD_TH_ELS | TEM_ELS | TEX_ELS | TR_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS | S_DES_S_FOR_S_TIT_ELS)) {
                   $furthest_block = $OE->[$_];
                   $furthest_block_i = $_;
                 }
@@ -13505,11 +13508,11 @@ if ($EOF) {
                           value => q@]@,
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
+$State = CDATA_SECTION_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -13563,11 +13566,11 @@ if ($EOF) {
                           value => q@]]@,
                           di => $DI, index => $Offset + (pos $Input) - 2};
         
+$State = CDATA_SECTION_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -13604,7 +13607,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -13640,11 +13642,11 @@ $State = CDATA_SECTION_STATE;
         
 } else {
 if ($EOF) {
+$State = CDATA_SECTION_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -13684,7 +13686,6 @@ if ($EOF) {
           
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -13729,7 +13730,6 @@ if ($EOF) {
           
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -13772,13 +13772,13 @@ $State = DOCTYPE_PUBLIC_ID__DQ__STATE;
 $Token->{q<public_identifier>} .= $1;
 } else {
 if ($EOF) {
+$State = DOCTYPE_PUBLIC_ID__DQ__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -13823,7 +13823,6 @@ if ($EOF) {
           
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -13866,13 +13865,13 @@ $State = DOCTYPE_PUBLIC_ID__SQ__STATE;
 $Token->{q<public_identifier>} .= $1;
 } else {
 if ($EOF) {
+$State = DOCTYPE_PUBLIC_ID__SQ__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -13954,7 +13953,6 @@ if ($EOF) {
       
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -13999,7 +13997,6 @@ if ($EOF) {
           
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -14042,13 +14039,13 @@ $State = DOCTYPE_SYSTEM_ID__DQ__STATE;
 $Token->{q<system_identifier>} .= $1;
 } else {
 if ($EOF) {
+$State = DOCTYPE_SYSTEM_ID__DQ__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -14093,7 +14090,6 @@ if ($EOF) {
           
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -14136,13 +14132,13 @@ $State = DOCTYPE_SYSTEM_ID__SQ__STATE;
 $Token->{q<system_identifier>} .= $1;
 } else {
 if ($EOF) {
+$State = DOCTYPE_SYSTEM_ID__SQ__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -16547,7 +16543,6 @@ if ($EOF) {
           
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -16581,8 +16576,8 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 $Token->{q<force_quirks_flag>} = 1;
+$State = BOGUS_DOCTYPE_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -16616,8 +16611,8 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 $Token->{q<force_quirks_flag>} = 1;
+$State = BOGUS_DOCTYPE_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -16651,8 +16646,8 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 $Token->{q<force_quirks_flag>} = 1;
+$State = BOGUS_DOCTYPE_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -16686,8 +16681,8 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 $Token->{q<force_quirks_flag>} = 1;
+$State = BOGUS_DOCTYPE_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -16719,8 +16714,8 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 $Token->{q<force_quirks_flag>} = 1;
+$State = BOGUS_DOCTYPE_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -16754,8 +16749,8 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 $Token->{q<force_quirks_flag>} = 1;
+$State = BOGUS_DOCTYPE_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -16789,8 +16784,8 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 $Token->{q<force_quirks_flag>} = 1;
+$State = BOGUS_DOCTYPE_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -16824,8 +16819,8 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 $Token->{q<force_quirks_flag>} = 1;
+$State = BOGUS_DOCTYPE_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -16859,8 +16854,8 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 $Token->{q<force_quirks_flag>} = 1;
+$State = BOGUS_DOCTYPE_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -16892,8 +16887,8 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 $Token->{q<force_quirks_flag>} = 1;
+$State = BOGUS_DOCTYPE_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -16942,7 +16937,6 @@ if ($EOF) {
           
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -16996,7 +16990,6 @@ if ($EOF) {
           
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -17029,7 +17022,6 @@ if ($EOF) {
           
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -17083,7 +17075,6 @@ if ($EOF) {
           
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -17209,7 +17200,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -17372,7 +17362,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -18619,11 +18608,11 @@ if ($EOF) {
           $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
         }
       
+$State = A_ATTR_NAME_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -18662,7 +18651,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -18731,11 +18719,11 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__DQ__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -18939,11 +18927,11 @@ if ($EOF) {
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__DQ__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -19147,11 +19135,11 @@ if ($EOF) {
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__DQ__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -19590,11 +19578,11 @@ if ($EOF) {
           } # REF
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__DQ__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -19669,11 +19657,11 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__DQ__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -19727,11 +19715,11 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__DQ__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -19770,11 +19758,11 @@ $State = ATTR_VALUE__DQ__STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
+$State = ATTR_VALUE__DQ__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -19813,7 +19801,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -19882,11 +19869,11 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__SQ__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -20090,11 +20077,11 @@ if ($EOF) {
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__SQ__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -20298,11 +20285,11 @@ if ($EOF) {
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__SQ__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -20741,11 +20728,11 @@ if ($EOF) {
           } # REF
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__SQ__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -20820,11 +20807,11 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__SQ__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -20878,11 +20865,11 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__SQ__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -20921,11 +20908,11 @@ $State = ATTR_VALUE__SQ__STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
+$State = ATTR_VALUE__SQ__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -21040,7 +21027,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -21221,11 +21207,11 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__UNQUOTED__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -21655,11 +21641,11 @@ if ($EOF) {
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__UNQUOTED__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -22089,11 +22075,11 @@ if ($EOF) {
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__UNQUOTED__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -22856,11 +22842,11 @@ if ($EOF) {
           } # REF
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__UNQUOTED__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -23047,11 +23033,11 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__UNQUOTED__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -23193,11 +23179,11 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__UNQUOTED__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -23317,11 +23303,11 @@ $State = ATTR_VALUE__UNQUOTED__STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
+$State = ATTR_VALUE__UNQUOTED__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -23386,7 +23372,6 @@ if ($EOF) {
       
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -23431,7 +23416,6 @@ if ($EOF) {
           
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -23476,7 +23460,6 @@ if ($EOF) {
           
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -23721,11 +23704,11 @@ $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 } else {
 if ($EOF) {
+$State = A_ATTR_NAME_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -23834,11 +23817,11 @@ $State = ATTR_VALUE__UNQUOTED__STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
+$State = ATTR_VALUE__UNQUOTED__STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -23878,7 +23861,6 @@ if ($EOF) {
           
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -23900,7 +23882,6 @@ push @$Tokens, $Token;
 } else {
 if ($EOF) {
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -23929,7 +23910,6 @@ push @$Tokens, $Token;
 } else {
 if ($EOF) {
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -23961,8 +23941,8 @@ $State = BOGUS_COMMENT_STATE;
 push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
+$State = BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -24245,7 +24225,6 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -24290,7 +24269,6 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -24333,12 +24311,12 @@ $State = COMMENT_STATE;
 push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
+$State = COMMENT_END_DASH_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -24388,7 +24366,6 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -24437,12 +24414,12 @@ $State = COMMENT_STATE;
 push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
+$State = COMMENT_END_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -24512,12 +24489,12 @@ $State = COMMENT_STATE;
 push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
+$State = COMMENT_END_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -24557,12 +24534,12 @@ $State = COMMENT_STATE;
 push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
+$State = COMMENT_END_DASH_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -24598,12 +24575,12 @@ $State = COMMENT_STATE;
 push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
+$State = COMMENT_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -24640,12 +24617,12 @@ $State = COMMENT_STATE;
 push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
+$State = COMMENT_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -24697,7 +24674,6 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -24740,12 +24716,12 @@ $State = COMMENT_STATE;
 push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
+$State = COMMENT_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -24785,7 +24761,6 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -24824,12 +24799,12 @@ $State = COMMENT_STATE;
 push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
+$State = COMMENT_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -26354,7 +26329,6 @@ if ($EOF) {
                           value => q@</@,
                           di => $DI, index => $AnchoredIndex};
         
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -26441,8 +26415,8 @@ if ($EOF) {
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
+$State = BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -26528,8 +26502,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+$State = BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -26614,8 +26588,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+$State = BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -26700,8 +26674,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+$State = BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -26786,8 +26760,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+$State = BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -26872,8 +26846,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+$State = BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -26958,8 +26932,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+$State = BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -27042,8 +27016,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+$State = BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -27125,8 +27099,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+$State = BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -27208,8 +27182,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+$State = BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -27291,8 +27265,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+$State = BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -27374,8 +27348,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+$State = BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -27457,8 +27431,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+$State = BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -27561,8 +27535,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
+$State = BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -27680,11 +27654,11 @@ $State = SCRIPT_DATA_DOUBLE_ESCAPED_STATE;
         
 } else {
 if ($EOF) {
+$State = SCRIPT_DATA_DOUBLE_ESCAPED_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -27809,11 +27783,11 @@ $State = SCRIPT_DATA_DOUBLE_ESCAPED_STATE;
         
 } else {
 if ($EOF) {
+$State = SCRIPT_DATA_DOUBLE_ESCAPED_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -27926,11 +27900,11 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
         
 } else {
 if ($EOF) {
+$State = SCRIPT_DATA_ESCAPED_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -28050,11 +28024,11 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
         
 } else {
 if ($EOF) {
+$State = SCRIPT_DATA_ESCAPED_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -28121,7 +28095,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -28182,7 +28155,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -28250,11 +28222,11 @@ $State = SCRIPT_DATA_DOUBLE_ESCAPED_STATE;
         
 } else {
 if ($EOF) {
+$State = SCRIPT_DATA_DOUBLE_ESCAPED_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -28314,7 +28286,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -28374,11 +28345,11 @@ $State = SCRIPT_DATA_DOUBLE_ESCAPED_STATE;
         
 } else {
 if ($EOF) {
+$State = SCRIPT_DATA_DOUBLE_ESCAPED_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -28821,7 +28792,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -28877,7 +28847,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -29086,11 +29055,11 @@ if ($EOF) {
                           di => $DI,
                           index => $TempIndex} if length $Temp;
         
+$State = SCRIPT_DATA_ESCAPED_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -29188,11 +29157,11 @@ if ($EOF) {
                           value => q@</@,
                           di => $DI, index => $AnchoredIndex};
         
+$State = SCRIPT_DATA_ESCAPED_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -29314,11 +29283,11 @@ if ($EOF) {
                           value => q@<@,
                           di => $DI, index => $AnchoredIndex};
         
+$State = SCRIPT_DATA_ESCAPED_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -29373,7 +29342,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -29428,11 +29396,11 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
         
 } else {
 if ($EOF) {
+$State = SCRIPT_DATA_ESCAPED_STATE;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -29778,7 +29746,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -29863,7 +29830,6 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
