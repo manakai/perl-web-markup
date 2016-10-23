@@ -3414,16 +3414,13 @@ sub actions_to_code ($;%) {
       push @code, q{push @$AFE, '#marker';};
     } elsif ($act->{type} eq 'adoption agency algorithm') {
       my $method = $act->{foster_parenting} ? 'aaa_foster' : 'aaa';
-      if (defined $act->{tag_name}) {
-        if ($act->{remove_from_afe_and_oe}) {
-          push @code, sprintf q{%s ($token, '%s', remove_from_afe_and_oe => 1);},
-              $method, $act->{tag_name};
-        } else {
-          push @code, sprintf q{%s ($token, '%s');},
-              $method, $act->{tag_name};
-        }
+      my $tag_name = defined $act->{tag_name} ? "'".$act->{tag_name}."'" : '$token->{tag_name}';
+      if ($act->{remove_from_afe_and_oe}) {
+        push @code, sprintf q{%s ($token, %s, remove_from_afe_and_oe => 1);},
+            $method, $tag_name;
       } else {
-        push @code, sprintf q{%s ($token, $token->{tag_name});}, $method;
+        push @code, sprintf q{%s ($token, %s);},
+            $method, $tag_name;
       }
     } elsif ($act->{type} eq 'parse error') {
       my $index_code;

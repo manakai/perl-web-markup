@@ -75,6 +75,21 @@
             "Web::HTML::Validator" : 1
          }
       },
+      "link:not body-ok" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>Most \u003Ccode>link\u003C/code> elements must be children of\u000Athe \u003Ccode>head\u003C/code> element of the document.  Exceptions\u000Aare microdata \u003Ccode>link\u003C/code> elements (i.e. \u003Ccode>link\u003C/code>\u000Aelements with \u003Ccode>itemprop\u003C/code> attributes) and\u000A\u003Ccode>link\u003C/code> elements whose \u003Ccode>rel\u003C/code> attribute\u000Ahas one of \u0022body-ok\u0022 link types such as \u003Ccode>stylesheet\u003C/code>.\u003C/p>",
+            "ja" : "\u003Cp>ほとんどの \u003Ccode>link\u003C/code> 要素は、文書の \u003Ccode>head\u003C/code>\u000A要素の子供でなければいけません。例外は、マイクロデータの\u000A\u003Ccode>link\u003C/code> 要素 (\u003Ccode>itemprop\u003C/code> 属性のある\u000A\u003Ccode>link\u003C/code> 要素) と、 \u003Ccode>rel\u003C/code>\u000A属性に \u003Ccode>body\u003C/code> 内でも使えるリンク型\u000A(\u003Ccode>stylesheet\u003C/code> など) が指定されている\u000A\u003Ccode>link\u003C/code> 要素だけです。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "A \u003Ccode>link\u003C/code> element is not a child of the \u003Ccode>head\u003C/code> element",
+            "ja" : "\u003Ccode>link\u003C/code> 要素が \u003Ccode>head\u003C/code> 要素の子供ではありません"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
       "link:sizes:not icon" : {
          "default_level" : "m",
          "desc" : {

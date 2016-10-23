@@ -2886,7 +2886,7 @@ push @$OE, $node;
                                             level => 'm',
                                             value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
-aaa ($token, $token->{tag_name});
+aaa ($token, $token->{tag_name}, remove_from_afe_and_oe => 1);
           }
         
 &reconstruct_afe if @$AFE and ref $AFE->[-1];
@@ -8876,7 +8876,7 @@ push @$Errors, {type => 'in table',
                                             level => 'm',
                                             value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
-aaa_foster ($token, $token->{tag_name});
+aaa_foster ($token, $token->{tag_name}, remove_from_afe_and_oe => 1);
           }
         
 &reconstruct_afe_foster if @$AFE and ref $AFE->[-1];
