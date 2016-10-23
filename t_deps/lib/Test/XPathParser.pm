@@ -1,9 +1,20 @@
 package Test::XPathParser;
 use strict;
 use warnings;
-use Exporter::Lite;
+use Carp;
 
 our @EXPORT = qw(S Sf STR NUM VAR F ROOT LP OP NEG X);
+
+sub import ($;@) {
+  my $from_class = shift;
+  my ($to_class, $file, $line) = caller;
+  no strict 'refs';
+  for (@_ ? @_ : @{$from_class . '::EXPORT'}) {
+    my $code = $from_class->can ($_)
+        or croak qq{"$_" is not exported by the $from_class module at $file line $line};
+    *{$to_class . '::' . $_} = $code;
+  }
+} # import
 
 sub S ($$$$$) { +{type => 'step', axis => $_[0],
                   prefix => $_[1], (defined $_[2] ? (nsurl => \($_[2])) : ()),
