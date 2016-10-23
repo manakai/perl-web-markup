@@ -5049,8 +5049,33 @@ if ($EOF) {
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = [[q@?@, $DI, $Offset + (pos $Input)]];
-$State = DOCTYPE_BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+      
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -5345,11 +5370,37 @@ push @{$Token->{q<data>}}, [q@
 @, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
-$State = DTD_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 } else {
 if ($EOF) {
 push @$Tokens, $Token;
+$State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+      
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -5374,15 +5425,40 @@ push @{$Token->{q<data>}}, [q@
 @, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
-$State = DTD_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = DOCTYPE_BOGUS_COMMENT_STATE;
 push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
-$State = DOCTYPE_BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+      
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -5976,8 +6052,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
-$State = DTD_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 } elsif ($Input =~ /\G([\[])/gcs) {
 
           unless ($DTDMode eq 'internal subset' or
@@ -6014,8 +6090,33 @@ if ($EOF) {
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
-$State = DOCTYPE_BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+      
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -6074,8 +6175,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DTD_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -6101,8 +6202,33 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DOCTYPE_BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+      
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -6160,8 +6286,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DTD_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -6187,8 +6313,33 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DOCTYPE_BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+      
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -6246,8 +6397,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DTD_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -6273,8 +6424,33 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DOCTYPE_BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+      
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -6332,8 +6508,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DTD_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -6359,8 +6535,33 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DOCTYPE_BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+      
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -6418,8 +6619,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DTD_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -6445,8 +6646,33 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DOCTYPE_BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+      
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -6504,8 +6730,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DTD_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -6531,8 +6757,33 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DOCTYPE_BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+      
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -6584,8 +6835,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DTD_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 } elsif ($Input =~ /\G([T])/gcs) {
 $Temp .= $1;
 
@@ -6631,8 +6882,33 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DOCTYPE_BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+      
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -6696,8 +6972,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DTD_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -6723,8 +6999,33 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DOCTYPE_BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+      
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -6782,8 +7083,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DTD_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -6809,8 +7110,33 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DOCTYPE_BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+      
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -6868,8 +7194,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DTD_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -6895,8 +7221,33 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DOCTYPE_BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+      
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -6954,8 +7305,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DTD_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -6981,8 +7332,33 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DOCTYPE_BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+      
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -7040,8 +7416,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DTD_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -7067,8 +7443,33 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DOCTYPE_BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+      
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -7120,8 +7521,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DTD_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 } elsif ($Input =~ /\G([T])/gcs) {
 $Temp .= $1;
 
@@ -7167,8 +7568,33 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DOCTYPE_BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+      
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -7226,8 +7652,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DTD_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -7253,8 +7679,33 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DOCTYPE_BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+      
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -7312,8 +7763,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DTD_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -7339,8 +7790,33 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DOCTYPE_BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+      
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -7398,8 +7874,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DTD_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -7425,8 +7901,33 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DOCTYPE_BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+      
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -7478,8 +7979,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DTD_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 } elsif ($Input =~ /\G([Y])/gcs) {
 $Temp .= $1;
 
@@ -7525,8 +8026,33 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DOCTYPE_BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+      
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -7584,8 +8110,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DTD_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -7611,8 +8137,33 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DOCTYPE_BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+      
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -7670,8 +8221,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DTD_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -7697,8 +8248,33 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DOCTYPE_BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+      
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -7756,8 +8332,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DTD_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -7783,8 +8359,33 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DOCTYPE_BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+      
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -7842,8 +8443,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DTD_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -7869,8 +8470,33 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DOCTYPE_BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+      
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -7928,8 +8554,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DTD_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -7955,8 +8581,33 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DOCTYPE_BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+      
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -8014,8 +8665,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DTD_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -8041,8 +8692,33 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DOCTYPE_BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+      
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -8094,8 +8770,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DTD_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 } elsif ($Input =~ /\G([N])/gcs) {
 $Temp .= $1;
 
@@ -8141,8 +8817,33 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DOCTYPE_BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
+
+            if (@$OpenMarkedSections) {
+              push @$Errors, {type => 'parser:EOF', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input)};
+            }
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+      
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -8699,8 +9400,8 @@ $State = DOCTYPE_BOGUS_COMMENT_STATE_CR;
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
-$State = DTD_STATE;
 push @$Tokens, $Token;
+$State = DTD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bare stago', level => 'm',
@@ -14942,8 +15643,8 @@ if ($EOF) {
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = [[q@?@, $DI, $Offset + (pos $Input)]];
-$State = BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -59112,11 +59813,12 @@ push @{$Token->{q<data>}}, [q@
 @, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 } else {
 if ($EOF) {
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -59141,15 +59843,15 @@ push @{$Token->{q<data>}}, [q@
 @, $DI, $Offset + (pos $Input) - (length $1) - 0];
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = BOGUS_COMMENT_STATE;
 push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 } else {
 if ($EOF) {
-$State = BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -72785,8 +73487,8 @@ if ($EOF) {
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
-$State = BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -73156,8 +73858,8 @@ $State = BOGUS_COMMENT_STATE_CR;
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -73180,8 +73882,8 @@ if ($EOF) {
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
-$State = BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -73240,8 +73942,8 @@ $State = BOGUS_COMMENT_STATE_CR;
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -73267,8 +73969,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -73326,8 +74028,8 @@ $State = BOGUS_COMMENT_STATE_CR;
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -73353,8 +74055,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -73412,8 +74114,8 @@ $State = BOGUS_COMMENT_STATE_CR;
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -73439,8 +74141,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -73498,8 +74200,8 @@ $State = BOGUS_COMMENT_STATE_CR;
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -73525,8 +74227,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -73584,8 +74286,8 @@ $State = BOGUS_COMMENT_STATE_CR;
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -73611,8 +74313,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -73670,8 +74372,8 @@ $State = BOGUS_COMMENT_STATE_CR;
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -73697,8 +74399,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -73750,8 +74452,8 @@ $State = BOGUS_COMMENT_STATE_CR;
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 } elsif ($Input =~ /\G([E])/gcs) {
 $Temp .= $1;
 
@@ -73797,8 +74499,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -73853,8 +74555,8 @@ $State = BOGUS_COMMENT_STATE_CR;
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -73880,8 +74582,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -73936,8 +74638,8 @@ $State = BOGUS_COMMENT_STATE_CR;
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -73963,8 +74665,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -74019,8 +74721,8 @@ $State = BOGUS_COMMENT_STATE_CR;
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -74046,8 +74748,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -74105,8 +74807,8 @@ $State = BOGUS_COMMENT_STATE_CR;
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -74132,8 +74834,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -74197,8 +74899,8 @@ $State = BOGUS_COMMENT_STATE_CR;
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus comment', level => 'm',
@@ -74224,8 +74926,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
@@ -74277,8 +74979,8 @@ $State = BOGUS_COMMENT_STATE_CR;
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = DATA_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 } elsif ($Input =~ /\G([\[])/gcs) {
 
             unless (@$OE) {
@@ -74312,8 +75014,8 @@ if ($EOF) {
       
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
-$State = BOGUS_COMMENT_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,
