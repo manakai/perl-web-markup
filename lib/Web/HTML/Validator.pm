@@ -166,7 +166,6 @@ sub _init ($) {
   $self->{term} = {};
   $self->{usemap} = [];
   $self->{map_exact} = {}; # |map| elements with their original |name|s
-  $self->{map_compat} = {}; # |map| elements with their lowercased |name|s
   $self->{has_link_type} = {};
   $self->{flag} = {};
   $self->{top_level_item_elements} = [];
@@ -197,7 +196,6 @@ sub _terminate ($) {
   delete $self->{idref};
   delete $self->{usemap};
   delete $self->{map_exact};
-  delete $self->{map_compat};
   delete $self->{top_level_item_elements};
   delete $self->{itemprop_els};
   delete $self->{flag};
@@ -6431,7 +6429,6 @@ $Element->{+HTML_NS}->{map} = {
     name => sub {
       my ($self, $attr) = @_;
       my $value = $attr->value;
-      my $value_compat = lc $value; ## XXX compatibility caseless match
       if (length $value) {
         if ($value =~ /[\x09\x0A\x0C\x0D\x20]/) {
           $self->{onerror}->(node => $attr,
@@ -6439,7 +6436,7 @@ $Element->{+HTML_NS}->{map} = {
                              level => 'm');
         }
         
-        if ($self->{map_compat}->{$value_compat}) {
+        if ($self->{map_exact}->{$value}) {
           $self->{onerror}->(node => $attr,
                              type => 'duplicate map name',
                              value => $value,
@@ -6451,7 +6448,6 @@ $Element->{+HTML_NS}->{map} = {
                            level => 'm');
       }
       $self->{map_exact}->{$value} ||= $attr;
-      $self->{map_compat}->{$value_compat} ||= $attr;
     },
   }), # check_attrs
   check_attrs2 => sub {
@@ -10230,19 +10226,10 @@ sub _check_refs ($) {
       ## There is at least one |map| element with the specified name.
       #
     } else {
-      my $name_compat = lc $_->[0]; ## XXX compatibility caseless match.
-      if ($self->{map_compat}->{$name_compat}) {
-        ## There is at least one |map| element with the specified name
-        ## in different case combination.
-        $self->{onerror}->(node => $_->[1],
-                           type => 'hashref:wrong case',
-                           level => 'm');
-      } else {
-        ## There is no |map| element with the specified name at all.
-        $self->{onerror}->(node => $_->[1],
-                           type => 'no referenced map',
-                           level => 'm');
-      }
+      ## There is no |map| element with the specified name at all.
+      $self->{onerror}->(node => $_->[1],
+                         type => 'no referenced map',
+                         level => 'm');
     }
   }
 
