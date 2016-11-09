@@ -276,7 +276,15 @@ sub get_inner_html ($$) {
     } elsif ($nt == 8) { # Comment
       $s .= '<!--' . $child->data . '-->';
     } elsif ($nt == 10) { # DocumentType
-      $s .= '<!DOCTYPE ' . $child->name . '>';
+      my $pubid = $child->public_id;
+      my $sysid = $child->system_id;
+      if (length $pubid) {
+        $s .= '<!DOCTYPE ' . $child->name . ' PUBLIC "' . $pubid . '" "' . $sysid . '">';
+      } elsif (length $sysid) {
+        $s .= '<!DOCTYPE ' . $child->name . ' SYSTEM "' . $sysid . '">';
+      } else {
+        $s .= '<!DOCTYPE ' . $child->name . '>';
+      }
     } elsif ($nt == 7) { # ProcessingInstruction
       $s .= '<?' . $child->target . ' ' . $child->data . '?>';
     } elsif ($nt == 9 or $nt == 11) { # Document / DocumentFragment

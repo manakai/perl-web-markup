@@ -433,6 +433,23 @@ test {
   done $c;
 } n => 1, name => 'template parent df';
 
+for (
+  ['a', '', '' => q{<!DOCTYPE a>}],
+  ['a', 'foo', '' => q{<!DOCTYPE a PUBLIC "foo" "">}],
+  ['a', '', 'bar' => q{<!DOCTYPE a SYSTEM "bar">}],
+  ['a', 'foo', 'baz' => q{<!DOCTYPE a PUBLIC "foo" "baz">}],
+  ['a', 'a"b', 'c"d' => q{<!DOCTYPE a PUBLIC "a"b" "c"d">}],
+) {
+  my ($name, $pid, $sid, $expected) = @$_;
+  test {
+    my $c = shift;
+    my $doc = new Web::DOM::Document;
+    my $dt = $doc->implementation->create_document_type ($name, $pid, $sid);
+    is ${Web::HTML::Serializer->new->get_inner_html ([$dt])}, $expected;
+    done $c;
+  } n => 1, name => $expected;
+}
+
 run_tests;
 
 =head1 LICENSE
