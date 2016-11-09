@@ -1,26 +1,18 @@
 =head1 NAME
 
-Web::XML::Serializer - XML DOM Serializer
+Web::XML::Serializer - Serialization of XML DOM
 
 =head1 SYNOPSIS
 
-  require Web::XML::Serializer;
-  
-  ## Serialize an XML document
-  my $xmlref = Web::XML::Serializer->get_inner_html ($doc);
-  
-  ## Serialize an XML element
-  my $xmlref = Web::XML::Serializer->get_inner_html ($el);
-  
-  ## Serialize an XML document fragment
-  my $xmlref = Web::XML::Serializer->get_inner_html ($df);
+  warn $element->inner_html;
+  warn $document->inner_html;
 
 =head1 DESCRIPTION
 
 The C<Web::XML::Serializer> module provides a function that implements
-the fragment serialization algorithm of HTML5.  It can be used to
-serialize an XML C<Document>, C<Element>, or C<DocumentFragment> node
-into an XML document or fragment.
+the fragment serialization algorithm in the HTML Standard.  It can be
+used to serialize an XML C<Document>, C<Element>, or
+C<DocumentFragment> node into an XML document or fragment.
 
 Note that the algorithm cannot be used to serialize an arbitrary DOM
 tree; an attempt to serialize a DOM that cannot be represented in a
@@ -52,6 +44,8 @@ C<inner_html> attribute for DOM C<Document> and C<Element> nodes.
 
 =head1 METHODS
 
+There are following methods:
+
 =over 4
 
 =item $serializer = Web::XML::Serializer->new
@@ -76,12 +70,12 @@ C<DocumentFragment>.
 =item HTML
 
 HTML Standard
-<http://www.whatwg.org/specs/web-apps/current-work/#serializing-xhtml-fragments>.
+<https://html.spec.whatwg.org/#serializing-xhtml-fragments>.
 
 =item DOMPARSING
 
 DOM Parsing and Serialization Standard
-<http://domparsing.spec.whatwg.org/#concept-serialize-xml>.
+<https://domparsing.spec.whatwg.org/#concept-serialize-xml>.
 
 =back
 
@@ -91,7 +85,7 @@ L<Web::HTML::Serializer>.
 
 L<Web::DOM::ParentNode>.
 
-Namespace fixup <http://suika.fam.cx/www/markup/xml/nsfixup>.
+Namespace fixup <https://suika.suikawiki.org/www/markup/xml/nsfixup>.
 
 =head1 AUTHOR
 
@@ -99,7 +93,7 @@ Wakaba <wakaba@suikawiki.org>.
 
 =head1 LICENSE
 
-Copyright 2007-2013 Wakaba <wakaba@suikawiki.org>.
+Copyright 2007-2016 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

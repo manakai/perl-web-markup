@@ -1,11 +1,10 @@
 use strict;
 use warnings;
-use Path::Class;
-use lib file (__FILE__)->dir->parent->parent->subdir ('lib')->stringify;
-use lib file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'lib')->stringify;
-use lib glob file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'modules', '*', 'lib')->stringify;
+use Path::Tiny;
+use lib path (__FILE__)->parent->parent->parent->child ('lib')->stringify;
+use lib path (__FILE__)->parent->parent->parent->child ('t_deps', 'lib')->stringify;
+use lib glob path (__FILE__)->parent->parent->parent->child ('t_deps', 'modules', '*', 'lib')->stringify;
 use Test::More;
-use Test::Differences;
 use Test::X1;
 use Web::XML::Serializer;
 use Web::DOM::Document;
@@ -340,18 +339,18 @@ test {
 
   local $Web::ScriptingEnabled = 0;
   is ${Web::XML::Serializer->new->get_inner_html ($noscript)},
-      qq<avc&amp;&lt;"&gt;'&nbsp;<abC xmlns="" class="xYz"></abC>Q&amp;A>,
+      qq<avc&amp;&lt;&quot;&gt;'\xA0<abC xmlns="" class="xYz"></abC>Q&amp;A>,
       'noscript_scripting_disabled noscript inner';
   is ${Web::XML::Serializer->new->get_inner_html ($el)},
-      qq<<noscript xmlns="http://www.w3.org/1999/xhtml">avc&amp;&lt;"&gt;'&nbsp;<abC xmlns="" class="xYz"></abC>Q&amp;A</noscript>>,
+      qq<<noscript xmlns="http://www.w3.org/1999/xhtml">avc&amp;&lt;&quot;&gt;'\xA0<abC xmlns="" class="xYz"></abC>Q&amp;A</noscript>>,
       'noscript_scripting_disabled';
 
   local $Web::ScriptingEnabled = 1;
   is ${Web::XML::Serializer->new->get_inner_html ($noscript)},
-      qq<avc&amp;&lt;"&gt;'&nbsp;<abC xmlns="" class="xYz"></abC>Q&amp;A>,
+      qq<avc&amp;&lt;&quot;&gt;'\xA0<abC xmlns="" class="xYz"></abC>Q&amp;A>,
       'noscript_scripting_enabled noscript inner';
   is ${Web::XML::Serializer->new->get_inner_html ($el)},
-      qq<<noscript xmlns="http://www.w3.org/1999/xhtml">avc&amp;&lt;"&gt;'&nbsp;<abC xmlns="" class="xYz"></abC>Q&amp;A</noscript>>,
+      qq<<noscript xmlns="http://www.w3.org/1999/xhtml">avc&amp;&lt;&quot;&gt;'\xA0<abC xmlns="" class="xYz"></abC>Q&amp;A</noscript>>,
       'noscript_scripting_enabled';
   done $c;
 } n => 4, name => 'noscript';
@@ -365,9 +364,9 @@ test {
   $pre->append_child ($doc->create_text_node ('abc<>&"' . "\xA0"));
 
   is ${Web::XML::Serializer->new->get_inner_html ($xmp)},
-      qq<abc&lt;&gt;&amp;"&nbsp;<pre xmlns="http://www.w3.org/1999/xhtml">abc&lt;&gt;&amp;"&nbsp;</pre>>;
+      qq<abc&lt;&gt;&amp;&quot;\xA0<pre xmlns="http://www.w3.org/1999/xhtml">abc&lt;&gt;&amp;&quot;\xA0</pre>>;
   is ${Web::XML::Serializer->new->get_inner_html ($el)},
-      qq<<xmp xmlns="http://www.w3.org/1999/xhtml">abc&lt;&gt;&amp;"&nbsp;<pre>abc&lt;&gt;&amp;"&nbsp;</pre></xmp>>;
+      qq<<xmp xmlns="http://www.w3.org/1999/xhtml">abc&lt;&gt;&amp;&quot;\xA0<pre>abc&lt;&gt;&amp;&quot;\xA0</pre></xmp>>;
   done $c;
 } n => 2, name => 'xmp_descendant';
 
@@ -378,7 +377,7 @@ test {
   $p->set_attribute_ns (undef, [undef, 'id'] => '<>&"' . qq<"']]> . '>' . "\xA0");
   
   is ${Web::XML::Serializer->new->get_inner_html ($el)},
-      qq{<p xmlns="http://www.w3.org/1999/xhtml" id="<>&amp;&quot;&quot;']]>&nbsp;"></p>};
+      qq{<p xmlns="http://www.w3.org/1999/xhtml" id="&lt;&gt;&amp;&quot;&quot;']]&gt;\xA0"></p>};
   done $c;
 } n => 1, name => 'attr_value';
 
@@ -503,7 +502,7 @@ test {
   $el->append_child ($doc->create_processing_instruction ('xml', 'version="1.0?>"'));
   $doc->append_child ($div);
   my $html = Web::XML::Serializer->new->get_inner_html ($doc);
-  eq_or_diff $$html, qq{<div xmlns="http://www.w3.org/1999/xhtml"><p title="<!&amp;&quot;'>&nbsp;">a b \x{1000}\x{2000}&lt;!&amp;"'&gt;&nbsp;<!--A -- B--><?xml version="1.0?>"?></p></div>};
+  is $$html, qq{<div xmlns="http://www.w3.org/1999/xhtml"><p title="&lt;!&amp;&quot;'&gt;\xA0">a b \x{1000}\x{2000}&lt;!&amp;&quot;'&gt;\xA0<!--A -- B--><?xml version="1.0?>"?></p></div>};
   done $c;
 } n => 1;
 
@@ -572,7 +571,7 @@ run_tests;
 
 =head1 LICENSE
 
-Copyright 2009-2013 Wakaba <wakaba@suikawiki.org>.
+Copyright 2009-2016 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

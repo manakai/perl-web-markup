@@ -139,9 +139,9 @@ sub get_inner_html ($$) {
   my $node = $_[1];
 
   ## XML fragment serialization algorithm
-  ## <http://www.whatwg.org/specs/web-apps/current-work/#serializing-xhtml-fragments>
+  ## <https://www.whatwg.org/specs/web-apps/current-work/#serializing-xhtml-fragments>
   ## Produce an XML serialization
-  ## <http://domparsing.spec.whatwg.org/#concept-serialize-xml>
+  ## <https://domparsing.spec.whatwg.org/#concept-serialize-xml>
 
   ## XXX HTML requires the serializer to throw if not serializable,
   ## while DOMPARSING requires not to throw.
@@ -174,7 +174,7 @@ sub get_inner_html ($$) {
     my $nt = $child->node_type;
     if ($nt == 1) { # Element
       ## Namespace fixup
-      ## <http://suika.suikawiki.org/www/markup/xml/nsfixup>.
+      ## <https://suika.suikawiki.org/www/markup/xml/nsfixup>.
 
       # 1.-2.
       my $default_ns = $c->[1];
@@ -253,11 +253,10 @@ sub get_inner_html ($$) {
         $s .= ' ' . $attr->[0] . '="';
         ## escape
         $attr->[1] =~ s/&/&amp;/g;
-        $attr->[1] =~ s/\xA0/&nbsp;/g;
+        #$attr->[1] =~ s/\xA0/&nbsp;/g;
         $attr->[1] =~ s/"/&quot;/g;
-        #$attr->[1] =~ s/</&lt;/g;
-        #$attr->[1] =~ s/>/&gt;/g;
-# XXX U+0000-001F
+        $attr->[1] =~ s/</&lt;/g;
+        $attr->[1] =~ s/>/&gt;/g;
         $s .= $attr->[1] . '"';
       }
       $s .= '>';
@@ -269,13 +268,11 @@ sub get_inner_html ($$) {
     } elsif ($nt == 3) { # Text
       my $value = $child->data;
       $value =~ s/&/&amp;/g;
-      $value =~ s/\xA0/&nbsp;/g;
+      #$value =~ s/\xA0/&nbsp;/g;
       $value =~ s/</&lt;/g;
       $value =~ s/>/&gt;/g;
-      #$value =~ s/"/&quot;/g;
+      $value =~ s/"/&quot;/g;
       $s .= $value;
-
-      # XXX Should we support Text->serializeAsCDATA [DOMPARSING]?
     } elsif ($nt == 8) { # Comment
       $s .= '<!--' . $child->data . '-->';
     } elsif ($nt == 10) { # DocumentType
@@ -297,7 +294,7 @@ sub get_inner_html ($$) {
 
 =head1 LICENSE
 
-Copyright 2007-2014 Wakaba <wakaba@suikawiki.org>.
+Copyright 2007-2016 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
