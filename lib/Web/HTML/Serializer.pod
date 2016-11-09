@@ -1,19 +1,11 @@
 =head1 NAME
 
-Web::HTML::Serializer - HTML DOM Serializer
+Web::HTML::Serializer - Serialization of HTML DOM
 
 =head1 SYNOPSIS
 
-  require Web::HTML::Serializer;
-  
-  ## Serialize an HTML document
-  my $htmlref = Web::HTML::Serializer->get_inner_html ($doc);
-  
-  ## Serialize an HTML element
-  my $htmlref = Web::HTML::Serializer->get_inner_html ($el);
-  
-  ## Serialize an HTML document fragment
-  my $htmlref = Web::HTML::Serializer->get_inner_html ($df);
+  warn $element->inner_html;
+  warn $document->inner_html;
 
 =head1 DESCRIPTION
 
@@ -52,6 +44,8 @@ C<inner_html> attribute for DOM C<Document> and C<Element> nodes.
 
 =head1 METHODS
 
+There are following methods:
+
 =over 4
 
 =item $serializer = Web::HTML::Serializer->new
@@ -85,7 +79,7 @@ C<DocumentFragment>.
 =item HTML
 
 HTML Standard
-<http://www.whatwg.org/specs/web-apps/current-work/complete.html#html-fragment-serialization-algorithm>.
+<https://html.spec.whatwg.org/#html-fragment-serialization-algorithm>.
 
 =back
 
@@ -101,7 +95,7 @@ Wakaba <wakaba@suikawiki.org>.
 
 =head1 LICENSE
 
-Copyright 2007-2014 Wakaba <wakaba@suikawiki.org>.
+Copyright 2007-2016 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

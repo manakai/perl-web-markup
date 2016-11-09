@@ -1,11 +1,10 @@
 use strict;
 use warnings;
-use Path::Class;
-use lib file (__FILE__)->dir->parent->parent->subdir ('lib')->stringify;
-use lib file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'lib')->stringify;
-use lib glob file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'modules', '*', 'lib')->stringify;
+use Path::Tiny;
+use lib path (__FILE__)->parent->parent->parent->child ('lib')->stringify;
+use lib path (__FILE__)->parent->parent->parent->child ('t_deps', 'lib')->stringify;
+use lib glob path (__FILE__)->parent->parent->parent->child ('t_deps', 'modules', '*', 'lib')->stringify;
 use Test::More;
-use Test::Differences;
 use Test::X1;
 use Web::HTML::Serializer;
 use Web::DOM::Document;
@@ -228,8 +227,8 @@ test {
   my $pre = $xmp->append_child ($doc->create_element_ns ('http://www.w3.org/1999/xhtml', [undef, 'pre']));
   $pre->append_child ($doc->create_text_node ('abc<>&"' . "\xA0"));
 
-  is ${Web::HTML::Serializer->new->get_inner_html ($xmp)}, qq<abc<>&"\xA0<pre>\x0Aabc&lt;&gt;&amp;"&nbsp;</pre>>;
-  is ${Web::HTML::Serializer->new->get_inner_html ($el)}, qq<<xmp>abc<>&"\xA0<pre>\x0Aabc&lt;&gt;&amp;"&nbsp;</pre></xmp>>;
+  is ${Web::HTML::Serializer->new->get_inner_html ($xmp)}, qq<abc<>&"\xA0<pre>abc&lt;&gt;&amp;"&nbsp;</pre>>;
+  is ${Web::HTML::Serializer->new->get_inner_html ($el)}, qq<<xmp>abc<>&"\xA0<pre>abc&lt;&gt;&amp;"&nbsp;</pre></xmp>>;
   done $c;
 } n => 2, name => 'xmp_descendant';
 
@@ -297,7 +296,7 @@ for my $tag_name (qw(textarea pre listing)) {
     my $child = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', [undef, $tag_name]);
     $child->text_content ("\x0Aabc\x0A");
     $el->append_child ($child);
-    is ${Web::HTML::Serializer->new->get_inner_html ($el)}, qq<<$tag_name>\x0A\x0Aabc\x0A</$tag_name>>;
+    is ${Web::HTML::Serializer->new->get_inner_html ($el)}, qq<<$tag_name>\x0Aabc\x0A</$tag_name>>;
     done $c;
   } n => 1, name => 'start_tag_trailing_newlines';
 
@@ -365,7 +364,7 @@ test {
   $el->append_child ($doc->create_processing_instruction ('xml', 'version="1.0?>"'));
   $doc->append_child ($div);
   my $html = Web::HTML::Serializer->new->get_inner_html ($doc);
-  eq_or_diff $$html, qq{<div><p title="<!&amp;&quot;'>&nbsp;">a b \x{1000}\x{2000}&lt;!&amp;"'&gt;&nbsp;<!--A -- B--><?xml version="1.0?>"></p></div>};
+  is $$html, qq{<div><p title="<!&amp;&quot;'>&nbsp;">a b \x{1000}\x{2000}&lt;!&amp;"'&gt;&nbsp;<!--A -- B--><?xml version="1.0?>"></p></div>};
   done $c;
 } n => 1;
 

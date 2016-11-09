@@ -106,10 +106,6 @@ sub get_inner_html ($$) {
       
       next C if $Web::HTML::_SyntaxDefs->{void}->{$child_ns}->{$tag_name};
 
-      $s .= "\x0A"
-          if {pre => 1, textarea => 1, listing => 1}->{$tag_name} and
-              $child_ns eq q<http://www.w3.org/1999/xhtml>;
-
       my $child_in_cdata = $self->_in_cdata ($child);
       unshift @node,
           (map { [$_, $child_in_cdata] } ($child->node_type == 1 and $child->manakai_element_type_match ('http://www.w3.org/1999/xhtml', 'template')) ? $child->content->child_nodes->to_list : $child->child_nodes->to_list),
@@ -147,7 +143,7 @@ sub get_inner_html ($$) {
 
 =head1 LICENSE
 
-Copyright 2007-2014 Wakaba <wakaba@suikawiki.org>.
+Copyright 2007-2016 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
