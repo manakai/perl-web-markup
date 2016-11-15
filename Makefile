@@ -220,7 +220,8 @@ intermediate/validator-errors.json: bin/generate-errors.pl \
 
 ## ------ Tests ------
 
-test: test-deps test-main test-benchmark
+test: test-deps test-main
+# test-benchmark
 
 test-deps: deps local/elements.json local/errors.json $(JSON_PS)
 
