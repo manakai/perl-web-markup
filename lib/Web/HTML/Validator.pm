@@ -2958,7 +2958,7 @@ $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{is} = sub {
     $self->{onerror}->(node => $attr,
                        type => 'is:not custom element name',
                        value => $value,
-                       level => 'w');
+                       level => 'm');
   }
 
   ## XXX autonomous custom element's local names and is="" attribute
