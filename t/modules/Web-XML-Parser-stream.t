@@ -422,7 +422,7 @@ test {
   $parser->parse_bytes_end;
   $parser->onparsed (sub {
     test {
-      is $doc->inner_html, q{<!DOCTYPE a><a xmlns=""></a>};
+      is $doc->inner_html, q{<!DOCTYPE a SYSTEM "http://a/"><a xmlns=""></a>};
       @error = grep { not $_->{type} eq 'xml:dtd:ext decl' } @error;
       @error = grep { not $_->{type} eq 'external entref' } @error;
       eq_or_diff \@error, [{type => 'no XML decl',
@@ -487,7 +487,7 @@ test {
   $parser->parse_bytes_end;
   $parser->onparsed (sub {
     test {
-      is $doc->inner_html, q{<!DOCTYPE a><a xmlns=""> yx</a>};
+      is $doc->inner_html, q{<!DOCTYPE a SYSTEM "http://a/"><a xmlns=""> yx</a>};
       @error = grep { not $_->{type} eq 'xml:dtd:ext decl' } @error;
       @error = grep { not $_->{type} eq 'external entref' } @error;
       eq_or_diff \@error, [{type => 'no XML decl',
@@ -552,7 +552,7 @@ test {
   $parser->parse_bytes_end;
   $parser->onparsed (sub {
     test {
-      is $doc->inner_html, q{<!DOCTYPE a><a xmlns=""></a>};
+      is $doc->inner_html, q{<!DOCTYPE a SYSTEM "http://a/"><a xmlns=""></a>};
       @error = grep { not $_->{type} eq 'xml:dtd:ext decl' } @error;
       @error = grep { not $_->{type} eq 'external entref' } @error;
       eq_or_diff \@error, [{type => 'no XML decl',
@@ -628,7 +628,7 @@ test {
   $parser->parse_bytes_end;
   $parser->onparsed (sub {
     test {
-      is $doc->inner_html, q{<!DOCTYPE a><a xmlns=""> yx</a>};
+      is $doc->inner_html, q{<!DOCTYPE a SYSTEM "http://a/"><a xmlns=""> yx</a>};
       @error = grep { not $_->{type} eq 'xml:dtd:ext decl' } @error;
       @error = grep { not $_->{type} eq 'external entref' } @error;
       eq_or_diff \@error, [{type => 'no XML decl',
@@ -715,7 +715,7 @@ run_tests;
 
 =head1 LICENSE
 
-Copyright 2014-2015 Wakaba <wakaba@suikawiki.org>.
+Copyright 2014-2016 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
