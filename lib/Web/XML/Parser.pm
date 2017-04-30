@@ -1081,12 +1081,11 @@ sub _sc ($) {
     ## ------ Tree constructor defs ------
     my $Element2Type = {};
 my $ProcessIM = [];
-sub TAG_NAME_BUTTON_FIELDSET_IMG_INPUT_KEYGEN_OBJECT_OUTPUT_SELECT_TEXTAREA () { 1 }
+sub TAG_NAME_BUTTON_FIELDSET_IMG_INPUT_OBJECT_OUTPUT_SELECT_TEXTAREA () { 1 }
 $TagName2Group->{q@button@} = 1;
 $TagName2Group->{q@fieldset@} = 1;
 $TagName2Group->{q@img@} = 1;
 $TagName2Group->{q@input@} = 1;
-$TagName2Group->{q@keygen@} = 1;
 $TagName2Group->{q@object@} = 1;
 $TagName2Group->{q@output@} = 1;
 $TagName2Group->{q@select@} = 1;
@@ -1100,8 +1099,8 @@ $TagName2Group->{q@textarea@} = 1;
         sub APP_AUD_STY_VID_ELS () { 2 }
       
 
-        ## HTML:button,HTML:fieldset,HTML:input,HTML:keygen,HTML:output,HTML:select
-        sub BFIKOS_ELS () { 4 }
+        ## HTML:button,HTML:fieldset,HTML:input,HTML:output,HTML:select
+        sub BUT_FIE_INP_OUT_SEL_ELS () { 4 }
       
 
         ## HTML:img
@@ -1114,16 +1113,15 @@ $TagName2Group->{q@textarea@} = 1;
 $Element2Type->{(HTMLNS)}->{q@*@} = HTML_NS_ELS;
 $Element2Type->{(HTMLNS)}->{q@applet@} = HTML_NS_ELS | APP_AUD_STY_VID_ELS;
 $Element2Type->{(HTMLNS)}->{q@audio@} = HTML_NS_ELS | APP_AUD_STY_VID_ELS;
-$Element2Type->{(HTMLNS)}->{q@button@} = HTML_NS_ELS | BFIKOS_ELS;
-$Element2Type->{(HTMLNS)}->{q@fieldset@} = HTML_NS_ELS | BFIKOS_ELS;
+$Element2Type->{(HTMLNS)}->{q@button@} = HTML_NS_ELS | BUT_FIE_INP_OUT_SEL_ELS;
+$Element2Type->{(HTMLNS)}->{q@fieldset@} = HTML_NS_ELS | BUT_FIE_INP_OUT_SEL_ELS;
 sub HEAD_EL () { HTML_NS_ELS | 32 } $Element2Type->{(HTMLNS)}->{q@head@} = HEAD_EL;
 sub HTML_EL () { HTML_NS_ELS | 64 } $Element2Type->{(HTMLNS)}->{q@html@} = HTML_EL;
 $Element2Type->{(HTMLNS)}->{q@img@} = HTML_NS_ELS | IMG_ELS;
-$Element2Type->{(HTMLNS)}->{q@input@} = HTML_NS_ELS | BFIKOS_ELS;
-$Element2Type->{(HTMLNS)}->{q@keygen@} = HTML_NS_ELS | BFIKOS_ELS;
+$Element2Type->{(HTMLNS)}->{q@input@} = HTML_NS_ELS | BUT_FIE_INP_OUT_SEL_ELS;
 $Element2Type->{(HTMLNS)}->{q@object@} = HTML_NS_ELS | OBJ_TEX_ELS;
-$Element2Type->{(HTMLNS)}->{q@output@} = HTML_NS_ELS | BFIKOS_ELS;
-sub SELECT_EL () { HTML_NS_ELS | BFIKOS_ELS } $Element2Type->{(HTMLNS)}->{q@select@} = SELECT_EL;
+$Element2Type->{(HTMLNS)}->{q@output@} = HTML_NS_ELS | BUT_FIE_INP_OUT_SEL_ELS;
+sub SELECT_EL () { HTML_NS_ELS | BUT_FIE_INP_OUT_SEL_ELS } $Element2Type->{(HTMLNS)}->{q@select@} = SELECT_EL;
 $Element2Type->{(HTMLNS)}->{q@style@} = HTML_NS_ELS | APP_AUD_STY_VID_ELS;
 sub TABLE_EL () { HTML_NS_ELS | 96 } $Element2Type->{(HTMLNS)}->{q@table@} = TABLE_EL;
 sub TEMPLATE_EL () { HTML_NS_ELS | 128 } $Element2Type->{(HTMLNS)}->{q@template@} = TEMPLATE_EL;
