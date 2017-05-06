@@ -10,8 +10,7 @@ use Test::More;
 use Test::X1;
 use Test::Differences;
 use Test::HTCT::Parser;
-use Encode;
-sub bytes ($) { encode 'utf8', $_[0] }
+
 my $DEBUG = $ENV{DEBUG};
 
 my $test_dir_name = file (__FILE__)->dir->parent->parent->

@@ -711,11 +711,131 @@ test {
   done $c;
 } n => 3, name => 'error after extentref';
 
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $parser = Web::XML::Parser->new;
+  $parser->parse_bytes_start ('shift_jis', $doc);
+  $parser->parse_bytes_feed ("<x>\x81");
+  $parser->parse_bytes_feed ("\x40</x>");
+  $parser->parse_bytes_end;
+  is $doc->document_element->text_content, "\x{3000}";
+  is $doc->charset, 'Shift_JIS';
+  done $c;
+} n => 2, name => 'bytes transport encoding';
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $parser = Web::XML::Parser->new;
+  $parser->parse_bytes_start ('shift_jis', $doc);
+  $parser->parse_bytes_feed ("<x>\x81");
+  $parser->parse_bytes_feed ("\xFF</x>");
+  $parser->parse_bytes_end;
+  is $doc->document_element->text_content, "\x{FFFD}";
+  is $doc->charset, 'Shift_JIS';
+  done $c;
+} n => 2, name => 'bytes transport encoding bad content';
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $parser = Web::XML::Parser->new;
+  $parser->known_definite_encoding ('shift_jis');
+  $parser->parse_bytes_start ('euc-jp', $doc);
+  $parser->parse_bytes_feed ("<x>\x81");
+  $parser->parse_bytes_feed ("\x40</x>");
+  $parser->parse_bytes_end;
+  is $doc->document_element->text_content, "\x{3000}";
+  is $doc->charset, 'Shift_JIS';
+  done $c;
+} n => 2, name => 'bytes transport + override encoding';
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $parser = Web::XML::Parser->new;
+  $parser->parse_bytes_start (undef, $doc);
+  $parser->parse_bytes_feed (qq{<?xml encoding="shift_jis"?><x>\x81});
+  $parser->parse_bytes_feed ("\x40</x>");
+  $parser->parse_bytes_end;
+  is $doc->document_element->text_content, "\x{3000}";
+  is $doc->charset, 'Shift_JIS';
+  done $c;
+} n => 2, name => 'bytes no transport encoding / xml-encoding'
+    if 0; # XXXXXXXX
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $parser = Web::XML::Parser->new;
+  $parser->parse_bytes_start (undef, $doc);
+  $parser->parse_bytes_feed (qq{<x>\x81});
+  $parser->parse_bytes_feed ("\x40</x>");
+  $parser->parse_bytes_end;
+  is $doc->document_element->text_content, "\x{FFFD}\x40";
+  is $doc->charset, 'UTF-8';
+  done $c;
+} n => 2, name => 'bytes no transport encoding / no xml-encoding'
+    if 0; # XXXXXXXX
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $parser = Web::XML::Parser->new;
+  $parser->parse_bytes_start (undef, $doc);
+  $parser->parse_bytes_feed (qq{\xFE\xFF\x00<\x00x\x00>\x81});
+  $parser->parse_bytes_feed ("\x40\x00<\x00/\x00x\x00>");
+  $parser->parse_bytes_end;
+  is $doc->document_element->text_content, "\x{8140}";
+  is $doc->charset, 'UTF-16BE';
+  done $c;
+} n => 2, name => 'bytes no transport encoding / UTF-16BE BOM';
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $parser = Web::XML::Parser->new;
+  $parser->parse_bytes_start ('shift_jis', $doc);
+  $parser->parse_bytes_feed (qq{\xFE\xFF\x00<\x00x\x00>\x81});
+  $parser->parse_bytes_feed ("\x40\x00<\x00/\x00x\x00>");
+  $parser->parse_bytes_end;
+  is $doc->document_element->text_content, "\x{8140}";
+  is $doc->charset, 'UTF-16BE';
+  done $c;
+} n => 2, name => 'bytes transport encoding / UTF-16BE BOM';
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $parser = Web::XML::Parser->new;
+  $parser->parse_bytes_start ('shift_jis', $doc);
+  $parser->parse_bytes_feed (qq{\xFF\xFE<\x00x\x00>\x00\x81});
+  $parser->parse_bytes_feed ("\x40<\x00/\x00x\x00>\x00");
+  $parser->parse_bytes_end;
+  is $doc->document_element->text_content, "\x{4081}";
+  is $doc->charset, 'UTF-16LE';
+  done $c;
+} n => 2, name => 'bytes transport encoding / UTF-16LE BOM';
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $parser = Web::XML::Parser->new;
+  $parser->parse_bytes_start ('shift_jis', $doc);
+  $parser->parse_bytes_feed (qq{\xEF\xBB\xBF<x>\x81});
+  $parser->parse_bytes_feed ("\x40</x>");
+  $parser->parse_bytes_end;
+  is $doc->document_element->text_content, "\x{FFFD}\x40";
+  is $doc->charset, 'UTF-8';
+  done $c;
+} n => 2, name => 'bytes transport encoding / UTF-8 BOM';
+
 run_tests;
 
 =head1 LICENSE
 
-Copyright 2014-2016 Wakaba <wakaba@suikawiki.org>.
+Copyright 2014-2017 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

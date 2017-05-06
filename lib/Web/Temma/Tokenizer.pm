@@ -7,12 +7,12 @@
     use warnings FATAL => 'redefine';
     use warnings FATAL => 'uninitialized';
     use utf8;
-    our $VERSION = '8.0';
+    our $VERSION = '9.0';
     use Carp qw(croak);
     
-    use Encode qw(decode); # XXX
     use Web::Encoding;
     use Web::Encoding::Sniffer;
+    use Web::Encoding::Decoder;
     use Web::HTML::ParserData;
     use Web::HTML::_SyntaxDefs;
 
@@ -39,6 +39,7 @@
         # nodes document can_restart restart
         # parse_bytes_started transport_encoding_label
         # byte_bufer byte_buffer_orig
+        # decoder
       }, $_[0];
     } # new
 
@@ -168,6 +169,7 @@ sub onrestartwithencoding ($;$) {
     sub _cleanup_states ($) {
       my $self = $_[0];
       delete $self->{input_stream};
+      delete $self->{input_stream_offset};
       delete $self->{input_encoding};
       delete $self->{saved_states};
       delete $self->{saved_lists};
@@ -509,10 +511,9 @@ sub _change_the_encoding ($$$) {
   ## Step 6. Navigate with replace.
   return $name; # change!
 
-#XXX move this to somewhere else (when callback can't handle restart)
-  ## Step 6. If can't restart
-  $Confident = 1; # certain
-  return undef;
+  ### Step 6. If can't restart
+  #$Confident = 1; # certain
+  #return undef;
 } # _change_the_encoding
 
     sub di_data_set ($;$) {
@@ -23959,26 +23960,31 @@ return 0;
 
     sub _feed_chars ($$) {
       my ($self, $input) = @_;
-      pos ($input->[0]) = 0;
-      while ($input->[0] =~ /[\x{0001}-\x{0008}\x{000B}\x{000E}-\x{001F}\x{007F}-\x{009F}\x{D800}-\x{DFFF}\x{FDD0}-\x{FDEF}\x{FFFE}-\x{FFFF}\x{1FFFE}-\x{1FFFF}\x{2FFFE}-\x{2FFFF}\x{3FFFE}-\x{3FFFF}\x{4FFFE}-\x{4FFFF}\x{5FFFE}-\x{5FFFF}\x{6FFFE}-\x{6FFFF}\x{7FFFE}-\x{7FFFF}\x{8FFFE}-\x{8FFFF}\x{9FFFE}-\x{9FFFF}\x{AFFFE}-\x{AFFFF}\x{BFFFE}-\x{BFFFF}\x{CFFFE}-\x{CFFFF}\x{DFFFE}-\x{DFFFF}\x{EFFFE}-\x{EFFFF}\x{FFFFE}-\x{FFFFF}\x{10FFFE}-\x{10FFFF}]/gc) {
-        my $index = $-[0];
-        my $char = ord substr $input->[0], $index, 1;
-        if ($char < 0x100) {
-          push @$Errors, {type => 'control char', level => 'm',
-                          text => (sprintf 'U+%04X', $char),
-                          di => $DI, index => $index};
-        } elsif ($char < 0xE000) {
-          push @$Errors, {type => 'char:surrogate', level => 'm',
-                          text => (sprintf 'U+%04X', $char),
-                          di => $DI, index => $index};
-        } else {
-          push @$Errors, {type => 'nonchar', level => 'm',
-                          text => (sprintf 'U+%04X', $char),
-                          di => $DI, index => $index};
+      for (@$input) {
+        pos ($_) = 0;
+        while (/[\x{0001}-\x{0008}\x{000B}\x{000E}-\x{001F}\x{007F}-\x{009F}\x{D800}-\x{DFFF}\x{FDD0}-\x{FDEF}\x{FFFE}-\x{FFFF}\x{1FFFE}-\x{1FFFF}\x{2FFFE}-\x{2FFFF}\x{3FFFE}-\x{3FFFF}\x{4FFFE}-\x{4FFFF}\x{5FFFE}-\x{5FFFF}\x{6FFFE}-\x{6FFFF}\x{7FFFE}-\x{7FFFF}\x{8FFFE}-\x{8FFFF}\x{9FFFE}-\x{9FFFF}\x{AFFFE}-\x{AFFFF}\x{BFFFE}-\x{BFFFF}\x{CFFFE}-\x{CFFFF}\x{DFFFE}-\x{DFFFF}\x{EFFFE}-\x{EFFFF}\x{FFFFE}-\x{FFFFF}\x{10FFFE}-\x{10FFFF}]/gc) {
+          my $index = $-[0];
+          my $char = ord substr $_, $index, 1;
+          if ($char < 0x100) {
+            push @$Errors, {type => 'control char', level => 'm',
+                            text => (sprintf 'U+%04X', $char),
+                            di => $DI,
+                            index => $self->{input_stream_offset} + $index};
+          } elsif ($char < 0xE000) {
+            push @$Errors, {type => 'char:surrogate', level => 'm',
+                            text => (sprintf 'U+%04X', $char),
+                            di => $DI,
+                            index => $self->{input_stream_offset} + $index};
+          } else {
+            push @$Errors, {type => 'nonchar', level => 'm',
+                            text => (sprintf 'U+%04X', $char),
+                            di => $DI,
+                            index => $self->{input_stream_offset} + $index};
+          }
         }
-      }
-      push @{$self->{input_stream}}, $input;
-
+        push @{$self->{input_stream}}, [$_];
+        $self->{input_stream_offset} += length $_;
+      } # @$input
       return $self->_run;
     } # _feed_chars
   
@@ -24015,6 +24021,7 @@ $Scripting = $self->{Scripting};
       ## 
 
       $self->{input_stream} = [];
+      $self->{input_stream_offset} = 0;
       my $dids = $self->di_data_set;
       $self->{di} = $DI = defined $self->{di} ? $self->{di} : @$dids || 1;
       $dids->[$DI] ||= {} if $DI >= 0;
@@ -24033,7 +24040,7 @@ $Scripting = $self->{Scripting};
 
 =head1 LICENSE
 
-Copyright 2007-2015 Wakaba <wakaba@suikawiki.org>.
+Copyright 2007-2017 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

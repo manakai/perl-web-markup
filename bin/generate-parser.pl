@@ -242,10 +242,9 @@ sub _change_the_encoding ($$$) {
   ## Step 6. Navigate with replace.
   return $name; # change!
 
-#XXX move this to somewhere else (when callback can't handle restart)
-  ## Step 6. If can't restart
-  $Confident = 1; # certain
-  return undef;
+  ### Step 6. If can't restart
+  #$Confident = 1; # certain
+  #return undef;
 } # _change_the_encoding
 
     sub di_data_set ($;$) {
@@ -5108,26 +5107,31 @@ sub generate_api ($) {
   push @sub_code, sprintf q{
     sub _feed_chars ($$) {
       my ($self, $input) = @_;
-      pos ($input->[0]) = 0;
-      while ($input->[0] =~ /[\x{0001}-\x{0008}\x{000B}\x{000E}-\x{001F}\x{007F}-\x{009F}\x{D800}-\x{DFFF}\x{FDD0}-\x{FDEF}\x{FFFE}-\x{FFFF}\x{1FFFE}-\x{1FFFF}\x{2FFFE}-\x{2FFFF}\x{3FFFE}-\x{3FFFF}\x{4FFFE}-\x{4FFFF}\x{5FFFE}-\x{5FFFF}\x{6FFFE}-\x{6FFFF}\x{7FFFE}-\x{7FFFF}\x{8FFFE}-\x{8FFFF}\x{9FFFE}-\x{9FFFF}\x{AFFFE}-\x{AFFFF}\x{BFFFE}-\x{BFFFF}\x{CFFFE}-\x{CFFFF}\x{DFFFE}-\x{DFFFF}\x{EFFFE}-\x{EFFFF}\x{FFFFE}-\x{FFFFF}\x{10FFFE}-\x{10FFFF}]/gc) {
-        my $index = $-[0];
-        my $char = ord substr $input->[0], $index, 1;
-        if ($char < 0x100) {
-          push @$Errors, {type => 'control char', level => 'm',
-                          text => (sprintf 'U+%%04X', $char),
-                          di => $DI, index => $index};
-        } elsif ($char < 0xE000) {
-          push @$Errors, {type => 'char:surrogate', level => 'm',
-                          text => (sprintf 'U+%%04X', $char),
-                          di => $DI, index => $index};
-        } else {
-          push @$Errors, {type => 'nonchar', level => 'm',
-                          text => (sprintf 'U+%%04X', $char),
-                          di => $DI, index => $index};
+      for (@$input) {
+        pos ($_) = 0;
+        while (/[\x{0001}-\x{0008}\x{000B}\x{000E}-\x{001F}\x{007F}-\x{009F}\x{D800}-\x{DFFF}\x{FDD0}-\x{FDEF}\x{FFFE}-\x{FFFF}\x{1FFFE}-\x{1FFFF}\x{2FFFE}-\x{2FFFF}\x{3FFFE}-\x{3FFFF}\x{4FFFE}-\x{4FFFF}\x{5FFFE}-\x{5FFFF}\x{6FFFE}-\x{6FFFF}\x{7FFFE}-\x{7FFFF}\x{8FFFE}-\x{8FFFF}\x{9FFFE}-\x{9FFFF}\x{AFFFE}-\x{AFFFF}\x{BFFFE}-\x{BFFFF}\x{CFFFE}-\x{CFFFF}\x{DFFFE}-\x{DFFFF}\x{EFFFE}-\x{EFFFF}\x{FFFFE}-\x{FFFFF}\x{10FFFE}-\x{10FFFF}]/gc) {
+          my $index = $-[0];
+          my $char = ord substr $_, $index, 1;
+          if ($char < 0x100) {
+            push @$Errors, {type => 'control char', level => 'm',
+                            text => (sprintf 'U+%%04X', $char),
+                            di => $DI,
+                            index => $self->{input_stream_offset} + $index};
+          } elsif ($char < 0xE000) {
+            push @$Errors, {type => 'char:surrogate', level => 'm',
+                            text => (sprintf 'U+%%04X', $char),
+                            di => $DI,
+                            index => $self->{input_stream_offset} + $index};
+          } else {
+            push @$Errors, {type => 'nonchar', level => 'm',
+                            text => (sprintf 'U+%%04X', $char),
+                            di => $DI,
+                            index => $self->{input_stream_offset} + $index};
+          }
         }
-      }
-      push @{$self->{input_stream}}, $input;
-
+        push @{$self->{input_stream}}, [$_];
+        $self->{input_stream_offset} += length $_;
+      } # @$input
       return $self->_run;
     } # _feed_chars
   } if $LANG eq 'HTML' or $LANG eq 'Temma';
@@ -5135,27 +5139,33 @@ sub generate_api ($) {
   push @sub_code, sprintf q{
     sub _feed_chars ($$) {
       my ($self, $input) = @_;
-      pos ($input->[0]) = 0;
-      while ($input->[0] =~ /[\x{0001}-\x{0008}\x{000B}\x{000C}\x{000E}-\x{001F}\x{D800}-\x{DFFF}\x{FFFE}\x{FFFF}\x{007F}-\x{009F}\x{FDD0}-\x{FDEF}\x{1FFFE}-\x{1FFFF}\x{2FFFE}-\x{2FFFF}\x{3FFFE}-\x{3FFFF}\x{4FFFE}-\x{4FFFF}\x{5FFFE}-\x{5FFFF}\x{6FFFE}-\x{6FFFF}\x{7FFFE}-\x{7FFFF}\x{8FFFE}-\x{8FFFF}\x{9FFFE}-\x{9FFFF}\x{AFFFE}-\x{AFFFF}\x{BFFFE}-\x{BFFFF}\x{CFFFE}-\x{CFFFF}\x{DFFFE}-\x{DFFFF}\x{EFFFE}-\x{EFFFF}\x{FFFFE}-\x{FFFFF}\x{10FFFE}-\x{10FFFF}]/gcx) {
-        my $index = $-[0];
-        my $char = ord substr $input->[0], $index, 1;
-        my $level = (substr $input->[0], $index, 1) =~ /[\x{0001}-\x{0008}\x{000B}\x{000C}\x{000E}-\x{001F}\x{D800}-\x{DFFF}\x{FFFE}\x{FFFF}]/ ? 'm' : 'w';
-        if ($char < 0x100) {
-          push @$Errors, {type => 'control char', level => $level,
-                          text => (sprintf 'U+%%04X', $char),
-                          di => $DI, index => $index};
-        } elsif ($char < 0xE000) {
-          push @$Errors, {type => 'char:surrogate', level => $level,
-                          text => (sprintf 'U+%%04X', $char),
-                          di => $DI, index => $index};
-        } else {
-          push @$Errors, {type => 'nonchar', level => $level,
-                          text => (sprintf 'U+%%04X', $char),
-                          di => $DI, index => $index};
+      for (@$input) {
+        pos ($_) = 0;
+        while (/[\x{0001}-\x{0008}\x{000B}\x{000C}\x{000E}-\x{001F}\x{D800}-\x{DFFF}\x{FFFE}\x{FFFF}\x{007F}-\x{009F}\x{FDD0}-\x{FDEF}\x{1FFFE}-\x{1FFFF}\x{2FFFE}-\x{2FFFF}\x{3FFFE}-\x{3FFFF}\x{4FFFE}-\x{4FFFF}\x{5FFFE}-\x{5FFFF}\x{6FFFE}-\x{6FFFF}\x{7FFFE}-\x{7FFFF}\x{8FFFE}-\x{8FFFF}\x{9FFFE}-\x{9FFFF}\x{AFFFE}-\x{AFFFF}\x{BFFFE}-\x{BFFFF}\x{CFFFE}-\x{CFFFF}\x{DFFFE}-\x{DFFFF}\x{EFFFE}-\x{EFFFF}\x{FFFFE}-\x{FFFFF}\x{10FFFE}-\x{10FFFF}]/gcx) {
+          my $index = $-[0];
+          my $c = substr $_, $index, 1;
+          my $char = ord $c;
+          my $level = $c =~ /[\x{0001}-\x{0008}\x{000B}\x{000C}\x{000E}-\x{001F}\x{D800}-\x{DFFF}\x{FFFE}\x{FFFF}]/ ? 'm' : 'w';
+          if ($char < 0x100) {
+            push @$Errors, {type => 'control char', level => $level,
+                            text => (sprintf 'U+%%04X', $char),
+                            di => $DI,
+                            index => $self->{input_stream_offset} + $index};
+          } elsif ($char < 0xE000) {
+            push @$Errors, {type => 'char:surrogate', level => $level,
+                            text => (sprintf 'U+%%04X', $char),
+                            di => $DI,
+                            index => $self->{input_stream_offset} + $index};
+          } else {
+            push @$Errors, {type => 'nonchar', level => $level,
+                            text => (sprintf 'U+%%04X', $char),
+                            di => $DI,
+                            index => $self->{input_stream_offset} + $index};
+          }
         }
-      }
-      push @{$self->{input_stream}}, $input;
-
+        push @{$self->{input_stream}}, [$_];
+        $self->{input_stream_offset} += length $_;
+      } # @$input
       return $self->_run;
     } # _feed_chars
   } if $LANG eq 'XML';
@@ -5194,6 +5204,7 @@ sub generate_api ($) {
       ## </!Temma>
 
       $self->{input_stream} = [];
+      $self->{input_stream_offset} = 0;
       my $dids = $self->di_data_set;
       $self->{di} = $DI = defined $self->{di} ? $self->{di} : @$dids || 1;
       $dids->[$DI] ||= {} if $DI >= 0;
@@ -5246,6 +5257,7 @@ sub generate_api ($) {
       ## 3.
       my $input = [$_[1]]; # string copy
       $self->{input_stream} = [];
+      $self->{input_stream_offset} = 0;
       my $dids = $self->di_data_set;
       $self->{di} = $DI = defined $self->{di} ? $self->{di} : @$dids || 1;
       $dids->[$DI] ||= {} if $DI >= 0;
@@ -5445,6 +5457,7 @@ sub generate_api ($) {
       my ($self, $doc) = @_;
 
       $self->{input_stream} = [];
+      $self->{input_stream_offset} = 0;
       $self->{document} = $doc;
       $self->{IframeSrcdoc} = $doc->manakai_is_srcdoc;
       $doc->manakai_is_html (%d);
@@ -5502,18 +5515,6 @@ sub generate_api ($) {
       return;
     } # parse_chars_end
 
-## NOTE: HTML5 spec says that the encoding layer MUST NOT strip BOM
-## and the HTML layer MUST ignore it.  However, we does strip BOM in
-## the encoding layer and the HTML layer does not ignore any U+FEFF,
-## because the core part of our HTML parser expects a string of
-## character, not a string of bytes or code units or anything which
-## might contain a BOM.  Therefore, any parser interface that accepts
-## a string of bytes, such as |parse_byte_string| in this module, must
-## ensure that it does strip the BOM and never strip any ZWNBSP.
-
-## XXX The policy mentioned above might change when we implement
-## Encoding Standard spec.
-
   } unless $LANG eq 'Temma';
 
   push @sub_code, sprintf q{
@@ -5528,6 +5529,7 @@ sub generate_api ($) {
 
       PARSER: {
         $self->{input_stream} = [];
+        $self->{input_stream_offset} = 0;
         $self->{nodes} = [$doc];
         $doc->remove_child ($_) for $doc->child_nodes->to_list;
 
@@ -5543,7 +5545,7 @@ sub generate_api ($) {
         }); # $Confident is set within this method.
         $doc->input_encoding ($self->{input_encoding});
 
-        my $input = [decode $self->{input_encoding}, $$inputref]; # XXXencoding
+        my $input = [decode_web_charset $self->{input_encoding}, $$inputref];
         my $dids = $self->di_data_set;
         $self->{di} = $DI = defined $self->{di} ? $self->{di} : @$dids || 1;
         $dids->[$DI] ||= {} if $DI >= 0;
@@ -5575,6 +5577,7 @@ sub generate_api ($) {
 
       delete $self->{parse_bytes_started};
       $self->{input_stream} = [];
+      $self->{input_stream_offset} = 0;
       VARS::INIT;
       VARS::RESET;
       SWITCH_STATE ("data state");
@@ -5611,8 +5614,13 @@ sub generate_api ($) {
 
       $self->{parse_bytes_started} = 1;
 
-      my $input = [decode $self->{input_encoding}, $self->{byte_buffer}, Encode::FB_QUIET]; # XXXencoding
-
+      $self->{decoder} = Web::Encoding::Decoder->new_from_encoding_key
+          ($self->{input_encoding});
+      $self->{decoder}->ignore_bom (1);
+      $self->{decoder}->onerror (sub {
+        $self->onerrors->($self, [{@_, di => $self->{di}}]);
+      });
+      my $input = $self->{decoder}->bytes ($self->{byte_buffer});
       $self->_feed_chars ($input) or return 0;
 
       return 1;
@@ -5648,7 +5656,7 @@ sub generate_api ($) {
   push @sub_code, sprintf q{
     ## The $args{start_parsing} flag should be set true if it has
     ## taken more than 500ms from the start of overall parsing
-    ## process. XXX should this be a separate method?
+    ## process.
     sub parse_bytes_feed ($$;%%) {
       my ($self, undef, %%args) = @_;
 
@@ -5660,17 +5668,15 @@ sub generate_api ($) {
       $self->{byte_buffer_orig} .= $_[1];
       PARSER: {
         if ($self->{parse_bytes_started}) {
-          my $input = [decode $self->{input_encoding}, $self->{byte_buffer}, Encode::FB_QUIET]; # XXXencoding
-          if (length $self->{byte_buffer} and 0 == length $input->[0]) {
-            substr ($self->{byte_buffer}, 0, 1) = '';
-            $input->[0] .= "\x{FFFD}" . decode $self->{input_encoding}, $self->{byte_buffer}, Encode::FB_QUIET; # XXX Encoding Standard
+          # XXX $self->{decoder} is undef if feed_bytes invoked after feed_eof
+          if (defined $self->{decoder}) {
+            my $input = $self->{decoder}->bytes ($_[1]);
+            $self->_feed_chars ($input) or do {
+              $self->{byte_buffer} = $self->{byte_buffer_orig};
+              $self->_parse_bytes_init;
+              redo PARSER;
+            };
           }
-
-          $self->_feed_chars ($input) or do {
-            $self->{byte_buffer} = $self->{byte_buffer_orig};
-            $self->_parse_bytes_init;
-            redo PARSER;
-          };
         } else {
           if ($args{start_parsing} or 1024 <= length $self->{byte_buffer}) {
             $self->_parse_bytes_start_parsing or do {
@@ -5701,13 +5707,14 @@ sub generate_api ($) {
           };
         }
 
-        if (length $self->{byte_buffer}) {
-          my $input = [decode $self->{input_encoding}, $self->{byte_buffer}]; # XXX encoding
+        if (defined $self->{decoder}) {
+          my $input = $self->{decoder}->eof;
           $self->_feed_chars ($input) or do {
             $self->{byte_buffer} = $self->{byte_buffer_orig};
             $self->_parse_bytes_init;
             redo PARSER;
           };
+          delete $self->{decoder};
         }
 
         $self->_feed_eof or do {
@@ -5759,6 +5766,7 @@ sub generate_api ($) {
     ${$self->{entity_expansion_count} = $main->{entity_expansion_count} ||= \(my $v = 0)}++;
 
     $self->{input_stream} = [@{$in->{entity}->{value}}];
+    #$self->{input_stream_offset} = 0;
     $self->{di_data_set} = my $dids = $main->di_data_set;
     $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
     $BaseURLDI = $self->{BaseURLDI} = defined $main->{BaseURLDI} ? $main->{BaseURLDI} : $main->di;
@@ -5813,6 +5821,7 @@ sub generate_api ($) {
     ${$self->{entity_expansion_count} = $main->{entity_expansion_count} ||= \(my $v = 0)}++;
 
     $self->{input_stream} = [@{$in->{entity}->{value}}];
+    #$self->{input_stream_offset} = 0;
     $self->{di_data_set} = my $dids = $main->di_data_set;
     $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
     $BaseURLDI = $self->{BaseURLDI} = defined $main->{BaseURLDI} ? $main->{BaseURLDI} : $main->di;
@@ -5894,6 +5903,7 @@ sub generate_api ($) {
     ${$self->{entity_expansion_count} = $main->{entity_expansion_count} ||= \(my $v = 0)}++;
 
     $self->{input_stream} = [];
+    $self->{input_stream_offset} = 0;
     $self->{di_data_set} = my $dids = $main->di_data_set;
     $self->{BaseURLDI} = $BaseURLDI = $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
     $dids->[$DI] ||= {} if $DI >= 0;
@@ -5947,6 +5957,7 @@ sub generate_api ($) {
     ${$self->{entity_expansion_count} = $main->{entity_expansion_count} ||= \(my $v = 0)}++;
 
     $self->{input_stream} = [@{$in->{entity}->{value}}];
+    #$self->{input_stream_offset} = 0;
     $self->{di_data_set} = my $dids = $main->di_data_set;
     $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
     $BaseURLDI = $self->{BaseURLDI} = defined $main->{BaseURLDI} ? $main->{BaseURLDI} : $main->di;
@@ -6024,6 +6035,7 @@ sub generate_api ($) {
     ${$self->{entity_expansion_count} = $main->{entity_expansion_count} ||= \(my $v = 0)}++;
 
     $self->{input_stream} = [];
+    $self->{input_stream_offset} = 0;
     $self->{di_data_set} = my $dids = $main->di_data_set;
     $self->{BaseURLDI} = $BaseURLDI = $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
     $dids->[$DI] ||= {} if $DI >= 0;
@@ -6069,6 +6081,7 @@ sub generate_api ($) {
     ${$self->{entity_expansion_count} = $main->{entity_expansion_count} ||= \(my $v = 0)}++;
 
     $self->{input_stream} = [@{$in->{entity}->{value}}];
+    #$self->{input_stream_offset} = 0;
     $self->{di_data_set} = my $dids = $main->di_data_set;
     $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
     $BaseURLDI = $self->{BaseURLDI} = defined $main->{BaseURLDI} ? $main->{BaseURLDI} : $main->di;
@@ -6147,6 +6160,7 @@ sub generate_api ($) {
     ${$self->{entity_expansion_count} = $main->{entity_expansion_count} ||= \(my $v = 0)}++;
 
     $self->{input_stream} = [];
+    $self->{input_stream_offset} = 0;
     $self->{di_data_set} = my $dids = $main->di_data_set;
     $self->{BaseURLDI} = $BaseURLDI = $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
     $dids->[$DI] ||= {} if $DI >= 0;
@@ -6198,6 +6212,7 @@ sub generate_api ($) {
     ${$self->{entity_expansion_count} = $main->{entity_expansion_count} ||= \(my $v = 0)}++;
 
     $self->{input_stream} = [@{$in->{entity}->{value}}];
+    #$self->{input_stream_offset} = 0;
     $self->{di_data_set} = my $dids = $main->di_data_set;
     $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
     $BaseURLDI = $self->{BaseURLDI} = defined $main->{BaseURLDI} ? $main->{BaseURLDI} : $main->di;
@@ -6287,6 +6302,7 @@ sub generate_api ($) {
     ${$self->{entity_expansion_count} = $main->{entity_expansion_count} ||= \(my $v = 0)}++;
 
     $self->{input_stream} = [];
+    $self->{input_stream_offset} = 0;
     $self->{di_data_set} = my $dids = $main->di_data_set;
     $self->{BaseURLDI} = $BaseURLDI = $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
     $dids->[$DI] ||= {} if $DI >= 0;
@@ -6349,12 +6365,12 @@ sub generate ($) {
     use warnings FATAL => 'redefine';
     use warnings FATAL => 'uninitialized';
     use utf8;
-    our $VERSION = '8.0';
+    our $VERSION = '9.0';
     use Carp qw(croak);
     %s
-    use Encode qw(decode); # XXX
     use Web::Encoding;
     use Web::Encoding::Sniffer;
+    use Web::Encoding::Decoder;
     use Web::HTML::ParserData;
     use Web::HTML::_SyntaxDefs;
 
@@ -6379,6 +6395,7 @@ sub generate ($) {
         # nodes document can_restart restart
         # parse_bytes_started transport_encoding_label
         # byte_bufer byte_buffer_orig
+        # decoder
       }, $_[0];
     } # new
 
@@ -6508,6 +6525,7 @@ sub onrestartwithencoding ($;$) {
     sub _cleanup_states ($) {
       my $self = $_[0];
       delete $self->{input_stream};
+      delete $self->{input_stream_offset};
       delete $self->{input_encoding};
       delete $self->{saved_states};
       delete $self->{saved_lists};
@@ -6542,7 +6560,7 @@ sub onrestartwithencoding ($;$) {
 
 =head1 LICENSE
 
-Copyright 2007-2015 Wakaba <wakaba@suikawiki.org>.
+Copyright 2007-2017 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
