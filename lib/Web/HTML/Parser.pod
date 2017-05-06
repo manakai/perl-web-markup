@@ -107,6 +107,16 @@ also L</SPECIFYING ENCODING>.
 The value should not be set while the parser is running.  If the value
 is changed, the result is undefined.
 
+=item $boolean = $parser->is_xhr
+
+=item $parser->is_xhr ($boolean)
+
+Get or set whether the document is parsed to create XHR's
+C<responseXML> document or not.  See also L</SPECIFYING ENCODING>.
+
+The value should not be set while the parser is running.  If the value
+is changed, the result is undefined.
+
 =item $boolean = $parser->scripting
 
 =item $parser->scripting ($boolean)
@@ -218,6 +228,9 @@ C<parse_byte*> methods try to detect the character encoding in use by
 the steps specified in HTML Standard.  It also takes the locale
 information of the C<locale_tag> method into account.
 
+The C<is_xhr> method's value also affects these encoding detecting
+process, as specified by the XMLHttpRequest Standard.
+
 =head1 SEE ALSO
 
 L<Web::DOM::Document>, L<Web::DOM::Element> in the perl-web-dom
@@ -231,34 +244,36 @@ L<Web::XML::Parser>.
 
 =head1 SPECIFICATIONS
 
-=over 4
-
 =item HTML
 
-HTML Standard <http://www.whatwg.org/specs/web-apps/current-work/>.
+HTML Standard <https://html.spec.whatwg.org/>.
 
 =item DOCUMENTINNERHTML
 
 Document.prototype.innerHTML
-<http://html5.org/tools/web-apps-tracker?from=6531&to=6532>.
+<https://html5.org/tools/web-apps-tracker?from=6531&to=6532>.
 
 =item DOMPARSING
 
-DOM Parsing and Serialization <http://domparsing.spec.whatwg.org/>.
+DOM Parsing and Serialization <https://domparsing.spec.whatwg.org/>.
+
+=item XHR
+
+XMLHttpRequest Standard <https://xhr.spec.whatwg.org/>.
 
 =item ENCODING
 
-Encoding Standard <http://encoding.spec.whatwg.org/>.
+Encoding Standard <https://encoding.spec.whatwg.org/>.
 
 =item MANAKAI
 
 manakai DOM Extensions
-<http://suika.suikawiki.org/~wakaba/wiki/sw/n/manakai++DOM%20Extensions>.
+<https://suika.suikawiki.org/~wakaba/wiki/sw/n/manakai++DOM%20Extensions>.
 
 =item MANAKAIINDEX
 
 manakai index data structure
-<http://wiki.suikawiki.org/n/manakai%20index%20data%20structures>.
+<https://wiki.suikawiki.org/n/manakai%20index%20data%20structures>.
 
 =back
 
@@ -268,7 +283,7 @@ Wakaba <wakaba@suikawiki.org>.
 
 =head1 LICENSE
 
-Copyright 2007-2015 Wakaba <wakaba@suikawiki.org>.
+Copyright 2007-2017 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

@@ -549,6 +549,22 @@ sub _parse_bytes_stream_change_encoding_by_main_parser_2 : Test(3) {
   eq_or_diff $doc->inner_html, qq(<html><head><meta charset="X-User-Defined"><link></head><body><p><q>\x{20AC}\x40</q></p></body></html>);
 } # _parse_bytes_stream_change_encoding_by_main_parser_2
 
+sub _parse_bytes_stream_change_encoding_by_main_parser_xhr : Test(3) {
+  my $dom = Web::DOM::Implementation->new;
+  my $doc = $dom->create_document;
+  my $parser = Web::HTML::Parser->new;
+  $parser->is_xhr (1);
+  $parser->parse_bytes_start (undef, $doc);
+  $parser->parse_bytes_feed ('<meta charset=', start_parsing => 1);
+  $parser->parse_bytes_feed ('"shift_jis"><link><p>');
+  $parser->parse_bytes_feed ("<q>\x81\x40</q>");
+  $parser->parse_bytes_end;
+  
+  ok $doc->manakai_is_html;
+  is $doc->input_encoding, 'UTF-8';
+  is $doc->inner_html, qq(<html><head><meta charset="shift_jis"><link></head><body><p><q>\x{FFFD}\x40</q></p></body></html>);
+} # _parse_bytes_stream_change_encoding_by_main_parser_xhr
+
 sub _parse_bytes_stream_prescan_tag_like : Test(3) {
   my $dom = Web::DOM::Implementation->new;
   my $doc = $dom->create_document;

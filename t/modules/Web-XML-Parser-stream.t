@@ -762,8 +762,7 @@ test {
   is $doc->document_element->text_content, "\x{3000}";
   is $doc->charset, 'Shift_JIS';
   done $c;
-} n => 2, name => 'bytes no transport encoding / xml-encoding'
-    if 0; # XXXXXXXX
+} n => 2, name => 'bytes no transport encoding / xml-encoding';
 
 test {
   my $c = shift;
@@ -776,8 +775,7 @@ test {
   is $doc->document_element->text_content, "\x{FFFD}\x40";
   is $doc->charset, 'UTF-8';
   done $c;
-} n => 2, name => 'bytes no transport encoding / no xml-encoding'
-    if 0; # XXXXXXXX
+} n => 2, name => 'bytes no transport encoding / no xml-encoding';
 
 test {
   my $c = shift;

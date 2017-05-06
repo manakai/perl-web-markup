@@ -124,8 +124,13 @@ sub known_definite_encoding ($;$) {
   return $_[0]->{known_definite_encoding};
 } # known_definite_encoding
 
-## Encoding sniffing algorithm
-## <http://www.whatwg.org/specs/web-apps/current-work/#determining-the-character-encoding>.
+sub is_xhr ($;$) {
+  if (@_ > 1) {
+    $_[0]->{is_xhr} = $_[1];
+  }
+  return $_[0]->{is_xhr};
+} # is_xhr
+
 sub _encoding_sniffing ($;%) {
   my ($self, %args) = @_;
 
@@ -134,7 +139,12 @@ sub _encoding_sniffing ($;%) {
   ## the resource is not available to the parser such that
   ## $args{read_head} callback ought not be invoked yet.
 
-  my $sniffer = Web::Encoding::Sniffer->new_from_context ('html'); # XXX
+  ## <HTML>
+  my $sniffer = Web::Encoding::Sniffer->new_from_context
+      ($self->{is_xhr} ? 'responsehtml' : 'html');
+  ## </HTML><XML>
+  my $sniffer = Web::Encoding::Sniffer->new_from_context ('xml');
+  ## </XML>
   $sniffer->detect (
     ## $args{read_head} must be a callback which, when invoked,
     ## returns a byte string used to sniff the character encoding of
@@ -263,6 +273,10 @@ sub _change_the_encoding ($$$) {
 
   };
 
+  for (@code) {
+    s{<XML>.*?</XML>}{}gs unless $LANG eq 'XML';
+    s{<HTML>.*?</HTML>}{}gs unless $LANG eq 'HTML' or $LANG eq 'Temma';
+  }
   return join "\n", @code;
 } # generate_input_bytes_handler
 
@@ -6383,7 +6397,7 @@ sub generate ($) {
       return bless {
         ## Input parameters
         # Scripting IframeSrcdoc DI known_definite_encoding locale_tag
-        # di_data_set is_sub_parser
+        # di_data_set is_sub_parser is_xhr
 
         ## Callbacks
         # onerror onerrors onappcacheselection onscript
