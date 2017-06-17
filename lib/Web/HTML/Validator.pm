@@ -7404,17 +7404,6 @@ $Element->{+HTML_NS}->{button} = {
                            level => 'm');
       }
     }
-    my $menu_attr = $item->{node}->get_attribute_node_ns (undef, 'menu');
-    if ($type eq 'menu') {
-      $self->{onerror}->(node => $item->{node},
-                         type => 'attribute missing',
-                         text => 'menu',
-                         level => 'm') unless $menu_attr;
-    } else {
-      $self->{onerror}->(node => $menu_attr,
-                         type => 'attribute not allowed',
-                         level => 'm') if $menu_attr;
-    }
   }, # check_attrs2
   check_end => sub {
     my ($self, $item, $element_state) = @_;

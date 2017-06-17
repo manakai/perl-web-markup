@@ -318,6 +318,24 @@
             "attr" : 1
          }
       },
+      "script:ignored nomodule" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>The \u003Ccode>nomodule\u003C/code> attribute of the \u003Ccode>script\u003C/code>\u000Aelement is effective only when the element defines a classic script.\u000AIt can't be used when the element defines a module script or a data\u000Ablock.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>script\u003C/code> 要素の \u003Ccode>nomodule\u003C/code>\u000A属性に効果があるのは、古典スクリプトのときだけです。\u000Aモジュールスクリプトやデータブロックの \u003Ccode>script\u003C/code> \u000A要素には指定できません。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "The \u003Ccode>nomodule\u003C/code> attribute has no effect",
+            "ja" : "この \u003Ccode>nomodule\u003C/code> 属性には意味がありません"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         },
+         "targets" : {
+            "attr" : 1
+         }
+      },
       "script:ignored nonce" : {
          "default_level" : "m",
          "desc" : {
