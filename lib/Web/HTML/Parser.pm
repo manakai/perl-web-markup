@@ -878,8 +878,6 @@ my $LQPublicIDPrefixPattern = qr{(?:-//W3C//DTD XHTML 1\.0 (?:TRANSITIONAL|FRAME
 my $QorLQPublicIDPrefixPattern = qr{(?:-//W3C//DTD HTML 4\.01 (?:TRANSITIONAL|FRAMESET)//)};
 my $QPublicIDs = {q<-//W3O//DTD W3 HTML STRICT 3.0//EN//> => 1, q<-/W3C/DTD HTML 4.0 TRANSITIONAL/EN> => 1, q<HTML> => 1};
 my $QSystemIDs = {q<HTTP://WWW.IBM.COM/DATA/DTD/V11/IBMXHTML1-TRANSITIONAL.DTD> => 1};
-my $OPPublicIDToSystemID = {q<-//W3C//DTD HTML 4.0//EN> => q<http://www.w3.org/TR/REC-html40/strict.dtd>, q<-//W3C//DTD HTML 4.01//EN> => q<http://www.w3.org/TR/html4/strict.dtd>, q<-//W3C//DTD XHTML 1.0 Strict//EN> => q<http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd>, q<-//W3C//DTD XHTML 1.1//EN> => q<http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd>};
-my $OPPublicIDOnly = {q<-//W3C//DTD HTML 4.0//EN> => 1, q<-//W3C//DTD HTML 4.01//EN> => 1};
 
       my $TCA = [undef,
         ## [1] after after body;COMMENT
@@ -12157,63 +12155,33 @@ push @$OP, ['doctype', $token => 0]; $NEXT_ID++;
             $QUIRKS = 1;
           }
         } elsif (defined $token->{public_identifier}) {
-          if (defined $OPPublicIDToSystemID->{$token->{public_identifier}}) {
-            if (defined $token->{system_identifier}) {
-              if ($OPPublicIDToSystemID->{$token->{public_identifier}} eq $token->{system_identifier}) {
-                push @$Errors, {type => 'obsolete permitted DOCTYPE',
-                                level => 's',
-                                di => $token->{di}, index => $token->{index}};
-              } else {
-                push @$Errors, {type => 'obsolete DOCTYPE', level => 'm',
-                                di => $token->{di}, index => $token->{index}};
-                unless ($IframeSrcdoc) {
-                  my $sysid = $token->{system_identifier};
-                  $sysid =~ tr/a-z/A-Z/; ## ASCII case-insensitive.
-                  if ($QSystemIDs->{$sysid}) {
-                    push @$OP, ['set-compat-mode', 'quirks'];
-                    $QUIRKS = 1;
-                  }
-                }
-              }
-            } else {
-              if ($OPPublicIDOnly->{$token->{public_identifier}}) {
-                push @$Errors, {type => 'obsolete permitted DOCTYPE',
-                                level => 's',
-                                di => $token->{di}, index => $token->{index}};
-              } else {
-                push @$Errors, {type => 'obsolete DOCTYPE', level => 'm',
-                                di => $token->{di}, index => $token->{index}};
-              }
-            }
-          } else {
-            push @$Errors, {type => 'obsolete DOCTYPE', level => 'm',
-                            di => $token->{di}, index => $token->{index}};
-            unless ($IframeSrcdoc) {
-              my $pubid = $token->{public_identifier};
-              $pubid =~ tr/a-z/A-Z/; ## ASCII case-insensitive.
-              if ($QPublicIDs->{$pubid}) {
-                push @$OP, ['set-compat-mode', 'quirks'];
-                $QUIRKS = 1;
-              } elsif ($pubid =~ /^$QPublicIDPrefixPattern/o) {
-                push @$OP, ['set-compat-mode', 'quirks'];
-                $QUIRKS = 1;
-              } elsif (defined $token->{system_identifier} and
-                       do {
-                         my $sysid = $token->{system_identifier};
-                         $sysid =~ tr/a-z/A-Z/; ## ASCII case-insensitive.
-                         $QSystemIDs->{$sysid};
-                       }) {
-                push @$OP, ['set-compat-mode', 'quirks'];
-                $QUIRKS = 1;
-              } elsif ($pubid =~ /^$LQPublicIDPrefixPattern/o) {
+          push @$Errors, {type => 'obsolete DOCTYPE', level => 'm',
+                          di => $token->{di}, index => $token->{index}};
+          unless ($IframeSrcdoc) {
+            my $pubid = $token->{public_identifier};
+            $pubid =~ tr/a-z/A-Z/; ## ASCII case-insensitive.
+            if ($QPublicIDs->{$pubid}) {
+              push @$OP, ['set-compat-mode', 'quirks'];
+              $QUIRKS = 1;
+            } elsif ($pubid =~ /^$QPublicIDPrefixPattern/o) {
+              push @$OP, ['set-compat-mode', 'quirks'];
+              $QUIRKS = 1;
+            } elsif (defined $token->{system_identifier} and
+                     do {
+                       my $sysid = $token->{system_identifier};
+                       $sysid =~ tr/a-z/A-Z/; ## ASCII case-insensitive.
+                       $QSystemIDs->{$sysid};
+                     }) {
+              push @$OP, ['set-compat-mode', 'quirks'];
+              $QUIRKS = 1;
+            } elsif ($pubid =~ /^$LQPublicIDPrefixPattern/o) {
+              push @$OP, ['set-compat-mode', 'limited quirks'];
+            } elsif ($pubid =~ /^$QorLQPublicIDPrefixPattern/o) {
+              if (defined $token->{system_identifier}) {
                 push @$OP, ['set-compat-mode', 'limited quirks'];
-              } elsif ($pubid =~ /^$QorLQPublicIDPrefixPattern/o) {
-                if (defined $token->{system_identifier}) {
-                  push @$OP, ['set-compat-mode', 'limited quirks'];
-                } else {
-                  push @$OP, ['set-compat-mode', 'quirks'];
-                  $QUIRKS = 1;
-                }
+              } else {
+                push @$OP, ['set-compat-mode', 'quirks'];
+                $QUIRKS = 1;
               }
             }
           }

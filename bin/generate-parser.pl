@@ -3071,63 +3071,33 @@ sub actions_to_code ($;%) {
             $QUIRKS = 1;
           }
         } elsif (defined $token->{public_identifier}) {
-          if (defined $OPPublicIDToSystemID->{$token->{public_identifier}}) {
-            if (defined $token->{system_identifier}) {
-              if ($OPPublicIDToSystemID->{$token->{public_identifier}} eq $token->{system_identifier}) {
-                push @$Errors, {type => 'obsolete permitted DOCTYPE',
-                                level => 's',
-                                di => $token->{di}, index => $token->{index}};
-              } else {
-                push @$Errors, {type => 'obsolete DOCTYPE', level => 'm',
-                                di => $token->{di}, index => $token->{index}};
-                unless ($IframeSrcdoc) {
-                  my $sysid = $token->{system_identifier};
-                  $sysid =~ tr/a-z/A-Z/; ## ASCII case-insensitive.
-                  if ($QSystemIDs->{$sysid}) {
-                    push @$OP, ['set-compat-mode', 'quirks'];
-                    $QUIRKS = 1;
-                  }
-                }
-              }
-            } else {
-              if ($OPPublicIDOnly->{$token->{public_identifier}}) {
-                push @$Errors, {type => 'obsolete permitted DOCTYPE',
-                                level => 's',
-                                di => $token->{di}, index => $token->{index}};
-              } else {
-                push @$Errors, {type => 'obsolete DOCTYPE', level => 'm',
-                                di => $token->{di}, index => $token->{index}};
-              }
-            }
-          } else {
-            push @$Errors, {type => 'obsolete DOCTYPE', level => 'm',
-                            di => $token->{di}, index => $token->{index}};
-            unless ($IframeSrcdoc) {
-              my $pubid = $token->{public_identifier};
-              $pubid =~ tr/a-z/A-Z/; ## ASCII case-insensitive.
-              if ($QPublicIDs->{$pubid}) {
-                push @$OP, ['set-compat-mode', 'quirks'];
-                $QUIRKS = 1;
-              } elsif ($pubid =~ /^$QPublicIDPrefixPattern/o) {
-                push @$OP, ['set-compat-mode', 'quirks'];
-                $QUIRKS = 1;
-              } elsif (defined $token->{system_identifier} and
-                       do {
-                         my $sysid = $token->{system_identifier};
-                         $sysid =~ tr/a-z/A-Z/; ## ASCII case-insensitive.
-                         $QSystemIDs->{$sysid};
-                       }) {
-                push @$OP, ['set-compat-mode', 'quirks'];
-                $QUIRKS = 1;
-              } elsif ($pubid =~ /^$LQPublicIDPrefixPattern/o) {
+          push @$Errors, {type => 'obsolete DOCTYPE', level => 'm',
+                          di => $token->{di}, index => $token->{index}};
+          unless ($IframeSrcdoc) {
+            my $pubid = $token->{public_identifier};
+            $pubid =~ tr/a-z/A-Z/; ## ASCII case-insensitive.
+            if ($QPublicIDs->{$pubid}) {
+              push @$OP, ['set-compat-mode', 'quirks'];
+              $QUIRKS = 1;
+            } elsif ($pubid =~ /^$QPublicIDPrefixPattern/o) {
+              push @$OP, ['set-compat-mode', 'quirks'];
+              $QUIRKS = 1;
+            } elsif (defined $token->{system_identifier} and
+                     do {
+                       my $sysid = $token->{system_identifier};
+                       $sysid =~ tr/a-z/A-Z/; ## ASCII case-insensitive.
+                       $QSystemIDs->{$sysid};
+                     }) {
+              push @$OP, ['set-compat-mode', 'quirks'];
+              $QUIRKS = 1;
+            } elsif ($pubid =~ /^$LQPublicIDPrefixPattern/o) {
+              push @$OP, ['set-compat-mode', 'limited quirks'];
+            } elsif ($pubid =~ /^$QorLQPublicIDPrefixPattern/o) {
+              if (defined $token->{system_identifier}) {
                 push @$OP, ['set-compat-mode', 'limited quirks'];
-              } elsif ($pubid =~ /^$QorLQPublicIDPrefixPattern/o) {
-                if (defined $token->{system_identifier}) {
-                  push @$OP, ['set-compat-mode', 'limited quirks'];
-                } else {
-                  push @$OP, ['set-compat-mode', 'quirks'];
-                  $QUIRKS = 1;
-                }
+              } else {
+                push @$OP, ['set-compat-mode', 'quirks'];
+                $QUIRKS = 1;
               }
             }
           }
@@ -3984,16 +3954,6 @@ sub generate_tree_constructor ($) {
         join ', ', map { qq{q<$_> => 1} } sort { $a cmp $b } keys %{$defs->{doctype_switch}->{quirks}->{values}->{public_id}};
     push @def_code, sprintf q{my $QSystemIDs = {%s};},
         join ', ', map { qq{q<$_> => 1} } sort { $a cmp $b } keys %{$defs->{doctype_switch}->{quirks}->{values}->{system_id}};
-    my $op_pub_to_sys = {};
-    my $op_pub_wo_sys = {};
-    for (@{$defs->{doctype_switch}->{obsolete_permitted}}) {
-      $op_pub_to_sys->{$_->[0]} = $_->[1] if defined $_->[1];
-      $op_pub_wo_sys->{$_->[0]} = 1 if not defined $_->[1];
-    }
-    push @def_code, sprintf q{my $OPPublicIDToSystemID = {%s};},
-        join ', ', map { qq{q<$_> => q<$op_pub_to_sys->{$_}>} } sort { $a cmp $b } keys %$op_pub_to_sys;
-    push @def_code, sprintf q{my $OPPublicIDOnly = {%s};},
-        join ', ', map { qq{q<$_> => 1} } sort { $a cmp $b } keys %$op_pub_wo_sys;
   }
 
   ## ---- Injecting pseudo-IM definitions ----
