@@ -3923,7 +3923,9 @@ $Element->{+HTML_NS}->{link} = {
     }
 
     my $sizes_attr = $item->{node}->get_attribute_node_ns (undef, 'sizes');
-    if (defined $sizes_attr and not $rel->{link_types}->{icon}) {
+    if (defined $sizes_attr and
+        not ($rel->{link_types}->{icon} or
+             $rel->{link_types}->{'apple-touch-icon'})) {
       $self->{onerror}->(node => $sizes_attr,
                          type => 'link:sizes:not icon',
                          level => 'm');

@@ -595,12 +595,13 @@ element with no <code>icon</code> link type
 @en
 <p>When the <code>sizes</code> attribute is specified, the
 <code>link</code> element's <code>rel</code> attribute must contain a
-link type keyword <code>icon</code>.  Otherwise the <code>sizes</code>
-attribute is ignored.
+link type keyword <code>icon</code> or <code>apple-touch-icon</code>.
+Otherwise the <code>sizes</code> attribute is ignored.
 
 @ja
 <code>link</code> 要素に <code>sizes</code> を指定する時は、
-<code>rel</code> 属性にリンク型 <code>icon</code>
+<code>rel</code> 属性にリンク型 <code>icon</code> か
+<code>apple-touch-icon</code>
 を指定しなければいけません。そうでなければ、 <code>sizes</code>
 属性は無視されます。
 
