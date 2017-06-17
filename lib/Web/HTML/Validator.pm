@@ -3950,11 +3950,14 @@ $Element->{+HTML_NS}->{link} = {
     }
 
     unless ($rel->{is_external_resource_link}) {
-      my $co_attr = $item->{node}->get_attribute_node_ns (undef, 'crossorigin');
-      if ($co_attr) {
-        $self->{onerror}->(node => $co_attr,
-                           type => 'non external resource crossorigin',
-                           level => 'w');
+      for my $name (qw(nonce crossorigin)) {
+        my $attr = $item->{node}->get_attribute_node_ns (undef, $name);
+        $self->{onerror}->(node => $attr,
+                           # non external resource crossorigin
+                           # non external resource nonce
+                           type => 'non external resource ' . $name,
+                           level => 'w')
+            if defined $attr;
       }
     }
   }, # check_attrs2

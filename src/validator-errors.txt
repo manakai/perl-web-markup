@@ -366,6 +366,50 @@ data block <code><var>{value}</var></code> is not supported
     
     <p>内容が適合しているかどうかは<em>不明</em>です。</p>
 
+* non external resource crossorigin
+
+layer=content-model
+default_level=w
+attr
+
+@en
+The <code>crossorigin</code> attribute has no effect
+@ja
+この <code>crossorigin</code> 属性には意味がありません
+
+@en
+<p>The <code>crossorigin</code> attribute of the <code>link</code>
+element is effective only when the element defines an external
+resource link (e.g. when its <code>rel</code> attribute is
+<code>stylesheet</code>.
+
+@ja
+<p><code>link</code> 要素の <code>crossorigin</code>
+属性に効果があるのは、外部資源リンクの時
+(<code>rel</code> 属性が <code>stylesheet</code> の時など) だけです。
+
+* non external resource nonce
+
+layer=content-model
+default_level=w
+attr
+
+@en
+The <code>nonce</code> attribute has no effect
+@ja
+この <code>nonce</code> 属性には意味がありません
+
+@en
+<p>The <code>nonce</code> attribute of the <code>link</code>
+element is effective only when the element defines an external
+resource link (e.g. when its <code>rel</code> attribute is
+<code>stylesheet</code>.
+
+@ja
+<p><code>link</code> 要素の <code>nonce</code>
+属性に効果があるのは、外部資源リンクの時
+(<code>rel</code> 属性が <code>stylesheet</code> の時など) だけです。
+
 * duplicate slot name
 
 default_level=w
