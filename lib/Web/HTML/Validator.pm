@@ -4572,16 +4572,16 @@ $Element->{+HTML_NS}->{script} = {
                          type => 'script type:bad spaces',
                          level => 'm')
           if $type =~ /[^MODULEmodule]/;
-      my $charset_attr = $item->{node}->get_attribute_node_ns (undef, 'charset');
-      $self->{onerror}->(node => $charset_attr,
-                         type => 'script:ignored charset',
-                         level => 'm')
-          if defined $charset_attr;
-      my $defer_attr = $item->{node}->get_attribute_node_ns (undef, 'defer');
-      $self->{onerror}->(node => $defer_attr,
-                         type => 'script:ignored defer',
-                         level => 'm')
-          if defined $defer_attr;
+      for my $name (qw(charset defer nomodule)) {
+        my $attr = $item->{node}->get_attribute_node_ns (undef, $name);
+        $self->{onerror}->(node => $attr,
+                           # script:ignored charset
+                           # script:ignored defer
+                           # script:ignored nomodule
+                           type => 'script:ignored ' . $name,
+                           level => 'm')
+            if defined $attr;
+      }
     } else {
       require Web::MIME::Type;
       my $mime_type;
@@ -4642,9 +4642,9 @@ $Element->{+HTML_NS}->{script} = {
                            type => 'script:ignored charset',
                            level => 'm')
             if defined $charset_attr and not defined $src_attr;
-      } else {
+      } else { # data block
         $element_state->{content_type} = $mime_type; # or undef; data block
-        for my $name (qw(async charset crossorigin defer nonce src)) {
+        for my $name (qw(async charset crossorigin defer nonce src nomodule)) {
           my $attr = $item->{node}->get_attribute_node_ns (undef, $name);
           $self->{onerror}->(node => $attr,
                              type => 'script:ignored ' . $name,

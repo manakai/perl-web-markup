@@ -258,6 +258,29 @@ attribute.
 属性に効果があるのは、モジュールスクリプトのときと、
 古典スクリプトで <code>src</code> 属性があるときだけです。
 
+* script:ignored nomodule
+
+layer=content-model
+default_level=m
+attr
+
+@en
+The <code>nomodule</code> attribute has no effect
+@ja
+この <code>nomodule</code> 属性には意味がありません
+
+@en
+<p>The <code>nomodule</code> attribute of the <code>script</code>
+element is effective only when the element defines a classic script.
+It can't be used when the element defines a module script or a data
+block.
+
+@ja
+<p><code>script</code> 要素の <code>nomodule</code>
+属性に効果があるのは、古典スクリプトのときだけです。
+モジュールスクリプトやデータブロックの <code>script</code> 
+要素には指定できません。
+
 * script language
 
 layer=content-model

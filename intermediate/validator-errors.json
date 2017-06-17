@@ -93,8 +93,8 @@
       "link:sizes:not icon" : {
          "default_level" : "m",
          "desc" : {
-            "en" : "\u003Cp>When the \u003Ccode>sizes\u003C/code> attribute is specified, the\u000A\u003Ccode>link\u003C/code> element's \u003Ccode>rel\u003C/code> attribute must contain a\u000Alink type keyword \u003Ccode>icon\u003C/code>.  Otherwise the \u003Ccode>sizes\u003C/code>\u000Aattribute is ignored.\u003C/p>",
-            "ja" : "\u003Ccode>link\u003C/code> 要素に \u003Ccode>sizes\u003C/code> を指定する時は、\u000A\u003Ccode>rel\u003C/code> 属性にリンク型 \u003Ccode>icon\u003C/code>\u000Aを指定しなければいけません。そうでなければ、 \u003Ccode>sizes\u003C/code>\u000A属性は無視されます。"
+            "en" : "\u003Cp>When the \u003Ccode>sizes\u003C/code> attribute is specified, the\u000A\u003Ccode>link\u003C/code> element's \u003Ccode>rel\u003C/code> attribute must contain a\u000Alink type keyword \u003Ccode>icon\u003C/code> or \u003Ccode>apple-touch-icon\u003C/code>.\u000AOtherwise the \u003Ccode>sizes\u003C/code> attribute is ignored.\u003C/p>",
+            "ja" : "\u003Ccode>link\u003C/code> 要素に \u003Ccode>sizes\u003C/code> を指定する時は、\u000A\u003Ccode>rel\u003C/code> 属性にリンク型 \u003Ccode>icon\u003C/code> か\u000A\u003Ccode>apple-touch-icon\u003C/code>\u000Aを指定しなければいけません。そうでなければ、 \u003Ccode>sizes\u003C/code>\u000A属性は無視されます。"
          },
          "layer" : "content-model",
          "message" : {
