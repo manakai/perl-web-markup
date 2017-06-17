@@ -760,3 +760,191 @@ has one of "body-ok" link types such as <code>stylesheet</code>.
 属性に <code>body</code> 内でも使えるリンク型
 (<code>stylesheet</code> など) が指定されている
 <code>link</code> 要素だけです。
+
+* element not allowed:dl
+
+default_level=m
+layer=content-model
+
+@en
+There is an element not allowed in a <code>dl</code> element
+@ja
+<code>dl</code> 要素内で認められない要素があります
+
+@en
+<p>In a <code>dl</code> element, only <code>dt</code>,
+<code>dd</code>, <code>div</code>, <code>script</code>, and
+<code>template</code> elements are allowed.
+
+<p>In a <code>div</code> element that is a child of a <code>dl</code>
+element, only <code>dt</code>, <code>dd</code>, <code>script</code>,
+and <code>template</code> elements are allowed.
+
+<p>Any other element in the list must be placed within a
+<code>dt</code> or <code>dd</code> element.
+
+@ja
+<p><code>dl</code> 要素では、 <code>dt</code>,
+<code>dd</code>, <code>div</code>, <code>script</code>,
+<code>template</code> の各要素だけが使えます。
+
+<p><code>dl</code> 要素の子供の <code>div</code> 要素では、
+<code>dt</code>, <code>dd</code>, <code>script</code>,
+<code>template</code> の各要素だけが使えます。
+
+<p>リスト内にその他の要素がある時は、
+<code>dt</code> 要素か <code>dd</code> 要素の中に入れる必要があります。
+
+* character not allowed:dl
+
+default_level=m
+layer=content-model
+
+@en
+There is a text in a <code>dl</code> element
+@ja
+<code>dl</code> 要素内にテキストがあります
+
+@en
+<p>In a <code>dl</code> element, only <code>dt</code>,
+<code>dd</code>, <code>div</code>, <code>script</code>, and
+<code>template</code> elements are allowed.
+
+<p>In a <code>div</code> element that is a child of a <code>dl</code>
+element, only <code>dt</code>, <code>dd</code>, <code>script</code>,
+and <code>template</code> elements are allowed.
+
+<p>Any text data in the list must be placed within a <code>dt</code>
+or <code>dd</code> element.
+
+@ja
+<p><code>dl</code> 要素では、 <code>dt</code>,
+<code>dd</code>, <code>div</code>, <code>script</code>,
+<code>template</code> の各要素だけが使えます。
+
+<p><code>dl</code> 要素の子供の <code>div</code> 要素では、
+<code>dt</code>, <code>dd</code>, <code>script</code>,
+<code>template</code> の各要素だけが使えます。
+
+<p>リスト内に文字データがある時は、
+<code>dt</code> 要素か <code>dd</code> 要素の中に入れる必要があります。
+
+* dl:div:mixed
+
+default_level=m
+layer=content-model
+
+@en
+There are <code>div</code> and non-<code>div</code> children
+@ja
+<code>div</code> 要素とそうでない要素の両方があります
+
+@en
+
+<p>In a <code>dl</code> element, all list items must be included
+either directly by <code>dt</code> and <code>dd</code> element
+children or indirectly by <code>div</code> element children.  They
+cannot be mixed.
+
+@ja
+<p><code>dl</code> 要素内では、すべての項目を
+<code>dt</code> 要素と <code>dd</code> 要素で直接記述するか、
+<code>div</code> 要素で間接的に含めるかのどちらかとしなければいけません。
+2つの方法を混合することはできません。
+
+* dl:no div
+
+default_level=m
+layer=content-model
+
+@en
+There is no <code>div</code> element wrapper
+@ja
+<code>div</code> 要素で包まれていません
+
+@en
+
+<p>In a <code>dl</code> element, all list items must be included
+either directly by <code>dt</code> and <code>dd</code> element
+children or indirectly by <code>div</code> element children.  They
+cannot be mixed.
+
+@ja
+<p><code>dl</code> 要素内では、すべての項目を
+<code>dt</code> 要素と <code>dd</code> 要素で直接記述するか、
+<code>div</code> 要素で間接的に含めるかのどちらかとしなければいけません。
+2つの方法を混合することはできません。
+
+* ps element missing:dt
+
+default_level=m
+layer=content-model
+
+@en
+There is no <code>dt</code> element before this element
+@ja
+この要素の前に <code>dt</code> 要素がありません
+
+@en
+<p>There must be a <code>dt</code> element before a <code>dd</code>
+element.
+
+@ja
+<p><code>dd</code> 要素の前には <code>dt</code> 要素が必要です。
+
+* ps element missing:dd
+
+default_level=m
+layer=content-model
+
+@en
+There is no <code>dd</code> element before this element
+@ja
+この要素の前に <code>dd</code> 要素がありません
+
+@en
+<p>A <code>dt</code> element must be followed by one or more
+<code>dd</code> element.
+
+@ja
+<p><code>dt</code> 要素の後には1つ以上の <code>dd</code>
+要素が必要です。
+
+* dl:last dd missing
+
+default_level=m
+layer=content-model
+
+@en
+There is no <code>dd</code> element at the last of this element
+@ja
+この要素の末尾に <code>dd</code> 要素がありません
+
+@en
+<p>A <code>dt</code> element must be followed by one or more
+<code>dd</code> element.
+
+@ja
+<p><code>dt</code> 要素の後には1つ以上の <code>dd</code>
+要素が必要です。
+
+* dl:div:second dt
+
+default_level=m
+layer=content-model
+
+@en
+There are multiple <code>dt</code> element groups
+@ja
+<code>dt</code> 要素が複数組あります
+
+@en
+<p>In a <code>div</code> element, there must be only one set of name
+(<code>dt</code>) and value (<code>dd</code>) pair.  To represent
+multiple name/value groups, use multiple <code>div</code> elements.
+
+@ja
+<p>1つの <code>div</code> 要素には1組の
+名前 (<code>dt</code>) と値 (<code>dd</code>) の組しか含められません。
+複数の名前と値の組を表したい時は、
+複数の <code>div</code> 要素に分ける必要があります。

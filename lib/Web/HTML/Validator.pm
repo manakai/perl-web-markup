@@ -2460,10 +2460,20 @@ $IsPalpableContent->{(HTML_NS)}->{ol} = sub {
 
 $IsPalpableContent->{(HTML_NS)}->{dl} = sub {
   for (@{$_[0]->child_nodes}) {
-    return 1 if
-        $_->node_type == 1 and # ELEMENT_NODE
-        $_->local_name =~ /\Ad[td]\z/ and # dt | dd
-        ($_->namespace_uri || '') eq HTML_NS;
+    if ($_->node_type == 1 and # ELEMENT_NODE
+        ($_->namespace_uri || '') eq HTML_NS) {
+      my $ln = $_->local_name;
+      if ($ln eq 'dt' or $ln eq 'dd') {
+        return 1;
+      } elsif ($ln eq 'div') {
+        for (@{$_->child_nodes}) {
+          if ($_->node_type == 1 and # ELEMENT_NODE
+              ($_->namespace_uri || '') eq HTML_NS) {
+            return 1 if $_->local_name =~ /\Ad[td]\z/;
+          }
+        }
+      }
+    }
   }
   return 0;
 };
@@ -5115,54 +5125,145 @@ $Element->{+HTML_NS}->{dl} = {
   %AnyChecker,
   check_start => sub {
     my ($self, $item, $element_state) = @_;
-    $element_state->{phase} = 'before dt';
+    $element_state->{dl_phase} = 'before dt';
   },
   check_child_element => sub {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
     if ($_Defs->{categories}->{'script-supporting elements'}->{elements}->{$child_nsuri}->{$child_ln}) {
       #
-    } elsif ($element_state->{phase} eq 'in dds') {
+    } elsif ($element_state->{dl_phase} eq 'in dds') {
       if ($child_nsuri eq HTML_NS and $child_ln eq 'dd') {
-        #$element_state->{phase} = 'in dds';
+        #$element_state->{dl_phase} = 'in dds';
       } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'dt') {
-        $element_state->{phase} = 'in dts';
+        $element_state->{dl_phase} = 'in dts';
+      } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'div') {
+        $self->{onerror}->(node => $child_el,
+                           type => 'dl:div:mixed',
+                           level => 'm');
+        $element_state->{dl_phase} = 'before second dt';
       } else {
         $self->{onerror}->(node => $child_el,
-                           type => 'element not allowed',
+                           type => 'element not allowed:dl',
                            level => 'm');
       }
-    } elsif ($element_state->{phase} eq 'in dts') {
+    } elsif ($element_state->{dl_phase} eq 'in dts') {
       if ($child_nsuri eq HTML_NS and $child_ln eq 'dt') {
-        #$element_state->{phase} = 'in dts';
+        #$element_state->{dl_phase} = 'in dts';
       } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'dd') {
-        $element_state->{phase} = 'in dds';
+        $element_state->{dl_phase} = 'in dds';
+      } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'div') {
+        $self->{onerror}->(node => $child_el,
+                           type => 'ps element missing:dd',
+                           level => 'm');
+        $self->{onerror}->(node => $child_el,
+                           type => 'dl:div:mixed',
+                           level => 'm');
+        $element_state->{dl_phase} = 'before second dt';
       } else {
         $self->{onerror}->(node => $child_el,
-                           type => 'element not allowed',
+                           type => 'element not allowed:dl',
                            level => 'm');
       }
-    } elsif ($element_state->{phase} eq 'before dt') {
+    } elsif ($element_state->{dl_phase} eq 'before dt') {
       if ($child_nsuri eq HTML_NS and $child_ln eq 'dt') {
-        $element_state->{phase} = 'in dts';
+        $element_state->{dl_phase} = 'in dts';
+      } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'div') {
+        $element_state->{dl_phase} = 'before div';
       } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'dd') {
-        $self->{onerror}
-             ->(node => $child_el,
-                type => 'ps element missing',
-                text => 'dt',
-                level => 'm');
-        $element_state->{phase} = 'in dds';
+        $self->{onerror}->(node => $child_el,
+                           type => 'ps element missing:dt',
+                           level => 'm');
+        $element_state->{dl_phase} = 'in dds';
       } else {
         $self->{onerror}->(node => $child_el,
-                           type => 'element not allowed',
+                           type => 'element not allowed:dl',
+                           level => 'm');
+      }
+    } elsif ($element_state->{dl_phase} eq 'before second dt') {
+      if ($child_nsuri eq HTML_NS and $child_ln eq 'dt') {
+        $element_state->{dl_phase} = 'in dts';
+      } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'div') {
+        $self->{onerror}->(node => $child_el,
+                           type => 'dl:div:mixed',
+                           level => 'm');
+        $element_state->{dl_phase} = 'before second dt';
+      } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'dd') {
+        $self->{onerror}->(node => $child_el,
+                           type => 'ps element missing:dt',
+                           level => 'm');
+        $element_state->{dl_phase} = 'in dds';
+      } else {
+        $self->{onerror}->(node => $child_el,
+                           type => 'element not allowed:dl',
+                           level => 'm');
+      }
+    } elsif ($element_state->{dl_phase} eq 'before div') {
+      if ($child_nsuri eq HTML_NS and $child_ln eq 'div') {
+        #$element_state->{dl_phase} = 'before div';
+      } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'dt') {
+        $self->{onerror}->(node => $child_el,
+                           type => 'dl:no div',
+                           level => 'm');
+        $element_state->{dl_phase} = 'before div dt';
+      } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'dd') {
+        $self->{onerror}->(node => $child_el,
+                           type => 'ps element missing:dt',
+                           level => 'm');
+        $self->{onerror}->(node => $child_el,
+                           type => 'dl:no div',
+                           level => 'm');
+        $element_state->{dl_phase} = 'before div dd';
+      } else {
+        $self->{onerror}->(node => $child_el,
+                           type => 'element not allowed:dl',
+                           level => 'm');
+      }
+    } elsif ($element_state->{dl_phase} eq 'before div dt') {
+      if ($child_nsuri eq HTML_NS and $child_ln eq 'div') {
+        $self->{onerror}->(node => $child_el,
+                           type => 'ps element missing:dd',
+                           level => 'm');
+        $element_state->{dl_phase} = 'before div';
+      } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'dt') {
+        $self->{onerror}->(node => $child_el,
+                           type => 'dl:no div',
+                           level => 'm');
+        #$element_state->{dl_phase} = 'before div dt';
+      } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'dd') {
+        $self->{onerror}->(node => $child_el,
+                           type => 'dl:no div',
+                           level => 'm');
+        $element_state->{dl_phase} = 'before div dd';
+      } else {
+        $self->{onerror}->(node => $child_el,
+                           type => 'element not allowed:dl',
+                           level => 'm');
+      }
+    } elsif ($element_state->{dl_phase} eq 'before div dd') {
+      if ($child_nsuri eq HTML_NS and $child_ln eq 'div') {
+        $element_state->{dl_phase} = 'before div';
+      } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'dt') {
+        $self->{onerror}->(node => $child_el,
+                           type => 'dl:no div',
+                           level => 'm');
+        $element_state->{dl_phase} = 'before div dt';
+      } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'dd') {
+        $self->{onerror}->(node => $child_el,
+                           type => 'dl:no div',
+                           level => 'm');
+        #$element_state->{dl_phase} = 'before div dd';
+      } else {
+        $self->{onerror}->(node => $child_el,
+                           type => 'element not allowed:dl',
                            level => 'm');
       }
     } else {
-      die "check_child_element: Bad |dl| phase: $element_state->{phase}";
+      die "check_child_element: Bad |dl| phase: $element_state->{dl_phase}";
     }
 
     if ($child_nsuri eq HTML_NS and $child_ln eq 'dt') {
-      my $name = $child_el->text_content;
+      my $name = $child_el->text_content; # XXX inner_text ?
       if (defined $element_state->{dl_names}->{$name}) {
         $self->{onerror}->(node => $child_el,
                            type => 'duplicate dl name',
@@ -5176,22 +5277,122 @@ $Element->{+HTML_NS}->{dl} = {
     my ($self, $item, $child_node, $has_significant, $element_state) = @_;
     if ($has_significant) {
       $self->{onerror}->(node => $child_node,
-                         type => 'character not allowed',
+                         type => 'character not allowed:dl',
                          level => 'm');
     }
   },
   check_end => sub {
     my ($self, $item, $element_state) = @_;
-    if ($element_state->{phase} eq 'in dts') {
+    if ($element_state->{dl_phase} eq 'in dts' or
+        $element_state->{dl_phase} eq 'before div dt') {
       $self->{onerror}->(node => $item->{node},
-                         type => 'child element missing',
-                         text => 'dd',
+                         type => 'dl:last dd missing',
                          level => 'm');
     }
 
     $AnyChecker{check_end}->(@_);
   },
 }; # dl
+
+$Element->{+HTML_NS}->{div} = {
+  %HTMLFlowContentChecker,
+  check_child_element => sub {
+    my ($self, $item, $child_el, $child_nsuri, $child_ln,
+        $child_is_transparent, $element_state) = @_;
+    if (defined $item->{parent_state}->{dl_phase}) { # in dl
+      if ($_Defs->{categories}->{'script-supporting elements'}->{elements}->{$child_nsuri}->{$child_ln}) {
+        #
+      } elsif (not defined $element_state->{dl_phase}) { # before dt
+        if ($child_nsuri eq HTML_NS and $child_ln eq 'dt') {
+          $element_state->{dl_phase} = 'in dts';
+        } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'dd') {
+          $self->{onerror}->(node => $child_el,
+                             type => 'ps element missing:dt',
+                             level => 'm');
+          $element_state->{dl_phase} = 'in dds';
+        } else {
+          $self->{onerror}->(node => $child_el,
+                             type => 'element not allowed:dl',
+                             level => 'm');
+        }
+      } elsif ($element_state->{dl_phase} eq 'in dts') {
+        if ($child_nsuri eq HTML_NS and $child_ln eq 'dt') {
+          #$element_state->{dl_phase} = 'in dts';
+        } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'dd') {
+          $element_state->{dl_phase} = 'in dds';
+        } else {
+          $self->{onerror}->(node => $child_el,
+                             type => 'element not allowed:dl',
+                             level => 'm');
+        }
+      } elsif ($element_state->{dl_phase} eq 'in dds') {
+        if ($child_nsuri eq HTML_NS and $child_ln eq 'dt') {
+          $self->{onerror}->(node => $child_el,
+                             type => 'dl:div:second dt',
+                             level => 'm');
+          $element_state->{dl_phase} = 'in dts';
+        } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'dd') {
+          #$element_state->{dl_phase} = 'in dds';
+        } else {
+          $self->{onerror}->(node => $child_el,
+                             type => 'element not allowed:dl',
+                             level => 'm');
+        }
+      } else {
+        die "Bad |dl_phase|: |$element_state->{dl_phase}|";
+      }
+
+      if ($child_nsuri eq HTML_NS and $child_ln eq 'dt') {
+        my $name = $child_el->text_content; # XXX inner_text ?
+        if (defined $item->{parent_state}->{dl_names}->{$name}) {
+          $self->{onerror}->(node => $child_el,
+                             type => 'duplicate dl name',
+                             level => 's');
+        } else {
+          $item->{parent_state}->{dl_names}->{$name} = 1;
+        }
+      }
+    } else { # flow content
+      if ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln} or
+          $_Defs->{categories}->{'flow content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln} or
+          ($child_nsuri eq HTML_NS and $child_ln =~ /-/)) {
+        $element_state->{in_flow_content} = 1;
+      } else {
+        $self->{onerror}->(node => $child_el,
+                           type => 'element not allowed:flow',
+                           level => 'm');
+      }
+    }
+  }, # check_child_element
+  check_child_text => sub {
+    my ($self, $item, $child_node, $has_significant, $element_state) = @_;
+    if ($has_significant and defined $item->{parent_state}->{dl_phase}) {
+      $self->{onerror}->(node => $child_node,
+                         type => 'character not allowed:dl',
+                         level => 'm');
+    }
+  }, # check_child_text
+  check_end => sub {
+    my ($self, $item, $element_state) = @_;
+    if (defined $item->{parent_state}->{dl_phase}) {
+      if (not defined $element_state->{dl_phase}) {
+        $self->{onerror}->(node => $item->{node},
+                           type => 'child element missing:dt',
+                           level => 'm');
+      } elsif ($element_state->{dl_phase} eq 'in dts') {
+        $self->{onerror}->(node => $item->{node},
+                           type => 'dl:last dd missing',
+                           level => 'm');
+      }
+    } else {
+      $self->{onerror}->(node => $item->{node},
+                         level => 's',
+                         type => 'no significant content')
+          unless $element_state->{has_palpable};
+      $HTMLFlowContentChecker{check_end}->(@_);
+    }
+  }, # check_end
+}; # div
 
 $ElementAttrChecker->{(HTML_NS)}->{marquee}->{''}->{loop} = $LegacyLoopChecker;
 
@@ -10222,7 +10423,7 @@ sub check_node ($$) {
 
 =head1 LICENSE
 
-Copyright 2007-2016 Wakaba <wakaba@suikawiki.org>.
+Copyright 2007-2017 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
