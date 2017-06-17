@@ -7754,67 +7754,6 @@ $Element->{+HTML_NS}->{textarea} = {
   }, # check_attrs2
 }; # textarea
 
-$Element->{+HTML_NS}->{keygen} = {
-  %HTMLEmptyChecker,
-  check_attrs => $GetHTMLAttrsChecker->({
-    name => $FormControlNameAttrChecker,
-  }), # check_attrs
-  check_start => sub {
-    my ($self, $item, $element_state) = @_;
-    $FAECheckStart->($self, $item, $element_state);
-  }, # check_start
-  check_attrs2 => sub {
-    my ($self, $item, $element_state) = @_;
-    $FAECheckAttrs2->($self, $item, $element_state);
-
-    my $el = $item->{node};
-    my $keytype = $el->get_attribute_ns (undef, 'keytype') || '';
-    $keytype =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
-    if ($keytype eq 'dsa') {
-      if ($el->has_attribute_ns (undef, 'keyparams')) {
-        my $pqg_attr = $el->get_attribute_node_ns (undef, 'pqg');
-        if ($pqg_attr) {
-          $self->{onerror}->(node => $pqg_attr,
-                             type => 'attribute not allowed',
-                             level => 'm');
-        }
-      } else {
-        unless ($el->has_attribute_ns (undef, 'pqg')) {
-          $self->{onerror}->(node => $el,
-                             type => 'attribute missing:keyparams|pqg',
-                             level => 'm');
-        }
-      }
-    } elsif ($keytype eq 'ec') {
-      unless ($el->has_attribute_ns (undef, 'keyparams')) {
-        $self->{onerror}->(node => $el,
-                           type => 'attribute missing',
-                           text => 'keyparams',
-                           level => 'm');
-      }
-      my $pqg_attr = $el->get_attribute_node_ns (undef, 'pqg');
-      if ($pqg_attr) {
-        $self->{onerror}->(node => $pqg_attr,
-                           type => 'attribute not allowed',
-                           level => 'm');
-      }
-    } else {
-      my $keyparams_attr = $el->get_attribute_node_ns (undef, 'keyparams');
-      if ($keyparams_attr) {
-        $self->{onerror}->(node => $keyparams_attr,
-                           type => 'attribute not allowed',
-                           level => 'm');
-      }
-      my $pqg_attr = $el->get_attribute_node_ns (undef, 'pqg');
-      if ($pqg_attr) {
-        $self->{onerror}->(node => $pqg_attr,
-                           type => 'attribute not allowed',
-                           level => 'm');
-      }
-    }
-  }, # check_attrs2
-}; # keygen
-
 $Element->{+HTML_NS}->{output} = {
   %HTMLPhrasingContentChecker,
   check_attrs => $GetHTMLAttrsChecker->({
@@ -7917,8 +7856,7 @@ $Element->{+HTML_NS}->{meter} = {
 $ElementAttrChecker->{(HTML_NS)}->{input}->{''}->{autofocus} =
 $ElementAttrChecker->{(HTML_NS)}->{button}->{''}->{autofocus} =
 $ElementAttrChecker->{(HTML_NS)}->{select}->{''}->{autofocus} =
-$ElementAttrChecker->{(HTML_NS)}->{textarea}->{''}->{autofocus} =
-$ElementAttrChecker->{(HTML_NS)}->{keygen}->{''}->{autofocus} = sub {
+$ElementAttrChecker->{(HTML_NS)}->{textarea}->{''}->{autofocus} = sub {
   my ($self, $attr) = @_;
 
   ## A boolean attribute
@@ -9501,7 +9439,7 @@ $Element->{+HTML_NS}->{template} = {
     if (not defined $model) {
       ## Flow content or metadata content
       $container = $df->owner_document->create_element_ns
-          (HTML_NS, $has_flow ? 'div' : 'head');
+          (HTML_NS, $has_flow ? 'body' : 'head');
     } elsif ($model eq 'metadata') {
       $container = $df->owner_document->create_element_ns (HTML_NS, 'head');
     } elsif ($model eq 'popup menu') {
