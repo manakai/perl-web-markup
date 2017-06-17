@@ -151,7 +151,7 @@ and has a <code>src</code> attribute.
 * script:ignored defer
 
 layer=content-model
-default_level=w
+default_level=m
 attr
 
 @en
@@ -173,7 +173,7 @@ has a <code>src</code> attribute, and does not have any
 * script:ignored async
 
 layer=content-model
-default_level=w
+default_level=m
 attr
 
 @en
@@ -190,6 +190,27 @@ attribute.
 @ja
 <p><code>script</code> 要素の <code>defer</code>
 属性に効果があるのは、モジュールスクリプトのときと、
+古典スクリプトで <code>src</code> 属性があるときだけです。
+
+* script:ignored integrity
+
+layer=content-model
+default_level=m
+attr
+
+@en
+The <code>integrity</code> attribute has no effect
+@ja
+この <code>integrity</code> 属性には意味がありません
+
+@en
+<p>The <code>integrity</code> attribute of the <code>script</code> element
+is effective only when the element defines a classic script and
+has a <code>src</code> attribute.
+
+@ja
+<p><code>script</code> 要素の <code>integrity</code>
+属性に効果があるのは、
 古典スクリプトで <code>src</code> 属性があるときだけです。
 
 * script:ignored src

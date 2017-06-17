@@ -105,6 +105,42 @@
             "Web::HTML::Validator" : 1
          }
       },
+      "non external resource crossorigin" : {
+         "default_level" : "w",
+         "desc" : {
+            "en" : "\u003Cp>The \u003Ccode>crossorigin\u003C/code> attribute of the \u003Ccode>link\u003C/code>\u000Aelement is effective only when the element defines an external\u000Aresource link (e.g. when its \u003Ccode>rel\u003C/code> attribute is\u000A\u003Ccode>stylesheet\u003C/code>.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>link\u003C/code> 要素の \u003Ccode>crossorigin\u003C/code>\u000A属性に効果があるのは、外部資源リンクの時\u000A(\u003Ccode>rel\u003C/code> 属性が \u003Ccode>stylesheet\u003C/code> の時など) だけです。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "The \u003Ccode>crossorigin\u003C/code> attribute has no effect",
+            "ja" : "この \u003Ccode>crossorigin\u003C/code> 属性には意味がありません"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         },
+         "targets" : {
+            "attr" : 1
+         }
+      },
+      "non external resource nonce" : {
+         "default_level" : "w",
+         "desc" : {
+            "en" : "\u003Cp>The \u003Ccode>nonce\u003C/code> attribute of the \u003Ccode>link\u003C/code>\u000Aelement is effective only when the element defines an external\u000Aresource link (e.g. when its \u003Ccode>rel\u003C/code> attribute is\u000A\u003Ccode>stylesheet\u003C/code>.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>link\u003C/code> 要素の \u003Ccode>nonce\u003C/code>\u000A属性に効果があるのは、外部資源リンクの時\u000A(\u003Ccode>rel\u003C/code> 属性が \u003Ccode>stylesheet\u003C/code> の時など) だけです。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "The \u003Ccode>nonce\u003C/code> attribute has no effect",
+            "ja" : "この \u003Ccode>nonce\u003C/code> 属性には意味がありません"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         },
+         "targets" : {
+            "attr" : 1
+         }
+      },
       "not custom element name" : {
          "default_level" : "m",
          "desc" : {

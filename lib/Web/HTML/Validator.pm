@@ -4575,12 +4575,13 @@ $Element->{+HTML_NS}->{script} = {
                          type => 'script type:bad spaces',
                          level => 'm')
           if $type =~ /[^MODULEmodule]/;
-      for my $name (qw(charset defer nomodule)) {
+      for my $name (qw(charset defer nomodule integrity)) {
         my $attr = $item->{node}->get_attribute_node_ns (undef, $name);
         $self->{onerror}->(node => $attr,
                            # script:ignored charset
                            # script:ignored defer
                            # script:ignored nomodule
+                           # script:ignored integrity
                            type => 'script:ignored ' . $name,
                            level => 'm')
             if defined $attr;
@@ -4625,31 +4626,42 @@ $Element->{+HTML_NS}->{script} = {
         }
         my $async_attr = $item->{node}->get_attribute_node_ns (undef, 'async');
         my $defer_attr = $item->{node}->get_attribute_node_ns (undef, 'defer');
-        my $co_attr = $item->{node}->get_attribute_node_ns (undef, 'crossorigin');
-        my $charset_attr = $item->{node}->get_attribute_node_ns (undef, 'charset');
         my $src_attr = $item->{node}->get_attribute_node_ns (undef, 'src');
         $self->{onerror}->(node => $defer_attr,
                            type => 'script:ignored defer',
                            level => 'w')
-            if (defined $defer_attr and defined $async_attr) or
-               (defined $defer_attr and not defined $src_attr);
-        $self->{onerror}->(node => $async_attr,
-                           type => 'script:ignored async',
-                           level => 'w')
-            if defined $async_attr and not defined $src_attr;
+            if defined $defer_attr and defined $async_attr and defined $src_attr;
+        my $co_attr = $item->{node}->get_attribute_node_ns (undef, 'crossorigin');
         $self->{onerror}->(node => $co_attr,
                            type => 'script:ignored crossorigin',
                            level => 'w')
             if defined $co_attr and not defined $src_attr;
-        $self->{onerror}->(node => $charset_attr,
-                           type => 'script:ignored charset',
-                           level => 'm')
-            if defined $charset_attr and not defined $src_attr;
+        if (not defined $src_attr) {
+          for my $name (qw(charset async defer integrity)) {
+            my $attr = $item->{node}->get_attribute_node_ns (undef, $name);
+            $self->{onerror}->(node => $attr,
+                               # script:ignored charset
+                               # script:ignored async
+                               # script:ignored defer
+                               # script:ignored integrity
+                               type => 'script:ignored ' . $name,
+                               level => 'm')
+                if defined $attr;
+          }
+        }
       } else { # data block
         $element_state->{content_type} = $mime_type; # or undef; data block
-        for my $name (qw(async charset crossorigin defer nonce src nomodule)) {
+        for my $name (qw(async charset crossorigin defer nonce src nomodule integrity)) {
           my $attr = $item->{node}->get_attribute_node_ns (undef, $name);
           $self->{onerror}->(node => $attr,
+                             # script:ignored charset
+                             # script:ignored async
+                             # script:ignored defer
+                             # script:ignored integrity
+                             # script:ignored crossorigin
+                             # script:ignored nonce
+                             # script:ignored src
+                             # script:ignored nomodule
                              type => 'script:ignored ' . $name,
                              level => 'm')
               if defined $attr;
@@ -4770,7 +4782,6 @@ $Element->{+HTML_NS}->{script} = {
   ## referenced resource.  <script type=""> must be specified if the
   ## referenced resource is not JavaScript.  <script charset=""> must
   ## match the charset="" of the referenced resource.
-
   ## XXX warn if bad nonce=""
 }; # script
 $ElementAttrChecker->{(HTML_NS)}->{script}->{''}->{type} = sub {};
