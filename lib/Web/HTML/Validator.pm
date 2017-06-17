@@ -5763,56 +5763,16 @@ $Element->{+HTML_NS}->{figure} = {
   }, # check_end
 }; # figure
 
-$Element->{+HTML_NS}->{iframe} = {
-  %HTMLTextChecker,
-  check_start => sub {
-    my ($self, $item) = @_;
-    if ($item->{node}->owner_document->manakai_is_html) {
-      $HTMLTextChecker{check_start}->(@_);
-    } else {
-      $HTMLEmptyChecker{check_start}->(@_);
-    }
-  }, # check_start
-  check_attrs2 => sub {
-    my ($self, $item) = @_;
-    if ($item->{node}->has_attribute_ns (undef, 'itemprop') and
-        not $item->{node}->has_attribute_ns (undef, 'src')) {
-      $self->{onerror}->(node => $item->{node},
-                         type => 'attribute missing',
-                         text => 'src',
-                         level => 'm');
-    }
-  }, # check_attrs2
-  check_child_element => sub {
-    my ($self, $item) = @_;
-    if ($item->{node}->owner_document->manakai_is_html) {
-      $HTMLTextChecker{check_child_element}->(@_);
-    } else {
-      $HTMLEmptyChecker{check_child_element}->(@_);
-    }
-  }, # check_child_element
-  check_child_text => sub {
-    my ($self, $item) = @_;
-    if ($item->{node}->owner_document->manakai_is_html) {
-      $HTMLTextChecker{check_child_text}->(@_);
-    } else {
-      $HTMLEmptyChecker{check_child_text}->(@_);
-    }
-  }, # check_child_text
-  check_end => sub {
-    my ($self, $item, $element_state) = @_;
-    if ($item->{node}->owner_document->manakai_is_html) {
-      $self->_add_minus_elements ($element_state,
-                                  {(HTML_NS) => {script => 1}});
-      $self->_check_fallback_html
-          ($item->{node}, $self->{minus_elements}, 'span');
-      $self->_remove_minus_elements ($element_state);
-      $HTMLTextChecker{check_end}->(@_);
-    } else {
-      $HTMLEmptyChecker{check_end}->(@_);
-    }
-  }, # check_end
-}; # iframe
+$Element->{+HTML_NS}->{iframe}->{check_attrs2} = sub {
+  my ($self, $item) = @_;
+  if ($item->{node}->has_attribute_ns (undef, 'itemprop') and
+      not $item->{node}->has_attribute_ns (undef, 'src')) {
+    $self->{onerror}->(node => $item->{node},
+                       type => 'attribute missing',
+                       text => 'src',
+                       level => 'm');
+  }
+}; # check_attrs2
 
 {
   my $keywords = $_Defs->{elements}->{(HTML_NS)}->{iframe}->{attrs}->{''}->{sandbox}->{keywords};
