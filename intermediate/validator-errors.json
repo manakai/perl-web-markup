@@ -1,5 +1,20 @@
 {
    "errors" : {
+      "character not allowed:dl" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>In a \u003Ccode>dl\u003C/code> element, only \u003Ccode>dt\u003C/code>,\u000A\u003Ccode>dd\u003C/code>, \u003Ccode>div\u003C/code>, \u003Ccode>script\u003C/code>, and\u000A\u003Ccode>template\u003C/code> elements are allowed.\u000A\u000A\u003C/p>\u003Cp>In a \u003Ccode>div\u003C/code> element that is a child of a \u003Ccode>dl\u003C/code>\u000Aelement, only \u003Ccode>dt\u003C/code>, \u003Ccode>dd\u003C/code>, \u003Ccode>script\u003C/code>,\u000Aand \u003Ccode>template\u003C/code> elements are allowed.\u000A\u000A\u003C/p>\u003Cp>Any text data in the list must be placed within a \u003Ccode>dt\u003C/code>\u000Aor \u003Ccode>dd\u003C/code> element.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>dl\u003C/code> 要素では、 \u003Ccode>dt\u003C/code>,\u000A\u003Ccode>dd\u003C/code>, \u003Ccode>div\u003C/code>, \u003Ccode>script\u003C/code>,\u000A\u003Ccode>template\u003C/code> の各要素だけが使えます。\u000A\u000A\u003C/p>\u003Cp>\u003Ccode>dl\u003C/code> 要素の子供の \u003Ccode>div\u003C/code> 要素では、\u000A\u003Ccode>dt\u003C/code>, \u003Ccode>dd\u003C/code>, \u003Ccode>script\u003C/code>,\u000A\u003Ccode>template\u003C/code> の各要素だけが使えます。\u000A\u000A\u003C/p>\u003Cp>リスト内に文字データがある時は、\u000A\u003Ccode>dt\u003C/code> 要素か \u003Ccode>dd\u003C/code> 要素の中に入れる必要があります。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "There is a text in a \u003Ccode>dl\u003C/code> element",
+            "ja" : "\u003Ccode>dl\u003C/code> 要素内にテキストがあります"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
       "control name:isindex" : {
          "default_level" : "m",
          "desc" : {
@@ -15,6 +30,66 @@
             "Web::HTML::Validator" : 1
          }
       },
+      "dl:div:mixed" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>In a \u003Ccode>dl\u003C/code> element, all list items must be included\u000Aeither directly by \u003Ccode>dt\u003C/code> and \u003Ccode>dd\u003C/code> element\u000Achildren or indirectly by \u003Ccode>div\u003C/code> element children.  They\u000Acannot be mixed.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>dl\u003C/code> 要素内では、すべての項目を\u000A\u003Ccode>dt\u003C/code> 要素と \u003Ccode>dd\u003C/code> 要素で直接記述するか、\u000A\u003Ccode>div\u003C/code> 要素で間接的に含めるかのどちらかとしなければいけません。\u000A2つの方法を混合することはできません。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "There are \u003Ccode>div\u003C/code> and non-\u003Ccode>div\u003C/code> children",
+            "ja" : "\u003Ccode>div\u003C/code> 要素とそうでない要素の両方があります"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "dl:div:second dt" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>In a \u003Ccode>div\u003C/code> element, there must be only one set of name\u000A(\u003Ccode>dt\u003C/code>) and value (\u003Ccode>dd\u003C/code>) pair.  To represent\u000Amultiple name/value groups, use multiple \u003Ccode>div\u003C/code> elements.\u003C/p>",
+            "ja" : "\u003Cp>1つの \u003Ccode>div\u003C/code> 要素には1組の\u000A名前 (\u003Ccode>dt\u003C/code>) と値 (\u003Ccode>dd\u003C/code>) の組しか含められません。\u000A複数の名前と値の組を表したい時は、\u000A複数の \u003Ccode>div\u003C/code> 要素に分ける必要があります。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "There are multiple \u003Ccode>dt\u003C/code> element groups",
+            "ja" : "\u003Ccode>dt\u003C/code> 要素が複数組あります"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "dl:last dd missing" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>A \u003Ccode>dt\u003C/code> element must be followed by one or more\u000A\u003Ccode>dd\u003C/code> element.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>dt\u003C/code> 要素の後には1つ以上の \u003Ccode>dd\u003C/code>\u000A要素が必要です。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "There is no \u003Ccode>dd\u003C/code> element at the last of this element",
+            "ja" : "この要素の末尾に \u003Ccode>dd\u003C/code> 要素がありません"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "dl:no div" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>In a \u003Ccode>dl\u003C/code> element, all list items must be included\u000Aeither directly by \u003Ccode>dt\u003C/code> and \u003Ccode>dd\u003C/code> element\u000Achildren or indirectly by \u003Ccode>div\u003C/code> element children.  They\u000Acannot be mixed.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>dl\u003C/code> 要素内では、すべての項目を\u000A\u003Ccode>dt\u003C/code> 要素と \u003Ccode>dd\u003C/code> 要素で直接記述するか、\u000A\u003Ccode>div\u003C/code> 要素で間接的に含めるかのどちらかとしなければいけません。\u000A2つの方法を混合することはできません。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "There is no \u003Ccode>div\u003C/code> element wrapper",
+            "ja" : "\u003Ccode>div\u003C/code> 要素で包まれていません"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
       "duplicate slot name" : {
          "default_level" : "w",
          "desc" : {
@@ -25,6 +100,21 @@
          "message" : {
             "en" : "The slot name is also assigned to another slot",
             "ja" : "このスロット名は他のスロットでも使われています"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "element not allowed:dl" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>In a \u003Ccode>dl\u003C/code> element, only \u003Ccode>dt\u003C/code>,\u000A\u003Ccode>dd\u003C/code>, \u003Ccode>div\u003C/code>, \u003Ccode>script\u003C/code>, and\u000A\u003Ccode>template\u003C/code> elements are allowed.\u000A\u000A\u003C/p>\u003Cp>In a \u003Ccode>div\u003C/code> element that is a child of a \u003Ccode>dl\u003C/code>\u000Aelement, only \u003Ccode>dt\u003C/code>, \u003Ccode>dd\u003C/code>, \u003Ccode>script\u003C/code>,\u000Aand \u003Ccode>template\u003C/code> elements are allowed.\u000A\u000A\u003C/p>\u003Cp>Any other element in the list must be placed within a\u000A\u003Ccode>dt\u003C/code> or \u003Ccode>dd\u003C/code> element.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>dl\u003C/code> 要素では、 \u003Ccode>dt\u003C/code>,\u000A\u003Ccode>dd\u003C/code>, \u003Ccode>div\u003C/code>, \u003Ccode>script\u003C/code>,\u000A\u003Ccode>template\u003C/code> の各要素だけが使えます。\u000A\u000A\u003C/p>\u003Cp>\u003Ccode>dl\u003C/code> 要素の子供の \u003Ccode>div\u003C/code> 要素では、\u000A\u003Ccode>dt\u003C/code>, \u003Ccode>dd\u003C/code>, \u003Ccode>script\u003C/code>,\u000A\u003Ccode>template\u003C/code> の各要素だけが使えます。\u000A\u000A\u003C/p>\u003Cp>リスト内にその他の要素がある時は、\u000A\u003Ccode>dt\u003C/code> 要素か \u003Ccode>dd\u003C/code> 要素の中に入れる必要があります。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "There is an element not allowed in a \u003Ccode>dl\u003C/code> element",
+            "ja" : "\u003Ccode>dl\u003C/code> 要素内で認められない要素があります"
          },
          "modules" : {
             "Web::HTML::Validator" : 1
@@ -151,6 +241,36 @@
          "message" : {
             "en" : "The element name is not a valid custom element name",
             "ja" : "要素名が妥当なカスタム要素名ではありません"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "ps element missing:dd" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>A \u003Ccode>dt\u003C/code> element must be followed by one or more\u000A\u003Ccode>dd\u003C/code> element.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>dt\u003C/code> 要素の後には1つ以上の \u003Ccode>dd\u003C/code>\u000A要素が必要です。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "There is no \u003Ccode>dd\u003C/code> element before this element",
+            "ja" : "この要素の前に \u003Ccode>dd\u003C/code> 要素がありません"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "ps element missing:dt" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>There must be a \u003Ccode>dt\u003C/code> element before a \u003Ccode>dd\u003C/code>\u000Aelement.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>dd\u003C/code> 要素の前には \u003Ccode>dt\u003C/code> 要素が必要です。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "There is no \u003Ccode>dt\u003C/code> element before this element",
+            "ja" : "この要素の前に \u003Ccode>dt\u003C/code> 要素がありません"
          },
          "modules" : {
             "Web::HTML::Validator" : 1
@@ -283,7 +403,7 @@
          }
       },
       "script:ignored async" : {
-         "default_level" : "w",
+         "default_level" : "m",
          "desc" : {
             "en" : "\u003Cp>The \u003Ccode>async\u003C/code> attribute of the \u003Ccode>script\u003C/code> element\u000Ais effective only when the element defines a module script, or when\u000Athe element defines a classic script and has a \u003Ccode>src\u003C/code>\u000Aattribute.\u003C/p>",
             "ja" : "\u003Cp>\u003Ccode>script\u003C/code> 要素の \u003Ccode>defer\u003C/code>\u000A属性に効果があるのは、モジュールスクリプトのときと、\u000A古典スクリプトで \u003Ccode>src\u003C/code> 属性があるときだけです。\u003C/p>"
@@ -337,7 +457,7 @@
          }
       },
       "script:ignored defer" : {
-         "default_level" : "w",
+         "default_level" : "m",
          "desc" : {
             "en" : "\u003Cp>The \u003Ccode>defer\u003C/code> attribute of the \u003Ccode>script\u003C/code>\u000Aelement is effective only when the element defines a classic script,\u000Ahas a \u003Ccode>src\u003C/code> attribute, and does not have any\u000A\u003Ccode>async\u003C/code> attribute.\u003C/p>",
             "ja" : "\u003Cp>\u003Ccode>script\u003C/code> 要素の \u003Ccode>defer\u003C/code>\u000A属性に効果があるのは、古典スクリプトで \u003Ccode>src\u003C/code>\u000A属性があり、 \u003Ccode>async\u003C/code> 属性がないときだけです。\u003C/p>"
@@ -346,6 +466,24 @@
          "message" : {
             "en" : "The \u003Ccode>defer\u003C/code> attribute has no effect",
             "ja" : "この \u003Ccode>defer\u003C/code> 属性には意味がありません"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         },
+         "targets" : {
+            "attr" : 1
+         }
+      },
+      "script:ignored integrity" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>The \u003Ccode>integrity\u003C/code> attribute of the \u003Ccode>script\u003C/code> element\u000Ais effective only when the element defines a classic script and\u000Ahas a \u003Ccode>src\u003C/code> attribute.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>script\u003C/code> 要素の \u003Ccode>integrity\u003C/code>\u000A属性に効果があるのは、\u000A古典スクリプトで \u003Ccode>src\u003C/code> 属性があるときだけです。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "The \u003Ccode>integrity\u003C/code> attribute has no effect",
+            "ja" : "この \u003Ccode>integrity\u003C/code> 属性には意味がありません"
          },
          "modules" : {
             "Web::HTML::Validator" : 1

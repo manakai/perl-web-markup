@@ -3932,21 +3932,33 @@ $Element->{+HTML_NS}->{link} = {
       }
     }
 
-    my $sizes_attr = $item->{node}->get_attribute_node_ns (undef, 'sizes');
-    if (defined $sizes_attr and
-        not ($rel->{link_types}->{icon} or
-             $rel->{link_types}->{'apple-touch-icon'})) {
-      $self->{onerror}->(node => $sizes_attr,
-                         type => 'link:sizes:not icon',
-                         level => 'm');
-    }
+    for my $name (qw(sizes as scope workertype updateviacache
+                     color integrity)) {
+      my $attr = $item->{node}->get_attribute_node_ns (undef, $name);
+      next unless defined $attr;
 
-    my $as_attr = $item->{node}->get_attribute_node_ns (undef, 'as');
-    if (defined $as_attr and not $rel->{link_types}->{preload}) {
-      $self->{onerror}->(node => $as_attr,
-                         type => 'link:as:not preload',
-                         level => 'm');
-    }
+      my $allowed = 0;
+      for (keys %{$rel->{link_types} or {}}) {
+        my $def = $Web::HTML::Validator::_Defs->{link_types}->{$_} || {};
+        if ($def->{$name}) {
+          $allowed = 1;
+          last;
+        }
+      }
+
+      unless ($allowed) {
+        $self->{onerror}->(node => $attr,
+                           # link:ignored sizes
+                           # link:ignored as
+                           # link:ignored scope
+                           # link:ignored workertype
+                           # link:ignored updateviacache
+                           # link:ignored color
+                           # link:ignored integrity
+                           type => 'link:ignored ' . $name,
+                           level => 'm');
+      }
+    } # $name
 
     if ($rel->{link_types}->{alternate} and $rel->{link_types}->{stylesheet}) {
       my $title_attr = $item->{node}->get_attribute_node_ns (undef, 'title');
@@ -4056,6 +4068,8 @@ $CheckerByMetadataName->{'referrer'} = sub {
   }
 }; # referrer
 
+# <color>
+$ElementAttrChecker->{(HTML_NS)}->{link}->{''}->{color} =
 $CheckerByMetadataName->{'theme-color'} = sub {
   my ($self, $attr) = @_;
   require Web::CSS::Parser;
