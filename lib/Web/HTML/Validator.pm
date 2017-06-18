@@ -1746,7 +1746,8 @@ sub _validate_aria ($$) {
           $state->{in_hgroup} = 1;
         } elsif ($ln eq 'datalist') {
           $state->{in_datalist} = 1;
-        } elsif ($ln eq 'ul' or $ln eq 'ol') {
+        } elsif ($ln eq 'ul' or $ln eq 'ol' or # in spec
+                 $ln eq 'menu' or $ln eq 'dir') { # not in spec
           $state->{in_ulol} = 1;
         }
         $state->{is_inert} = 1
@@ -1861,8 +1862,6 @@ sub _validate_aria ($$) {
       } elsif ($ln eq 'li') {
         $adef = $aria_defs->{'in-ulol'}
             if $node_context->{refaddr $node}->{in_ulol};
-      } elsif ($ln eq 'menu') {
-        $adef = $aria_defs->{$node->type}; # type=popup or toolbar
       } elsif ($ln =~ /\Ah[1-6]\z/) {
         $adef = $aria_defs->{'no-hgroup'}
             unless $node_context->{refaddr $node}->{in_hgroup};
@@ -2443,12 +2442,10 @@ $IsPalpableContent->{(HTML_NS)}->{input} = sub {
   ## Not <input type=hidden>
   return not (($_[0]->get_attribute_ns (undef, 'type') || '') =~ /\A[Hh][Ii][Dd][Dd][Ee][Nn]\z/); # hidden ASCII case-insensitive
 };
-$IsPalpableContent->{(HTML_NS)}->{menu} = sub {
-  return $_[0]->type eq 'toolbar';
-};
 
 $IsPalpableContent->{(HTML_NS)}->{ul} =
-$IsPalpableContent->{(HTML_NS)}->{ol} = sub {
+$IsPalpableContent->{(HTML_NS)}->{ol} =
+$IsPalpableContent->{(HTML_NS)}->{menu} = sub {
   for (@{$_[0]->child_nodes}) {
     return 1 if
         $_->node_type == 1 and # ELEMENT_NODE
@@ -3252,7 +3249,7 @@ my %HTMLPhrasingContentChecker = (
     my ($self, $item, $element_state) = @_;
 
     ## Will be restored by |check_end| of
-    ## |%HTMLPhrasingContentChecker| or |menu| element.
+    ## |%HTMLPhrasingContentChecker|.
     $element_state->{in_phrasing_original} = $self->{flag}->{in_phrasing};
     $self->{flag}->{in_phrasing} = 1;
   }, # check_start
@@ -5056,6 +5053,7 @@ $Element->{+HTML_NS}->{header} = {
 
 $Element->{+HTML_NS}->{ul} =
 $Element->{+HTML_NS}->{ol} =
+$Element->{+HTML_NS}->{menu} =
 $Element->{+HTML_NS}->{dir} = {
   %AnyChecker,
   check_child_element => sub {
@@ -5079,7 +5077,7 @@ $Element->{+HTML_NS}->{dir} = {
                          level => 'm');
     }
   },
-}; # ul ol dir
+}; # ul ol menu dir
 
 $ElementAttrChecker->{(HTML_NS)}->{ul}->{''}->{type} = sub {
   my ($self, $attr) = @_;
@@ -5101,6 +5099,7 @@ $ElementAttrChecker->{(HTML_NS)}->{$_}->{''}->{type} = sub {
                        level => 'm');
   }
 } for qw(li dir); # <li type=""> <dir type="">
+delete $ElementAttrChecker->{(HTML_NS)}->{$_}->{menu}->{type};
 
 $ElementAttrChecker->{(HTML_NS)}->{li}->{''}->{value} = sub {
   my ($self, $attr) = @_;
@@ -8161,165 +8160,6 @@ $Element->{+HTML_NS}->{summary} = {
   }, # check_end
 }; # summary
 
-$Element->{+HTML_NS}->{menu} = {
-  %AnyChecker,
-  ## <menu type=toolbar>: (li | script-supporting)* | flow
-  ## <menu type=context>: (menuitem | hr | <menu type=context> | script-supporting)*
-  check_start => sub {
-    my ($self, $item, $element_state) = @_;
-    $element_state->{phase} = $item->{node}->type eq 'toolbar' ? 'toolbar' : 'popup';
-      ## $element_state->{phase}
-      ##   toolbar -> toolbar-li | toolbar-flow
-      ##   toolbar-li
-      ##   toolbar-flow
-      ##   popup
-    $element_state->{id_type} = 'popup' if $item->{node}->type eq 'context';
-    $AnyChecker{check_start}->(@_);
-  }, # check_start
-  check_attrs2 => sub {
-    my ($self, $item, $element_state) = @_;
-    my $label_attr = $item->{node}->get_attribute_node_ns (undef, 'label');
-    if ($label_attr) {
-      my $parent = $item->{node}->parent_node;
-      if ($parent and
-          $parent->node_type == 1 and # ELEMENT_NODE
-          $parent->manakai_element_type_match (HTML_NS, 'menu') and
-          $parent->type eq 'context') {
-        #
-      } else {
-        $self->{onerror}->(node => $label_attr,
-                           type => 'attribute not allowed',
-                           level => 'm');
-      }
-    }
-  }, # check_attrs2
-  check_child_element => sub {
-    my ($self, $item, $child_el, $child_nsuri, $child_ln,
-        $child_is_transparent, $element_state) = @_;
-    if ($element_state->{phase} eq 'toolbar') {
-      if ($child_nsuri eq HTML_NS and $child_ln eq 'li') {
-        $element_state->{phase} = 'toolbar-li';
-      } elsif ($_Defs->{categories}->{'script-supporting elements'}->{elements}->{$child_nsuri}->{$child_ln}) {
-        #
-      } elsif ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln} or
-               $_Defs->{categories}->{'flow content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln} or
-               ($child_nsuri eq HTML_NS and $child_ln =~ /-/)) {
-        $element_state->{phase} = 'toolbar-flow';
-      } else {
-        $self->{onerror}->(node => $child_el,
-                           type => 'element not allowed:menu type=toolbar',
-                           level => 'm');
-      }
-    } elsif ($element_state->{phase} eq 'toolbar-li') {
-      if ($child_nsuri eq HTML_NS and $child_ln eq 'li') {
-        $element_state->{phase} = 'toolbar-li';
-      } elsif ($_Defs->{categories}->{'script-supporting elements'}->{elements}->{$child_nsuri}->{$child_ln}) {
-        #
-      } else {
-        $self->{onerror}->(node => $child_el,
-                           type => 'element not allowed:menu type=toolbar',
-                           level => 'm');
-      }
-    } elsif ($element_state->{phase} eq 'toolbar-flow') {
-      if ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln} or
-          $_Defs->{categories}->{'flow content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln}) {
-        #
-      } else {
-        $self->{onerror}->(node => $child_el,
-                           type => 'element not allowed:menu type=toolbar',
-                           level => 'm');
-      }
-    } elsif ($element_state->{phase} eq 'popup') {
-      if (($child_nsuri eq HTML_NS and
-           ($child_ln eq 'menuitem' or
-            $child_ln eq 'hr' or
-            ($child_ln eq 'menu' and
-             not (($child_el->get_attribute_ns (undef, 'type') || '') =~ /\A[Tt][Oo][Oo][Ll][Bb][Aa][Rr]\z/)))) or # type=toolbar
-          $_Defs->{categories}->{'script-supporting elements'}->{elements}->{$child_nsuri}->{$child_ln}) {
-        #
-      } else {
-        $self->{onerror}->(node => $child_el,
-                           type => 'element not allowed:menu type=popup', # now type=context
-                           level => 'm');
-      }
-    } else {
-      die "Bad phase: |$element_state->{phase}|";
-    }
-  }, # check_child_element
-  check_child_text => sub {
-    my ($self, $item, $child_node, $has_significant, $element_state) = @_;
-    if ($has_significant) {
-      if ($element_state->{phase} eq 'toolbar') {
-        $element_state->{phase} = 'toolbar-flow';
-      } elsif ($element_state->{phase} eq 'toolbar-flow') {
-        #
-      } else {
-        $self->{onerror}->(node => $child_node,
-                           type => 'character not allowed',
-                           level => 'm');
-      }
-    }
-  }, # check_child_text
-  check_end => sub {
-    my ($self, $item, $element_state) = @_;
-    if ($element_state->{phase} eq 'toolbar-flow') {
-      $self->{onerror}->(node => $item->{node},
-                         level => 's',
-                         type => 'no significant content')
-          unless $element_state->{has_palpable};
-    }
-    $AnyChecker{check_end}->(@_);
-  }, # check_end
-}; # menu
-
-$Element->{+HTML_NS}->{menuitem} = {
-  %HTMLTextChecker,
-  check_attrs2 => sub {
-    my ($self, $item, $element_state) = @_;
-
-    ## Explicit command mode.
-    my $label_attr = $item->{node}->get_attribute_node_ns (undef, 'label');
-    unless (defined $label_attr) {
-      my $v = '';
-      for ($item->{node}->child_nodes->to_list) {
-        if ($_->node_type == 3) { # TEXT_NODE
-          $v .= $_->data;
-        }
-      }
-      $v =~ s/\A[\x09\x0A\x0C\x0D\x20]+//;
-      $v =~ s/[\x09\x0A\x0C\x0D\x20]+\z//;
-      $v =~ s/[\x09\x0A\x0C\x0D\x20]+/ /g;
-      unless (length $v) {
-        $self->{onerror}->(node => $item->{node},
-                           type => 'attribute missing',
-                           text => 'label',
-                           level => 'm');
-      }
-    }
-
-    my $type = $item->{node}->get_attribute_ns (undef, 'type') || '';
-    $type =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
-
-    unless ($type eq 'checkbox' or $type eq 'radio') {
-      my $cd_attr = $item->{node}->get_attribute_node_ns (undef, 'checked');
-      if ($cd_attr) {
-        $self->{onerror}->(node => $cd_attr,
-                           type => 'attribute not allowed',
-                           level => 'm');
-      }
-    }
-
-    unless ($type eq 'radio') {
-      my $rg_attr = $item->{node}->get_attribute_node_ns (undef, 'radiogroup');
-      if ($rg_attr) {
-        $self->{onerror}->(node => $rg_attr,
-                           type => 'attribute not allowed',
-                           level => 'm');
-      }
-    }
-  }, # check_attrs2
-}; # menuitem
-
 $Element->{+HTML_NS}->{dialog} = {
   %HTMLFlowContentChecker,
   check_start => sub {
@@ -9579,7 +9419,6 @@ $Element->{+HTML_NS}->{template} = {
             optgroup => 'select',
             option => 'select',
             summary => 'details',
-            menuitem => 'popup menu',
             style => 'metadata',
           }->{$ln};
           last if defined $model;
@@ -9605,7 +9444,7 @@ $Element->{+HTML_NS}->{template} = {
         ## content, figure, ruby, object, media, table (<script>
         ## <template>), colgroup (<script> <template>), table body
         ## (<script> <template>), tr (<script> <template>), fieldset,
-        ## details, <menu type=popup> (<hr> <script> <template>)
+        ## details
         #
       } elsif ($child->node_type == 3) { # TEXT_NODE
         if ($child->data =~ /[^\x09\x0A\x0C\x0D\x20]/) { # non-space chars
@@ -9622,9 +9461,6 @@ $Element->{+HTML_NS}->{template} = {
           (HTML_NS, $has_flow ? 'body' : 'head');
     } elsif ($model eq 'metadata') {
       $container = $df->owner_document->create_element_ns (HTML_NS, 'head');
-    } elsif ($model eq 'popup menu') {
-      $container = $df->owner_document->create_element_ns (HTML_NS, 'menu');
-      $container->set_attribute_ns (undef, type => 'context');
     } else {
       $container = $df->owner_document->create_element_ns (HTML_NS, $model);
       $container->set_attribute_ns (undef, data => 'http://test/') if $model eq 'object';
@@ -10374,7 +10210,6 @@ sub _check_refs ($) {
         labelable => 'no referenced control',
         datalist => 'no referenced datalist',
         object => 'no referenced object',
-        popup => 'no referenced menu',
       }->{$_->[0]};
       $self->{onerror}->(node => $_->[2],
                          type => $error_type,
