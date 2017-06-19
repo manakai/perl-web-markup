@@ -4523,13 +4523,13 @@ sub _link_types ($$%) {
     }
 
     ## Global uniqueness
-    if ($link_type eq 'pingback') {
+    if ($link_type eq 'pingback' or $link_type eq 'canonical') {
       unless ($self->{has_link_type}->{$link_type}) {
         $self->{has_link_type}->{$link_type} = 1;
       } else {
         $self->{onerror}->(node => $attr, value => $link_type,
                            type => 'link type:duplicate',
-                           level => 'm');
+                           level => $link_type eq 'canonical' ? 'w' : 'm');
       }
     }
   } # $link_type
@@ -4544,6 +4544,8 @@ sub _link_types ($$%) {
 
   ## XXX rel=pingback has special syntax restrictions and requirements
   ## on interaction with X-Pingback: header [PINGBACK]
+
+  # XXXresource rel=canonical linked resource
 
   $self->{flag}->{node_is_hyperlink}->{refaddr $attr->owner_element} = $attr->owner_element
       if $is_hyperlink;
