@@ -1068,3 +1068,29 @@ multiple name/value groups, use multiple <code>div</code> elements.
 名前 (<code>dt</code>) と値 (<code>dd</code>) の組しか含められません。
 複数の名前と値の組を表したい時は、
 複数の <code>div</code> 要素に分ける必要があります。
+
+* sandbox duplicate allow-top-navigation
+
+default_level=m
+layer=content-model
+
+@en
+Both <code>allow-top-navigation</code> and
+<code>allow-top-navigation-by-user-activation</code> are specified
+@ja
+<code>allow-top-navigation</code> と
+<code>allow-top-navigation-by-user-activation</code> 
+の両方が指定されています
+
+@en
+<p>Only one of keywords <code>allow-top-navigation</code> and
+<code>allow-top-navigation-by-user-activation</code> can be specified
+in a <code>sandbox</code> attribute.  If both keywords are specified,
+<code>allow-top-navigation-by-user-activation</code> is ignored.
+
+@ja
+<p><code>sandbox</code> 属性に <code>allow-top-navigation</code> と
+<code>allow-top-navigation-by-user-activation</code> 
+の両方を指定してはいけません。両方していしても、
+<code>allow-top-navigation-by-user-activation</code>
+は無視されます。

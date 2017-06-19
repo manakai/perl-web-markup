@@ -6025,6 +6025,11 @@ $Element->{+HTML_NS}->{iframe}->{check_attrs2} = sub {
                          type => 'sandbox allow-same-origin allow-scripts',
                          level => 'w');
     }
+    if ($word{'allow-top-navigation'} and $word{'allow-top-navigation-by-user-activation'}) {
+      $self->{onerror}->(node => $attr,
+                         type => 'sandbox duplicate allow-top-navigation',
+                         level => 'm');
+    }
   }; # <iframe sandbox="">
 }
 
