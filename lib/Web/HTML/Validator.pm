@@ -4415,7 +4415,7 @@ $ElementAttrChecker->{(HTML_NS)}->{style}->{''}->{type} = sub {
   my $value = $attr->value;
   if ($value =~ m{\A[Tt][Ee][Xx][Tt]/[Cc][Ss][Ss]\z}) {
     $self->{onerror}->(node => $attr, type => 'style type:text/css',
-                       level => 's');
+                       level => 's'); # obsolete but conforming
   } else {
     $self->{onerror}->(node => $attr, type => 'style type', level => 'm');
   }
@@ -4608,12 +4608,12 @@ $Element->{+HTML_NS}->{script} = {
             $self->{onerror}->(node => $type_attr,
                                value => $computed_type,
                                type => 'script type:empty',
-                               level => 'm');
+                               level => 's'); # obsolete but conforming
           } else {
             $self->{onerror}->(node => $type_attr,
                                value => $computed_type,
                                type => 'script type:classic',
-                               level => 's');
+                               level => ($type =~ /[\x00-\x20]/ ? 'm' : 's')); # obsolete but conforming
           }
         }
         my $async_attr = $item->{node}->get_attribute_node_ns (undef, 'async');
