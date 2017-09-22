@@ -149,7 +149,10 @@ sub _test ($$$) {
     $val->image_viewable ($test->{'image-viewable'});
     $val->check_node ($check_as_doc ? $doc : $doc->document_element);
 
-    is_set_list \@error, [map {
+    is_set_list [map {
+      s/\x0A/\\n/;
+      $_;
+    } @error], [map {
       # XXXindex
       s/^\d+;\d+;//;
       $_;

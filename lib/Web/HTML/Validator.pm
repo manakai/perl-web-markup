@@ -1185,36 +1185,6 @@ $ElementAttrChecker->{(HTML_NS)}->{object}->{''}->{archive} = sub {
   $self->{has_uri_attr} = 1 if $attr->local_name ne 'profile';
 }; # <a ping=""> <area ping=""> <head profile=""> <object archive="">
 
-$ElementAttrChecker->{(HTML_NS)}->{applet}->{''}->{archive} = sub {
-  my ($self, $attr) = @_;
-
-  ## A set of comma-separated tokens [HTML]
-  my $value = $attr->value;
-  my @value = length $value ? split /,/, $value, -1 : ();
-
-  require Web::URL::Checker;
-  for my $v (@value) {
-    $v =~ s/^[\x09\x0A\x0C\x0D\x20]+//;
-    $v =~ s/[\x09\x0A\x0C\x0D\x20]+\z//;
-
-    if ($v eq '') {
-      $self->{onerror}->(type => 'url:empty',
-                         node => $attr,
-                         level => 'm');
-    } else {
-      ## Non-empty URL
-      my $chk = Web::URL::Checker->new_from_string ($v);
-      $chk->onerror (sub {
-        $self->{onerror}->(value => $v, @_, node => $attr);
-      });
-      # XXX base URL is <applet codebase="">
-      $chk->check_iri_reference; # XXX URL
-    }
-  }
-
-  $self->{has_uri_attr} = 1;
-}; # <applet archive="">
-
 my $ValidEmailAddress;
 {
   my $atext_dot = qr[[A-Za-z0-9!#\$%&'*+/=?^_`{|}~.-]];
@@ -6373,40 +6343,6 @@ $Element->{+HTML_NS}->{object} = {
     $TransparentChecker{check_end}->(@_);
   }, # check_end
 }; # object
-
-$Element->{+HTML_NS}->{applet} = {
-  %{$Element->{+HTML_NS}->{object}},
-  check_attrs => $GetHTMLAttrsChecker->({
-    name => $NameAttrChecker,
-  }), # check_attrs
-  check_attrs2 => sub {
-    my ($self, $item, $element_state) = @_;
-    my $el = $item->{node};
-
-    unless ($el->has_attribute_ns (undef, 'code')) {
-      unless ($el->has_attribute_ns (undef, 'object')) {
-        $self->{onerror}->(node => $el,
-                           type => 'attribute missing:code|object',
-                           level => 'm');
-      }
-    }
-    
-    for my $attr_name (qw(width height)) {
-      ## |width| and |height| are REQUIRED according to HTML4.
-      unless ($el->has_attribute_ns (undef, $attr_name)) {
-        $self->{onerror}->(node => $el,
-                           type => 'attribute missing',
-                           text => $attr_name,
-                           level => 'm');
-      }
-    }
-  }, # check_attrs2
-  check_end => sub {
-    my ($self, $item, $element_state) = @_;
-    $Element->{+HTML_NS}->{object}->{check_end}->(@_);
-    $NameAttrCheckEnd->(@_); # for <img name>
-  }, # check_end
-}; # applet
 
 $Element->{+HTML_NS}->{param}->{check_attrs2} = sub {
   my ($self, $item, $element_state) = @_;
