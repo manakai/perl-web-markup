@@ -1094,3 +1094,182 @@ in a <code>sandbox</code> attribute.  If both keywords are specified,
 の両方を指定してはいけません。両方していしても、
 <code>allow-top-navigation-by-user-activation</code>
 は無視されます。
+
+* aria:not preferred markup:css
+
+default_level=w
+layer=content-model
+
+@en
+Use of CSS is preferred
+@ja
+CSS を使うのが適切です
+
+@en
+<p>The <code>role</code> attribute should only be
+used when it cannot be represented by CSS properties.</p>
+@ja
+<p><code>role</code> 属性は、 CSS
+表現できない時に限って使うべきです。</p>
+
+* aria:not preferred markup:html-attr
+
+default_level=w
+layer=content-model
+
+@en
+The <code><var>{text}</var></code> attribute is preferred
+@ja
+<code><var>{text}</var></code> 属性の方が適切です
+
+@en
+<p>The ARIA attribute should only be used when its semantics
+cannot be represented by native HTML attributes.</p>
+@ja
+<p>ARIA 属性は、その意味を HTML の本来の属性で表せない時だけ使うべきです。</p>
+
+* aria:not preferred markup:html-element
+
+default_level=w
+layer=content-model
+
+@en
+The <code><var>{text}</var></code> element is preferred
+@ja
+<code><var>{text}</var></code> 要素の方が適切です
+
+@en
+<p>The <code>role</code> attribute should only be used when it cannot be
+represented by an HTML element with similar semantics.</p>
+@ja
+<p><code>role</code> 属性は、同じような意味の HTML
+要素で表現できない時に限って使うべきです。</p>
+
+* aria:not preferred markup:input
+
+default_level=w
+layer=content-model
+
+@en
+The <code>&lt;input type=<var>{text}</var>></code> element is preferred
+@ja
+<code>&lt;input type=<var>{text}</var>></code> 要素の方が適切です
+
+@en
+    <p>The <code>role</code> attribute should only be
+    used when it cannot be represented by an HTML <code>input</code>
+    element with similar semantics.</p>
+@ja
+    <p><code>role</code> 属性は、同じような意味の HTML
+    <code>input</code> 要素で表現できない時に限って使うべきです。</p>
+
+* aria:not preferred markup:math
+
+default_level=w
+layer=content-model
+
+@en
+The <code>math</code> element is preferred
+@ja
+<code>math</code> 要素の方が適切です
+
+@en
+    <p>The <code>role</code> attribute should only be
+    used when it cannot be represented by a MathML
+    <code>math</code> element.</p>
+@ja
+    <p><code>role</code> 属性は、 MathML <code>math</code>
+    要素で表現できない時に限って使うべきです。</p>
+
+* aria:not preferred markup:textbox
+
+default_level=w
+layer=content-model
+
+@en
+The <code>&lt;input type=text></code> or <code>textarea</code>
+element is preferred
+@ja
+<code>&lt;input type=text></code> や <code>textarea</code>
+要素の方が適切です
+
+@en
+    <p>The <code>role</code> attribute should only be
+    used when it cannot be represented by an HTML
+    <code>&lt;input type=text></code> or <code>textarea</code> element.
+@ja
+    <p><code>role</code> 属性は、 HTML
+    <code>&lt;input type=text></code> 要素や <code>textarea</code>
+    要素で表現できない時に限って使うべきです。</p>
+
+* aria:not preferred markup:role
+
+default_level=w
+layer=content-model
+
+@en
+The role <code><var>{text}</var></code> is preferred
+@ja
+役割 <code><var>{text}</var></code> の方が適切です
+
+@en
+<p>The <code>presentation</code> role is historical;
+the <code>none</code> role should be used.</p>
+@ja
+<p>役割 <code>presentation</code> は古いものです。
+役割 <code>none</code> を使うべきです。</p>
+
+* aria:not preferred markup:th
+
+default_level=w
+layer=content-model
+
+@en
+The <code>&lt;th <var>{text}</var>></code> element is preferred
+@ja
+<code>&lt;th scope=<var>{text}</var>></code> の方が適切です
+
+@en
+    <p>The <code>role</code> attribute should only be
+    used when it cannot be represented by an HTML <code>th</code>
+    element with a <code>scope</code> attribute.</p>
+@ja
+    <p><code>role</code> 属性は、 HTML
+    <code>th</code> 要素と <code>scope</code> 
+    属性で表現できない時に限って使うべきです。</p>
+
+* aria:not preferred markup:title
+
+default_level=w
+layer=content-model
+
+@en
+The <code>title</code> attribute is preferred
+@ja
+<code>title</code> 属性の方が適切です
+
+@en
+    <p>The <code>role</code> attribute should only be
+    used when it cannot be represented by an HTML <code>title</code>
+    attribute or an SVG <code>title</code> element.</p>
+@ja
+    <p><code>role</code> 属性は、 HTML
+    <code>title</code> 属性や SVG <code>title</code>
+    要素で表現できない時に限って使うべきです。</p>
+
+* aria:not preferred markup:omit
+
+default_level=w
+layer=content-model
+
+@en
+This is redundant
+@ja
+これは冗長です
+
+@en
+<p>Certain kinds of ARIA attributes are redundant with native 
+HTML or SVG elements.  It should be omitted.</p>
+@ja
+<p>いくつかの ARIA の属性は本来の HTML や SVG
+の要素と冗長です。省略するべきです。</p>

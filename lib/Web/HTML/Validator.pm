@@ -1624,6 +1624,11 @@ $NamespacedAttrChecker->{(XMLNS_NS)}->{''} = sub {
 
 $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{role} = sub { };
 $ElementAttrChecker->{(SVG_NS)}->{'*'}->{''}->{role} = sub { };
+  ## ARIA requires the author to not mutate the "role" attribute value
+  ## <https://w3c.github.io/aria/aria/aria.html#roles>.  This is a
+  ## willful violation to that spec; we don't enforce such a strange
+  ## requirement for compatibility with a broken implementation
+  ## strategy.
 
 $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{'aria-label'} =
 $ElementAttrChecker->{(SVG_NS)}->{'*'}->{''}->{'aria-label'} = sub {
@@ -1636,6 +1641,11 @@ $ElementAttrChecker->{(SVG_NS)}->{'*'}->{''}->{'aria-label'} = sub {
 $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{'aria-dropeffect'} =
 $ElementAttrChecker->{(SVG_NS)}->{'*'}->{''}->{'aria-dropeffect'} = sub {
   my ($self, $attr) = @_;
+
+  ## <https://w3c.github.io/aria/aria/aria.html#aria-dropeffect>
+  ## aria-dropeffect="" is deprecated (reported through "preferred"
+  ## checking).
+
   ## Unordered set of unique space-separated tokens.
   my %word;
   for my $word (grep {length $_}
@@ -1653,6 +1663,10 @@ $ElementAttrChecker->{(SVG_NS)}->{'*'}->{''}->{'aria-dropeffect'} = sub {
     }
   }
 }; # aria-dropeffect=""
+
+## <https://w3c.github.io/aria/aria/aria.html#aria-grabbed>
+## aria-grabbed="" is deprecated (reported through "preferred"
+## checks).
 
 $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{'aria-relevant'} =
 $ElementAttrChecker->{(SVG_NS)}->{'*'}->{''}->{'aria-relevant'} = sub {
@@ -1674,6 +1688,34 @@ $ElementAttrChecker->{(SVG_NS)}->{'*'}->{''}->{'aria-relevant'} = sub {
     }
   }
 }; # aria-relevant=""
+
+sub _aria_not_preferred ($$$$) {
+  my ($self, $node, $value, $preferred) = @_;
+  if ($preferred->{type} eq 'html_attr' and
+      ($node->owner_element->namespace_uri || '') eq HTML_NS) {
+    if ($node->owner_element->has_attribute_ns (undef, $preferred->{name})) {
+      $self->{onerror}->(node => $node,
+                         type => 'aria:redundant:html-attr',
+                         text => $preferred->{name},
+                         level => 'w');
+    } else {
+      $self->{onerror}->(node => $node,
+                         type => 'aria:not preferred markup:html-attr',
+                         text => $preferred->{name},
+                         level => 'w',
+                         preferred => $preferred);
+    }
+  } else {
+    my $type = $preferred->{type};
+    $type =~ tr/_/-/;
+    $self->{onerror}->(node => $node,
+                       type => 'aria:not preferred markup:' . $type,
+                       text => $preferred->{name} || $preferred->{scope}, # or undef
+                       value => $value, # or undef
+                       level => 'w',
+                       preferred => $preferred);
+  }
+} # _aria_not_preferred
 
 sub _validate_aria ($$) {
   my ($self, $target_nodes) = @_;
@@ -1709,6 +1751,7 @@ sub _validate_aria ($$) {
           }
         }
 
+        ## <https://w3c.github.io/aria/aria/aria.html#aria-owns>
         my $owns = $node->get_attribute_node_ns (undef, 'aria-owns');
         if (defined $owns) {
           $self->{onerror}->(node => $owns,
@@ -1829,6 +1872,7 @@ sub _validate_aria ($$) {
       $aria_defs = $_Defs->{input}->{aria}->{$node->type};
     }
 
+    # XXX need to update
     my $adef;
     if ($ns eq HTML_NS) {
       if ($ln eq 'img') {
@@ -1838,26 +1882,17 @@ sub _validate_aria ($$) {
         } else {
           $adef = $aria_defs->{'not-empty-alt'};
         }
-      } elsif ($ln eq 'a' or $ln eq 'area') {
+      } elsif ($ln eq 'a' or $ln eq 'area' or $ln eq 'link') {
         $adef = $aria_defs->{'hyperlink'}
             if $node->has_attribute_ns (undef, 'href');
-      } elsif ($ln eq 'link') {
-        if ($self->{flag}->{node_is_hyperlink}->{refaddr $node}) {
-          $adef = $aria_defs->{'hyperlink'};
-        }
       } elsif ($ln eq 'select') {
-        my $type = $node->multiple ? 'multilist' : $node->size > 1 ? 'singlelist' : 'dropdown';
-        $adef = $aria_defs->{$type};
+        $adef = $aria_defs->{$node->multiple ? 'multilist' : 'singlelist'};
       } elsif ($ln eq 'option') {
         my $context = $node_context->{refaddr $node};
         if ($context->{in_select} or $context->{in_select_optgroup}) {
-          $adef = $aria_defs->{'in-select-' . ($context->{in_select} ||
-                                               $context->{in_select_optgroup})};
+          $adef = $aria_defs->{'in-select'};
         } elsif ($context->{in_datalist}) {
-          $adef = $aria_defs->{'in-datalist'}
-              if not $node->has_attribute_ns (undef, 'disabled') and
-                 not $context->{in_disabled_optgroup} and
-                 not $node->value eq '';
+          $adef = $aria_defs->{'in-datalist'};
         }
       } elsif ($ln eq 'li') {
         $adef = $aria_defs->{'in-ulol'}
@@ -1865,9 +1900,6 @@ sub _validate_aria ($$) {
       } elsif ($ln =~ /\Ah[1-6]\z/) {
         $adef = $aria_defs->{'no-hgroup'}
             unless $node_context->{refaddr $node}->{in_hgroup};
-      } elsif ($ln eq 'body' or $ln eq 'frameset') {
-        $adef = $aria_defs->{'the-body'}
-            if ($node->owner_document->body || '') eq $node;
       }
     }
     $adef ||= $aria_defs->{''};
@@ -1903,23 +1935,22 @@ sub _validate_aria ($$) {
     }
 
     for my $role (keys %role) {
+      if (defined $default_role and $default_role eq $role) {
+        $self->{onerror}->(node => $role_attr,
+                           type => 'aria:role:default role',
+                           value => $role,
+                           level => 'm');
+        next;
+      }
+
       my $conflict_error;
-      if ($adef->{allowed_roles}) {
-        unless ($adef->{allowed_roles}->{$role}) {
-          if (defined $default_role and $default_role eq $role) {
-            $self->{onerror}->(node => $role_attr,
-                               type => 'aria:role:default role',
-                               value => $role,
-                               level => 'm');
-            next;
-          } else {
-            $self->{onerror}->(node => $role_attr,
-                               type => 'aria:role:conflict with semantics',
-                               value => $role,
-                               level => 'm');
-            $conflict_error = 1;
-          }
-        }
+      if (($adef->{default_role} or $adef->{allowed_roles}) and
+          not $adef->{allowed_roles}->{$role}) {
+        $self->{onerror}->(node => $role_attr,
+                           type => 'aria:role:conflict with semantics',
+                           value => $role,
+                           level => 'm');
+        $conflict_error = 1;
       }
 
       my $preferred = $_Defs->{roles}->{$role}->{preferred};
@@ -1941,15 +1972,17 @@ sub _validate_aria ($$) {
                              value => $role,
                              level => 'w')
               unless $conflict_error;
-        } else {
-          my $type = $preferred->{type};
-          $type =~ tr/_/-/;
+        } elsif ($preferred->{type} eq 'textbox' and
+                 $ns eq HTML_NS and
+                 (($ln eq 'input' and $node->type eq 'text') or
+                  $ln eq 'textarea')) {
           $self->{onerror}->(node => $role_attr,
-                             type => 'aria:not preferred markup:' . $type,
-                             text => $preferred->{name} || $preferred->{scope}, # or undef
+                             type => 'aria:redundant role',
                              value => $role,
                              level => 'w')
-              unless $role eq 'textbox' and $ns eq HTML_NS and $ln eq 'input';
+              unless $conflict_error;
+        } else {
+          _aria_not_preferred $self, $role_attr, $role, $preferred;
         }
       }
     } # $role
@@ -1981,6 +2014,9 @@ sub _validate_aria ($$) {
         }
       }
 
+      # XXX element-specific disallowed ARIA attributes
+      # XXX strong semantics attribute value validation
+
       if (not $allowed) {
         $self->{onerror}->(node => $attr,
                            type => 'aria:attr not allowed for role',
@@ -1989,9 +2025,7 @@ sub _validate_aria ($$) {
       } elsif ($adef->{attrs}->{$attr_ln} or
                ($attr_ln eq 'aria-hidden' and
                 ($node->namespace_uri || '') eq HTML_NS and
-                $node->has_attribute_ns (undef, 'hidden')) or
-               ($attr_ln eq 'aria-disabled' and
-                $node_context->{refaddr $node}->{is_inert})) {
+                $node->has_attribute_ns (undef, 'hidden'))) {
         $self->{onerror}->(node => $attr,
                            type => 'aria:attr not allowed for element',
                            level => 'm');
@@ -2003,20 +2037,7 @@ sub _validate_aria ($$) {
                            type => 'attribute not allowed',
                            level => 'w');
       } elsif ($attr_def->{preferred}) {
-        if ($attr_def->{preferred}->{type} eq 'html_attr' and
-            ($node->namespace_uri || '') eq HTML_NS) {
-          if ($node->has_attribute_ns (undef, $attr_def->{preferred}->{name})) {
-            $self->{onerror}->(node => $attr,
-                               type => 'aria:redundant:html-attr',
-                               text => $attr_def->{preferred}->{name},
-                               level => 'w');
-          } else {
-            $self->{onerror}->(node => $attr,
-                               type => 'aria:not preferred markup:html-attr',
-                               text => $attr_def->{preferred}->{name},
-                               level => 'w');
-          }
-        }
+        _aria_not_preferred $self, $attr, undef, $attr_def->{preferred};
       }
     } # $attr
 
@@ -2049,6 +2070,7 @@ sub _validate_aria ($$) {
     ## |$adef->{attrs}->{$attr_ln}| in addition to the element's
     ## attribute.  They skip it as this only occurs in invalid cases.
 
+    ## <https://w3c.github.io/aria/aria/aria.html#aria-checked>
     if (defined $attr{'aria-checked'}) {
       if ($role{radio} or $role{menuitemradio}) {
         my $value = $attr{'aria-checked'}->value;
@@ -2058,6 +2080,10 @@ sub _validate_aria ($$) {
                            level => 'w')
             if $value eq 'mixed';
       }
+
+# XXX role=switch aria-checked=mixed is "not supported"
+# <http://w3c.github.io/aria/aria/aria.html#switch>.
+
     }
 
     if (defined $attr{'aria-live'}) {
@@ -2144,9 +2170,11 @@ sub _validate_aria ($$) {
       for (split /[\x09\x0A\x0C\x0D\x20]+/, $attr{'aria-labelledby'}->value) {
         my $attr = $self->{id}->{$_}->[0];
         if (defined $attr) {
+          ## <https://w3c.github.io/aria/aria/aria.html#definition>
+          # XXX aria-labelledby SHOULD point role=term.
           my $el = $attr->owner_element;
           if (($el->namespace_uri || '') eq HTML_NS and
-              $el->local_name eq 'dfn') {
+              $el->local_name eq 'dfn') { # XXX
             #
           } else {
             $self->{onerror}->(node => $attr{'aria-labelledby'},
@@ -2249,6 +2277,7 @@ sub _validate_aria ($$) {
             if @{$els->{$r}} > 1;
       }
 
+      ## <https://w3c.github.io/aria/aria/aria.html#toolbar>
       if ($roles->{application} and @{$els->{toolbar}} > 1) {
         for (@{$els->{toolbar}}) {
           ## See IMPLATTRCHK note above.
@@ -2260,8 +2289,8 @@ sub _validate_aria ($$) {
         }
       }
 
-      unless ((($node->namespace_uri || '') eq HTML_NS and $node->local_name eq 'body') or
-              (($node->namespace_uri || '') eq SVG_NS and $node->local_name eq 'svg')) {
+      if ((defined $roles->{document} and not $roles->{document} eq 'implicit') or
+          (defined $roles->{application} and not $roles->{application} eq 'implicit')) {
         ## See IMPLATTRCHK note above.
         $self->{onerror}->(node => $node,
                            type => 'attribute missing',
@@ -2322,6 +2351,11 @@ sub _validate_aria ($$) {
                            level => 's');
       } # LABEL
     }
+
+    ## <https://w3c.github.io/aria/aria/aria.html#columnheader>
+    ## XXX role=table > role=columnheader SHOULD NOT have aria-required, aria-readonly
+    ## <https://w3c.github.io/aria/aria/aria.html#rowheader>
+    ## XXX role=table > role=rowheader SHOULD NOT have aria-required, aria-readonly
 
     if ($roles->{grid} or $roles->{treegrid}) {
       $owned_nodes ||= $get_owned_nodes->($node);
@@ -2397,8 +2431,57 @@ sub _validate_aria ($$) {
 # an interactive content descendant
 # <http://w3c.github.io/aria/aria/aria.html#text>.
 
-# XXX role=switch aria-checked=mixed is "not supported"
-# <http://w3c.github.io/aria/aria/aria.html#switch>.
+# XXX <https://w3c.github.io/aria/aria/aria.html#combobox>
+# role=combobox MUST must_contain <role=textbox|searchbox aria-multiline=false>.
+# <role=combobox aria-expanded=true> MUST must_contain role=listbox|tree|grid|dialog (combobox popup).  <role=combobox aria-expanded=true> MUST has aria-controls={combobox popup}
+# <role=combobox>'s aria-haspopup MUST be <role=combobox>'s combobox popup's role
+
+# XXX <https://w3c.github.io/aria/aria/aria.html#dialog>
+# <role=dialog> SHOULD have at least one focusable descendant element
+
+# XXX <https://w3c.github.io/aria/aria/aria.html#feed>
+# <role=feed> > <role=article> SHOULD be focusable
+
+# XXX <https://w3c.github.io/aria/aria/aria.html#grid>
+# <role=grid> with multiple <role=gridcell aria-selected=true> SHOULD have aria-multiselectable=true
+# <role=gridcell aria-rowspan aria-colspan> SHOULD use rowspan="" colspan="" instead
+
+# XXX <https://w3c.github.io/aria/aria/aria.html#group>
+# <role=group> is used in list, its *children* must be role=listitem
+
+# XXX <https://w3c.github.io/aria/aria/aria.html#none>
+# role=none is equivalent to role=presentation
+
+# XXX <https://w3c.github.io/aria/aria/aria.html#separator>
+# focusable role=separator MUST have aria-valuenow
+# In applications with multiple focusable role=separator, SHOULD have accessible name
+
+# XXX <https://w3c.github.io/aria/aria/aria.html#switch>
+# <role=switch aria-checked=mixed> is equivalent to aria-checked=false
+
+# XXX <https://w3c.github.io/aria/aria/aria.html#table>
+# role=table -> HTML <table>
+
+# XXX <https://w3c.github.io/aria/aria/aria.html#term>
+# role=term SHOULD NOT be interactive
+
+# XXX <https://w3c.github.io/aria/aria/aria.html#aria-current>
+# aria-current element MUST be unique
+
+# XXX <https://w3c.github.io/aria/aria/aria.html#aria-errormessage>
+# aria-errormessage MUST have aria-invalid=true
+
+# XXX <https://w3c.github.io/aria/aria/aria.html#aria-roledescription>
+# aria-roledescription SHOULD have explicit or implicit role
+# aria-roledescription SHOULD have non whitespace character
+
+# XXX role-based content model
+# <https://w3c.github.io/html-aria/#allowed-aria-roles-states-and-properties>
+# XXX separator is interactive content if focusable
+
+## XXX <input readonly contenteditable> implies aria-readonly=true
+## aria-readonly=false, which is really broken and should be detected
+## by another steps of conformance checkers.
 
 ## ------ Element content model ------
 
@@ -2856,39 +2939,6 @@ $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{dir} = $GetHTMLEnumeratedAttrChe
   rtl => 1,
   auto => 'last resort:good',
 }); # dir=""
-
-$ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{dropzone} = sub {
-  ## Unordered set of space-separated tokens, ASCII case-insensitive.
-    my ($self, $attr) = @_;
-    my $has_feedback;
-    my %word;
-    for my $word (grep {length $_}
-                  split /[\x09\x0A\x0C\x0D\x20]+/, $attr->value) {
-      $word =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
-      if ($word eq 'copy' or $word eq 'move' or $word eq 'link') {
-        if ($has_feedback) {
-          $self->{onerror}->(node => $attr,
-                             type => 'dropzone:duplicate feedback',
-                             value => $word,
-                             level => 'm');
-        }
-        $has_feedback = 1;
-      } elsif ($word =~ /^(?:string|file):./s) {
-        if ($word{$word}) {
-          $self->{onerror}->(node => $attr,
-                             type => 'duplicate token',
-                             value => $word,
-                             level => 'm');
-        }
-        $word{$word} = 1;
-      } else {
-          $self->{onerror}->(node => $attr,
-                             type => 'word not allowed',
-                             value => $word,
-                             level => 'm');
-      }
-    }
-}; # dropzone=""
 
 $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{language} = sub {
   my ($self, $attr) = @_;
@@ -5101,7 +5151,7 @@ $ElementAttrChecker->{(HTML_NS)}->{$_}->{''}->{type} = sub {
                        level => 'm');
   }
 } for qw(li dir); # <li type=""> <dir type="">
-delete $ElementAttrChecker->{(HTML_NS)}->{$_}->{menu}->{type};
+delete $ElementAttrChecker->{(HTML_NS)}->{$_}->{menu}->{type}; # XXX
 
 $ElementAttrChecker->{(HTML_NS)}->{li}->{''}->{value} = sub {
   my ($self, $attr) = @_;
@@ -9976,8 +10026,7 @@ sub _check_node ($$) {
 
       unless ($item->{node}->has_attribute_ns (undef, 'title')) {
         if ($item->{element_state}->{require_title} or
-            $item->{node}->has_attribute_ns (undef, 'draggable') or
-            $item->{node}->has_attribute_ns (undef, 'dropzone')) {
+            $item->{node}->has_attribute_ns (undef, 'draggable')) {
           $self->{onerror}->(node => $item->{node},
                              type => 'attribute missing',
                              text => 'title',
