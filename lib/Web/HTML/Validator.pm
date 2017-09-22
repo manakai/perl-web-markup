@@ -878,31 +878,6 @@ $ItemValueChecker->{'MIME type'} = sub {
   return $type; # or undef
 }; # MIME type
 
-$ElementAttrChecker->{(HTML_NS)}->{style}->{''}->{type} = sub {
-  my ($self, $attr, $item, $element_state) = @_;
-
-  require Web::MIME::Type;
-  my $onerror = sub { $self->{onerror}->(@_, node => $attr) };
-  my $type = Web::MIME::Type->parse_web_mime_type
-      ($attr->value, $onerror);
-
-  if ($type) {
-    $type->validate ($onerror);
-
-    $self->{onerror}->(node => $attr,
-                       type => 'IMT:not styling lang',
-                       level => 'm')
-        unless $type->is_styling_lang;
-
-    $self->{onerror}->(node => $attr,
-                       value => 'charset',
-                       type => 'IMT:parameter not allowed',
-                       level => 'm')
-        if defined $type->param ('charset');
-  }
-  $element_state->{content_type} = $type;
-}; # <style type="">
-
 ## Language tag [HTML] [BCP47]
 $CheckerByType->{'language tag'} = sub {
   my ($self, $attr) = @_;
@@ -4414,27 +4389,12 @@ $Element->{+HTML_NS}->{meta} = {
 
 $Element->{+HTML_NS}->{style} = {
   %AnyChecker,
-  check_start => sub {
-    my ($self, $item, $element_state) = @_;
-    $element_state->{content_type} = do {
-      require Web::MIME::Type;
-      Web::MIME::Type->parse_web_mime_type ('text/css');
-    }; # overridden by type="" checker, if specified
-  }, # check_start
-  check_attrs2 => sub {
-    my ($self, $item, $element_state) = @_;
-    $element_state->{element_allowed} = 1
-        if $element_state->{content_type} and
-           $element_state->{content_type}->is_xml_mime_type;
-  }, # check_attrs2
   check_child_element => sub {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
-    unless ($element_state->{element_allowed}) {
-      $self->{onerror}->(node => $child_el,
-                         type => 'element not allowed',
-                         level => 'm');
-    }
+    $self->{onerror}->(node => $child_el,
+                       type => 'element not allowed',
+                       level => 'm');
   }, # check_child_element
   check_end => sub {
     my ($self, $item, $element_state) = @_;
@@ -4442,35 +4402,24 @@ $Element->{+HTML_NS}->{style} = {
     my ($text, $tc, $text_sps, $tc_sps)
         = node_to_text_and_tc_and_sps $item->{node};
 
-    {
-      my $length = length $tc;
-      $tc =~ s/.*<!--.*?-->//gs;
-      $length -= length $tc;
-      if ($tc =~ /<!--/) {
-        $length += $-[0];
-        my $p = pos_to_lc $tc_sps, $length;
-        $self->{onerror}->(node => $item->{node},
-                           %$p,
-                           type => 'style:unclosed cdo',
-                           level => 'm');
-      }
-    }
-
-    if (defined $element_state->{content_type} and
-        ($element_state->{content_type}->as_valid_mime_type || '') eq 'text/css') {
-      my $parser = $self->_css_parser ($item->{node}, $text, $text_sps);
-      my $ss = $parser->parse_char_string_as_ss ($text);
-      # XXX Web::CSS::Checker->new->check_ss ($ss);
-    } elsif (defined $element_state->{content_type}) {
-      $self->{onerror}->(node => $item->{node},
-                         value => $element_state->{content_type}->as_valid_mime_type,
-                         type => 'unknown style lang',
-                         level => 'u');
-    }
+    my $parser = $self->_css_parser ($item->{node}, $text, $text_sps);
+    my $ss = $parser->parse_char_string_as_ss ($text);
+    # XXX Web::CSS::Checker->new->check_ss ($ss);
 
     $AnyChecker{check_end}->(@_);
   },
 }; # style
+
+$ElementAttrChecker->{(HTML_NS)}->{style}->{''}->{type} = sub {
+  my ($self, $attr, $item, $element_state) = @_;
+  my $value = $attr->value;
+  if ($value =~ m{\A[Tt][Ee][Xx][Tt]/[Cc][Ss][Ss]\z}) {
+    $self->{onerror}->(node => $attr, type => 'style type:text/css',
+                       level => 's');
+  } else {
+    $self->{onerror}->(node => $attr, type => 'style type', level => 'm');
+  }
+}; # <style type="">
 
 sub _link_types ($$%) {
   my ($self, $attr, %args) = @_;

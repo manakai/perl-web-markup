@@ -1273,3 +1273,43 @@ HTML or SVG elements.  It should be omitted.</p>
 @ja
 <p>いくつかの ARIA の属性は本来の HTML や SVG
 の要素と冗長です。省略するべきです。</p>
+
+* style:unclosed cdo
+
+default_level=s
+layer=microsyntax
+
+@en
+There is no <code>--></code>
+@ja
+<code>--></code> がありません
+
+@en
+    <p>In a <code>script</code> element, any
+    substring <code>&lt;!--</code> must be closed by corresponding
+    substring <code>--></code>.</p>
+@ja
+    <p><code>script</code> 要素の中では、
+    <code>&lt;!--</code> には対応する <code>--></code>
+    がなければいけません。</p>
+
+* style type
+
+default_level=s
+layer=microsyntax
+
+@en
+The style type is not <code>text/css</code>
+@ja
+スタイルの種別が <code>text/css</code> ではありません
+
+@en
+<p>The <code>type</code> attribute value of the <code>style</code> element,
+if specified, must be <code>text/css</code>.  (However, it should
+be omitted altogther.)</p>
+<p>Non-CSS style languages are not supported by Web browsers.</p>
+@ja
+<p><code>style</code> 要素の <code>type</code> 属性の値が指定される場合は、
+<code>text/css</code> でなければいけません。 (ただし、
+<code>type</code> 属性自体を省略するべきです。)</p>
+<p>Web ブラウザーは CSS 以外のスタイル言語に対応していません。</p>
