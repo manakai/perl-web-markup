@@ -456,6 +456,21 @@
             "attr" : 1
          }
       },
+      "non-utf-8 character encoding" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>The character encoding of an HTML document must be UTF-8.  No other\u000Aencoding is allowed.\u003C/p>",
+            "ja" : "\u003Cp>HTML 文書の文字符号化は UTF-8 でなければなりません。\u000Aそれ以外は認められていません。\u003C/p>"
+         },
+         "layer" : "charencoding",
+         "message" : {
+            "en" : "The document's character encoding is not UTF-8",
+            "ja" : "文書の文字符号化が UTF-8 ではありません"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
       "not custom element name" : {
          "default_level" : "m",
          "desc" : {
@@ -511,6 +526,39 @@
          "message" : {
             "en" : "Both \u003Ccode>allow-top-navigation\u003C/code> and\u000A\u003Ccode>allow-top-navigation-by-user-activation\u003C/code> are specified",
             "ja" : "\u003Ccode>allow-top-navigation\u003C/code> と\u000A\u003Ccode>allow-top-navigation-by-user-activation\u003C/code> \u000Aの両方が指定されています"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "script charset" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>The \u003Ccode>charset\u003C/code> attribute of the \u003Ccode>script\u003C/code>\u000Aelement should not be specified.  Both the document and the script has\u000Ato be encoded in UTF-8, in which case the attribute has no effect.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>script\u003C/code> 要素の \u003Ccode>charset\u003C/code>\u000A属性は指定するべきではありません。文書もスクリプトも UTF-8\u000Aで符号化しなければなりません。その場合 \u003Ccode>charset\u003C/code>\u000A属性には意味がありません。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "The \u003Ccode>charset\u003C/code> attribute is specified",
+            "ja" : "\u003Ccode>charset\u003C/code> 属性が指定されています"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         },
+         "targets" : {
+            "attr" : 1
+         }
+      },
+      "script charset utf-8" : {
+         "default_level" : "s",
+         "desc" : {
+            "en" : "\u003Cp>The \u003Ccode>charset\u003C/code> attribute of the \u003Ccode>script\u003C/code>\u000Aelement should not be specified.  Both the document and the script has\u000Ato be encoded in UTF-8, in which case the attribute has no effect.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>script\u003C/code> 要素の \u003Ccode>charset\u003C/code>\u000A属性は指定するべきではありません。文書もスクリプトも UTF-8\u000Aで符号化しなければなりません。その場合 \u003Ccode>charset\u003C/code>\u000A属性には意味がありません。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "The \u003Ccode>charset\u003C/code> attribute is specified as UTF-8",
+            "ja" : "\u003Ccode>charset\u003C/code> 属性で UTF-8 が指定されています"
          },
          "modules" : {
             "Web::HTML::Validator" : 1

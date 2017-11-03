@@ -664,7 +664,7 @@ for my $test (
         $test->[0] eq 'utf-8' ? [] :
             [{type => 'non-utf-8 character encoding',
               value => $test->[2],
-              node => $doc, level => 's'}];
+              node => $doc, level => 'm'}];
     done $c;
   } n => 1, name => ['charset', @$test];
 
@@ -689,7 +689,7 @@ for my $test (
         $test->[0] eq 'utf-8' ? [] :
             [{type => 'non-utf-8 character encoding',
               value => $test->[2],
-              node => $doc, level => 's'}];
+              node => $doc, level => 'm'}];
     done $c;
   } n => 1, name => ['charset', @$test];
 }
@@ -710,7 +710,7 @@ test {
   $validator->check_node ($doc);
   eq_or_diff \@error, [{type => 'non-utf-8 character encoding',
                         value => 'UTF-16BE',
-                        node => $doc, level => 's'}];
+                        node => $doc, level => 'm'}];
   done $c;
 } n => 1, name => ['UTF-16 BOM'];
 
@@ -739,7 +739,7 @@ test {
                         node => $doc, level => 'm'},
                        {type => 'non-utf-8 character encoding',
                         value => 'UTF-16BE',
-                        node => $doc, level => 's'}];
+                        node => $doc, level => 'm'}];
   done $c;
 } n => 1, name => ['UTF-16 BOM'];
 
@@ -759,7 +759,7 @@ test {
   $validator->check_node ($doc);
   eq_or_diff \@error, [{type => 'non-utf-8 character encoding',
                         value => 'UTF-16BE',
-                        node => $doc, level => 's'}];
+                        node => $doc, level => 'm'}];
   done $c;
 } n => 1, name => ['Content-Type charset=""'];
 
@@ -779,7 +779,7 @@ test {
   $validator->check_node ($doc);
   eq_or_diff \@error, [{type => 'non-utf-8 character encoding',
                         value => 'UTF-16BE',
-                        node => $doc, level => 's'}];
+                        node => $doc, level => 'm'}];
   done $c;
 } n => 1, name => ['iframe srcdoc'];
 
@@ -800,7 +800,7 @@ test {
                         node => $doc, level => 'm'},
                        {type => 'non-utf-8 character encoding',
                         value => 'windows-1251',
-                        node => $doc, level => 's'}];
+                        node => $doc, level => 'm'}];
   done $c;
 } n => 1, name => ['not labelled'];
 
@@ -827,7 +827,7 @@ test {
                        {type => 'non-utf-8 character encoding',
                         #value => 'ISO-2022-CN-EXT',
                         value => undef,
-                        node => $doc, level => 's'}];
+                        node => $doc, level => 'm'}];
   done $c;
 } n => 1, name => ['not labelled / replacement'];
 

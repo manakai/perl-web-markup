@@ -57,7 +57,7 @@ sub parse_file ($) {
       } else {
         $Data->{errors}->{$error_type}->{parser_tests}->[-1]->{input} .= "\x0A" . $_;
       }
-    } elsif (defined $error_type and /^(layer)=(microsyntax|content-model|feature)$/) {
+    } elsif (defined $error_type and /^(layer)=(microsyntax|content-model|feature|charencoding)$/) {
       $Data->{errors}->{$error_type}->{$1} = $2;
     } elsif (defined $error_type and /^(default_level)=(m|s|w|u)$/) {
       $Data->{errors}->{$error_type}->{$1} = $2;

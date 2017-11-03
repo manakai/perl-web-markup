@@ -9,6 +9,24 @@
 
 module=Web::HTML::Validator
 
+* non-utf-8 character encoding
+
+layer=charencoding
+default_level=m
+
+@en
+The document's character encoding is not UTF-8
+@ja
+文書の文字符号化が UTF-8 ではありません
+
+@en
+<p>The character encoding of an HTML document must be UTF-8.  No other
+encoding is allowed.
+
+@ja
+<p>HTML 文書の文字符号化は UTF-8 でなければなりません。
+それ以外は認められていません。
+
 * script type:bad spaces
 
 layer=microsyntax

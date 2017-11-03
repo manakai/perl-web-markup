@@ -4384,6 +4384,12 @@ $Element->{+HTML_NS}->{meta} = {
                            level => 'm');
       }
     } # $property_attr
+
+    ## Whether the character encoding declaration's encoding is UTF-8
+    ## or not is not checked here.  If it is inconsitent with the
+    ## document's encoding, it is an error detected here.  If it is
+    ## consitent but the document's encoding is not UTF-8, the
+    ## |_check_doc_charset| method detects an error.
   }, # check_attrs2
 }; # meta
 
@@ -9531,7 +9537,7 @@ sub _check_doc_charset ($$) {
       $self->{onerror}->(node => $doc,
                          type => 'non-utf-8 character encoding',
                          value => $doc->input_encoding,
-                         level => 's');
+                         level => 'm');
     }
   } else { # XML document
     if ($self->{flag}->{has_meta_charset} and not defined $doc->xml_encoding) {
