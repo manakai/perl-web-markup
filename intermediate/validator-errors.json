@@ -1,5 +1,155 @@
 {
    "errors" : {
+      "aria:not preferred markup:css" : {
+         "default_level" : "w",
+         "desc" : {
+            "en" : "\u003Cp>The \u003Ccode>role\u003C/code> attribute should only be\u000Aused when it cannot be represented by CSS properties.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>role\u003C/code> 属性は、 CSS\u000A表現できない時に限って使うべきです。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "Use of CSS is preferred",
+            "ja" : "CSS を使うのが適切です"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "aria:not preferred markup:html-attr" : {
+         "default_level" : "w",
+         "desc" : {
+            "en" : "\u003Cp>The ARIA attribute should only be used when its semantics\u000Acannot be represented by native HTML attributes.\u003C/p>",
+            "ja" : "\u003Cp>ARIA 属性は、その意味を HTML の本来の属性で表せない時だけ使うべきです。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "The \u003Ccode>\u003Cvar>{text}\u003C/var>\u003C/code> attribute is preferred",
+            "ja" : "\u003Ccode>\u003Cvar>{text}\u003C/var>\u003C/code> 属性の方が適切です"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "aria:not preferred markup:html-element" : {
+         "default_level" : "w",
+         "desc" : {
+            "en" : "\u003Cp>The \u003Ccode>role\u003C/code> attribute should only be used when it cannot be\u000Arepresented by an HTML element with similar semantics.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>role\u003C/code> 属性は、同じような意味の HTML\u000A要素で表現できない時に限って使うべきです。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "The \u003Ccode>\u003Cvar>{text}\u003C/var>\u003C/code> element is preferred",
+            "ja" : "\u003Ccode>\u003Cvar>{text}\u003C/var>\u003C/code> 要素の方が適切です"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "aria:not preferred markup:input" : {
+         "default_level" : "w",
+         "desc" : {
+            "en" : "\u003Cp>The \u003Ccode>role\u003C/code> attribute should only be\u000A    used when it cannot be represented by an HTML \u003Ccode>input\u003C/code>\u000A    element with similar semantics.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>role\u003C/code> 属性は、同じような意味の HTML\u000A    \u003Ccode>input\u003C/code> 要素で表現できない時に限って使うべきです。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "The \u003Ccode>&lt;input type=\u003Cvar>{text}\u003C/var>&gt;\u003C/code> element is preferred",
+            "ja" : "\u003Ccode>&lt;input type=\u003Cvar>{text}\u003C/var>&gt;\u003C/code> 要素の方が適切です"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "aria:not preferred markup:math" : {
+         "default_level" : "w",
+         "desc" : {
+            "en" : "\u003Cp>The \u003Ccode>role\u003C/code> attribute should only be\u000A    used when it cannot be represented by a MathML\u000A    \u003Ccode>math\u003C/code> element.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>role\u003C/code> 属性は、 MathML \u003Ccode>math\u003C/code>\u000A    要素で表現できない時に限って使うべきです。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "The \u003Ccode>math\u003C/code> element is preferred",
+            "ja" : "\u003Ccode>math\u003C/code> 要素の方が適切です"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "aria:not preferred markup:omit" : {
+         "default_level" : "w",
+         "desc" : {
+            "en" : "\u003Cp>Certain kinds of ARIA attributes are redundant with native \u000AHTML or SVG elements.  It should be omitted.\u003C/p>",
+            "ja" : "\u003Cp>いくつかの ARIA の属性は本来の HTML や SVG\u000Aの要素と冗長です。省略するべきです。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "This is redundant",
+            "ja" : "これは冗長です"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "aria:not preferred markup:role" : {
+         "default_level" : "w",
+         "desc" : {
+            "en" : "\u003Cp>The \u003Ccode>presentation\u003C/code> role is historical;\u000Athe \u003Ccode>none\u003C/code> role should be used.\u003C/p>",
+            "ja" : "\u003Cp>役割 \u003Ccode>presentation\u003C/code> は古いものです。\u000A役割 \u003Ccode>none\u003C/code> を使うべきです。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "The role \u003Ccode>\u003Cvar>{text}\u003C/var>\u003C/code> is preferred",
+            "ja" : "役割 \u003Ccode>\u003Cvar>{text}\u003C/var>\u003C/code> の方が適切です"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "aria:not preferred markup:textbox" : {
+         "default_level" : "w",
+         "desc" : {
+            "en" : "\u003Cp>The \u003Ccode>role\u003C/code> attribute should only be\u000A    used when it cannot be represented by an HTML\u000A    \u003Ccode>&lt;input type=text&gt;\u003C/code> or \u003Ccode>textarea\u003C/code> element.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>role\u003C/code> 属性は、 HTML\u000A    \u003Ccode>&lt;input type=text&gt;\u003C/code> 要素や \u003Ccode>textarea\u003C/code>\u000A    要素で表現できない時に限って使うべきです。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "The \u003Ccode>&lt;input type=text&gt;\u003C/code> or \u003Ccode>textarea\u003C/code>\u000Aelement is preferred",
+            "ja" : "\u003Ccode>&lt;input type=text&gt;\u003C/code> や \u003Ccode>textarea\u003C/code>\u000A要素の方が適切です"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "aria:not preferred markup:th" : {
+         "default_level" : "w",
+         "desc" : {
+            "en" : "\u003Cp>The \u003Ccode>role\u003C/code> attribute should only be\u000A    used when it cannot be represented by an HTML \u003Ccode>th\u003C/code>\u000A    element with a \u003Ccode>scope\u003C/code> attribute.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>role\u003C/code> 属性は、 HTML\u000A    \u003Ccode>th\u003C/code> 要素と \u003Ccode>scope\u003C/code> \u000A    属性で表現できない時に限って使うべきです。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "The \u003Ccode>&lt;th \u003Cvar>{text}\u003C/var>&gt;\u003C/code> element is preferred",
+            "ja" : "\u003Ccode>&lt;th scope=\u003Cvar>{text}\u003C/var>&gt;\u003C/code> の方が適切です"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "aria:not preferred markup:title" : {
+         "default_level" : "w",
+         "desc" : {
+            "en" : "\u003Cp>The \u003Ccode>role\u003C/code> attribute should only be\u000A    used when it cannot be represented by an HTML \u003Ccode>title\u003C/code>\u000A    attribute or an SVG \u003Ccode>title\u003C/code> element.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>role\u003C/code> 属性は、 HTML\u000A    \u003Ccode>title\u003C/code> 属性や SVG \u003Ccode>title\u003C/code>\u000A    要素で表現できない時に限って使うべきです。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "The \u003Ccode>title\u003C/code> attribute is preferred",
+            "ja" : "\u003Ccode>title\u003C/code> 属性の方が適切です"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
       "character not allowed:dl" : {
          "default_level" : "m",
          "desc" : {
@@ -351,6 +501,21 @@
             "Web::HTML::Validator" : 1
          }
       },
+      "sandbox duplicate allow-top-navigation" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>Only one of keywords \u003Ccode>allow-top-navigation\u003C/code> and\u000A\u003Ccode>allow-top-navigation-by-user-activation\u003C/code> can be specified\u000Ain a \u003Ccode>sandbox\u003C/code> attribute.  If both keywords are specified,\u000A\u003Ccode>allow-top-navigation-by-user-activation\u003C/code> is ignored.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>sandbox\u003C/code> 属性に \u003Ccode>allow-top-navigation\u003C/code> と\u000A\u003Ccode>allow-top-navigation-by-user-activation\u003C/code> \u000Aの両方を指定してはいけません。両方していしても、\u000A\u003Ccode>allow-top-navigation-by-user-activation\u003C/code>\u000Aは無視されます。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "Both \u003Ccode>allow-top-navigation\u003C/code> and\u000A\u003Ccode>allow-top-navigation-by-user-activation\u003C/code> are specified",
+            "ja" : "\u003Ccode>allow-top-navigation\u003C/code> と\u000A\u003Ccode>allow-top-navigation-by-user-activation\u003C/code> \u000Aの両方が指定されています"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
       "script language" : {
          "default_level" : "s",
          "desc" : {
@@ -637,6 +802,36 @@
          },
          "targets" : {
             "attr" : 1
+         }
+      },
+      "style type" : {
+         "default_level" : "s",
+         "desc" : {
+            "en" : "\u003Cp>The \u003Ccode>type\u003C/code> attribute value of the \u003Ccode>style\u003C/code> element,\u000Aif specified, must be \u003Ccode>text/css\u003C/code>.  (However, it should\u000Abe omitted altogther.)\u003C/p>\u000A\u003Cp>Non-CSS style languages are not supported by Web browsers.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>style\u003C/code> 要素の \u003Ccode>type\u003C/code> 属性の値が指定される場合は、\u000A\u003Ccode>text/css\u003C/code> でなければいけません。 (ただし、\u000A\u003Ccode>type\u003C/code> 属性自体を省略するべきです。)\u003C/p>\u000A\u003Cp>Web ブラウザーは CSS 以外のスタイル言語に対応していません。\u003C/p>"
+         },
+         "layer" : "microsyntax",
+         "message" : {
+            "en" : "The style type is not \u003Ccode>text/css\u003C/code>",
+            "ja" : "スタイルの種別が \u003Ccode>text/css\u003C/code> ではありません"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "style:unclosed cdo" : {
+         "default_level" : "s",
+         "desc" : {
+            "en" : "\u003Cp>In a \u003Ccode>script\u003C/code> element, any\u000A    substring \u003Ccode>&lt;!--\u003C/code> must be closed by corresponding\u000A    substring \u003Ccode>--&gt;\u003C/code>.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>script\u003C/code> 要素の中では、\u000A    \u003Ccode>&lt;!--\u003C/code> には対応する \u003Ccode>--&gt;\u003C/code>\u000A    がなければいけません。\u003C/p>"
+         },
+         "layer" : "microsyntax",
+         "message" : {
+            "en" : "There is no \u003Ccode>--&gt;\u003C/code>",
+            "ja" : "\u003Ccode>--&gt;\u003C/code> がありません"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
          }
       },
       "tabindex:indexed" : {

@@ -4640,6 +4640,21 @@ $Element->{+HTML_NS}->{script} = {
                                level => 'm')
                 if defined $attr;
           }
+        } else { # <script src>
+          my $attr = $item->{node}->get_attribute_node_ns (undef, 'charset');
+          if (defined $attr) {
+            my $value = $attr->value;
+            $value =~ tr/A-Z/a-z/; ## ASCII case-insensitive
+            if ($value eq 'utf-8') {
+              $self->{onerror}->(node => $attr,
+                                 type => 'script charset utf-8',
+                                 level => 's'); # obsolete but conforming
+            } else {
+              $self->{onerror}->(node => $attr,
+                                 type => 'script charset',
+                                 level => 'm');
+            }
+          }
         }
       } else { # data block
         $element_state->{content_type} = $mime_type; # or undef; data block

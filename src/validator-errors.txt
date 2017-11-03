@@ -127,6 +127,49 @@ is the default.
 省略するべきです。 <code>type</code> 要素の既定値は古典スクリプトなので、
 冗長です。
 
+* script charset
+
+layer=content-model
+default_level=m
+attr
+
+@en
+The <code>charset</code> attribute is specified
+@ja
+<code>charset</code> 属性が指定されています
+
+@en
+<p>The <code>charset</code> attribute of the <code>script</code>
+element should not be specified.  Both the document and the script has
+to be encoded in UTF-8, in which case the attribute has no effect.
+
+@ja
+<p><code>script</code> 要素の <code>charset</code>
+属性は指定するべきではありません。文書もスクリプトも UTF-8
+で符号化しなければなりません。その場合 <code>charset</code>
+属性には意味がありません。
+
+* script charset utf-8
+
+layer=content-model
+default_level=s
+
+@en
+The <code>charset</code> attribute is specified as UTF-8
+@ja
+<code>charset</code> 属性で UTF-8 が指定されています
+
+@en
+<p>The <code>charset</code> attribute of the <code>script</code>
+element should not be specified.  Both the document and the script has
+to be encoded in UTF-8, in which case the attribute has no effect.
+
+@ja
+<p><code>script</code> 要素の <code>charset</code>
+属性は指定するべきではありません。文書もスクリプトも UTF-8
+で符号化しなければなりません。その場合 <code>charset</code>
+属性には意味がありません。
+
 * script:ignored charset
 
 layer=content-model
