@@ -2796,10 +2796,6 @@ $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{accesskey} = sub {
     }
   }
 }; # accesskey=""
-$ElementAttrChecker->{(HTML_NS)}->{a}->{''}->{directkey}
-    = $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{accesskey};
-$ElementAttrChecker->{(HTML_NS)}->{input}->{''}->{directkey}
-    = $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{accesskey};
 
 # XXX superglobal
 $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{id} = sub {
@@ -3148,27 +3144,6 @@ my $ShapeCoordsChecker = sub ($$$$) {
     }
   }
 }; # $ShapeCoordsChecker
-
-my $LegacyLoopChecker = sub {
-  my ($self, $attr) = @_;
-  
-  ## A valid integer.
-  
-  if ($attr->value =~ /\A(-?[0-9]+)\z/) {
-    my $n = 0+$1;
-    if ($n != 0 and $n >= -1) {
-      #
-    } else {
-      $self->{onerror}->(node => $attr,
-                         type => 'integer:out of range',
-                         level => 'm');
-    }
-  } else {
-    $self->{onerror}->(node => $attr,
-                       type => 'integer:syntax error',
-                       level => 'm');
-  }
-}; # $LegacyLoopChecker
 
 # XXX
 my $GetHTMLAttrsChecker = sub {
@@ -5399,7 +5374,26 @@ $Element->{+HTML_NS}->{div} = {
   }, # check_end
 }; # div
 
-$ElementAttrChecker->{(HTML_NS)}->{marquee}->{''}->{loop} = $LegacyLoopChecker;
+$ElementAttrChecker->{(HTML_NS)}->{marquee}->{''}->{loop} = sub {
+  my ($self, $attr) = @_;
+  
+  ## A valid integer.
+  
+  if ($attr->value =~ /\A(-?[0-9]+)\z/) {
+    my $n = 0+$1;
+    if ($n != 0 and $n >= -1) {
+      #
+    } else {
+      $self->{onerror}->(node => $attr,
+                         type => 'integer:out of range',
+                         level => 'm');
+    }
+  } else {
+    $self->{onerror}->(node => $attr,
+                       type => 'integer:syntax error',
+                       level => 'm');
+  }
+}; # <marquee loop>
 
 $ElementAttrChecker->{(HTML_NS)}->{font}->{''}->{size} = sub {
   my ($self, $attr) = @_;
@@ -5416,46 +5410,8 @@ $Element->{+HTML_NS}->{a} = {
   %TransparentChecker,
   check_attrs => $GetHTMLAttrsChecker->({
     coords => sub { }, ## Checked in $ShapeCoordsChecker.
-          cti => sub {
-            my ($self, $attr) = @_;
-            my $value = $attr->value;
-            if ($value =~ m[\A[0-9*\x23,/]{1,128}\z]) {
-              if ($value =~ m[//]) {
-                $self->{onerror}->(node => $attr,
-                                   type => 'cti:syntax error',
-                                   level => 'm');
-              }
-            } else {
-              $self->{onerror}->(node => $attr,
-                                 type => 'cti:syntax error',
-                                 level => 'm');
-            }
-          }, # cti
-          loop => sub {
-            my ($self, $attr) = @_;
-            if ($attr->value =~ /\A(?:[0-9]+|infinite)\z/) {
-              #
-            } else {
-              $self->{onerror}->(node => $attr,
-                                 type => 'nninteger:syntax error',
-                                 level => 'm');
-            }
-          }, # loop
-          memoryname => sub {
-            my ($self, $attr) = @_;
-            if ($attr->value =~ /.-./s) {
-              #
-            } else {
-              $self->{onerror}->(node => $attr,
-                                 type => 'memoryname:syntax error',
-                                 level => 'm');
-            }
-          }, # memoryname
-          name => $NameAttrChecker,
+    name => $NameAttrChecker,
     rel => sub {}, ## checked in check_attrs2
-    viblength => $GetHTMLNonNegativeIntegerAttrChecker->(sub {
-      1 <= $_[0] and $_[0] <= 9;
-    }),
   }), # check_attrs
   check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
@@ -5478,10 +5434,6 @@ $Element->{+HTML_NS}->{a} = {
     } else {
       for (qw(
         target ping rel hreflang type referrerpolicy
-        ilet iswf irst ib ifb ijam ista
-        email telbook kana memoryname
-        lcs
-        loop soundstart volume
       )) {
         if (defined $attr{$_}) {
           $self->{onerror}->(node => $attr{$_},
@@ -5495,23 +5447,6 @@ $Element->{+HTML_NS}->{a} = {
                          text => 'href',
                          level => 'm')
           if defined $attr{itemprop};
-    }
-
-    if ($attr{target}) {
-      for (qw(ilet iswf irst ib ifb ijam lcs utn)) {
-        if ($attr{$_}) {
-          $self->{onerror}->(node => $attr{target},
-                             type => 'attribute not allowed',
-                             level => 'm');
-          last;
-        }
-      }
-    }
-
-    if ($attr{viblength} and not $attr{vibration}) {
-      $self->{onerror}->(node => $attr{viblength},
-                         type => 'attribute not allowed',
-                         level => 'm');
     }
 
     $ShapeCoordsChecker->($self, $item, \%attr, 'missing');
@@ -6110,22 +6045,7 @@ $Element->{+HTML_NS}->{img} = {
           }
         }
       }, # border
-      localsrc => sub {
-        my ($self, $attr) = @_;
-        my $value = $attr->value;
-        if ($value =~ /\A[1-9][0-9]*\z/) {
-          #
-        } elsif ($value =~ /\A[0-9A-Za-z]+\z/) {
-          $self->{onerror}->(node => $attr,
-                             type => 'localsrc:deprecated',
-                             level => 's');
-        } else {
-          $self->{onerror}->(node => $attr,
-                             type => 'localsrc:invalid',
-                             level => 'm');
-        }
-      },
-      name => $NameAttrChecker,
+    name => $NameAttrChecker,
   }), # check_attrs
   check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
@@ -6513,43 +6433,6 @@ $Element->{+HTML_NS}->{track} = {
     }
   }, # check_attrs2
 }; # track
-
-$Element->{+HTML_NS}->{bgsound} = {
-  %HTMLEmptyChecker,
-  check_attrs => $GetHTMLAttrsChecker->({
-    balance => sub {
-      my ($self, $attr) = @_;
-
-      ## A valid integer.
-
-      if ($attr->value =~ /\A(-?[0-9]+)\z/) {
-        my $n = 0+$1;
-        if (-10000 <= $n and $n <= 10000) {
-          #
-        } else {
-          $self->{onerror}->(node => $attr,
-                             type => 'integer:out of range',
-                             level => 'm');
-        }
-      } else {
-        $self->{onerror}->(node => $attr,
-                           type => 'integer:syntax error',
-                           level => 'm');
-      }
-    }, # balance
-    loop => $LegacyLoopChecker,
-  }), # check_attrs
-  check_attrs2 => sub {
-    my ($self, $item, $element_state) = @_;
-
-    unless ($item->{node}->has_attribute_ns (undef, 'src')) {
-      $self->{onerror}->(node => $item->{node},
-                         type => 'attribute missing',
-                         text => 'src',
-                         level => 'm');
-    }
-  }, # check_attrs2
-}; # bgsound
 
 $Element->{+HTML_NS}->{canvas} = {
   %TransparentChecker,
@@ -7089,22 +6972,6 @@ $Element->{+HTML_NS}->{form} = {
       }
     },
   }), # check_attrs
-  check_attrs2 => sub {
-    my ($self, $item, $element_state) = @_;
-    my $el = $item->{node};
-
-    my $target_attr = $el->get_attribute_node_ns (undef, 'target');
-    if ($target_attr) {
-      for (qw(lcs utn)) {
-        if ($el->has_attribute_ns (undef, $_)) {
-          $self->{onerror}->(node => $target_attr,
-                             type => 'attribute not allowed',
-                             level => 'm');
-          last;
-        }
-      }
-    }
-  }, # check_attrs2
   check_start => sub {
     my ($self, $item, $element_state) = @_;
     $element_state->{id_type} = 'form';
@@ -7220,8 +7087,6 @@ $Element->{+HTML_NS}->{input} = {
     autocomplete => $GetHTMLEnumeratedAttrChecker->({ # XXX old
       on => 1, off => 1,
     }),
-    format => $TextFormatAttrChecker,
-    loop => $LegacyLoopChecker,
     max => sub {}, ## check_attrs2
     min => sub {}, ## check_attrs2
     name => $FormControlNameAttrChecker,
@@ -7235,9 +7100,6 @@ $Element->{+HTML_NS}->{input} = {
     }, # precision
     ## XXXresource src="" referenced resource type
     value => sub {}, ## check_attrs2
-    viblength => $GetHTMLNonNegativeIntegerAttrChecker->(sub {
-      1 <= $_[0] and $_[0] <= 9;
-    }),
   }),
   check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
@@ -7345,27 +7207,6 @@ $Element->{+HTML_NS}->{input} = {
       $element_state->{number_value}->{min} ||= 0;
       $element_state->{number_value}->{max} = 100
           unless defined $element_state->{number_value}->{max};
-    } elsif ($input_type eq 'submit') {
-      my $dk_attr = $el->get_attribute_node_ns (undef, 'directkey');
-      if ($dk_attr) {
-        unless ($el->has_attribute_ns (undef, 'value')) {
-          $self->{onerror}->(node => $dk_attr,
-                             type => 'attribute missing',
-                             text => 'value',
-                             level => 'm');
-        }
-      }
-
-      unless ($el->has_attribute_ns (undef, 'src')) {
-        for (qw(volume soundstart)) {
-          my $attr = $el->get_attribute_node_ns (undef, $_);
-          if ($attr) {
-            $self->{onerror}->(node => $attr,
-                               type => 'attribute not allowed',
-                               level => 'm');
-          }
-        }
-      }
     } elsif ($input_type eq 'image') {
       if (my $attr = $el->get_attribute_node_ns (undef, 'start')) {
         unless ($el->has_attribute_ns (undef, 'dynsrc')) {
@@ -7373,15 +7214,6 @@ $Element->{+HTML_NS}->{input} = {
                              type => 'attribute not allowed',
                              level => 'm');
         }
-      }
-    }
-
-    my $vl_attr = $el->get_attribute_node_ns (undef, 'viblength');
-    if ($vl_attr) {
-      unless ($el->has_attribute_ns (undef, 'vibration')) {
-        $self->{onerror}->(node => $vl_attr,
-                           type => 'attribute not allowed',
-                           level => 'm');
       }
     }
 
