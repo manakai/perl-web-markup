@@ -2,7 +2,7 @@ use strict;
 use warnings;
 use Path::Class;
 use lib glob file (__FILE__)->dir->parent->subdir ('t_deps', 'modules', '*', 'lib');
-use Encode;
+use Web::Encoding;
 use Web::DOM::Document;
 use Web::HTML::Parser;
 use Web::HTML::Validator;
@@ -53,7 +53,7 @@ $parser->onerror ($onerror);
 
 local $/ = undef;
 my $input = @ARGV ? $ARGV[0] : scalar <>;
-$input = decode 'utf-8', $input;
+$input = decode_web_utf8 $input;
 $dids->[@$dids]->{lc_map} = create_index_lc_mapping $input;
 $parser->di ($#$dids);
 $parser->parse_byte_string (undef, $input => $doc);

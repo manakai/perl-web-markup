@@ -878,31 +878,6 @@ $ItemValueChecker->{'MIME type'} = sub {
   return $type; # or undef
 }; # MIME type
 
-$ElementAttrChecker->{(HTML_NS)}->{style}->{''}->{type} = sub {
-  my ($self, $attr, $item, $element_state) = @_;
-
-  require Web::MIME::Type;
-  my $onerror = sub { $self->{onerror}->(@_, node => $attr) };
-  my $type = Web::MIME::Type->parse_web_mime_type
-      ($attr->value, $onerror);
-
-  if ($type) {
-    $type->validate ($onerror);
-
-    $self->{onerror}->(node => $attr,
-                       type => 'IMT:not styling lang',
-                       level => 'm')
-        unless $type->is_styling_lang;
-
-    $self->{onerror}->(node => $attr,
-                       value => 'charset',
-                       type => 'IMT:parameter not allowed',
-                       level => 'm')
-        if defined $type->param ('charset');
-  }
-  $element_state->{content_type} = $type;
-}; # <style type="">
-
 ## Language tag [HTML] [BCP47]
 $CheckerByType->{'language tag'} = sub {
   my ($self, $attr) = @_;
@@ -1184,36 +1159,6 @@ $ElementAttrChecker->{(HTML_NS)}->{object}->{''}->{archive} = sub {
 
   $self->{has_uri_attr} = 1 if $attr->local_name ne 'profile';
 }; # <a ping=""> <area ping=""> <head profile=""> <object archive="">
-
-$ElementAttrChecker->{(HTML_NS)}->{applet}->{''}->{archive} = sub {
-  my ($self, $attr) = @_;
-
-  ## A set of comma-separated tokens [HTML]
-  my $value = $attr->value;
-  my @value = length $value ? split /,/, $value, -1 : ();
-
-  require Web::URL::Checker;
-  for my $v (@value) {
-    $v =~ s/^[\x09\x0A\x0C\x0D\x20]+//;
-    $v =~ s/[\x09\x0A\x0C\x0D\x20]+\z//;
-
-    if ($v eq '') {
-      $self->{onerror}->(type => 'url:empty',
-                         node => $attr,
-                         level => 'm');
-    } else {
-      ## Non-empty URL
-      my $chk = Web::URL::Checker->new_from_string ($v);
-      $chk->onerror (sub {
-        $self->{onerror}->(value => $v, @_, node => $attr);
-      });
-      # XXX base URL is <applet codebase="">
-      $chk->check_iri_reference; # XXX URL
-    }
-  }
-
-  $self->{has_uri_attr} = 1;
-}; # <applet archive="">
 
 my $ValidEmailAddress;
 {
@@ -1624,6 +1569,11 @@ $NamespacedAttrChecker->{(XMLNS_NS)}->{''} = sub {
 
 $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{role} = sub { };
 $ElementAttrChecker->{(SVG_NS)}->{'*'}->{''}->{role} = sub { };
+  ## ARIA requires the author to not mutate the "role" attribute value
+  ## <https://w3c.github.io/aria/aria/aria.html#roles>.  This is a
+  ## willful violation to that spec; we don't enforce such a strange
+  ## requirement for compatibility with a broken implementation
+  ## strategy.
 
 $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{'aria-label'} =
 $ElementAttrChecker->{(SVG_NS)}->{'*'}->{''}->{'aria-label'} = sub {
@@ -1636,6 +1586,11 @@ $ElementAttrChecker->{(SVG_NS)}->{'*'}->{''}->{'aria-label'} = sub {
 $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{'aria-dropeffect'} =
 $ElementAttrChecker->{(SVG_NS)}->{'*'}->{''}->{'aria-dropeffect'} = sub {
   my ($self, $attr) = @_;
+
+  ## <https://w3c.github.io/aria/aria/aria.html#aria-dropeffect>
+  ## aria-dropeffect="" is deprecated (reported through "preferred"
+  ## checking).
+
   ## Unordered set of unique space-separated tokens.
   my %word;
   for my $word (grep {length $_}
@@ -1653,6 +1608,10 @@ $ElementAttrChecker->{(SVG_NS)}->{'*'}->{''}->{'aria-dropeffect'} = sub {
     }
   }
 }; # aria-dropeffect=""
+
+## <https://w3c.github.io/aria/aria/aria.html#aria-grabbed>
+## aria-grabbed="" is deprecated (reported through "preferred"
+## checks).
 
 $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{'aria-relevant'} =
 $ElementAttrChecker->{(SVG_NS)}->{'*'}->{''}->{'aria-relevant'} = sub {
@@ -1674,6 +1633,34 @@ $ElementAttrChecker->{(SVG_NS)}->{'*'}->{''}->{'aria-relevant'} = sub {
     }
   }
 }; # aria-relevant=""
+
+sub _aria_not_preferred ($$$$) {
+  my ($self, $node, $value, $preferred) = @_;
+  if ($preferred->{type} eq 'html_attr' and
+      ($node->owner_element->namespace_uri || '') eq HTML_NS) {
+    if ($node->owner_element->has_attribute_ns (undef, $preferred->{name})) {
+      $self->{onerror}->(node => $node,
+                         type => 'aria:redundant:html-attr',
+                         text => $preferred->{name},
+                         level => 'w');
+    } else {
+      $self->{onerror}->(node => $node,
+                         type => 'aria:not preferred markup:html-attr',
+                         text => $preferred->{name},
+                         level => 'w',
+                         preferred => $preferred);
+    }
+  } else {
+    my $type = $preferred->{type};
+    $type =~ tr/_/-/;
+    $self->{onerror}->(node => $node,
+                       type => 'aria:not preferred markup:' . $type,
+                       text => $preferred->{name} || $preferred->{scope}, # or undef
+                       value => $value, # or undef
+                       level => 'w',
+                       preferred => $preferred);
+  }
+} # _aria_not_preferred
 
 sub _validate_aria ($$) {
   my ($self, $target_nodes) = @_;
@@ -1709,6 +1696,7 @@ sub _validate_aria ($$) {
           }
         }
 
+        ## <https://w3c.github.io/aria/aria/aria.html#aria-owns>
         my $owns = $node->get_attribute_node_ns (undef, 'aria-owns');
         if (defined $owns) {
           $self->{onerror}->(node => $owns,
@@ -1746,7 +1734,8 @@ sub _validate_aria ($$) {
           $state->{in_hgroup} = 1;
         } elsif ($ln eq 'datalist') {
           $state->{in_datalist} = 1;
-        } elsif ($ln eq 'ul' or $ln eq 'ol') {
+        } elsif ($ln eq 'ul' or $ln eq 'ol' or # in spec
+                 $ln eq 'menu' or $ln eq 'dir') { # not in spec
           $state->{in_ulol} = 1;
         }
         $state->{is_inert} = 1
@@ -1828,6 +1817,7 @@ sub _validate_aria ($$) {
       $aria_defs = $_Defs->{input}->{aria}->{$node->type};
     }
 
+    # XXX need to update
     my $adef;
     if ($ns eq HTML_NS) {
       if ($ln eq 'img') {
@@ -1837,38 +1827,24 @@ sub _validate_aria ($$) {
         } else {
           $adef = $aria_defs->{'not-empty-alt'};
         }
-      } elsif ($ln eq 'a' or $ln eq 'area') {
+      } elsif ($ln eq 'a' or $ln eq 'area' or $ln eq 'link') {
         $adef = $aria_defs->{'hyperlink'}
             if $node->has_attribute_ns (undef, 'href');
-      } elsif ($ln eq 'link') {
-        if ($self->{flag}->{node_is_hyperlink}->{refaddr $node}) {
-          $adef = $aria_defs->{'hyperlink'};
-        }
       } elsif ($ln eq 'select') {
-        my $type = $node->multiple ? 'multilist' : $node->size > 1 ? 'singlelist' : 'dropdown';
-        $adef = $aria_defs->{$type};
+        $adef = $aria_defs->{$node->multiple ? 'multilist' : 'singlelist'};
       } elsif ($ln eq 'option') {
         my $context = $node_context->{refaddr $node};
         if ($context->{in_select} or $context->{in_select_optgroup}) {
-          $adef = $aria_defs->{'in-select-' . ($context->{in_select} ||
-                                               $context->{in_select_optgroup})};
+          $adef = $aria_defs->{'in-select'};
         } elsif ($context->{in_datalist}) {
-          $adef = $aria_defs->{'in-datalist'}
-              if not $node->has_attribute_ns (undef, 'disabled') and
-                 not $context->{in_disabled_optgroup} and
-                 not $node->value eq '';
+          $adef = $aria_defs->{'in-datalist'};
         }
       } elsif ($ln eq 'li') {
         $adef = $aria_defs->{'in-ulol'}
             if $node_context->{refaddr $node}->{in_ulol};
-      } elsif ($ln eq 'menu') {
-        $adef = $aria_defs->{$node->type}; # type=popup or toolbar
       } elsif ($ln =~ /\Ah[1-6]\z/) {
         $adef = $aria_defs->{'no-hgroup'}
             unless $node_context->{refaddr $node}->{in_hgroup};
-      } elsif ($ln eq 'body' or $ln eq 'frameset') {
-        $adef = $aria_defs->{'the-body'}
-            if ($node->owner_document->body || '') eq $node;
       }
     }
     $adef ||= $aria_defs->{''};
@@ -1904,23 +1880,22 @@ sub _validate_aria ($$) {
     }
 
     for my $role (keys %role) {
+      if (defined $default_role and $default_role eq $role) {
+        $self->{onerror}->(node => $role_attr,
+                           type => 'aria:role:default role',
+                           value => $role,
+                           level => 'm');
+        next;
+      }
+
       my $conflict_error;
-      if ($adef->{allowed_roles}) {
-        unless ($adef->{allowed_roles}->{$role}) {
-          if (defined $default_role and $default_role eq $role) {
-            $self->{onerror}->(node => $role_attr,
-                               type => 'aria:role:default role',
-                               value => $role,
-                               level => 'm');
-            next;
-          } else {
-            $self->{onerror}->(node => $role_attr,
-                               type => 'aria:role:conflict with semantics',
-                               value => $role,
-                               level => 'm');
-            $conflict_error = 1;
-          }
-        }
+      if (($adef->{default_role} or $adef->{allowed_roles}) and
+          not $adef->{allowed_roles}->{$role}) {
+        $self->{onerror}->(node => $role_attr,
+                           type => 'aria:role:conflict with semantics',
+                           value => $role,
+                           level => 'm');
+        $conflict_error = 1;
       }
 
       my $preferred = $_Defs->{roles}->{$role}->{preferred};
@@ -1942,15 +1917,17 @@ sub _validate_aria ($$) {
                              value => $role,
                              level => 'w')
               unless $conflict_error;
-        } else {
-          my $type = $preferred->{type};
-          $type =~ tr/_/-/;
+        } elsif ($preferred->{type} eq 'textbox' and
+                 $ns eq HTML_NS and
+                 (($ln eq 'input' and $node->type eq 'text') or
+                  $ln eq 'textarea')) {
           $self->{onerror}->(node => $role_attr,
-                             type => 'aria:not preferred markup:' . $type,
-                             text => $preferred->{name} || $preferred->{scope}, # or undef
+                             type => 'aria:redundant role',
                              value => $role,
                              level => 'w')
-              unless $role eq 'textbox' and $ns eq HTML_NS and $ln eq 'input';
+              unless $conflict_error;
+        } else {
+          _aria_not_preferred $self, $role_attr, $role, $preferred;
         }
       }
     } # $role
@@ -1982,6 +1959,9 @@ sub _validate_aria ($$) {
         }
       }
 
+      # XXX element-specific disallowed ARIA attributes
+      # XXX strong semantics attribute value validation
+
       if (not $allowed) {
         $self->{onerror}->(node => $attr,
                            type => 'aria:attr not allowed for role',
@@ -1990,9 +1970,7 @@ sub _validate_aria ($$) {
       } elsif ($adef->{attrs}->{$attr_ln} or
                ($attr_ln eq 'aria-hidden' and
                 ($node->namespace_uri || '') eq HTML_NS and
-                $node->has_attribute_ns (undef, 'hidden')) or
-               ($attr_ln eq 'aria-disabled' and
-                $node_context->{refaddr $node}->{is_inert})) {
+                $node->has_attribute_ns (undef, 'hidden'))) {
         $self->{onerror}->(node => $attr,
                            type => 'aria:attr not allowed for element',
                            level => 'm');
@@ -2004,20 +1982,7 @@ sub _validate_aria ($$) {
                            type => 'attribute not allowed',
                            level => 'w');
       } elsif ($attr_def->{preferred}) {
-        if ($attr_def->{preferred}->{type} eq 'html_attr' and
-            ($node->namespace_uri || '') eq HTML_NS) {
-          if ($node->has_attribute_ns (undef, $attr_def->{preferred}->{name})) {
-            $self->{onerror}->(node => $attr,
-                               type => 'aria:redundant:html-attr',
-                               text => $attr_def->{preferred}->{name},
-                               level => 'w');
-          } else {
-            $self->{onerror}->(node => $attr,
-                               type => 'aria:not preferred markup:html-attr',
-                               text => $attr_def->{preferred}->{name},
-                               level => 'w');
-          }
-        }
+        _aria_not_preferred $self, $attr, undef, $attr_def->{preferred};
       }
     } # $attr
 
@@ -2050,6 +2015,7 @@ sub _validate_aria ($$) {
     ## |$adef->{attrs}->{$attr_ln}| in addition to the element's
     ## attribute.  They skip it as this only occurs in invalid cases.
 
+    ## <https://w3c.github.io/aria/aria/aria.html#aria-checked>
     if (defined $attr{'aria-checked'}) {
       if ($role{radio} or $role{menuitemradio}) {
         my $value = $attr{'aria-checked'}->value;
@@ -2059,6 +2025,10 @@ sub _validate_aria ($$) {
                            level => 'w')
             if $value eq 'mixed';
       }
+
+# XXX role=switch aria-checked=mixed is "not supported"
+# <http://w3c.github.io/aria/aria/aria.html#switch>.
+
     }
 
     if (defined $attr{'aria-live'}) {
@@ -2145,9 +2115,11 @@ sub _validate_aria ($$) {
       for (split /[\x09\x0A\x0C\x0D\x20]+/, $attr{'aria-labelledby'}->value) {
         my $attr = $self->{id}->{$_}->[0];
         if (defined $attr) {
+          ## <https://w3c.github.io/aria/aria/aria.html#definition>
+          # XXX aria-labelledby SHOULD point role=term.
           my $el = $attr->owner_element;
           if (($el->namespace_uri || '') eq HTML_NS and
-              $el->local_name eq 'dfn') {
+              $el->local_name eq 'dfn') { # XXX
             #
           } else {
             $self->{onerror}->(node => $attr{'aria-labelledby'},
@@ -2250,6 +2222,7 @@ sub _validate_aria ($$) {
             if @{$els->{$r}} > 1;
       }
 
+      ## <https://w3c.github.io/aria/aria/aria.html#toolbar>
       if ($roles->{application} and @{$els->{toolbar}} > 1) {
         for (@{$els->{toolbar}}) {
           ## See IMPLATTRCHK note above.
@@ -2261,8 +2234,8 @@ sub _validate_aria ($$) {
         }
       }
 
-      unless ((($node->namespace_uri || '') eq HTML_NS and $node->local_name eq 'body') or
-              (($node->namespace_uri || '') eq SVG_NS and $node->local_name eq 'svg')) {
+      if ((defined $roles->{document} and not $roles->{document} eq 'implicit') or
+          (defined $roles->{application} and not $roles->{application} eq 'implicit')) {
         ## See IMPLATTRCHK note above.
         $self->{onerror}->(node => $node,
                            type => 'attribute missing',
@@ -2323,6 +2296,11 @@ sub _validate_aria ($$) {
                            level => 's');
       } # LABEL
     }
+
+    ## <https://w3c.github.io/aria/aria/aria.html#columnheader>
+    ## XXX role=table > role=columnheader SHOULD NOT have aria-required, aria-readonly
+    ## <https://w3c.github.io/aria/aria/aria.html#rowheader>
+    ## XXX role=table > role=rowheader SHOULD NOT have aria-required, aria-readonly
 
     if ($roles->{grid} or $roles->{treegrid}) {
       $owned_nodes ||= $get_owned_nodes->($node);
@@ -2398,8 +2376,57 @@ sub _validate_aria ($$) {
 # an interactive content descendant
 # <http://w3c.github.io/aria/aria/aria.html#text>.
 
-# XXX role=switch aria-checked=mixed is "not supported"
-# <http://w3c.github.io/aria/aria/aria.html#switch>.
+# XXX <https://w3c.github.io/aria/aria/aria.html#combobox>
+# role=combobox MUST must_contain <role=textbox|searchbox aria-multiline=false>.
+# <role=combobox aria-expanded=true> MUST must_contain role=listbox|tree|grid|dialog (combobox popup).  <role=combobox aria-expanded=true> MUST has aria-controls={combobox popup}
+# <role=combobox>'s aria-haspopup MUST be <role=combobox>'s combobox popup's role
+
+# XXX <https://w3c.github.io/aria/aria/aria.html#dialog>
+# <role=dialog> SHOULD have at least one focusable descendant element
+
+# XXX <https://w3c.github.io/aria/aria/aria.html#feed>
+# <role=feed> > <role=article> SHOULD be focusable
+
+# XXX <https://w3c.github.io/aria/aria/aria.html#grid>
+# <role=grid> with multiple <role=gridcell aria-selected=true> SHOULD have aria-multiselectable=true
+# <role=gridcell aria-rowspan aria-colspan> SHOULD use rowspan="" colspan="" instead
+
+# XXX <https://w3c.github.io/aria/aria/aria.html#group>
+# <role=group> is used in list, its *children* must be role=listitem
+
+# XXX <https://w3c.github.io/aria/aria/aria.html#none>
+# role=none is equivalent to role=presentation
+
+# XXX <https://w3c.github.io/aria/aria/aria.html#separator>
+# focusable role=separator MUST have aria-valuenow
+# In applications with multiple focusable role=separator, SHOULD have accessible name
+
+# XXX <https://w3c.github.io/aria/aria/aria.html#switch>
+# <role=switch aria-checked=mixed> is equivalent to aria-checked=false
+
+# XXX <https://w3c.github.io/aria/aria/aria.html#table>
+# role=table -> HTML <table>
+
+# XXX <https://w3c.github.io/aria/aria/aria.html#term>
+# role=term SHOULD NOT be interactive
+
+# XXX <https://w3c.github.io/aria/aria/aria.html#aria-current>
+# aria-current element MUST be unique
+
+# XXX <https://w3c.github.io/aria/aria/aria.html#aria-errormessage>
+# aria-errormessage MUST have aria-invalid=true
+
+# XXX <https://w3c.github.io/aria/aria/aria.html#aria-roledescription>
+# aria-roledescription SHOULD have explicit or implicit role
+# aria-roledescription SHOULD have non whitespace character
+
+# XXX role-based content model
+# <https://w3c.github.io/html-aria/#allowed-aria-roles-states-and-properties>
+# XXX separator is interactive content if focusable
+
+## XXX <input readonly contenteditable> implies aria-readonly=true
+## aria-readonly=false, which is really broken and should be detected
+## by another steps of conformance checkers.
 
 ## ------ Element content model ------
 
@@ -2443,12 +2470,10 @@ $IsPalpableContent->{(HTML_NS)}->{input} = sub {
   ## Not <input type=hidden>
   return not (($_[0]->get_attribute_ns (undef, 'type') || '') =~ /\A[Hh][Ii][Dd][Dd][Ee][Nn]\z/); # hidden ASCII case-insensitive
 };
-$IsPalpableContent->{(HTML_NS)}->{menu} = sub {
-  return $_[0]->type eq 'toolbar';
-};
 
 $IsPalpableContent->{(HTML_NS)}->{ul} =
-$IsPalpableContent->{(HTML_NS)}->{ol} = sub {
+$IsPalpableContent->{(HTML_NS)}->{ol} =
+$IsPalpableContent->{(HTML_NS)}->{menu} = sub {
   for (@{$_[0]->child_nodes}) {
     return 1 if
         $_->node_type == 1 and # ELEMENT_NODE
@@ -2460,10 +2485,20 @@ $IsPalpableContent->{(HTML_NS)}->{ol} = sub {
 
 $IsPalpableContent->{(HTML_NS)}->{dl} = sub {
   for (@{$_[0]->child_nodes}) {
-    return 1 if
-        $_->node_type == 1 and # ELEMENT_NODE
-        $_->local_name =~ /\Ad[td]\z/ and # dt | dd
-        ($_->namespace_uri || '') eq HTML_NS;
+    if ($_->node_type == 1 and # ELEMENT_NODE
+        ($_->namespace_uri || '') eq HTML_NS) {
+      my $ln = $_->local_name;
+      if ($ln eq 'dt' or $ln eq 'dd') {
+        return 1;
+      } elsif ($ln eq 'div') {
+        for (@{$_->child_nodes}) {
+          if ($_->node_type == 1 and # ELEMENT_NODE
+              ($_->namespace_uri || '') eq HTML_NS) {
+            return 1 if $_->local_name =~ /\Ad[td]\z/;
+          }
+        }
+      }
+    }
   }
   return 0;
 };
@@ -2761,10 +2796,6 @@ $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{accesskey} = sub {
     }
   }
 }; # accesskey=""
-$ElementAttrChecker->{(HTML_NS)}->{a}->{''}->{directkey}
-    = $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{accesskey};
-$ElementAttrChecker->{(HTML_NS)}->{input}->{''}->{directkey}
-    = $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{accesskey};
 
 # XXX superglobal
 $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{id} = sub {
@@ -2849,39 +2880,6 @@ $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{dir} = $GetHTMLEnumeratedAttrChe
   rtl => 1,
   auto => 'last resort:good',
 }); # dir=""
-
-$ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{dropzone} = sub {
-  ## Unordered set of space-separated tokens, ASCII case-insensitive.
-    my ($self, $attr) = @_;
-    my $has_feedback;
-    my %word;
-    for my $word (grep {length $_}
-                  split /[\x09\x0A\x0C\x0D\x20]+/, $attr->value) {
-      $word =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
-      if ($word eq 'copy' or $word eq 'move' or $word eq 'link') {
-        if ($has_feedback) {
-          $self->{onerror}->(node => $attr,
-                             type => 'dropzone:duplicate feedback',
-                             value => $word,
-                             level => 'm');
-        }
-        $has_feedback = 1;
-      } elsif ($word =~ /^(?:string|file):./s) {
-        if ($word{$word}) {
-          $self->{onerror}->(node => $attr,
-                             type => 'duplicate token',
-                             value => $word,
-                             level => 'm');
-        }
-        $word{$word} = 1;
-      } else {
-          $self->{onerror}->(node => $attr,
-                             type => 'word not allowed',
-                             value => $word,
-                             level => 'm');
-      }
-    }
-}; # dropzone=""
 
 $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{language} = sub {
   my ($self, $attr) = @_;
@@ -3147,27 +3145,6 @@ my $ShapeCoordsChecker = sub ($$$$) {
   }
 }; # $ShapeCoordsChecker
 
-my $LegacyLoopChecker = sub {
-  my ($self, $attr) = @_;
-  
-  ## A valid integer.
-  
-  if ($attr->value =~ /\A(-?[0-9]+)\z/) {
-    my $n = 0+$1;
-    if ($n != 0 and $n >= -1) {
-      #
-    } else {
-      $self->{onerror}->(node => $attr,
-                         type => 'integer:out of range',
-                         level => 'm');
-    }
-  } else {
-    $self->{onerror}->(node => $attr,
-                       type => 'integer:syntax error',
-                       level => 'm');
-  }
-}; # $LegacyLoopChecker
-
 # XXX
 my $GetHTMLAttrsChecker = sub {
   my $element_specific_checker = shift;
@@ -3242,7 +3219,7 @@ my %HTMLPhrasingContentChecker = (
     my ($self, $item, $element_state) = @_;
 
     ## Will be restored by |check_end| of
-    ## |%HTMLPhrasingContentChecker| or |menu| element.
+    ## |%HTMLPhrasingContentChecker|.
     $element_state->{in_phrasing_original} = $self->{flag}->{in_phrasing};
     $self->{flag}->{in_phrasing} = 1;
   }, # check_start
@@ -3922,19 +3899,33 @@ $Element->{+HTML_NS}->{link} = {
       }
     }
 
-    my $sizes_attr = $item->{node}->get_attribute_node_ns (undef, 'sizes');
-    if (defined $sizes_attr and not $rel->{link_types}->{icon}) {
-      $self->{onerror}->(node => $sizes_attr,
-                         type => 'link:sizes:not icon',
-                         level => 'm');
-    }
+    for my $name (qw(sizes as scope workertype updateviacache
+                     color integrity)) {
+      my $attr = $item->{node}->get_attribute_node_ns (undef, $name);
+      next unless defined $attr;
 
-    my $as_attr = $item->{node}->get_attribute_node_ns (undef, 'as');
-    if (defined $as_attr and not $rel->{link_types}->{preload}) {
-      $self->{onerror}->(node => $as_attr,
-                         type => 'link:as:not preload',
-                         level => 'm');
-    }
+      my $allowed = 0;
+      for (keys %{$rel->{link_types} or {}}) {
+        my $def = $Web::HTML::Validator::_Defs->{link_types}->{$_} || {};
+        if ($def->{$name}) {
+          $allowed = 1;
+          last;
+        }
+      }
+
+      unless ($allowed) {
+        $self->{onerror}->(node => $attr,
+                           # link:ignored sizes
+                           # link:ignored as
+                           # link:ignored scope
+                           # link:ignored workertype
+                           # link:ignored updateviacache
+                           # link:ignored color
+                           # link:ignored integrity
+                           type => 'link:ignored ' . $name,
+                           level => 'm');
+      }
+    } # $name
 
     if ($rel->{link_types}->{alternate} and $rel->{link_types}->{stylesheet}) {
       my $title_attr = $item->{node}->get_attribute_node_ns (undef, 'title');
@@ -3948,11 +3939,14 @@ $Element->{+HTML_NS}->{link} = {
     }
 
     unless ($rel->{is_external_resource_link}) {
-      my $co_attr = $item->{node}->get_attribute_node_ns (undef, 'crossorigin');
-      if ($co_attr) {
-        $self->{onerror}->(node => $co_attr,
-                           type => 'non external resource crossorigin',
-                           level => 'w');
+      for my $name (qw(nonce crossorigin)) {
+        my $attr = $item->{node}->get_attribute_node_ns (undef, $name);
+        $self->{onerror}->(node => $attr,
+                           # non external resource crossorigin
+                           # non external resource nonce
+                           type => 'non external resource ' . $name,
+                           level => 'w')
+            if defined $attr;
       }
     }
   }, # check_attrs2
@@ -4041,6 +4035,8 @@ $CheckerByMetadataName->{'referrer'} = sub {
   }
 }; # referrer
 
+# <color>
+$ElementAttrChecker->{(HTML_NS)}->{link}->{''}->{color} =
 $CheckerByMetadataName->{'theme-color'} = sub {
   my ($self, $attr) = @_;
   require Web::CSS::Parser;
@@ -4363,32 +4359,23 @@ $Element->{+HTML_NS}->{meta} = {
                            level => 'm');
       }
     } # $property_attr
+
+    ## Whether the character encoding declaration's encoding is UTF-8
+    ## or not is not checked here.  If it is inconsitent with the
+    ## document's encoding, it is an error detected here.  If it is
+    ## consitent but the document's encoding is not UTF-8, the
+    ## |_check_doc_charset| method detects an error.
   }, # check_attrs2
 }; # meta
 
 $Element->{+HTML_NS}->{style} = {
   %AnyChecker,
-  check_start => sub {
-    my ($self, $item, $element_state) = @_;
-    $element_state->{content_type} = do {
-      require Web::MIME::Type;
-      Web::MIME::Type->parse_web_mime_type ('text/css');
-    }; # overridden by type="" checker, if specified
-  }, # check_start
-  check_attrs2 => sub {
-    my ($self, $item, $element_state) = @_;
-    $element_state->{element_allowed} = 1
-        if $element_state->{content_type} and
-           $element_state->{content_type}->is_xml_mime_type;
-  }, # check_attrs2
   check_child_element => sub {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
-    unless ($element_state->{element_allowed}) {
-      $self->{onerror}->(node => $child_el,
-                         type => 'element not allowed',
-                         level => 'm');
-    }
+    $self->{onerror}->(node => $child_el,
+                       type => 'element not allowed',
+                       level => 'm');
   }, # check_child_element
   check_end => sub {
     my ($self, $item, $element_state) = @_;
@@ -4396,35 +4383,24 @@ $Element->{+HTML_NS}->{style} = {
     my ($text, $tc, $text_sps, $tc_sps)
         = node_to_text_and_tc_and_sps $item->{node};
 
-    {
-      my $length = length $tc;
-      $tc =~ s/.*<!--.*?-->//gs;
-      $length -= length $tc;
-      if ($tc =~ /<!--/) {
-        $length += $-[0];
-        my $p = pos_to_lc $tc_sps, $length;
-        $self->{onerror}->(node => $item->{node},
-                           %$p,
-                           type => 'style:unclosed cdo',
-                           level => 'm');
-      }
-    }
-
-    if (defined $element_state->{content_type} and
-        ($element_state->{content_type}->as_valid_mime_type || '') eq 'text/css') {
-      my $parser = $self->_css_parser ($item->{node}, $text, $text_sps);
-      my $ss = $parser->parse_char_string_as_ss ($text);
-      # XXX Web::CSS::Checker->new->check_ss ($ss);
-    } elsif (defined $element_state->{content_type}) {
-      $self->{onerror}->(node => $item->{node},
-                         value => $element_state->{content_type}->as_valid_mime_type,
-                         type => 'unknown style lang',
-                         level => 'u');
-    }
+    my $parser = $self->_css_parser ($item->{node}, $text, $text_sps);
+    my $ss = $parser->parse_char_string_as_ss ($text);
+    # XXX Web::CSS::Checker->new->check_ss ($ss);
 
     $AnyChecker{check_end}->(@_);
   },
 }; # style
+
+$ElementAttrChecker->{(HTML_NS)}->{style}->{''}->{type} = sub {
+  my ($self, $attr, $item, $element_state) = @_;
+  my $value = $attr->value;
+  if ($value =~ m{\A[Tt][Ee][Xx][Tt]/[Cc][Ss][Ss]\z}) {
+    $self->{onerror}->(node => $attr, type => 'style type:text/css',
+                       level => 's'); # obsolete but conforming
+  } else {
+    $self->{onerror}->(node => $attr, type => 'style type', level => 'm');
+  }
+}; # <style type="">
 
 sub _link_types ($$%) {
   my ($self, $attr, %args) = @_;
@@ -4497,13 +4473,13 @@ sub _link_types ($$%) {
     }
 
     ## Global uniqueness
-    if ($link_type eq 'pingback') {
+    if ($link_type eq 'pingback' or $link_type eq 'canonical') {
       unless ($self->{has_link_type}->{$link_type}) {
         $self->{has_link_type}->{$link_type} = 1;
       } else {
         $self->{onerror}->(node => $attr, value => $link_type,
                            type => 'link type:duplicate',
-                           level => 'm');
+                           level => $link_type eq 'canonical' ? 'w' : 'm');
       }
     }
   } # $link_type
@@ -4518,6 +4494,8 @@ sub _link_types ($$%) {
 
   ## XXX rel=pingback has special syntax restrictions and requirements
   ## on interaction with X-Pingback: header [PINGBACK]
+
+  # XXXresource rel=canonical linked resource
 
   $self->{flag}->{node_is_hyperlink}->{refaddr $attr->owner_element} = $attr->owner_element
       if $is_hyperlink;
@@ -4570,16 +4548,17 @@ $Element->{+HTML_NS}->{script} = {
                          type => 'script type:bad spaces',
                          level => 'm')
           if $type =~ /[^MODULEmodule]/;
-      my $charset_attr = $item->{node}->get_attribute_node_ns (undef, 'charset');
-      $self->{onerror}->(node => $charset_attr,
-                         type => 'script:ignored charset',
-                         level => 'm')
-          if defined $charset_attr;
-      my $defer_attr = $item->{node}->get_attribute_node_ns (undef, 'defer');
-      $self->{onerror}->(node => $defer_attr,
-                         type => 'script:ignored defer',
-                         level => 'm')
-          if defined $defer_attr;
+      for my $name (qw(charset defer nomodule integrity)) {
+        my $attr = $item->{node}->get_attribute_node_ns (undef, $name);
+        $self->{onerror}->(node => $attr,
+                           # script:ignored charset
+                           # script:ignored defer
+                           # script:ignored nomodule
+                           # script:ignored integrity
+                           type => 'script:ignored ' . $name,
+                           level => 'm')
+            if defined $attr;
+      }
     } else {
       require Web::MIME::Type;
       my $mime_type;
@@ -4610,41 +4589,67 @@ $Element->{+HTML_NS}->{script} = {
             $self->{onerror}->(node => $type_attr,
                                value => $computed_type,
                                type => 'script type:empty',
-                               level => 'm');
+                               level => 's'); # obsolete but conforming
           } else {
             $self->{onerror}->(node => $type_attr,
                                value => $computed_type,
                                type => 'script type:classic',
-                               level => 's');
+                               level => ($type =~ /[\x00-\x20]/ ? 'm' : 's')); # obsolete but conforming
           }
         }
         my $async_attr = $item->{node}->get_attribute_node_ns (undef, 'async');
         my $defer_attr = $item->{node}->get_attribute_node_ns (undef, 'defer');
-        my $co_attr = $item->{node}->get_attribute_node_ns (undef, 'crossorigin');
-        my $charset_attr = $item->{node}->get_attribute_node_ns (undef, 'charset');
         my $src_attr = $item->{node}->get_attribute_node_ns (undef, 'src');
         $self->{onerror}->(node => $defer_attr,
                            type => 'script:ignored defer',
                            level => 'w')
-            if (defined $defer_attr and defined $async_attr) or
-               (defined $defer_attr and not defined $src_attr);
-        $self->{onerror}->(node => $async_attr,
-                           type => 'script:ignored async',
-                           level => 'w')
-            if defined $async_attr and not defined $src_attr;
+            if defined $defer_attr and defined $async_attr and defined $src_attr;
+        my $co_attr = $item->{node}->get_attribute_node_ns (undef, 'crossorigin');
         $self->{onerror}->(node => $co_attr,
                            type => 'script:ignored crossorigin',
                            level => 'w')
             if defined $co_attr and not defined $src_attr;
-        $self->{onerror}->(node => $charset_attr,
-                           type => 'script:ignored charset',
-                           level => 'm')
-            if defined $charset_attr and not defined $src_attr;
-      } else {
+        if (not defined $src_attr) {
+          for my $name (qw(charset async defer integrity)) {
+            my $attr = $item->{node}->get_attribute_node_ns (undef, $name);
+            $self->{onerror}->(node => $attr,
+                               # script:ignored charset
+                               # script:ignored async
+                               # script:ignored defer
+                               # script:ignored integrity
+                               type => 'script:ignored ' . $name,
+                               level => 'm')
+                if defined $attr;
+          }
+        } else { # <script src>
+          my $attr = $item->{node}->get_attribute_node_ns (undef, 'charset');
+          if (defined $attr) {
+            my $value = $attr->value;
+            $value =~ tr/A-Z/a-z/; ## ASCII case-insensitive
+            if ($value eq 'utf-8') {
+              $self->{onerror}->(node => $attr,
+                                 type => 'script charset utf-8',
+                                 level => 's'); # obsolete but conforming
+            } else {
+              $self->{onerror}->(node => $attr,
+                                 type => 'script charset',
+                                 level => 'm');
+            }
+          }
+        }
+      } else { # data block
         $element_state->{content_type} = $mime_type; # or undef; data block
-        for my $name (qw(async charset crossorigin defer nonce src)) {
+        for my $name (qw(async charset crossorigin defer nonce src nomodule integrity)) {
           my $attr = $item->{node}->get_attribute_node_ns (undef, $name);
           $self->{onerror}->(node => $attr,
+                             # script:ignored charset
+                             # script:ignored async
+                             # script:ignored defer
+                             # script:ignored integrity
+                             # script:ignored crossorigin
+                             # script:ignored nonce
+                             # script:ignored src
+                             # script:ignored nomodule
                              type => 'script:ignored ' . $name,
                              level => 'm')
               if defined $attr;
@@ -4765,7 +4770,6 @@ $Element->{+HTML_NS}->{script} = {
   ## referenced resource.  <script type=""> must be specified if the
   ## referenced resource is not JavaScript.  <script charset=""> must
   ## match the charset="" of the referenced resource.
-
   ## XXX warn if bad nonce=""
 }; # script
 $ElementAttrChecker->{(HTML_NS)}->{script}->{''}->{type} = sub {};
@@ -5016,6 +5020,7 @@ $Element->{+HTML_NS}->{header} = {
 
 $Element->{+HTML_NS}->{ul} =
 $Element->{+HTML_NS}->{ol} =
+$Element->{+HTML_NS}->{menu} =
 $Element->{+HTML_NS}->{dir} = {
   %AnyChecker,
   check_child_element => sub {
@@ -5039,7 +5044,7 @@ $Element->{+HTML_NS}->{dir} = {
                          level => 'm');
     }
   },
-}; # ul ol dir
+}; # ul ol menu dir
 
 $ElementAttrChecker->{(HTML_NS)}->{ul}->{''}->{type} = sub {
   my ($self, $attr) = @_;
@@ -5061,6 +5066,7 @@ $ElementAttrChecker->{(HTML_NS)}->{$_}->{''}->{type} = sub {
                        level => 'm');
   }
 } for qw(li dir); # <li type=""> <dir type="">
+delete $ElementAttrChecker->{(HTML_NS)}->{$_}->{menu}->{type}; # XXX
 
 $ElementAttrChecker->{(HTML_NS)}->{li}->{''}->{value} = sub {
   my ($self, $attr) = @_;
@@ -5099,54 +5105,145 @@ $Element->{+HTML_NS}->{dl} = {
   %AnyChecker,
   check_start => sub {
     my ($self, $item, $element_state) = @_;
-    $element_state->{phase} = 'before dt';
+    $element_state->{dl_phase} = 'before dt';
   },
   check_child_element => sub {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
     if ($_Defs->{categories}->{'script-supporting elements'}->{elements}->{$child_nsuri}->{$child_ln}) {
       #
-    } elsif ($element_state->{phase} eq 'in dds') {
+    } elsif ($element_state->{dl_phase} eq 'in dds') {
       if ($child_nsuri eq HTML_NS and $child_ln eq 'dd') {
-        #$element_state->{phase} = 'in dds';
+        #$element_state->{dl_phase} = 'in dds';
       } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'dt') {
-        $element_state->{phase} = 'in dts';
+        $element_state->{dl_phase} = 'in dts';
+      } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'div') {
+        $self->{onerror}->(node => $child_el,
+                           type => 'dl:div:mixed',
+                           level => 'm');
+        $element_state->{dl_phase} = 'before second dt';
       } else {
         $self->{onerror}->(node => $child_el,
-                           type => 'element not allowed',
+                           type => 'element not allowed:dl',
                            level => 'm');
       }
-    } elsif ($element_state->{phase} eq 'in dts') {
+    } elsif ($element_state->{dl_phase} eq 'in dts') {
       if ($child_nsuri eq HTML_NS and $child_ln eq 'dt') {
-        #$element_state->{phase} = 'in dts';
+        #$element_state->{dl_phase} = 'in dts';
       } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'dd') {
-        $element_state->{phase} = 'in dds';
+        $element_state->{dl_phase} = 'in dds';
+      } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'div') {
+        $self->{onerror}->(node => $child_el,
+                           type => 'ps element missing:dd',
+                           level => 'm');
+        $self->{onerror}->(node => $child_el,
+                           type => 'dl:div:mixed',
+                           level => 'm');
+        $element_state->{dl_phase} = 'before second dt';
       } else {
         $self->{onerror}->(node => $child_el,
-                           type => 'element not allowed',
+                           type => 'element not allowed:dl',
                            level => 'm');
       }
-    } elsif ($element_state->{phase} eq 'before dt') {
+    } elsif ($element_state->{dl_phase} eq 'before dt') {
       if ($child_nsuri eq HTML_NS and $child_ln eq 'dt') {
-        $element_state->{phase} = 'in dts';
+        $element_state->{dl_phase} = 'in dts';
+      } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'div') {
+        $element_state->{dl_phase} = 'before div';
       } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'dd') {
-        $self->{onerror}
-             ->(node => $child_el,
-                type => 'ps element missing',
-                text => 'dt',
-                level => 'm');
-        $element_state->{phase} = 'in dds';
+        $self->{onerror}->(node => $child_el,
+                           type => 'ps element missing:dt',
+                           level => 'm');
+        $element_state->{dl_phase} = 'in dds';
       } else {
         $self->{onerror}->(node => $child_el,
-                           type => 'element not allowed',
+                           type => 'element not allowed:dl',
+                           level => 'm');
+      }
+    } elsif ($element_state->{dl_phase} eq 'before second dt') {
+      if ($child_nsuri eq HTML_NS and $child_ln eq 'dt') {
+        $element_state->{dl_phase} = 'in dts';
+      } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'div') {
+        $self->{onerror}->(node => $child_el,
+                           type => 'dl:div:mixed',
+                           level => 'm');
+        $element_state->{dl_phase} = 'before second dt';
+      } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'dd') {
+        $self->{onerror}->(node => $child_el,
+                           type => 'ps element missing:dt',
+                           level => 'm');
+        $element_state->{dl_phase} = 'in dds';
+      } else {
+        $self->{onerror}->(node => $child_el,
+                           type => 'element not allowed:dl',
+                           level => 'm');
+      }
+    } elsif ($element_state->{dl_phase} eq 'before div') {
+      if ($child_nsuri eq HTML_NS and $child_ln eq 'div') {
+        #$element_state->{dl_phase} = 'before div';
+      } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'dt') {
+        $self->{onerror}->(node => $child_el,
+                           type => 'dl:no div',
+                           level => 'm');
+        $element_state->{dl_phase} = 'before div dt';
+      } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'dd') {
+        $self->{onerror}->(node => $child_el,
+                           type => 'ps element missing:dt',
+                           level => 'm');
+        $self->{onerror}->(node => $child_el,
+                           type => 'dl:no div',
+                           level => 'm');
+        $element_state->{dl_phase} = 'before div dd';
+      } else {
+        $self->{onerror}->(node => $child_el,
+                           type => 'element not allowed:dl',
+                           level => 'm');
+      }
+    } elsif ($element_state->{dl_phase} eq 'before div dt') {
+      if ($child_nsuri eq HTML_NS and $child_ln eq 'div') {
+        $self->{onerror}->(node => $child_el,
+                           type => 'ps element missing:dd',
+                           level => 'm');
+        $element_state->{dl_phase} = 'before div';
+      } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'dt') {
+        $self->{onerror}->(node => $child_el,
+                           type => 'dl:no div',
+                           level => 'm');
+        #$element_state->{dl_phase} = 'before div dt';
+      } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'dd') {
+        $self->{onerror}->(node => $child_el,
+                           type => 'dl:no div',
+                           level => 'm');
+        $element_state->{dl_phase} = 'before div dd';
+      } else {
+        $self->{onerror}->(node => $child_el,
+                           type => 'element not allowed:dl',
+                           level => 'm');
+      }
+    } elsif ($element_state->{dl_phase} eq 'before div dd') {
+      if ($child_nsuri eq HTML_NS and $child_ln eq 'div') {
+        $element_state->{dl_phase} = 'before div';
+      } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'dt') {
+        $self->{onerror}->(node => $child_el,
+                           type => 'dl:no div',
+                           level => 'm');
+        $element_state->{dl_phase} = 'before div dt';
+      } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'dd') {
+        $self->{onerror}->(node => $child_el,
+                           type => 'dl:no div',
+                           level => 'm');
+        #$element_state->{dl_phase} = 'before div dd';
+      } else {
+        $self->{onerror}->(node => $child_el,
+                           type => 'element not allowed:dl',
                            level => 'm');
       }
     } else {
-      die "check_child_element: Bad |dl| phase: $element_state->{phase}";
+      die "check_child_element: Bad |dl| phase: $element_state->{dl_phase}";
     }
 
     if ($child_nsuri eq HTML_NS and $child_ln eq 'dt') {
-      my $name = $child_el->text_content;
+      my $name = $child_el->text_content; # XXX inner_text ?
       if (defined $element_state->{dl_names}->{$name}) {
         $self->{onerror}->(node => $child_el,
                            type => 'duplicate dl name',
@@ -5160,16 +5257,16 @@ $Element->{+HTML_NS}->{dl} = {
     my ($self, $item, $child_node, $has_significant, $element_state) = @_;
     if ($has_significant) {
       $self->{onerror}->(node => $child_node,
-                         type => 'character not allowed',
+                         type => 'character not allowed:dl',
                          level => 'm');
     }
   },
   check_end => sub {
     my ($self, $item, $element_state) = @_;
-    if ($element_state->{phase} eq 'in dts') {
+    if ($element_state->{dl_phase} eq 'in dts' or
+        $element_state->{dl_phase} eq 'before div dt') {
       $self->{onerror}->(node => $item->{node},
-                         type => 'child element missing',
-                         text => 'dd',
+                         type => 'dl:last dd missing',
                          level => 'm');
     }
 
@@ -5177,7 +5274,126 @@ $Element->{+HTML_NS}->{dl} = {
   },
 }; # dl
 
-$ElementAttrChecker->{(HTML_NS)}->{marquee}->{''}->{loop} = $LegacyLoopChecker;
+$Element->{+HTML_NS}->{div} = {
+  %HTMLFlowContentChecker,
+  check_child_element => sub {
+    my ($self, $item, $child_el, $child_nsuri, $child_ln,
+        $child_is_transparent, $element_state) = @_;
+    if (defined $item->{parent_state}->{dl_phase}) { # in dl
+      if ($_Defs->{categories}->{'script-supporting elements'}->{elements}->{$child_nsuri}->{$child_ln}) {
+        #
+      } elsif (not defined $element_state->{dl_phase}) { # before dt
+        if ($child_nsuri eq HTML_NS and $child_ln eq 'dt') {
+          $element_state->{dl_phase} = 'in dts';
+        } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'dd') {
+          $self->{onerror}->(node => $child_el,
+                             type => 'ps element missing:dt',
+                             level => 'm');
+          $element_state->{dl_phase} = 'in dds';
+        } else {
+          $self->{onerror}->(node => $child_el,
+                             type => 'element not allowed:dl',
+                             level => 'm');
+        }
+      } elsif ($element_state->{dl_phase} eq 'in dts') {
+        if ($child_nsuri eq HTML_NS and $child_ln eq 'dt') {
+          #$element_state->{dl_phase} = 'in dts';
+        } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'dd') {
+          $element_state->{dl_phase} = 'in dds';
+        } else {
+          $self->{onerror}->(node => $child_el,
+                             type => 'element not allowed:dl',
+                             level => 'm');
+        }
+      } elsif ($element_state->{dl_phase} eq 'in dds') {
+        if ($child_nsuri eq HTML_NS and $child_ln eq 'dt') {
+          $self->{onerror}->(node => $child_el,
+                             type => 'dl:div:second dt',
+                             level => 'm');
+          $element_state->{dl_phase} = 'in dts';
+        } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'dd') {
+          #$element_state->{dl_phase} = 'in dds';
+        } else {
+          $self->{onerror}->(node => $child_el,
+                             type => 'element not allowed:dl',
+                             level => 'm');
+        }
+      } else {
+        die "Bad |dl_phase|: |$element_state->{dl_phase}|";
+      }
+
+      if ($child_nsuri eq HTML_NS and $child_ln eq 'dt') {
+        my $name = $child_el->text_content; # XXX inner_text ?
+        if (defined $item->{parent_state}->{dl_names}->{$name}) {
+          $self->{onerror}->(node => $child_el,
+                             type => 'duplicate dl name',
+                             level => 's');
+        } else {
+          $item->{parent_state}->{dl_names}->{$name} = 1;
+        }
+      }
+    } else { # flow content
+      if ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln} or
+          $_Defs->{categories}->{'flow content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln} or
+          ($child_nsuri eq HTML_NS and $child_ln =~ /-/)) {
+        $element_state->{in_flow_content} = 1;
+      } else {
+        $self->{onerror}->(node => $child_el,
+                           type => 'element not allowed:flow',
+                           level => 'm');
+      }
+    }
+  }, # check_child_element
+  check_child_text => sub {
+    my ($self, $item, $child_node, $has_significant, $element_state) = @_;
+    if ($has_significant and defined $item->{parent_state}->{dl_phase}) {
+      $self->{onerror}->(node => $child_node,
+                         type => 'character not allowed:dl',
+                         level => 'm');
+    }
+  }, # check_child_text
+  check_end => sub {
+    my ($self, $item, $element_state) = @_;
+    if (defined $item->{parent_state}->{dl_phase}) {
+      if (not defined $element_state->{dl_phase}) {
+        $self->{onerror}->(node => $item->{node},
+                           type => 'child element missing:dt',
+                           level => 'm');
+      } elsif ($element_state->{dl_phase} eq 'in dts') {
+        $self->{onerror}->(node => $item->{node},
+                           type => 'dl:last dd missing',
+                           level => 'm');
+      }
+    } else {
+      $self->{onerror}->(node => $item->{node},
+                         level => 's',
+                         type => 'no significant content')
+          unless $element_state->{has_palpable};
+      $HTMLFlowContentChecker{check_end}->(@_);
+    }
+  }, # check_end
+}; # div
+
+$ElementAttrChecker->{(HTML_NS)}->{marquee}->{''}->{loop} = sub {
+  my ($self, $attr) = @_;
+  
+  ## A valid integer.
+  
+  if ($attr->value =~ /\A(-?[0-9]+)\z/) {
+    my $n = 0+$1;
+    if ($n != 0 and $n >= -1) {
+      #
+    } else {
+      $self->{onerror}->(node => $attr,
+                         type => 'integer:out of range',
+                         level => 'm');
+    }
+  } else {
+    $self->{onerror}->(node => $attr,
+                       type => 'integer:syntax error',
+                       level => 'm');
+  }
+}; # <marquee loop>
 
 $ElementAttrChecker->{(HTML_NS)}->{font}->{''}->{size} = sub {
   my ($self, $attr) = @_;
@@ -5194,46 +5410,8 @@ $Element->{+HTML_NS}->{a} = {
   %TransparentChecker,
   check_attrs => $GetHTMLAttrsChecker->({
     coords => sub { }, ## Checked in $ShapeCoordsChecker.
-          cti => sub {
-            my ($self, $attr) = @_;
-            my $value = $attr->value;
-            if ($value =~ m[\A[0-9*\x23,/]{1,128}\z]) {
-              if ($value =~ m[//]) {
-                $self->{onerror}->(node => $attr,
-                                   type => 'cti:syntax error',
-                                   level => 'm');
-              }
-            } else {
-              $self->{onerror}->(node => $attr,
-                                 type => 'cti:syntax error',
-                                 level => 'm');
-            }
-          }, # cti
-          loop => sub {
-            my ($self, $attr) = @_;
-            if ($attr->value =~ /\A(?:[0-9]+|infinite)\z/) {
-              #
-            } else {
-              $self->{onerror}->(node => $attr,
-                                 type => 'nninteger:syntax error',
-                                 level => 'm');
-            }
-          }, # loop
-          memoryname => sub {
-            my ($self, $attr) = @_;
-            if ($attr->value =~ /.-./s) {
-              #
-            } else {
-              $self->{onerror}->(node => $attr,
-                                 type => 'memoryname:syntax error',
-                                 level => 'm');
-            }
-          }, # memoryname
-          name => $NameAttrChecker,
+    name => $NameAttrChecker,
     rel => sub {}, ## checked in check_attrs2
-    viblength => $GetHTMLNonNegativeIntegerAttrChecker->(sub {
-      1 <= $_[0] and $_[0] <= 9;
-    }),
   }), # check_attrs
   check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
@@ -5256,10 +5434,6 @@ $Element->{+HTML_NS}->{a} = {
     } else {
       for (qw(
         target ping rel hreflang type referrerpolicy
-        ilet iswf irst ib ifb ijam ista
-        email telbook kana memoryname
-        lcs
-        loop soundstart volume
       )) {
         if (defined $attr{$_}) {
           $self->{onerror}->(node => $attr{$_},
@@ -5273,23 +5447,6 @@ $Element->{+HTML_NS}->{a} = {
                          text => 'href',
                          level => 'm')
           if defined $attr{itemprop};
-    }
-
-    if ($attr{target}) {
-      for (qw(ilet iswf irst ib ifb ijam lcs utn)) {
-        if ($attr{$_}) {
-          $self->{onerror}->(node => $attr{target},
-                             type => 'attribute not allowed',
-                             level => 'm');
-          last;
-        }
-      }
-    }
-
-    if ($attr{viblength} and not $attr{vibration}) {
-      $self->{onerror}->(node => $attr{viblength},
-                         type => 'attribute not allowed',
-                         level => 'm');
     }
 
     $ShapeCoordsChecker->($self, $item, \%attr, 'missing');
@@ -5758,56 +5915,16 @@ $Element->{+HTML_NS}->{figure} = {
   }, # check_end
 }; # figure
 
-$Element->{+HTML_NS}->{iframe} = {
-  %HTMLTextChecker,
-  check_start => sub {
-    my ($self, $item) = @_;
-    if ($item->{node}->owner_document->manakai_is_html) {
-      $HTMLTextChecker{check_start}->(@_);
-    } else {
-      $HTMLEmptyChecker{check_start}->(@_);
-    }
-  }, # check_start
-  check_attrs2 => sub {
-    my ($self, $item) = @_;
-    if ($item->{node}->has_attribute_ns (undef, 'itemprop') and
-        not $item->{node}->has_attribute_ns (undef, 'src')) {
-      $self->{onerror}->(node => $item->{node},
-                         type => 'attribute missing',
-                         text => 'src',
-                         level => 'm');
-    }
-  }, # check_attrs2
-  check_child_element => sub {
-    my ($self, $item) = @_;
-    if ($item->{node}->owner_document->manakai_is_html) {
-      $HTMLTextChecker{check_child_element}->(@_);
-    } else {
-      $HTMLEmptyChecker{check_child_element}->(@_);
-    }
-  }, # check_child_element
-  check_child_text => sub {
-    my ($self, $item) = @_;
-    if ($item->{node}->owner_document->manakai_is_html) {
-      $HTMLTextChecker{check_child_text}->(@_);
-    } else {
-      $HTMLEmptyChecker{check_child_text}->(@_);
-    }
-  }, # check_child_text
-  check_end => sub {
-    my ($self, $item, $element_state) = @_;
-    if ($item->{node}->owner_document->manakai_is_html) {
-      $self->_add_minus_elements ($element_state,
-                                  {(HTML_NS) => {script => 1}});
-      $self->_check_fallback_html
-          ($item->{node}, $self->{minus_elements}, 'span');
-      $self->_remove_minus_elements ($element_state);
-      $HTMLTextChecker{check_end}->(@_);
-    } else {
-      $HTMLEmptyChecker{check_end}->(@_);
-    }
-  }, # check_end
-}; # iframe
+$Element->{+HTML_NS}->{iframe}->{check_attrs2} = sub {
+  my ($self, $item) = @_;
+  if ($item->{node}->has_attribute_ns (undef, 'itemprop') and
+      not $item->{node}->has_attribute_ns (undef, 'src')) {
+    $self->{onerror}->(node => $item->{node},
+                       type => 'attribute missing',
+                       text => 'src',
+                       level => 'm');
+  }
+}; # check_attrs2
 
 {
   my $keywords = $_Defs->{elements}->{(HTML_NS)}->{iframe}->{attrs}->{''}->{sandbox}->{keywords};
@@ -5834,6 +5951,11 @@ $Element->{+HTML_NS}->{iframe} = {
       $self->{onerror}->(node => $attr,
                          type => 'sandbox allow-same-origin allow-scripts',
                          level => 'w');
+    }
+    if ($word{'allow-top-navigation'} and $word{'allow-top-navigation-by-user-activation'}) {
+      $self->{onerror}->(node => $attr,
+                         type => 'sandbox duplicate allow-top-navigation',
+                         level => 'm');
     }
   }; # <iframe sandbox="">
 }
@@ -5923,22 +6045,7 @@ $Element->{+HTML_NS}->{img} = {
           }
         }
       }, # border
-      localsrc => sub {
-        my ($self, $attr) = @_;
-        my $value = $attr->value;
-        if ($value =~ /\A[1-9][0-9]*\z/) {
-          #
-        } elsif ($value =~ /\A[0-9A-Za-z]+\z/) {
-          $self->{onerror}->(node => $attr,
-                             type => 'localsrc:deprecated',
-                             level => 's');
-        } else {
-          $self->{onerror}->(node => $attr,
-                             type => 'localsrc:invalid',
-                             level => 'm');
-        }
-      },
-      name => $NameAttrChecker,
+    name => $NameAttrChecker,
   }), # check_attrs
   check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
@@ -6126,40 +6233,6 @@ $Element->{+HTML_NS}->{object} = {
     $TransparentChecker{check_end}->(@_);
   }, # check_end
 }; # object
-
-$Element->{+HTML_NS}->{applet} = {
-  %{$Element->{+HTML_NS}->{object}},
-  check_attrs => $GetHTMLAttrsChecker->({
-    name => $NameAttrChecker,
-  }), # check_attrs
-  check_attrs2 => sub {
-    my ($self, $item, $element_state) = @_;
-    my $el = $item->{node};
-
-    unless ($el->has_attribute_ns (undef, 'code')) {
-      unless ($el->has_attribute_ns (undef, 'object')) {
-        $self->{onerror}->(node => $el,
-                           type => 'attribute missing:code|object',
-                           level => 'm');
-      }
-    }
-    
-    for my $attr_name (qw(width height)) {
-      ## |width| and |height| are REQUIRED according to HTML4.
-      unless ($el->has_attribute_ns (undef, $attr_name)) {
-        $self->{onerror}->(node => $el,
-                           type => 'attribute missing',
-                           text => $attr_name,
-                           level => 'm');
-      }
-    }
-  }, # check_attrs2
-  check_end => sub {
-    my ($self, $item, $element_state) = @_;
-    $Element->{+HTML_NS}->{object}->{check_end}->(@_);
-    $NameAttrCheckEnd->(@_); # for <img name>
-  }, # check_end
-}; # applet
 
 $Element->{+HTML_NS}->{param}->{check_attrs2} = sub {
   my ($self, $item, $element_state) = @_;
@@ -6360,43 +6433,6 @@ $Element->{+HTML_NS}->{track} = {
     }
   }, # check_attrs2
 }; # track
-
-$Element->{+HTML_NS}->{bgsound} = {
-  %HTMLEmptyChecker,
-  check_attrs => $GetHTMLAttrsChecker->({
-    balance => sub {
-      my ($self, $attr) = @_;
-
-      ## A valid integer.
-
-      if ($attr->value =~ /\A(-?[0-9]+)\z/) {
-        my $n = 0+$1;
-        if (-10000 <= $n and $n <= 10000) {
-          #
-        } else {
-          $self->{onerror}->(node => $attr,
-                             type => 'integer:out of range',
-                             level => 'm');
-        }
-      } else {
-        $self->{onerror}->(node => $attr,
-                           type => 'integer:syntax error',
-                           level => 'm');
-      }
-    }, # balance
-    loop => $LegacyLoopChecker,
-  }), # check_attrs
-  check_attrs2 => sub {
-    my ($self, $item, $element_state) = @_;
-
-    unless ($item->{node}->has_attribute_ns (undef, 'src')) {
-      $self->{onerror}->(node => $item->{node},
-                         type => 'attribute missing',
-                         text => 'src',
-                         level => 'm');
-    }
-  }, # check_attrs2
-}; # bgsound
 
 $Element->{+HTML_NS}->{canvas} = {
   %TransparentChecker,
@@ -6936,22 +6972,6 @@ $Element->{+HTML_NS}->{form} = {
       }
     },
   }), # check_attrs
-  check_attrs2 => sub {
-    my ($self, $item, $element_state) = @_;
-    my $el = $item->{node};
-
-    my $target_attr = $el->get_attribute_node_ns (undef, 'target');
-    if ($target_attr) {
-      for (qw(lcs utn)) {
-        if ($el->has_attribute_ns (undef, $_)) {
-          $self->{onerror}->(node => $target_attr,
-                             type => 'attribute not allowed',
-                             level => 'm');
-          last;
-        }
-      }
-    }
-  }, # check_attrs2
   check_start => sub {
     my ($self, $item, $element_state) = @_;
     $element_state->{id_type} = 'form';
@@ -7067,8 +7087,6 @@ $Element->{+HTML_NS}->{input} = {
     autocomplete => $GetHTMLEnumeratedAttrChecker->({ # XXX old
       on => 1, off => 1,
     }),
-    format => $TextFormatAttrChecker,
-    loop => $LegacyLoopChecker,
     max => sub {}, ## check_attrs2
     min => sub {}, ## check_attrs2
     name => $FormControlNameAttrChecker,
@@ -7082,9 +7100,6 @@ $Element->{+HTML_NS}->{input} = {
     }, # precision
     ## XXXresource src="" referenced resource type
     value => sub {}, ## check_attrs2
-    viblength => $GetHTMLNonNegativeIntegerAttrChecker->(sub {
-      1 <= $_[0] and $_[0] <= 9;
-    }),
   }),
   check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
@@ -7192,27 +7207,6 @@ $Element->{+HTML_NS}->{input} = {
       $element_state->{number_value}->{min} ||= 0;
       $element_state->{number_value}->{max} = 100
           unless defined $element_state->{number_value}->{max};
-    } elsif ($input_type eq 'submit') {
-      my $dk_attr = $el->get_attribute_node_ns (undef, 'directkey');
-      if ($dk_attr) {
-        unless ($el->has_attribute_ns (undef, 'value')) {
-          $self->{onerror}->(node => $dk_attr,
-                             type => 'attribute missing',
-                             text => 'value',
-                             level => 'm');
-        }
-      }
-
-      unless ($el->has_attribute_ns (undef, 'src')) {
-        for (qw(volume soundstart)) {
-          my $attr = $el->get_attribute_node_ns (undef, $_);
-          if ($attr) {
-            $self->{onerror}->(node => $attr,
-                               type => 'attribute not allowed',
-                               level => 'm');
-          }
-        }
-      }
     } elsif ($input_type eq 'image') {
       if (my $attr = $el->get_attribute_node_ns (undef, 'start')) {
         unless ($el->has_attribute_ns (undef, 'dynsrc')) {
@@ -7220,15 +7214,6 @@ $Element->{+HTML_NS}->{input} = {
                              type => 'attribute not allowed',
                              level => 'm');
         }
-      }
-    }
-
-    my $vl_attr = $el->get_attribute_node_ns (undef, 'viblength');
-    if ($vl_attr) {
-      unless ($el->has_attribute_ns (undef, 'vibration')) {
-        $self->{onerror}->(node => $vl_attr,
-                           type => 'attribute not allowed',
-                           level => 'm');
       }
     }
 
@@ -7401,17 +7386,6 @@ $Element->{+HTML_NS}->{button} = {
                            type => 'attribute not allowed',
                            level => 'm');
       }
-    }
-    my $menu_attr = $item->{node}->get_attribute_node_ns (undef, 'menu');
-    if ($type eq 'menu') {
-      $self->{onerror}->(node => $item->{node},
-                         type => 'attribute missing',
-                         text => 'menu',
-                         level => 'm') unless $menu_attr;
-    } else {
-      $self->{onerror}->(node => $menu_attr,
-                         type => 'attribute not allowed',
-                         level => 'm') if $menu_attr;
     }
   }, # check_attrs2
   check_end => sub {
@@ -7754,67 +7728,6 @@ $Element->{+HTML_NS}->{textarea} = {
   }, # check_attrs2
 }; # textarea
 
-$Element->{+HTML_NS}->{keygen} = {
-  %HTMLEmptyChecker,
-  check_attrs => $GetHTMLAttrsChecker->({
-    name => $FormControlNameAttrChecker,
-  }), # check_attrs
-  check_start => sub {
-    my ($self, $item, $element_state) = @_;
-    $FAECheckStart->($self, $item, $element_state);
-  }, # check_start
-  check_attrs2 => sub {
-    my ($self, $item, $element_state) = @_;
-    $FAECheckAttrs2->($self, $item, $element_state);
-
-    my $el = $item->{node};
-    my $keytype = $el->get_attribute_ns (undef, 'keytype') || '';
-    $keytype =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
-    if ($keytype eq 'dsa') {
-      if ($el->has_attribute_ns (undef, 'keyparams')) {
-        my $pqg_attr = $el->get_attribute_node_ns (undef, 'pqg');
-        if ($pqg_attr) {
-          $self->{onerror}->(node => $pqg_attr,
-                             type => 'attribute not allowed',
-                             level => 'm');
-        }
-      } else {
-        unless ($el->has_attribute_ns (undef, 'pqg')) {
-          $self->{onerror}->(node => $el,
-                             type => 'attribute missing:keyparams|pqg',
-                             level => 'm');
-        }
-      }
-    } elsif ($keytype eq 'ec') {
-      unless ($el->has_attribute_ns (undef, 'keyparams')) {
-        $self->{onerror}->(node => $el,
-                           type => 'attribute missing',
-                           text => 'keyparams',
-                           level => 'm');
-      }
-      my $pqg_attr = $el->get_attribute_node_ns (undef, 'pqg');
-      if ($pqg_attr) {
-        $self->{onerror}->(node => $pqg_attr,
-                           type => 'attribute not allowed',
-                           level => 'm');
-      }
-    } else {
-      my $keyparams_attr = $el->get_attribute_node_ns (undef, 'keyparams');
-      if ($keyparams_attr) {
-        $self->{onerror}->(node => $keyparams_attr,
-                           type => 'attribute not allowed',
-                           level => 'm');
-      }
-      my $pqg_attr = $el->get_attribute_node_ns (undef, 'pqg');
-      if ($pqg_attr) {
-        $self->{onerror}->(node => $pqg_attr,
-                           type => 'attribute not allowed',
-                           level => 'm');
-      }
-    }
-  }, # check_attrs2
-}; # keygen
-
 $Element->{+HTML_NS}->{output} = {
   %HTMLPhrasingContentChecker,
   check_attrs => $GetHTMLAttrsChecker->({
@@ -7917,8 +7830,7 @@ $Element->{+HTML_NS}->{meter} = {
 $ElementAttrChecker->{(HTML_NS)}->{input}->{''}->{autofocus} =
 $ElementAttrChecker->{(HTML_NS)}->{button}->{''}->{autofocus} =
 $ElementAttrChecker->{(HTML_NS)}->{select}->{''}->{autofocus} =
-$ElementAttrChecker->{(HTML_NS)}->{textarea}->{''}->{autofocus} =
-$ElementAttrChecker->{(HTML_NS)}->{keygen}->{''}->{autofocus} = sub {
+$ElementAttrChecker->{(HTML_NS)}->{textarea}->{''}->{autofocus} = sub {
   my ($self, $attr) = @_;
 
   ## A boolean attribute
@@ -8042,165 +7954,6 @@ $Element->{+HTML_NS}->{summary} = {
     $HTMLPhrasingContentChecker{check_end}->(@_);
   }, # check_end
 }; # summary
-
-$Element->{+HTML_NS}->{menu} = {
-  %AnyChecker,
-  ## <menu type=toolbar>: (li | script-supporting)* | flow
-  ## <menu type=context>: (menuitem | hr | <menu type=context> | script-supporting)*
-  check_start => sub {
-    my ($self, $item, $element_state) = @_;
-    $element_state->{phase} = $item->{node}->type eq 'toolbar' ? 'toolbar' : 'popup';
-      ## $element_state->{phase}
-      ##   toolbar -> toolbar-li | toolbar-flow
-      ##   toolbar-li
-      ##   toolbar-flow
-      ##   popup
-    $element_state->{id_type} = 'popup' if $item->{node}->type eq 'context';
-    $AnyChecker{check_start}->(@_);
-  }, # check_start
-  check_attrs2 => sub {
-    my ($self, $item, $element_state) = @_;
-    my $label_attr = $item->{node}->get_attribute_node_ns (undef, 'label');
-    if ($label_attr) {
-      my $parent = $item->{node}->parent_node;
-      if ($parent and
-          $parent->node_type == 1 and # ELEMENT_NODE
-          $parent->manakai_element_type_match (HTML_NS, 'menu') and
-          $parent->type eq 'context') {
-        #
-      } else {
-        $self->{onerror}->(node => $label_attr,
-                           type => 'attribute not allowed',
-                           level => 'm');
-      }
-    }
-  }, # check_attrs2
-  check_child_element => sub {
-    my ($self, $item, $child_el, $child_nsuri, $child_ln,
-        $child_is_transparent, $element_state) = @_;
-    if ($element_state->{phase} eq 'toolbar') {
-      if ($child_nsuri eq HTML_NS and $child_ln eq 'li') {
-        $element_state->{phase} = 'toolbar-li';
-      } elsif ($_Defs->{categories}->{'script-supporting elements'}->{elements}->{$child_nsuri}->{$child_ln}) {
-        #
-      } elsif ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln} or
-               $_Defs->{categories}->{'flow content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln} or
-               ($child_nsuri eq HTML_NS and $child_ln =~ /-/)) {
-        $element_state->{phase} = 'toolbar-flow';
-      } else {
-        $self->{onerror}->(node => $child_el,
-                           type => 'element not allowed:menu type=toolbar',
-                           level => 'm');
-      }
-    } elsif ($element_state->{phase} eq 'toolbar-li') {
-      if ($child_nsuri eq HTML_NS and $child_ln eq 'li') {
-        $element_state->{phase} = 'toolbar-li';
-      } elsif ($_Defs->{categories}->{'script-supporting elements'}->{elements}->{$child_nsuri}->{$child_ln}) {
-        #
-      } else {
-        $self->{onerror}->(node => $child_el,
-                           type => 'element not allowed:menu type=toolbar',
-                           level => 'm');
-      }
-    } elsif ($element_state->{phase} eq 'toolbar-flow') {
-      if ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln} or
-          $_Defs->{categories}->{'flow content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln}) {
-        #
-      } else {
-        $self->{onerror}->(node => $child_el,
-                           type => 'element not allowed:menu type=toolbar',
-                           level => 'm');
-      }
-    } elsif ($element_state->{phase} eq 'popup') {
-      if (($child_nsuri eq HTML_NS and
-           ($child_ln eq 'menuitem' or
-            $child_ln eq 'hr' or
-            ($child_ln eq 'menu' and
-             not (($child_el->get_attribute_ns (undef, 'type') || '') =~ /\A[Tt][Oo][Oo][Ll][Bb][Aa][Rr]\z/)))) or # type=toolbar
-          $_Defs->{categories}->{'script-supporting elements'}->{elements}->{$child_nsuri}->{$child_ln}) {
-        #
-      } else {
-        $self->{onerror}->(node => $child_el,
-                           type => 'element not allowed:menu type=popup', # now type=context
-                           level => 'm');
-      }
-    } else {
-      die "Bad phase: |$element_state->{phase}|";
-    }
-  }, # check_child_element
-  check_child_text => sub {
-    my ($self, $item, $child_node, $has_significant, $element_state) = @_;
-    if ($has_significant) {
-      if ($element_state->{phase} eq 'toolbar') {
-        $element_state->{phase} = 'toolbar-flow';
-      } elsif ($element_state->{phase} eq 'toolbar-flow') {
-        #
-      } else {
-        $self->{onerror}->(node => $child_node,
-                           type => 'character not allowed',
-                           level => 'm');
-      }
-    }
-  }, # check_child_text
-  check_end => sub {
-    my ($self, $item, $element_state) = @_;
-    if ($element_state->{phase} eq 'toolbar-flow') {
-      $self->{onerror}->(node => $item->{node},
-                         level => 's',
-                         type => 'no significant content')
-          unless $element_state->{has_palpable};
-    }
-    $AnyChecker{check_end}->(@_);
-  }, # check_end
-}; # menu
-
-$Element->{+HTML_NS}->{menuitem} = {
-  %HTMLTextChecker,
-  check_attrs2 => sub {
-    my ($self, $item, $element_state) = @_;
-
-    ## Explicit command mode.
-    my $label_attr = $item->{node}->get_attribute_node_ns (undef, 'label');
-    unless (defined $label_attr) {
-      my $v = '';
-      for ($item->{node}->child_nodes->to_list) {
-        if ($_->node_type == 3) { # TEXT_NODE
-          $v .= $_->data;
-        }
-      }
-      $v =~ s/\A[\x09\x0A\x0C\x0D\x20]+//;
-      $v =~ s/[\x09\x0A\x0C\x0D\x20]+\z//;
-      $v =~ s/[\x09\x0A\x0C\x0D\x20]+/ /g;
-      unless (length $v) {
-        $self->{onerror}->(node => $item->{node},
-                           type => 'attribute missing',
-                           text => 'label',
-                           level => 'm');
-      }
-    }
-
-    my $type = $item->{node}->get_attribute_ns (undef, 'type') || '';
-    $type =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
-
-    unless ($type eq 'checkbox' or $type eq 'radio') {
-      my $cd_attr = $item->{node}->get_attribute_node_ns (undef, 'checked');
-      if ($cd_attr) {
-        $self->{onerror}->(node => $cd_attr,
-                           type => 'attribute not allowed',
-                           level => 'm');
-      }
-    }
-
-    unless ($type eq 'radio') {
-      my $rg_attr = $item->{node}->get_attribute_node_ns (undef, 'radiogroup');
-      if ($rg_attr) {
-        $self->{onerror}->(node => $rg_attr,
-                           type => 'attribute not allowed',
-                           level => 'm');
-      }
-    }
-  }, # check_attrs2
-}; # menuitem
 
 $Element->{+HTML_NS}->{dialog} = {
   %HTMLFlowContentChecker,
@@ -9461,7 +9214,6 @@ $Element->{+HTML_NS}->{template} = {
             optgroup => 'select',
             option => 'select',
             summary => 'details',
-            menuitem => 'popup menu',
             style => 'metadata',
           }->{$ln};
           last if defined $model;
@@ -9487,7 +9239,7 @@ $Element->{+HTML_NS}->{template} = {
         ## content, figure, ruby, object, media, table (<script>
         ## <template>), colgroup (<script> <template>), table body
         ## (<script> <template>), tr (<script> <template>), fieldset,
-        ## details, <menu type=popup> (<hr> <script> <template>)
+        ## details
         #
       } elsif ($child->node_type == 3) { # TEXT_NODE
         if ($child->data =~ /[^\x09\x0A\x0C\x0D\x20]/) { # non-space chars
@@ -9501,12 +9253,9 @@ $Element->{+HTML_NS}->{template} = {
     if (not defined $model) {
       ## Flow content or metadata content
       $container = $df->owner_document->create_element_ns
-          (HTML_NS, $has_flow ? 'div' : 'head');
+          (HTML_NS, $has_flow ? 'body' : 'head');
     } elsif ($model eq 'metadata') {
       $container = $df->owner_document->create_element_ns (HTML_NS, 'head');
-    } elsif ($model eq 'popup menu') {
-      $container = $df->owner_document->create_element_ns (HTML_NS, 'menu');
-      $container->set_attribute_ns (undef, type => 'context');
     } else {
       $container = $df->owner_document->create_element_ns (HTML_NS, $model);
       $container->set_attribute_ns (undef, data => 'http://test/') if $model eq 'object';
@@ -9620,7 +9369,7 @@ sub _check_doc_charset ($$) {
       $self->{onerror}->(node => $doc,
                          type => 'non-utf-8 character encoding',
                          value => $doc->input_encoding,
-                         level => 's');
+                         level => 'm');
     }
   } else { # XML document
     if ($self->{flag}->{has_meta_charset} and not defined $doc->xml_encoding) {
@@ -10015,8 +9764,7 @@ sub _check_node ($$) {
 
       unless ($item->{node}->has_attribute_ns (undef, 'title')) {
         if ($item->{element_state}->{require_title} or
-            $item->{node}->has_attribute_ns (undef, 'draggable') or
-            $item->{node}->has_attribute_ns (undef, 'dropzone')) {
+            $item->{node}->has_attribute_ns (undef, 'draggable')) {
           $self->{onerror}->(node => $item->{node},
                              type => 'attribute missing',
                              text => 'title',
@@ -10256,7 +10004,6 @@ sub _check_refs ($) {
         labelable => 'no referenced control',
         datalist => 'no referenced datalist',
         object => 'no referenced object',
-        popup => 'no referenced menu',
       }->{$_->[0]};
       $self->{onerror}->(node => $_->[2],
                          type => $error_type,
@@ -10319,7 +10066,7 @@ sub check_node ($$) {
 
 =head1 LICENSE
 
-Copyright 2007-2016 Wakaba <wakaba@suikawiki.org>.
+Copyright 2007-2017 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

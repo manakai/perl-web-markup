@@ -13,6 +13,67 @@ use Web::HTML::Parser;
 use Web::XML::Parser;
 use Web::DOM::Document;
 
+sub note ($) {
+  my $s = '# ' . $_[0];
+  $s =~ s/\n/\n# /g;
+  print STDERR "$s\n";
+} # note
+
+sub is_set_list ($$;$) {
+  my ($actual, $expected, $name) = @_;
+
+  my $act = {};
+  $act->{$_}++ for @$actual;
+  my $exp = {};
+  $exp->{$_}++ for @$expected;
+
+  my $act_only = {};
+  my $exp_only = {};
+  for (keys %$exp) {
+    if ($act->{$_}) {
+      if ($act->{$_} == $exp->{$_}) {
+        #
+      } else {
+        if ($act->{$_} > $exp->{$_}) {
+          $act_only->{$_} = $act->{$_} - $exp->{$_};
+        } else {
+          $exp_only->{$_} = $exp->{$_} - $act->{$_};
+        }
+      }
+    } else {
+      $exp_only->{$_} = $exp->{$_};
+    }
+  }
+  for (keys %$act) {
+    $act_only->{$_} = $act->{$_} unless $exp->{$_};
+  }
+
+  if (not keys %$exp_only and not keys %$act_only) {
+    ok 1, $name;
+  } else {
+    if (keys %$act != keys %$exp) {
+      is 0+keys %$act, 0+keys %$exp, "$name - #";
+    } else {
+      ok 0, $name;
+      note "# of errors: " . (0+keys %$act);
+    }
+    if (keys %$exp_only) {
+      note join "\n", "Expected but not got:",
+          map {
+            ("- $_",
+             ($exp_only->{$_} > 1 ? "    x $exp_only->{$_}" : ()));
+          } sort { $a cmp $b } keys %$exp_only;
+    }
+    if (keys %$act_only) {
+      note join "\n", "Got but not expected:",
+          map {
+            ("- $_",
+             ($act_only->{$_} > 1 ? "    x $act_only->{$_}" : ()));
+          } sort { $a cmp $b } keys %$act_only;
+    }
+  }
+} # is_set_list
+
 sub test_files (@) {
   my @FILES = @_;
 
@@ -20,12 +81,12 @@ sub test_files (@) {
     for_each_test ($file_name, {
       data => {is_prefixed => 1},
       errors => {is_list => 1, is_prefixed => 1},
-    }, sub { _test ($file_name, $_[0]) });
+    }, sub { _test ($file_name, $_[0], $_[1]) });
   }
 } # test_files
 
-sub _test ($$) {
-  my ($file_name, $test) = @_;
+sub _test ($$$) {
+  my ($file_name, $test, $opts) = @_;
   $file_name = $1 if $file_name =~ m{([^/]+\.dat)};
   test {
     my $c = shift;
@@ -37,9 +98,9 @@ sub _test ($$) {
     my $check_as_doc = $test->{'is-document'};
 
     unless ($test->{data}) {
-      warn "No #data field\n";
+      die "No #data field\n";
     } elsif (not $test->{errors}) {
-      warn "No #errors field ($test->{data}->[0])\n";
+      die "No #errors field ($test->{data}->[0])\n";
     }
 
     my $doc;
@@ -88,21 +149,17 @@ sub _test ($$) {
     $val->image_viewable ($test->{'image-viewable'});
     $val->check_node ($check_as_doc ? $doc : $doc->document_element);
 
-    my $actual = join ("\n", sort {$a cmp $b} @error);
-    my $expected = join ("\n", sort {$a cmp $b} map {
+    is_set_list [map {
+      s/\x0A/\\n/;
+      $_;
+    } @error], [map {
       # XXXindex
       s/^\d+;\d+;//;
       $_;
-    } @{$test->{errors}->[0]});
-    $actual = join "\n", sort { $a cmp $b } split /\n/, join "\n", $actual;
-    $expected = join "\n", sort { $a cmp $b } split /\n/, join "\n", $expected;
-    if ($actual eq $expected) {
-      is $actual, $expected;
-    } else {
-      eq_or_diff $actual, $expected, $test->{data}->[0];
-    }
+    } @{$test->{errors}->[0]}], "errors";
     done $c;
-  } n => 1, name => [$file_name, substr $test->{data}->[0], 0, 40];
+  } n => 1, name => [$file_name, $opts->{line_number},
+                     substr $test->{data}->[0], 0, 40];
 } # test
 
 sub get_node_path ($) {

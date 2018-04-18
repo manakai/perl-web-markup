@@ -155,7 +155,7 @@ redirect.  It is also used as base URL.
 
 The module also has following methods for API compatibility with
 L<Web::HTML::Parser> but they have no effect: C<locale_tag>,
-C<scripting>.
+C<scripting>, C<is_xhr>.
 
 =head1 SPECIFYING ENCODING
 
@@ -204,27 +204,26 @@ for details of source location annotations using DOM3 user data.
 
 =item XML
 
-XML 1.0 <http://www.w3.org/TR/xml/>.
+XML 1.0 <https://www.w3.org/TR/xml/>.
 
 =item XMLNS
 
-Namespaces in XML 1.0 <http://www.w3.org/TR/xml-names/>.
+Namespaces in XML 1.0 <https://www.w3.org/TR/xml-names/>.
 
 =item INFOSET
 
-XML Information Set <http://www.w3.org/TR/xml-infoset/>.
+XML Information Set <https://www.w3.org/TR/xml-infoset/>.
 
 DOM Level 3 Core - Infoset Mapping
-<http://www.w3.org/TR/DOM-Level-3-Core/infoset-mapping.html>.
+<https://www.w3.org/TR/DOM-Level-3-Core/infoset-mapping.html>.
 
 =item XML5
 
-XML-ER <https://dvcs.w3.org/hg/xml-er/raw-file/tip/Overview.html>.
+XML5 Standard <https://ygg01.github.io/xml5_draft/>.
 
 =item HTML
 
-HTML Standard - Parsing XHTML documents
-<http://www.whatwg.org/specs/web-apps/current-work/#parsing-xhtml-documents>.
+HTML Standard <https://html.spec.whatwg.org/>.
 
 The XML fragment parsing algorithm must return the children of the
 template content of the root element of the resulting C<Document>, in
@@ -233,12 +232,12 @@ tree order, if the /context/ element is an HTML C<template> element.
 =item DOMDTDEF
 
 XML processing and DOM Document Type Definitions
-<http://suika.suikawiki.org/www/markup/xml/domdtdef/domdtdef-work>.
+<https://suika.suikawiki.org/www/markup/xml/domdtdef/domdtdef-work>.
 
 =item MANAKAI
 
 manakai DOM Extensions
-<http://suika.suikawiki.org/~wakaba/wiki/sw/n/manakai%20DOM%20Extensions>.
+<https://suika.suikawiki.org/~wakaba/wiki/sw/n/manakai%20DOM%20Extensions>.
 
 =back
 
@@ -255,7 +254,7 @@ Wakaba <wakaba@suikawiki.org>.
 
 =head1 LICENSE
 
-Copyright 2007-2015 Wakaba <wakaba@suikawiki.org>.
+Copyright 2007-2017 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

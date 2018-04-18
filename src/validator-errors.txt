@@ -9,6 +9,24 @@
 
 module=Web::HTML::Validator
 
+* non-utf-8 character encoding
+
+layer=charencoding
+default_level=m
+
+@en
+The document's character encoding is not UTF-8
+@ja
+文書の文字符号化が UTF-8 ではありません
+
+@en
+<p>The character encoding of an HTML document must be UTF-8.  No other
+encoding is allowed.
+
+@ja
+<p>HTML 文書の文字符号化は UTF-8 でなければなりません。
+それ以外は認められていません。
+
 * script type:bad spaces
 
 layer=microsyntax
@@ -127,6 +145,49 @@ is the default.
 省略するべきです。 <code>type</code> 要素の既定値は古典スクリプトなので、
 冗長です。
 
+* script charset
+
+layer=content-model
+default_level=m
+attr
+
+@en
+The <code>charset</code> attribute is specified
+@ja
+<code>charset</code> 属性が指定されています
+
+@en
+<p>The <code>charset</code> attribute of the <code>script</code>
+element should not be specified.  Both the document and the script has
+to be encoded in UTF-8, in which case the attribute has no effect.
+
+@ja
+<p><code>script</code> 要素の <code>charset</code>
+属性は指定するべきではありません。文書もスクリプトも UTF-8
+で符号化しなければなりません。その場合 <code>charset</code>
+属性には意味がありません。
+
+* script charset utf-8
+
+layer=content-model
+default_level=s
+
+@en
+The <code>charset</code> attribute is specified as UTF-8
+@ja
+<code>charset</code> 属性で UTF-8 が指定されています
+
+@en
+<p>The <code>charset</code> attribute of the <code>script</code>
+element should not be specified.  Both the document and the script has
+to be encoded in UTF-8, in which case the attribute has no effect.
+
+@ja
+<p><code>script</code> 要素の <code>charset</code>
+属性は指定するべきではありません。文書もスクリプトも UTF-8
+で符号化しなければなりません。その場合 <code>charset</code>
+属性には意味がありません。
+
 * script:ignored charset
 
 layer=content-model
@@ -151,7 +212,7 @@ and has a <code>src</code> attribute.
 * script:ignored defer
 
 layer=content-model
-default_level=w
+default_level=m
 attr
 
 @en
@@ -173,7 +234,7 @@ has a <code>src</code> attribute, and does not have any
 * script:ignored async
 
 layer=content-model
-default_level=w
+default_level=m
 attr
 
 @en
@@ -190,6 +251,27 @@ attribute.
 @ja
 <p><code>script</code> 要素の <code>defer</code>
 属性に効果があるのは、モジュールスクリプトのときと、
+古典スクリプトで <code>src</code> 属性があるときだけです。
+
+* script:ignored integrity
+
+layer=content-model
+default_level=m
+attr
+
+@en
+The <code>integrity</code> attribute has no effect
+@ja
+この <code>integrity</code> 属性には意味がありません
+
+@en
+<p>The <code>integrity</code> attribute of the <code>script</code> element
+is effective only when the element defines a classic script and
+has a <code>src</code> attribute.
+
+@ja
+<p><code>script</code> 要素の <code>integrity</code>
+属性に効果があるのは、
 古典スクリプトで <code>src</code> 属性があるときだけです。
 
 * script:ignored src
@@ -257,6 +339,29 @@ attribute.
 <p><code>script</code> 要素の <code>crossorigin</code>
 属性に効果があるのは、モジュールスクリプトのときと、
 古典スクリプトで <code>src</code> 属性があるときだけです。
+
+* script:ignored nomodule
+
+layer=content-model
+default_level=m
+attr
+
+@en
+The <code>nomodule</code> attribute has no effect
+@ja
+この <code>nomodule</code> 属性には意味がありません
+
+@en
+<p>The <code>nomodule</code> attribute of the <code>script</code>
+element is effective only when the element defines a classic script.
+It can't be used when the element defines a module script or a data
+block.
+
+@ja
+<p><code>script</code> 要素の <code>nomodule</code>
+属性に効果があるのは、古典スクリプトのときだけです。
+モジュールスクリプトやデータブロックの <code>script</code> 
+要素には指定できません。
 
 * script language
 
@@ -342,6 +447,50 @@ data block <code><var>{value}</var></code> is not supported
     属性で指定されたスクリプト言語、あたはデータブロックの適合性検査には対応していません。</p>
     
     <p>内容が適合しているかどうかは<em>不明</em>です。</p>
+
+* non external resource crossorigin
+
+layer=content-model
+default_level=w
+attr
+
+@en
+The <code>crossorigin</code> attribute has no effect
+@ja
+この <code>crossorigin</code> 属性には意味がありません
+
+@en
+<p>The <code>crossorigin</code> attribute of the <code>link</code>
+element is effective only when the element defines an external
+resource link (e.g. when its <code>rel</code> attribute is
+<code>stylesheet</code>.
+
+@ja
+<p><code>link</code> 要素の <code>crossorigin</code>
+属性に効果があるのは、外部資源リンクの時
+(<code>rel</code> 属性が <code>stylesheet</code> の時など) だけです。
+
+* non external resource nonce
+
+layer=content-model
+default_level=w
+attr
+
+@en
+The <code>nonce</code> attribute has no effect
+@ja
+この <code>nonce</code> 属性には意味がありません
+
+@en
+<p>The <code>nonce</code> attribute of the <code>link</code>
+element is effective only when the element defines an external
+resource link (e.g. when its <code>rel</code> attribute is
+<code>stylesheet</code>.
+
+@ja
+<p><code>link</code> 要素の <code>nonce</code>
+属性に効果があるのは、外部資源リンクの時
+(<code>rel</code> 属性が <code>stylesheet</code> の時など) だけです。
 
 * duplicate slot name
 
@@ -556,7 +705,7 @@ restrictions:
 
   </ul>
 
-* link:as:not preload
+* link:ignored as
 
 default_level=m
 layer=content-model
@@ -580,7 +729,7 @@ attribute is ignored.
 を指定しなければいけません。そうでなければ、 <code>as</code>
 属性は無視されます。
 
-* link:sizes:not icon
+* link:ignored sizes
 
 default_level=m
 layer=content-model
@@ -595,13 +744,134 @@ element with no <code>icon</code> link type
 @en
 <p>When the <code>sizes</code> attribute is specified, the
 <code>link</code> element's <code>rel</code> attribute must contain a
-link type keyword <code>icon</code>.  Otherwise the <code>sizes</code>
-attribute is ignored.
+link type keyword <code>icon</code> or <code>apple-touch-icon</code>.
+Otherwise the <code>sizes</code> attribute is ignored.
 
 @ja
 <code>link</code> 要素に <code>sizes</code> を指定する時は、
-<code>rel</code> 属性にリンク型 <code>icon</code>
+<code>rel</code> 属性にリンク型 <code>icon</code> か
+<code>apple-touch-icon</code>
 を指定しなければいけません。そうでなければ、 <code>sizes</code>
+属性は無視されます。
+
+* link:ignored integrity
+
+default_level=m
+layer=content-model
+
+@en
+The <code>integrity</code> attribute is specified to a <code>link</code>
+element with no <code>stylesheet</code> link type
+@ja
+リンク型 <code>stylesheet</code> の指定されていない <code>link</code>
+要素に <code>integrity</code> 属性が指定されています
+
+@en
+<p>When the <code>integrity</code> attribute is specified, the
+<code>link</code> element's <code>rel</code> attribute must contain a
+link type keyword <code>stylesheet</code>.
+Otherwise the <code>integrity</code> attribute is ignored.
+
+@ja
+<code>link</code> 要素に <code>integrity</code> を指定する時は、
+<code>rel</code> 属性にリンク型 <code>stylesheet</code>
+を指定しなければいけません。そうでなければ、 <code>integrity</code>
+属性は無視されます。
+
+* link:ignored scope
+
+default_level=m
+layer=content-model
+
+@en
+The <code>scope</code> attribute is specified to a <code>link</code>
+element with no <code>serviceworker</code> link type
+@ja
+リンク型 <code>serviceworker</code> の指定されていない <code>link</code>
+要素に <code>scope</code> 属性が指定されています
+
+@en
+<p>When the <code>scope</code> attribute is specified, the
+<code>link</code> element's <code>rel</code> attribute must contain a
+link type keyword <code>serviceworker</code>.
+Otherwise the <code>scope</code> attribute is ignored.
+
+@ja
+<code>link</code> 要素に <code>scope</code> を指定する時は、
+<code>rel</code> 属性にリンク型 <code>serviceworker</code>
+を指定しなければいけません。そうでなければ、 <code>scope</code>
+属性は無視されます。
+
+* link:ignored workertype
+
+default_level=m
+layer=content-model
+
+@en
+The <code>workertype</code> attribute is specified to a <code>link</code>
+element with no <code>serviceworker</code> link type
+@ja
+リンク型 <code>serviceworker</code> の指定されていない <code>link</code>
+要素に <code>workertype</code> 属性が指定されています
+
+@en
+<p>When the <code>workertype</code> attribute is specified, the
+<code>link</code> element's <code>rel</code> attribute must contain a
+link type keyword <code>serviceworker</code>.
+Otherwise the <code>workertype</code> attribute is ignored.
+
+@ja
+<code>link</code> 要素に <code>workertype</code> を指定する時は、
+<code>rel</code> 属性にリンク型 <code>serviceworker</code>
+を指定しなければいけません。そうでなければ、 <code>workertype</code>
+属性は無視されます。
+
+* link:ignored updateviacache
+
+default_level=m
+layer=content-model
+
+@en
+The <code>updateviacache</code> attribute is specified to a <code>link</code>
+element with no <code>serviceworker</code> link type
+@ja
+リンク型 <code>serviceworker</code> の指定されていない <code>link</code>
+要素に <code>updateviacache</code> 属性が指定されています
+
+@en
+<p>When the <code>updateviacache</code> attribute is specified, the
+<code>link</code> element's <code>rel</code> attribute must contain a
+link type keyword <code>serviceworker</code>.
+Otherwise the <code>updateviacache</code> attribute is ignored.
+
+@ja
+<code>link</code> 要素に <code>updateviacache</code> を指定する時は、
+<code>rel</code> 属性にリンク型 <code>serviceworker</code>
+を指定しなければいけません。そうでなければ、 <code>updateviacache</code>
+属性は無視されます。
+
+* link:ignored color
+
+default_level=m
+layer=content-model
+
+@en
+The <code>color</code> attribute is specified to a <code>link</code>
+element with no <code>mask-icon</code> link type
+@ja
+リンク型 <code>mask-icon</code> の指定されていない <code>link</code>
+要素に <code>color</code> 属性が指定されています
+
+@en
+<p>When the <code>color</code> attribute is specified, the
+<code>link</code> element's <code>rel</code> attribute must contain a
+link type keyword <code>mask-icon</code>.
+Otherwise the <code>color</code> attribute is ignored.
+
+@ja
+<code>link</code> 要素に <code>color</code> を指定する時は、
+<code>rel</code> 属性にリンク型 <code>mask-icon</code>
+を指定しなければいけません。そうでなければ、 <code>color</code>
 属性は無視されます。
 
 * control name:isindex
@@ -671,3 +941,436 @@ has one of "body-ok" link types such as <code>stylesheet</code>.
 属性に <code>body</code> 内でも使えるリンク型
 (<code>stylesheet</code> など) が指定されている
 <code>link</code> 要素だけです。
+
+* element not allowed:dl
+
+default_level=m
+layer=content-model
+
+@en
+There is an element not allowed in a <code>dl</code> element
+@ja
+<code>dl</code> 要素内で認められない要素があります
+
+@en
+<p>In a <code>dl</code> element, only <code>dt</code>,
+<code>dd</code>, <code>div</code>, <code>script</code>, and
+<code>template</code> elements are allowed.
+
+<p>In a <code>div</code> element that is a child of a <code>dl</code>
+element, only <code>dt</code>, <code>dd</code>, <code>script</code>,
+and <code>template</code> elements are allowed.
+
+<p>Any other element in the list must be placed within a
+<code>dt</code> or <code>dd</code> element.
+
+@ja
+<p><code>dl</code> 要素では、 <code>dt</code>,
+<code>dd</code>, <code>div</code>, <code>script</code>,
+<code>template</code> の各要素だけが使えます。
+
+<p><code>dl</code> 要素の子供の <code>div</code> 要素では、
+<code>dt</code>, <code>dd</code>, <code>script</code>,
+<code>template</code> の各要素だけが使えます。
+
+<p>リスト内にその他の要素がある時は、
+<code>dt</code> 要素か <code>dd</code> 要素の中に入れる必要があります。
+
+* character not allowed:dl
+
+default_level=m
+layer=content-model
+
+@en
+There is a text in a <code>dl</code> element
+@ja
+<code>dl</code> 要素内にテキストがあります
+
+@en
+<p>In a <code>dl</code> element, only <code>dt</code>,
+<code>dd</code>, <code>div</code>, <code>script</code>, and
+<code>template</code> elements are allowed.
+
+<p>In a <code>div</code> element that is a child of a <code>dl</code>
+element, only <code>dt</code>, <code>dd</code>, <code>script</code>,
+and <code>template</code> elements are allowed.
+
+<p>Any text data in the list must be placed within a <code>dt</code>
+or <code>dd</code> element.
+
+@ja
+<p><code>dl</code> 要素では、 <code>dt</code>,
+<code>dd</code>, <code>div</code>, <code>script</code>,
+<code>template</code> の各要素だけが使えます。
+
+<p><code>dl</code> 要素の子供の <code>div</code> 要素では、
+<code>dt</code>, <code>dd</code>, <code>script</code>,
+<code>template</code> の各要素だけが使えます。
+
+<p>リスト内に文字データがある時は、
+<code>dt</code> 要素か <code>dd</code> 要素の中に入れる必要があります。
+
+* dl:div:mixed
+
+default_level=m
+layer=content-model
+
+@en
+There are <code>div</code> and non-<code>div</code> children
+@ja
+<code>div</code> 要素とそうでない要素の両方があります
+
+@en
+
+<p>In a <code>dl</code> element, all list items must be included
+either directly by <code>dt</code> and <code>dd</code> element
+children or indirectly by <code>div</code> element children.  They
+cannot be mixed.
+
+@ja
+<p><code>dl</code> 要素内では、すべての項目を
+<code>dt</code> 要素と <code>dd</code> 要素で直接記述するか、
+<code>div</code> 要素で間接的に含めるかのどちらかとしなければいけません。
+2つの方法を混合することはできません。
+
+* dl:no div
+
+default_level=m
+layer=content-model
+
+@en
+There is no <code>div</code> element wrapper
+@ja
+<code>div</code> 要素で包まれていません
+
+@en
+
+<p>In a <code>dl</code> element, all list items must be included
+either directly by <code>dt</code> and <code>dd</code> element
+children or indirectly by <code>div</code> element children.  They
+cannot be mixed.
+
+@ja
+<p><code>dl</code> 要素内では、すべての項目を
+<code>dt</code> 要素と <code>dd</code> 要素で直接記述するか、
+<code>div</code> 要素で間接的に含めるかのどちらかとしなければいけません。
+2つの方法を混合することはできません。
+
+* ps element missing:dt
+
+default_level=m
+layer=content-model
+
+@en
+There is no <code>dt</code> element before this element
+@ja
+この要素の前に <code>dt</code> 要素がありません
+
+@en
+<p>There must be a <code>dt</code> element before a <code>dd</code>
+element.
+
+@ja
+<p><code>dd</code> 要素の前には <code>dt</code> 要素が必要です。
+
+* ps element missing:dd
+
+default_level=m
+layer=content-model
+
+@en
+There is no <code>dd</code> element before this element
+@ja
+この要素の前に <code>dd</code> 要素がありません
+
+@en
+<p>A <code>dt</code> element must be followed by one or more
+<code>dd</code> element.
+
+@ja
+<p><code>dt</code> 要素の後には1つ以上の <code>dd</code>
+要素が必要です。
+
+* dl:last dd missing
+
+default_level=m
+layer=content-model
+
+@en
+There is no <code>dd</code> element at the last of this element
+@ja
+この要素の末尾に <code>dd</code> 要素がありません
+
+@en
+<p>A <code>dt</code> element must be followed by one or more
+<code>dd</code> element.
+
+@ja
+<p><code>dt</code> 要素の後には1つ以上の <code>dd</code>
+要素が必要です。
+
+* dl:div:second dt
+
+default_level=m
+layer=content-model
+
+@en
+There are multiple <code>dt</code> element groups
+@ja
+<code>dt</code> 要素が複数組あります
+
+@en
+<p>In a <code>div</code> element, there must be only one set of name
+(<code>dt</code>) and value (<code>dd</code>) pair.  To represent
+multiple name/value groups, use multiple <code>div</code> elements.
+
+@ja
+<p>1つの <code>div</code> 要素には1組の
+名前 (<code>dt</code>) と値 (<code>dd</code>) の組しか含められません。
+複数の名前と値の組を表したい時は、
+複数の <code>div</code> 要素に分ける必要があります。
+
+* sandbox duplicate allow-top-navigation
+
+default_level=m
+layer=content-model
+
+@en
+Both <code>allow-top-navigation</code> and
+<code>allow-top-navigation-by-user-activation</code> are specified
+@ja
+<code>allow-top-navigation</code> と
+<code>allow-top-navigation-by-user-activation</code> 
+の両方が指定されています
+
+@en
+<p>Only one of keywords <code>allow-top-navigation</code> and
+<code>allow-top-navigation-by-user-activation</code> can be specified
+in a <code>sandbox</code> attribute.  If both keywords are specified,
+<code>allow-top-navigation-by-user-activation</code> is ignored.
+
+@ja
+<p><code>sandbox</code> 属性に <code>allow-top-navigation</code> と
+<code>allow-top-navigation-by-user-activation</code> 
+の両方を指定してはいけません。両方していしても、
+<code>allow-top-navigation-by-user-activation</code>
+は無視されます。
+
+* aria:not preferred markup:css
+
+default_level=w
+layer=content-model
+
+@en
+Use of CSS is preferred
+@ja
+CSS を使うのが適切です
+
+@en
+<p>The <code>role</code> attribute should only be
+used when it cannot be represented by CSS properties.</p>
+@ja
+<p><code>role</code> 属性は、 CSS
+表現できない時に限って使うべきです。</p>
+
+* aria:not preferred markup:html-attr
+
+default_level=w
+layer=content-model
+
+@en
+The <code><var>{text}</var></code> attribute is preferred
+@ja
+<code><var>{text}</var></code> 属性の方が適切です
+
+@en
+<p>The ARIA attribute should only be used when its semantics
+cannot be represented by native HTML attributes.</p>
+@ja
+<p>ARIA 属性は、その意味を HTML の本来の属性で表せない時だけ使うべきです。</p>
+
+* aria:not preferred markup:html-element
+
+default_level=w
+layer=content-model
+
+@en
+The <code><var>{text}</var></code> element is preferred
+@ja
+<code><var>{text}</var></code> 要素の方が適切です
+
+@en
+<p>The <code>role</code> attribute should only be used when it cannot be
+represented by an HTML element with similar semantics.</p>
+@ja
+<p><code>role</code> 属性は、同じような意味の HTML
+要素で表現できない時に限って使うべきです。</p>
+
+* aria:not preferred markup:input
+
+default_level=w
+layer=content-model
+
+@en
+The <code>&lt;input type=<var>{text}</var>></code> element is preferred
+@ja
+<code>&lt;input type=<var>{text}</var>></code> 要素の方が適切です
+
+@en
+    <p>The <code>role</code> attribute should only be
+    used when it cannot be represented by an HTML <code>input</code>
+    element with similar semantics.</p>
+@ja
+    <p><code>role</code> 属性は、同じような意味の HTML
+    <code>input</code> 要素で表現できない時に限って使うべきです。</p>
+
+* aria:not preferred markup:math
+
+default_level=w
+layer=content-model
+
+@en
+The <code>math</code> element is preferred
+@ja
+<code>math</code> 要素の方が適切です
+
+@en
+    <p>The <code>role</code> attribute should only be
+    used when it cannot be represented by a MathML
+    <code>math</code> element.</p>
+@ja
+    <p><code>role</code> 属性は、 MathML <code>math</code>
+    要素で表現できない時に限って使うべきです。</p>
+
+* aria:not preferred markup:textbox
+
+default_level=w
+layer=content-model
+
+@en
+The <code>&lt;input type=text></code> or <code>textarea</code>
+element is preferred
+@ja
+<code>&lt;input type=text></code> や <code>textarea</code>
+要素の方が適切です
+
+@en
+    <p>The <code>role</code> attribute should only be
+    used when it cannot be represented by an HTML
+    <code>&lt;input type=text></code> or <code>textarea</code> element.
+@ja
+    <p><code>role</code> 属性は、 HTML
+    <code>&lt;input type=text></code> 要素や <code>textarea</code>
+    要素で表現できない時に限って使うべきです。</p>
+
+* aria:not preferred markup:role
+
+default_level=w
+layer=content-model
+
+@en
+The role <code><var>{text}</var></code> is preferred
+@ja
+役割 <code><var>{text}</var></code> の方が適切です
+
+@en
+<p>The <code>presentation</code> role is historical;
+the <code>none</code> role should be used.</p>
+@ja
+<p>役割 <code>presentation</code> は古いものです。
+役割 <code>none</code> を使うべきです。</p>
+
+* aria:not preferred markup:th
+
+default_level=w
+layer=content-model
+
+@en
+The <code>&lt;th <var>{text}</var>></code> element is preferred
+@ja
+<code>&lt;th scope=<var>{text}</var>></code> の方が適切です
+
+@en
+    <p>The <code>role</code> attribute should only be
+    used when it cannot be represented by an HTML <code>th</code>
+    element with a <code>scope</code> attribute.</p>
+@ja
+    <p><code>role</code> 属性は、 HTML
+    <code>th</code> 要素と <code>scope</code> 
+    属性で表現できない時に限って使うべきです。</p>
+
+* aria:not preferred markup:title
+
+default_level=w
+layer=content-model
+
+@en
+The <code>title</code> attribute is preferred
+@ja
+<code>title</code> 属性の方が適切です
+
+@en
+    <p>The <code>role</code> attribute should only be
+    used when it cannot be represented by an HTML <code>title</code>
+    attribute or an SVG <code>title</code> element.</p>
+@ja
+    <p><code>role</code> 属性は、 HTML
+    <code>title</code> 属性や SVG <code>title</code>
+    要素で表現できない時に限って使うべきです。</p>
+
+* aria:not preferred markup:omit
+
+default_level=w
+layer=content-model
+
+@en
+This is redundant
+@ja
+これは冗長です
+
+@en
+<p>Certain kinds of ARIA attributes are redundant with native 
+HTML or SVG elements.  It should be omitted.</p>
+@ja
+<p>いくつかの ARIA の属性は本来の HTML や SVG
+の要素と冗長です。省略するべきです。</p>
+
+* style:unclosed cdo
+
+default_level=s
+layer=microsyntax
+
+@en
+There is no <code>--></code>
+@ja
+<code>--></code> がありません
+
+@en
+    <p>In a <code>script</code> element, any
+    substring <code>&lt;!--</code> must be closed by corresponding
+    substring <code>--></code>.</p>
+@ja
+    <p><code>script</code> 要素の中では、
+    <code>&lt;!--</code> には対応する <code>--></code>
+    がなければいけません。</p>
+
+* style type
+
+default_level=s
+layer=microsyntax
+
+@en
+The style type is not <code>text/css</code>
+@ja
+スタイルの種別が <code>text/css</code> ではありません
+
+@en
+<p>The <code>type</code> attribute value of the <code>style</code> element,
+if specified, must be <code>text/css</code>.  (However, it should
+be omitted altogther.)</p>
+<p>Non-CSS style languages are not supported by Web browsers.</p>
+@ja
+<p><code>style</code> 要素の <code>type</code> 属性の値が指定される場合は、
+<code>text/css</code> でなければいけません。 (ただし、
+<code>type</code> 属性自体を省略するべきです。)</p>
+<p>Web ブラウザーは CSS 以外のスタイル言語に対応していません。</p>

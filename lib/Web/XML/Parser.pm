@@ -7,11 +7,12 @@
     use warnings FATAL => 'redefine';
     use warnings FATAL => 'uninitialized';
     use utf8;
-    our $VERSION = '8.0';
+    our $VERSION = '9.0';
     use Carp qw(croak);
     
-    use Encode qw(decode); # XXX
     use Web::Encoding;
+    use Web::Encoding::Sniffer;
+    use Web::Encoding::Decoder;
     use Web::HTML::ParserData;
     use Web::HTML::_SyntaxDefs;
 
@@ -26,7 +27,7 @@
       return bless {
         ## Input parameters
         # Scripting IframeSrcdoc DI known_definite_encoding locale_tag
-        # di_data_set is_sub_parser
+        # di_data_set is_sub_parser is_xhr
 
         ## Callbacks
         # onerror onerrors onappcacheselection onscript
@@ -38,6 +39,7 @@
         # nodes document can_restart restart
         # parse_bytes_started transport_encoding_label
         # byte_bufer byte_buffer_orig
+        # decoder
       }, $_[0];
     } # new
 
@@ -167,6 +169,7 @@ sub onrestartwithencoding ($;$) {
     sub _cleanup_states ($) {
       my $self = $_[0];
       delete $self->{input_stream};
+      delete $self->{input_stream_offset};
       delete $self->{input_encoding};
       delete $self->{saved_states};
       delete $self->{saved_lists};
@@ -3872,65 +3875,43 @@ sub known_definite_encoding ($;$) {
   return $_[0]->{known_definite_encoding};
 } # known_definite_encoding
 
-## Encoding sniffing algorithm
-## <http://www.whatwg.org/specs/web-apps/current-work/#determining-the-character-encoding>.
+sub is_xhr ($;$) {
+  if (@_ > 1) {
+    $_[0]->{is_xhr} = $_[1];
+  }
+  return $_[0]->{is_xhr};
+} # is_xhr
+
 sub _encoding_sniffing ($;%) {
   my ($self, %args) = @_;
-
-  ## One of followings:
-  ##   - Step 1. User-specified encoding
-  ##   - The new character encoding by change the encoding
-  ##     <http://www.whatwg.org/specs/web-apps/current-work/#change-the-encoding>
-  ##     step 5. Encoding from <meta charset>
-  ##   - A known definite encoding
-  my $kde = $self->known_definite_encoding;
-  if (defined $kde) {
-    ## If specified, it must be an encoding label from the Encoding
-    ## Standard.
-    my $name = Web::Encoding::encoding_label_to_name $kde;
-    if ($name) {
-      $self->{input_encoding} = $name;
-      $Confident = 1; # certain
-      return;
-    }
-  }
 
   return if $args{no_body_data_yet};
   ## $args{no_body_data_yet} flag must be set to true if the body of
   ## the resource is not available to the parser such that
   ## $args{read_head} callback ought not be invoked yet.
 
-  ## Step 2. Wait 500ms or 1024 bytes, whichever came first (See
-  ## Web::HTML::Parser for how and when to use this callback).
-  my $head = $args{read_head} ? $args{read_head}->() : undef;
-  ## $args{read_head} must be a callback which, when invoked, returns
-  ## a byte string used to sniff the character encoding of the input
-  ## stream.  As described in the HTML Standard, it should be at most
-  ## 1024 bytes.  The callback should not invoke sync I/O.  This
-  ## method should be invoked with $args{no_body_data_yet} flag unset
-  ## only after 500ms has past or 1024 bytes has been received.  The
-  ## callback should not invoke any exception.
+  ## <XML>
+  my $sniffer = Web::Encoding::Sniffer->new_from_context ('xml');
+  ## </XML>
+  $sniffer->detect (
+    ## $args{read_head} must be a callback which, when invoked,
+    ## returns a byte string used to sniff the character encoding of
+    ## the input stream.  As described in the HTML Standard, it should
+    ## be at most 1024 bytes.  The callback should not invoke sync
+    ## I/O.  This method should be invoked with
+    ## $args{no_body_data_yet} flag unset only after 500ms has past or
+    ## 1024 bytes has been received.  The callback should not invoke
+    ## any exception.
+    ${$args{read_head}->()},
 
-  ## Step 3. BOM
-  ## XXX Now this step is part of "decode" in the specs
-  if (defined $head) {
-    if ($$head =~ /^\xFE\xFF/) {
-      $self->{input_encoding} = 'utf-16be';
-      $Confident = 1; # certain
-      return;
-    } elsif ($$head =~ /^\xFF\xFE/) {
-      $self->{input_encoding} = 'utf-16le';
-      $Confident = 1; # certain
-      return;
-    } elsif ($$head =~ /^\xEF\xBB\xBF/) {
-      $self->{input_encoding} = 'utf-8';
-      $Confident = 1; # certain
-      return;
-    }
-  }
+    ## One of followings:
+    ##   - Step 1. User-specified encoding
+    ##   - The new character encoding by change the encoding
+    ##     <https://www.whatwg.org/specs/web-apps/current-work/#change-the-encoding>
+    ##     step 5. Encoding from <meta charset>
+    ##   - XHR override charset
+    override => $self->known_definite_encoding,
 
-  ## Step 4. Transport-layer encoding
-  if ($args{transport_encoding_name}) {
     ## $args{transport_encoding_name} must be specified iff the
     ## underlying protocol provides the character encoding for the
     ## input stream.  For HTTP, the |charset=""| parameter in the
@@ -3938,219 +3919,38 @@ sub _encoding_sniffing ($;%) {
     ## value is interpreted as an encoding name or alias defined in
     ## the Encoding Standard.  (Invalid encoding name will be
     ## ignored.)
-    my $name = Web::Encoding::encoding_label_to_name $args{transport_encoding_name};
-    if ($name) {
-      $self->{input_encoding} = $name;
-      $Confident = 1; # certain
-      return;
-    }
-  }
+    transport => $args{transport_encoding_name},
 
-  ## Step 5. <meta charset>
-  if (defined $head) {
-    my $name = $self->_prescan_byte_stream ($$head);
-    if ($name) {
-      $self->{input_encoding} = $name;
-      $Confident = 0; # tentative
-      return;
-    }
-  }
+    #reference
 
-  ## Step 6. Parent browsing context
-  if ($args{parent_document}) {
-    ## $args{parent_document}, if specified, must be the |Document|
-    ## through which the new (to be parsed) document is nested, or the
-    ## active document of the parent browsing context of the new
-    ## document.
-
+    embed => undef,
     # XXX
-    # if $args{parent_document}->origin equals $self->document->origin and
-    #    $args{parent_document}->charset is ASCII compatible {
-    #   $self->{input_encoding} = $args{parent_document}->charset;
-    #   $Confident = 0; # tentative
-    #   return;
-    # }
-  }
+    #do {
+    #  if ($args{parent_document}) {
+    #    ## $args{parent_document}, if specified, must be the |Document|
+    #    ## through which the new (to be parsed) document is nested, or the
+    #    ## active document of the parent browsing context of the new
+    #    ## document.
+    #    if $args{parent_document}->origin equals $self->document->origin and
+    #       $args{parent_document}->charset is ASCII compatible {
+    #      $args{parent_document}->charset; # XXX if "replacement"
+    #    }
+    #  } elsif ($args{history_encoding_name}) {
+    #    ## EXPERIMENTAL: $args{get_history_encoding_name}, if specified,
+    #    ## must be a callback which returns the canonical character
+    #    ## encoding name for the input stream, guessed by e.g. last visit
+    #    ## to this page.
+    #    $args{history_encoding_name}; # XXX if "replacement"
+    #  }
+    #},
 
-  ## Step 7. History
-  if ($args{get_history_encoding_name}) {
-    ## EXPERIMENTAL: $args{get_history_encoding_name}, if specified,
-    ## must be a callback which returns the canonical character
-    ## encoding name for the input stream, guessed by e.g. last visit
-    ## to this page.
-    # XXX how to handle async access to history DB?
-    my $name = Web::Encoding::encoding_label_to_name $args{get_history_encoding_name}->();
-    if ($name) {
-      $self->{input_encoding} = $name;
-      $Confident = 0; # tentative
-      return;
-    }
-  }
+    locale => $self->locale_tag,
 
-  ## Step 8. UniversalCharDet
-  if (defined $head) {
-    require Web::Encoding::UnivCharDet;
-    my $det = Web::Encoding::UnivCharDet->new;
-    # XXX locale-dependent configuration
-    my $name = Web::Encoding::encoding_label_to_name $det->detect_byte_string ($$head);
-    if ($name) {
-      $self->{input_encoding} = $name;
-      $Confident = 0; # tentative
-      return;
-    }
-  }
-
-  ## Step 8. Locale-dependent default
-  my $locale = $self->locale_tag;
-  if ($locale) {
-    my $name = Web::Encoding::encoding_label_to_name (
-        Web::Encoding::locale_default_encoding_name $locale ||
-        Web::Encoding::locale_default_encoding_name [split /-/, $locale, 2]->[0]
-    );
-    if ($name) {
-      $self->{input_encoding} = $name;
-      $Confident = 0; # tentative
-      return;
-    }
-  }
-
-  ## Step 8. Default of default
-  $self->{input_encoding} = Web::Encoding::encoding_label_to_name 'windows-1252';
-  $Confident = 0; # tentative
-  return;
-
-  # XXX expose sniffing info for validator
+  );
+  $self->{input_encoding} = $sniffer->encoding;
+  $Confident = $sniffer->confident;
+  # XXX export $sniffer->source for validator
 } # _encoding_sniffing
-
-# prescan a byte stream to determine its encoding
-# <http://www.whatwg.org/specs/web-apps/current-work/#prescan-a-byte-stream-to-determine-its-encoding>
-sub _prescan_byte_stream ($$) {
-  # 1.
-  (pos $_[1]) = 0;
-
-  # 2.
-  LOOP: {
-    $_[1] =~ /\G<!--+>/gc;
-    $_[1] =~ /\G<!--.*?-->/gcs;
-    if ($_[1] =~ /\G<[Mm][Ee][Tt][Aa](?=[\x09\x0A\x0C\x0D\x20\x2F])/gc) {
-      # 1.
-      #
-
-      # 2.-5.
-      my $attr_list = {};
-      my $got_pragma = 0;
-      my $need_pragma = undef;
-      my $charset;
-
-      # 6.
-      ATTRS: {
-        my $attr = $_[0]->_get_attr ($_[1]) or last ATTRS;
-
-        # 7.
-        redo ATTRS if $attr_list->{$attr->{name}};
-        
-        # 8.
-        $attr_list->{$attr->{name}} = $attr;
-
-        # 9.
-        if ($attr->{name} eq 'http-equiv') {
-          $got_pragma = 1 if $attr->{value} eq 'content-type';
-        } elsif ($attr->{name} eq 'content') {
-          # algorithm for extracting a character encoding from a
-          # |meta| element
-          # <http://www.whatwg.org/specs/web-apps/current-work/#algorithm-for-extracting-a-character-encoding-from-a-meta-element>
-          if (not defined $charset and
-              $attr->{value} =~ /[Cc][Hh][Aa][Rr][Ss][Ee][Tt]
-                                 [\x09\x0A\x0C\x0D\x20]*=
-                                 [\x09\x0A\x0C\x0D\x20]*(?>"([^"]*)"|'([^']*)'|
-                                 ([^"'\x09\x0A\x0C\x0D\x20]
-                                  [^\x09\x0A\x0C\x0D\x20\x3B]*))/x) {
-            $charset = Web::Encoding::encoding_label_to_name
-                (defined $1 ? $1 : defined $2 ? $2 : $3);
-            $need_pragma = 1;
-          }
-        } elsif ($attr->{name} eq 'charset') {
-          $charset = Web::Encoding::encoding_label_to_name $attr->{value};
-          $need_pragma = 0;
-        }
-
-        # 10.
-        return undef if pos $_[1] >= length $_[1];
-        redo ATTRS;
-      } # ATTRS
-
-      # 11. Processing, 12.
-      if (not defined $need_pragma or
-          ($need_pragma and not $got_pragma)) {
-        #
-      } elsif (defined $charset) {
-        # 13.-14.
-        $charset = Web::Encoding::fixup_html_meta_encoding_name $charset;
-
-        # 15.-16.
-        return $charset if defined $charset;
-      }
-    } elsif ($_[1] =~ m{\G</?[A-Za-z][^\x09\x0A\x0C\x0D\x20>]*}gc) {
-      {
-        $_[0]->_get_attr ($_[1]) and redo;
-      }
-    } elsif ($_[1] =~ m{\G<[!/?][^>]*}gc) {
-      #
-    }
-
-    # 3. Next byte
-    $_[1] =~ /\G[^<]+/gc || $_[1] =~ /\G</gc;
-    return undef if pos $_[1] >= length $_[1];
-    redo LOOP;
-  } # LOOP
-} # _prescan_byte_stream
-
-# get an attribute
-# <http://www.whatwg.org/specs/web-apps/current-work/#concept-get-attributes-when-sniffing>
-sub _get_attr ($$) {
-  # 1.
-  $_[1] =~ /\G[\x09\x0A\x0C\x0D\x20\x2F]+/gc;
-
-  # 2.
-  if ($_[1] =~ /\G>/gc) {
-    pos ($_[1])--;
-    return undef;
-  }
-  
-  # 3.
-  my $attr = {name => '', value => ''};
-
-  # 4.-5.
-  if ($_[1] =~ m{\G([^\x09\x0A\x0C\x0D\x20/>][^\x09\x0A\x0C\x0D\x20/>=]*)}gc) {
-    $attr->{name} .= $1;
-    $attr->{name} =~ tr/A-Z/a-z/;
-  }
-  return undef if $_[1] =~ m{\G\z}gc;
-  return $attr if $_[1] =~ m{\G(?=[/>])}gc;
-
-  # 6.
-  $_[1] =~ m{\G[\x09\x0A\x0C\x0D\x20]+}gc;
-
-  # 7.-8.
-  return $attr unless $_[1] =~ m{\G=}gc;
-
-  # 9.
-  $_[1] =~ m{\G[\x09\x0A\x0C\x0D\x20]+}gc;
-
-  # 10.-12.
-  if ($_[1] =~ m{\G\x22([^\x22]*)\x22}gc) {
-    $attr->{value} .= $1;
-    $attr->{value} =~ tr/A-Z/a-z/;
-  } elsif ($_[1] =~ m{\G\x27([^\x27]*)\x27}gc) {
-    $attr->{value} .= $1;
-    $attr->{value} =~ tr/A-Z/a-z/;
-  } elsif ($_[1] =~ m{\G([^\x09\x0A\x0C\x0D\x20>]+)}gc) {
-    $attr->{value} .= $1;
-    $attr->{value} =~ tr/A-Z/a-z/;
-  }
-  return undef if $_[1] =~ m{\G\z}gc;
-  return $attr;
-} # _get_attr
 
 sub _change_the_encoding ($$$) {
   my ($self, $name, $attr) = @_;
@@ -4200,10 +4000,9 @@ sub _change_the_encoding ($$$) {
   ## Step 6. Navigate with replace.
   return $name; # change!
 
-#XXX move this to somewhere else (when callback can't handle restart)
-  ## Step 6. If can't restart
-  $Confident = 1; # certain
-  return undef;
+  ### Step 6. If can't restart
+  #$Confident = 1; # certain
+  #return undef;
 } # _change_the_encoding
 
     sub di_data_set ($;$) {
@@ -78067,27 +77866,33 @@ sub dom_tree ($$) {
 
     sub _feed_chars ($$) {
       my ($self, $input) = @_;
-      pos ($input->[0]) = 0;
-      while ($input->[0] =~ /[\x{0001}-\x{0008}\x{000B}\x{000C}\x{000E}-\x{001F}\x{D800}-\x{DFFF}\x{FFFE}\x{FFFF}\x{007F}-\x{009F}\x{FDD0}-\x{FDEF}\x{1FFFE}-\x{1FFFF}\x{2FFFE}-\x{2FFFF}\x{3FFFE}-\x{3FFFF}\x{4FFFE}-\x{4FFFF}\x{5FFFE}-\x{5FFFF}\x{6FFFE}-\x{6FFFF}\x{7FFFE}-\x{7FFFF}\x{8FFFE}-\x{8FFFF}\x{9FFFE}-\x{9FFFF}\x{AFFFE}-\x{AFFFF}\x{BFFFE}-\x{BFFFF}\x{CFFFE}-\x{CFFFF}\x{DFFFE}-\x{DFFFF}\x{EFFFE}-\x{EFFFF}\x{FFFFE}-\x{FFFFF}\x{10FFFE}-\x{10FFFF}]/gcx) {
-        my $index = $-[0];
-        my $char = ord substr $input->[0], $index, 1;
-        my $level = (substr $input->[0], $index, 1) =~ /[\x{0001}-\x{0008}\x{000B}\x{000C}\x{000E}-\x{001F}\x{D800}-\x{DFFF}\x{FFFE}\x{FFFF}]/ ? 'm' : 'w';
-        if ($char < 0x100) {
-          push @$Errors, {type => 'control char', level => $level,
-                          text => (sprintf 'U+%04X', $char),
-                          di => $DI, index => $index};
-        } elsif ($char < 0xE000) {
-          push @$Errors, {type => 'char:surrogate', level => $level,
-                          text => (sprintf 'U+%04X', $char),
-                          di => $DI, index => $index};
-        } else {
-          push @$Errors, {type => 'nonchar', level => $level,
-                          text => (sprintf 'U+%04X', $char),
-                          di => $DI, index => $index};
+      for (@$input) {
+        pos ($_) = 0;
+        while (/[\x{0001}-\x{0008}\x{000B}\x{000C}\x{000E}-\x{001F}\x{D800}-\x{DFFF}\x{FFFE}\x{FFFF}\x{007F}-\x{009F}\x{FDD0}-\x{FDEF}\x{1FFFE}-\x{1FFFF}\x{2FFFE}-\x{2FFFF}\x{3FFFE}-\x{3FFFF}\x{4FFFE}-\x{4FFFF}\x{5FFFE}-\x{5FFFF}\x{6FFFE}-\x{6FFFF}\x{7FFFE}-\x{7FFFF}\x{8FFFE}-\x{8FFFF}\x{9FFFE}-\x{9FFFF}\x{AFFFE}-\x{AFFFF}\x{BFFFE}-\x{BFFFF}\x{CFFFE}-\x{CFFFF}\x{DFFFE}-\x{DFFFF}\x{EFFFE}-\x{EFFFF}\x{FFFFE}-\x{FFFFF}\x{10FFFE}-\x{10FFFF}]/gcx) {
+          my $index = $-[0];
+          my $c = substr $_, $index, 1;
+          my $char = ord $c;
+          my $level = $c =~ /[\x{0001}-\x{0008}\x{000B}\x{000C}\x{000E}-\x{001F}\x{D800}-\x{DFFF}\x{FFFE}\x{FFFF}]/ ? 'm' : 'w';
+          if ($char < 0x100) {
+            push @$Errors, {type => 'control char', level => $level,
+                            text => (sprintf 'U+%04X', $char),
+                            di => $DI,
+                            index => $self->{input_stream_offset} + $index};
+          } elsif ($char < 0xE000) {
+            push @$Errors, {type => 'char:surrogate', level => $level,
+                            text => (sprintf 'U+%04X', $char),
+                            di => $DI,
+                            index => $self->{input_stream_offset} + $index};
+          } else {
+            push @$Errors, {type => 'nonchar', level => $level,
+                            text => (sprintf 'U+%04X', $char),
+                            di => $DI,
+                            index => $self->{input_stream_offset} + $index};
+          }
         }
-      }
-      push @{$self->{input_stream}}, $input;
-
+        push @{$self->{input_stream}}, [$_];
+        $self->{input_stream_offset} += length $_;
+      } # @$input
       return $self->_run;
     } # _feed_chars
   
@@ -78132,6 +77937,7 @@ $Scripting = $self->{Scripting};
       ## </!Temma>
 
       $self->{input_stream} = [];
+      $self->{input_stream_offset} = 0;
       my $dids = $self->di_data_set;
       $self->{di} = $DI = defined $self->{di} ? $self->{di} : @$dids || 1;
       $dids->[$DI] ||= {} if $DI >= 0;
@@ -78183,6 +77989,7 @@ $Scripting = $self->{Scripting};
       ## 3.
       my $input = [$_[1]]; # string copy
       $self->{input_stream} = [];
+      $self->{input_stream_offset} = 0;
       my $dids = $self->di_data_set;
       $self->{di} = $DI = defined $self->{di} ? $self->{di} : @$dids || 1;
       $dids->[$DI] ||= {} if $DI >= 0;
@@ -78299,6 +78106,7 @@ $Scripting = $self->{Scripting};
       my ($self, $doc) = @_;
 
       $self->{input_stream} = [];
+      $self->{input_stream_offset} = 0;
       $self->{document} = $doc;
       $self->{IframeSrcdoc} = $doc->manakai_is_srcdoc;
       $doc->manakai_is_html (0);
@@ -78377,18 +78185,6 @@ $Scripting = $self->{Scripting};
       return;
     } # parse_chars_end
 
-## NOTE: HTML5 spec says that the encoding layer MUST NOT strip BOM
-## and the HTML layer MUST ignore it.  However, we does strip BOM in
-## the encoding layer and the HTML layer does not ignore any U+FEFF,
-## because the core part of our HTML parser expects a string of
-## character, not a string of bytes or code units or anything which
-## might contain a BOM.  Therefore, any parser interface that accepts
-## a string of bytes, such as |parse_byte_string| in this module, must
-## ensure that it does strip the BOM and never strip any ZWNBSP.
-
-## XXX The policy mentioned above might change when we implement
-## Encoding Standard spec.
-
   
 
     sub parse_byte_string ($$$$) {
@@ -78402,6 +78198,7 @@ $Scripting = $self->{Scripting};
 
       PARSER: {
         $self->{input_stream} = [];
+        $self->{input_stream_offset} = 0;
         $self->{nodes} = [$doc];
         $doc->remove_child ($_) for $doc->child_nodes->to_list;
 
@@ -78427,7 +78224,7 @@ $Scripting = $self->{Scripting};
         }); # $Confident is set within this method.
         $doc->input_encoding ($self->{input_encoding});
 
-        my $input = [decode $self->{input_encoding}, $$inputref]; # XXXencoding
+        my $input = [decode_web_charset $self->{input_encoding}, $$inputref];
         my $dids = $self->di_data_set;
         $self->{di} = $DI = defined $self->{di} ? $self->{di} : @$dids || 1;
         $dids->[$DI] ||= {} if $DI >= 0;
@@ -78458,6 +78255,7 @@ $Scripting = $self->{Scripting};
 
       delete $self->{parse_bytes_started};
       $self->{input_stream} = [];
+      $self->{input_stream_offset} = 0;
       $AnchoredIndex = 0;
 $InitialCMGroupDepth = 0;
 $NEXT_ID = 1;
@@ -78503,8 +78301,13 @@ $Scripting = $self->{Scripting};
 
       $self->{parse_bytes_started} = 1;
 
-      my $input = [decode $self->{input_encoding}, $self->{byte_buffer}, Encode::FB_QUIET]; # XXXencoding
-
+      $self->{decoder} = Web::Encoding::Decoder->new_from_encoding_key
+          ($self->{input_encoding});
+      $self->{decoder}->ignore_bom (1);
+      $self->{decoder}->onerror (sub {
+        $self->onerrors->($self, [{@_, di => $self->{di}}]);
+      });
+      my $input = $self->{decoder}->bytes ($self->{byte_buffer});
       $self->_feed_chars ($input) or return 0;
 
       return 1;
@@ -78538,7 +78341,7 @@ $Scripting = $self->{Scripting};
 
     ## The $args{start_parsing} flag should be set true if it has
     ## taken more than 500ms from the start of overall parsing
-    ## process. XXX should this be a separate method?
+    ## process.
     sub parse_bytes_feed ($$;%) {
       my ($self, undef, %args) = @_;
 
@@ -78556,17 +78359,15 @@ $Scripting = $self->{Scripting};
       $self->{byte_buffer_orig} .= $_[1];
       PARSER: {
         if ($self->{parse_bytes_started}) {
-          my $input = [decode $self->{input_encoding}, $self->{byte_buffer}, Encode::FB_QUIET]; # XXXencoding
-          if (length $self->{byte_buffer} and 0 == length $input->[0]) {
-            substr ($self->{byte_buffer}, 0, 1) = '';
-            $input->[0] .= "\x{FFFD}" . decode $self->{input_encoding}, $self->{byte_buffer}, Encode::FB_QUIET; # XXX Encoding Standard
+          # XXX $self->{decoder} is undef if feed_bytes invoked after feed_eof
+          if (defined $self->{decoder}) {
+            my $input = $self->{decoder}->bytes ($_[1]);
+            $self->_feed_chars ($input) or do {
+              $self->{byte_buffer} = $self->{byte_buffer_orig};
+              $self->_parse_bytes_init;
+              redo PARSER;
+            };
           }
-
-          $self->_feed_chars ($input) or do {
-            $self->{byte_buffer} = $self->{byte_buffer_orig};
-            $self->_parse_bytes_init;
-            redo PARSER;
-          };
         } else {
           if ($args{start_parsing} or 1024 <= length $self->{byte_buffer}) {
             $self->_parse_bytes_start_parsing or do {
@@ -78603,13 +78404,14 @@ $Scripting = $self->{Scripting};
           };
         }
 
-        if (length $self->{byte_buffer}) {
-          my $input = [decode $self->{input_encoding}, $self->{byte_buffer}]; # XXX encoding
+        if (defined $self->{decoder}) {
+          my $input = $self->{decoder}->eof;
           $self->_feed_chars ($input) or do {
             $self->{byte_buffer} = $self->{byte_buffer_orig};
             $self->_parse_bytes_init;
             redo PARSER;
           };
+          delete $self->{decoder};
         }
 
         $self->_feed_eof or do {
@@ -78670,6 +78472,7 @@ $Scripting = $self->{Scripting};
     ${$self->{entity_expansion_count} = $main->{entity_expansion_count} ||= \(my $v = 0)}++;
 
     $self->{input_stream} = [@{$in->{entity}->{value}}];
+    #$self->{input_stream_offset} = 0;
     $self->{di_data_set} = my $dids = $main->di_data_set;
     $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
     $BaseURLDI = $self->{BaseURLDI} = defined $main->{BaseURLDI} ? $main->{BaseURLDI} : $main->di;
@@ -78734,6 +78537,7 @@ $Scripting = $self->{Scripting};
     ${$self->{entity_expansion_count} = $main->{entity_expansion_count} ||= \(my $v = 0)}++;
 
     $self->{input_stream} = [@{$in->{entity}->{value}}];
+    #$self->{input_stream_offset} = 0;
     $self->{di_data_set} = my $dids = $main->di_data_set;
     $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
     $BaseURLDI = $self->{BaseURLDI} = defined $main->{BaseURLDI} ? $main->{BaseURLDI} : $main->di;
@@ -78825,6 +78629,7 @@ $Scripting = $self->{Scripting};
     ${$self->{entity_expansion_count} = $main->{entity_expansion_count} ||= \(my $v = 0)}++;
 
     $self->{input_stream} = [];
+    $self->{input_stream_offset} = 0;
     $self->{di_data_set} = my $dids = $main->di_data_set;
     $self->{BaseURLDI} = $BaseURLDI = $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
     $dids->[$DI] ||= {} if $DI >= 0;
@@ -78888,6 +78693,7 @@ $Scripting = $self->{Scripting};
     ${$self->{entity_expansion_count} = $main->{entity_expansion_count} ||= \(my $v = 0)}++;
 
     $self->{input_stream} = [@{$in->{entity}->{value}}];
+    #$self->{input_stream_offset} = 0;
     $self->{di_data_set} = my $dids = $main->di_data_set;
     $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
     $BaseURLDI = $self->{BaseURLDI} = defined $main->{BaseURLDI} ? $main->{BaseURLDI} : $main->di;
@@ -78975,6 +78781,7 @@ $Scripting = $self->{Scripting};
     ${$self->{entity_expansion_count} = $main->{entity_expansion_count} ||= \(my $v = 0)}++;
 
     $self->{input_stream} = [];
+    $self->{input_stream_offset} = 0;
     $self->{di_data_set} = my $dids = $main->di_data_set;
     $self->{BaseURLDI} = $BaseURLDI = $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
     $dids->[$DI] ||= {} if $DI >= 0;
@@ -79030,6 +78837,7 @@ $Scripting = $self->{Scripting};
     ${$self->{entity_expansion_count} = $main->{entity_expansion_count} ||= \(my $v = 0)}++;
 
     $self->{input_stream} = [@{$in->{entity}->{value}}];
+    #$self->{input_stream_offset} = 0;
     $self->{di_data_set} = my $dids = $main->di_data_set;
     $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
     $BaseURLDI = $self->{BaseURLDI} = defined $main->{BaseURLDI} ? $main->{BaseURLDI} : $main->di;
@@ -79118,6 +78926,7 @@ $Scripting = $self->{Scripting};
     ${$self->{entity_expansion_count} = $main->{entity_expansion_count} ||= \(my $v = 0)}++;
 
     $self->{input_stream} = [];
+    $self->{input_stream_offset} = 0;
     $self->{di_data_set} = my $dids = $main->di_data_set;
     $self->{BaseURLDI} = $BaseURLDI = $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
     $dids->[$DI] ||= {} if $DI >= 0;
@@ -79179,6 +78988,7 @@ $Scripting = $self->{Scripting};
     ${$self->{entity_expansion_count} = $main->{entity_expansion_count} ||= \(my $v = 0)}++;
 
     $self->{input_stream} = [@{$in->{entity}->{value}}];
+    #$self->{input_stream_offset} = 0;
     $self->{di_data_set} = my $dids = $main->di_data_set;
     $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
     $BaseURLDI = $self->{BaseURLDI} = defined $main->{BaseURLDI} ? $main->{BaseURLDI} : $main->di;
@@ -79278,6 +79088,7 @@ $Scripting = $self->{Scripting};
     ${$self->{entity_expansion_count} = $main->{entity_expansion_count} ||= \(my $v = 0)}++;
 
     $self->{input_stream} = [];
+    $self->{input_stream_offset} = 0;
     $self->{di_data_set} = my $dids = $main->di_data_set;
     $self->{BaseURLDI} = $BaseURLDI = $DI = $self->{di} = defined $self->{di} ? $self->{di} : @$dids;
     $dids->[$DI] ||= {} if $DI >= 0;
@@ -79317,7 +79128,7 @@ $Scripting = $self->{Scripting};
 
 =head1 LICENSE
 
-Copyright 2007-2015 Wakaba <wakaba@suikawiki.org>.
+Copyright 2007-2017 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

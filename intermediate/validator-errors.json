@@ -1,5 +1,170 @@
 {
    "errors" : {
+      "aria:not preferred markup:css" : {
+         "default_level" : "w",
+         "desc" : {
+            "en" : "\u003Cp>The \u003Ccode>role\u003C/code> attribute should only be\u000Aused when it cannot be represented by CSS properties.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>role\u003C/code> 属性は、 CSS\u000A表現できない時に限って使うべきです。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "Use of CSS is preferred",
+            "ja" : "CSS を使うのが適切です"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "aria:not preferred markup:html-attr" : {
+         "default_level" : "w",
+         "desc" : {
+            "en" : "\u003Cp>The ARIA attribute should only be used when its semantics\u000Acannot be represented by native HTML attributes.\u003C/p>",
+            "ja" : "\u003Cp>ARIA 属性は、その意味を HTML の本来の属性で表せない時だけ使うべきです。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "The \u003Ccode>\u003Cvar>{text}\u003C/var>\u003C/code> attribute is preferred",
+            "ja" : "\u003Ccode>\u003Cvar>{text}\u003C/var>\u003C/code> 属性の方が適切です"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "aria:not preferred markup:html-element" : {
+         "default_level" : "w",
+         "desc" : {
+            "en" : "\u003Cp>The \u003Ccode>role\u003C/code> attribute should only be used when it cannot be\u000Arepresented by an HTML element with similar semantics.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>role\u003C/code> 属性は、同じような意味の HTML\u000A要素で表現できない時に限って使うべきです。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "The \u003Ccode>\u003Cvar>{text}\u003C/var>\u003C/code> element is preferred",
+            "ja" : "\u003Ccode>\u003Cvar>{text}\u003C/var>\u003C/code> 要素の方が適切です"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "aria:not preferred markup:input" : {
+         "default_level" : "w",
+         "desc" : {
+            "en" : "\u003Cp>The \u003Ccode>role\u003C/code> attribute should only be\u000A    used when it cannot be represented by an HTML \u003Ccode>input\u003C/code>\u000A    element with similar semantics.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>role\u003C/code> 属性は、同じような意味の HTML\u000A    \u003Ccode>input\u003C/code> 要素で表現できない時に限って使うべきです。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "The \u003Ccode>&lt;input type=\u003Cvar>{text}\u003C/var>&gt;\u003C/code> element is preferred",
+            "ja" : "\u003Ccode>&lt;input type=\u003Cvar>{text}\u003C/var>&gt;\u003C/code> 要素の方が適切です"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "aria:not preferred markup:math" : {
+         "default_level" : "w",
+         "desc" : {
+            "en" : "\u003Cp>The \u003Ccode>role\u003C/code> attribute should only be\u000A    used when it cannot be represented by a MathML\u000A    \u003Ccode>math\u003C/code> element.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>role\u003C/code> 属性は、 MathML \u003Ccode>math\u003C/code>\u000A    要素で表現できない時に限って使うべきです。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "The \u003Ccode>math\u003C/code> element is preferred",
+            "ja" : "\u003Ccode>math\u003C/code> 要素の方が適切です"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "aria:not preferred markup:omit" : {
+         "default_level" : "w",
+         "desc" : {
+            "en" : "\u003Cp>Certain kinds of ARIA attributes are redundant with native \u000AHTML or SVG elements.  It should be omitted.\u003C/p>",
+            "ja" : "\u003Cp>いくつかの ARIA の属性は本来の HTML や SVG\u000Aの要素と冗長です。省略するべきです。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "This is redundant",
+            "ja" : "これは冗長です"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "aria:not preferred markup:role" : {
+         "default_level" : "w",
+         "desc" : {
+            "en" : "\u003Cp>The \u003Ccode>presentation\u003C/code> role is historical;\u000Athe \u003Ccode>none\u003C/code> role should be used.\u003C/p>",
+            "ja" : "\u003Cp>役割 \u003Ccode>presentation\u003C/code> は古いものです。\u000A役割 \u003Ccode>none\u003C/code> を使うべきです。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "The role \u003Ccode>\u003Cvar>{text}\u003C/var>\u003C/code> is preferred",
+            "ja" : "役割 \u003Ccode>\u003Cvar>{text}\u003C/var>\u003C/code> の方が適切です"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "aria:not preferred markup:textbox" : {
+         "default_level" : "w",
+         "desc" : {
+            "en" : "\u003Cp>The \u003Ccode>role\u003C/code> attribute should only be\u000A    used when it cannot be represented by an HTML\u000A    \u003Ccode>&lt;input type=text&gt;\u003C/code> or \u003Ccode>textarea\u003C/code> element.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>role\u003C/code> 属性は、 HTML\u000A    \u003Ccode>&lt;input type=text&gt;\u003C/code> 要素や \u003Ccode>textarea\u003C/code>\u000A    要素で表現できない時に限って使うべきです。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "The \u003Ccode>&lt;input type=text&gt;\u003C/code> or \u003Ccode>textarea\u003C/code>\u000Aelement is preferred",
+            "ja" : "\u003Ccode>&lt;input type=text&gt;\u003C/code> や \u003Ccode>textarea\u003C/code>\u000A要素の方が適切です"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "aria:not preferred markup:th" : {
+         "default_level" : "w",
+         "desc" : {
+            "en" : "\u003Cp>The \u003Ccode>role\u003C/code> attribute should only be\u000A    used when it cannot be represented by an HTML \u003Ccode>th\u003C/code>\u000A    element with a \u003Ccode>scope\u003C/code> attribute.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>role\u003C/code> 属性は、 HTML\u000A    \u003Ccode>th\u003C/code> 要素と \u003Ccode>scope\u003C/code> \u000A    属性で表現できない時に限って使うべきです。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "The \u003Ccode>&lt;th \u003Cvar>{text}\u003C/var>&gt;\u003C/code> element is preferred",
+            "ja" : "\u003Ccode>&lt;th scope=\u003Cvar>{text}\u003C/var>&gt;\u003C/code> の方が適切です"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "aria:not preferred markup:title" : {
+         "default_level" : "w",
+         "desc" : {
+            "en" : "\u003Cp>The \u003Ccode>role\u003C/code> attribute should only be\u000A    used when it cannot be represented by an HTML \u003Ccode>title\u003C/code>\u000A    attribute or an SVG \u003Ccode>title\u003C/code> element.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>role\u003C/code> 属性は、 HTML\u000A    \u003Ccode>title\u003C/code> 属性や SVG \u003Ccode>title\u003C/code>\u000A    要素で表現できない時に限って使うべきです。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "The \u003Ccode>title\u003C/code> attribute is preferred",
+            "ja" : "\u003Ccode>title\u003C/code> 属性の方が適切です"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "character not allowed:dl" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>In a \u003Ccode>dl\u003C/code> element, only \u003Ccode>dt\u003C/code>,\u000A\u003Ccode>dd\u003C/code>, \u003Ccode>div\u003C/code>, \u003Ccode>script\u003C/code>, and\u000A\u003Ccode>template\u003C/code> elements are allowed.\u000A\u000A\u003C/p>\u003Cp>In a \u003Ccode>div\u003C/code> element that is a child of a \u003Ccode>dl\u003C/code>\u000Aelement, only \u003Ccode>dt\u003C/code>, \u003Ccode>dd\u003C/code>, \u003Ccode>script\u003C/code>,\u000Aand \u003Ccode>template\u003C/code> elements are allowed.\u000A\u000A\u003C/p>\u003Cp>Any text data in the list must be placed within a \u003Ccode>dt\u003C/code>\u000Aor \u003Ccode>dd\u003C/code> element.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>dl\u003C/code> 要素では、 \u003Ccode>dt\u003C/code>,\u000A\u003Ccode>dd\u003C/code>, \u003Ccode>div\u003C/code>, \u003Ccode>script\u003C/code>,\u000A\u003Ccode>template\u003C/code> の各要素だけが使えます。\u000A\u000A\u003C/p>\u003Cp>\u003Ccode>dl\u003C/code> 要素の子供の \u003Ccode>div\u003C/code> 要素では、\u000A\u003Ccode>dt\u003C/code>, \u003Ccode>dd\u003C/code>, \u003Ccode>script\u003C/code>,\u000A\u003Ccode>template\u003C/code> の各要素だけが使えます。\u000A\u000A\u003C/p>\u003Cp>リスト内に文字データがある時は、\u000A\u003Ccode>dt\u003C/code> 要素か \u003Ccode>dd\u003C/code> 要素の中に入れる必要があります。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "There is a text in a \u003Ccode>dl\u003C/code> element",
+            "ja" : "\u003Ccode>dl\u003C/code> 要素内にテキストがあります"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
       "control name:isindex" : {
          "default_level" : "m",
          "desc" : {
@@ -15,6 +180,66 @@
             "Web::HTML::Validator" : 1
          }
       },
+      "dl:div:mixed" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>In a \u003Ccode>dl\u003C/code> element, all list items must be included\u000Aeither directly by \u003Ccode>dt\u003C/code> and \u003Ccode>dd\u003C/code> element\u000Achildren or indirectly by \u003Ccode>div\u003C/code> element children.  They\u000Acannot be mixed.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>dl\u003C/code> 要素内では、すべての項目を\u000A\u003Ccode>dt\u003C/code> 要素と \u003Ccode>dd\u003C/code> 要素で直接記述するか、\u000A\u003Ccode>div\u003C/code> 要素で間接的に含めるかのどちらかとしなければいけません。\u000A2つの方法を混合することはできません。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "There are \u003Ccode>div\u003C/code> and non-\u003Ccode>div\u003C/code> children",
+            "ja" : "\u003Ccode>div\u003C/code> 要素とそうでない要素の両方があります"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "dl:div:second dt" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>In a \u003Ccode>div\u003C/code> element, there must be only one set of name\u000A(\u003Ccode>dt\u003C/code>) and value (\u003Ccode>dd\u003C/code>) pair.  To represent\u000Amultiple name/value groups, use multiple \u003Ccode>div\u003C/code> elements.\u003C/p>",
+            "ja" : "\u003Cp>1つの \u003Ccode>div\u003C/code> 要素には1組の\u000A名前 (\u003Ccode>dt\u003C/code>) と値 (\u003Ccode>dd\u003C/code>) の組しか含められません。\u000A複数の名前と値の組を表したい時は、\u000A複数の \u003Ccode>div\u003C/code> 要素に分ける必要があります。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "There are multiple \u003Ccode>dt\u003C/code> element groups",
+            "ja" : "\u003Ccode>dt\u003C/code> 要素が複数組あります"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "dl:last dd missing" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>A \u003Ccode>dt\u003C/code> element must be followed by one or more\u000A\u003Ccode>dd\u003C/code> element.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>dt\u003C/code> 要素の後には1つ以上の \u003Ccode>dd\u003C/code>\u000A要素が必要です。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "There is no \u003Ccode>dd\u003C/code> element at the last of this element",
+            "ja" : "この要素の末尾に \u003Ccode>dd\u003C/code> 要素がありません"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "dl:no div" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>In a \u003Ccode>dl\u003C/code> element, all list items must be included\u000Aeither directly by \u003Ccode>dt\u003C/code> and \u003Ccode>dd\u003C/code> element\u000Achildren or indirectly by \u003Ccode>div\u003C/code> element children.  They\u000Acannot be mixed.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>dl\u003C/code> 要素内では、すべての項目を\u000A\u003Ccode>dt\u003C/code> 要素と \u003Ccode>dd\u003C/code> 要素で直接記述するか、\u000A\u003Ccode>div\u003C/code> 要素で間接的に含めるかのどちらかとしなければいけません。\u000A2つの方法を混合することはできません。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "There is no \u003Ccode>div\u003C/code> element wrapper",
+            "ja" : "\u003Ccode>div\u003C/code> 要素で包まれていません"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
       "duplicate slot name" : {
          "default_level" : "w",
          "desc" : {
@@ -25,6 +250,21 @@
          "message" : {
             "en" : "The slot name is also assigned to another slot",
             "ja" : "このスロット名は他のスロットでも使われています"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "element not allowed:dl" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>In a \u003Ccode>dl\u003C/code> element, only \u003Ccode>dt\u003C/code>,\u000A\u003Ccode>dd\u003C/code>, \u003Ccode>div\u003C/code>, \u003Ccode>script\u003C/code>, and\u000A\u003Ccode>template\u003C/code> elements are allowed.\u000A\u000A\u003C/p>\u003Cp>In a \u003Ccode>div\u003C/code> element that is a child of a \u003Ccode>dl\u003C/code>\u000Aelement, only \u003Ccode>dt\u003C/code>, \u003Ccode>dd\u003C/code>, \u003Ccode>script\u003C/code>,\u000Aand \u003Ccode>template\u003C/code> elements are allowed.\u000A\u000A\u003C/p>\u003Cp>Any other element in the list must be placed within a\u000A\u003Ccode>dt\u003C/code> or \u003Ccode>dd\u003C/code> element.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>dl\u003C/code> 要素では、 \u003Ccode>dt\u003C/code>,\u000A\u003Ccode>dd\u003C/code>, \u003Ccode>div\u003C/code>, \u003Ccode>script\u003C/code>,\u000A\u003Ccode>template\u003C/code> の各要素だけが使えます。\u000A\u000A\u003C/p>\u003Cp>\u003Ccode>dl\u003C/code> 要素の子供の \u003Ccode>div\u003C/code> 要素では、\u000A\u003Ccode>dt\u003C/code>, \u003Ccode>dd\u003C/code>, \u003Ccode>script\u003C/code>,\u000A\u003Ccode>template\u003C/code> の各要素だけが使えます。\u000A\u000A\u003C/p>\u003Cp>リスト内にその他の要素がある時は、\u000A\u003Ccode>dt\u003C/code> 要素か \u003Ccode>dd\u003C/code> 要素の中に入れる必要があります。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "There is an element not allowed in a \u003Ccode>dl\u003C/code> element",
+            "ja" : "\u003Ccode>dl\u003C/code> 要素内で認められない要素があります"
          },
          "modules" : {
             "Web::HTML::Validator" : 1
@@ -60,7 +300,7 @@
             "Web::HTML::Validator" : 1
          }
       },
-      "link:as:not preload" : {
+      "link:ignored as" : {
          "default_level" : "m",
          "desc" : {
             "en" : "\u003Cp>When the \u003Ccode>as\u003C/code> attribute is specified, the\u000A\u003Ccode>link\u003C/code> element's \u003Ccode>rel\u003C/code> attribute must contain a\u000Alink type keyword \u003Ccode>preload\u003C/code>.  Otherwise the \u003Ccode>as\u003C/code>\u000Aattribute is ignored.\u003C/p>",
@@ -70,6 +310,96 @@
          "message" : {
             "en" : "The \u003Ccode>as\u003C/code> attribute is specified to a \u003Ccode>link\u003C/code>\u000Aelement with no \u003Ccode>preload\u003C/code> link type",
             "ja" : "リンク型 \u003Ccode>preload\u003C/code> の指定されていない \u003Ccode>link\u003C/code>\u000A要素に \u003Ccode>as\u003C/code> 属性が指定されています"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "link:ignored color" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>When the \u003Ccode>color\u003C/code> attribute is specified, the\u000A\u003Ccode>link\u003C/code> element's \u003Ccode>rel\u003C/code> attribute must contain a\u000Alink type keyword \u003Ccode>mask-icon\u003C/code>.\u000AOtherwise the \u003Ccode>color\u003C/code> attribute is ignored.\u003C/p>",
+            "ja" : "\u003Ccode>link\u003C/code> 要素に \u003Ccode>color\u003C/code> を指定する時は、\u000A\u003Ccode>rel\u003C/code> 属性にリンク型 \u003Ccode>mask-icon\u003C/code>\u000Aを指定しなければいけません。そうでなければ、 \u003Ccode>color\u003C/code>\u000A属性は無視されます。"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "The \u003Ccode>color\u003C/code> attribute is specified to a \u003Ccode>link\u003C/code>\u000Aelement with no \u003Ccode>mask-icon\u003C/code> link type",
+            "ja" : "リンク型 \u003Ccode>mask-icon\u003C/code> の指定されていない \u003Ccode>link\u003C/code>\u000A要素に \u003Ccode>color\u003C/code> 属性が指定されています"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "link:ignored integrity" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>When the \u003Ccode>integrity\u003C/code> attribute is specified, the\u000A\u003Ccode>link\u003C/code> element's \u003Ccode>rel\u003C/code> attribute must contain a\u000Alink type keyword \u003Ccode>stylesheet\u003C/code>.\u000AOtherwise the \u003Ccode>integrity\u003C/code> attribute is ignored.\u003C/p>",
+            "ja" : "\u003Ccode>link\u003C/code> 要素に \u003Ccode>integrity\u003C/code> を指定する時は、\u000A\u003Ccode>rel\u003C/code> 属性にリンク型 \u003Ccode>stylesheet\u003C/code>\u000Aを指定しなければいけません。そうでなければ、 \u003Ccode>integrity\u003C/code>\u000A属性は無視されます。"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "The \u003Ccode>integrity\u003C/code> attribute is specified to a \u003Ccode>link\u003C/code>\u000Aelement with no \u003Ccode>stylesheet\u003C/code> link type",
+            "ja" : "リンク型 \u003Ccode>stylesheet\u003C/code> の指定されていない \u003Ccode>link\u003C/code>\u000A要素に \u003Ccode>integrity\u003C/code> 属性が指定されています"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "link:ignored scope" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>When the \u003Ccode>scope\u003C/code> attribute is specified, the\u000A\u003Ccode>link\u003C/code> element's \u003Ccode>rel\u003C/code> attribute must contain a\u000Alink type keyword \u003Ccode>serviceworker\u003C/code>.\u000AOtherwise the \u003Ccode>scope\u003C/code> attribute is ignored.\u003C/p>",
+            "ja" : "\u003Ccode>link\u003C/code> 要素に \u003Ccode>scope\u003C/code> を指定する時は、\u000A\u003Ccode>rel\u003C/code> 属性にリンク型 \u003Ccode>serviceworker\u003C/code>\u000Aを指定しなければいけません。そうでなければ、 \u003Ccode>scope\u003C/code>\u000A属性は無視されます。"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "The \u003Ccode>scope\u003C/code> attribute is specified to a \u003Ccode>link\u003C/code>\u000Aelement with no \u003Ccode>serviceworker\u003C/code> link type",
+            "ja" : "リンク型 \u003Ccode>serviceworker\u003C/code> の指定されていない \u003Ccode>link\u003C/code>\u000A要素に \u003Ccode>scope\u003C/code> 属性が指定されています"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "link:ignored sizes" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>When the \u003Ccode>sizes\u003C/code> attribute is specified, the\u000A\u003Ccode>link\u003C/code> element's \u003Ccode>rel\u003C/code> attribute must contain a\u000Alink type keyword \u003Ccode>icon\u003C/code> or \u003Ccode>apple-touch-icon\u003C/code>.\u000AOtherwise the \u003Ccode>sizes\u003C/code> attribute is ignored.\u003C/p>",
+            "ja" : "\u003Ccode>link\u003C/code> 要素に \u003Ccode>sizes\u003C/code> を指定する時は、\u000A\u003Ccode>rel\u003C/code> 属性にリンク型 \u003Ccode>icon\u003C/code> か\u000A\u003Ccode>apple-touch-icon\u003C/code>\u000Aを指定しなければいけません。そうでなければ、 \u003Ccode>sizes\u003C/code>\u000A属性は無視されます。"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "The \u003Ccode>sizes\u003C/code> attribute is specified to a \u003Ccode>link\u003C/code>\u000Aelement with no \u003Ccode>icon\u003C/code> link type",
+            "ja" : "リンク型 \u003Ccode>icon\u003C/code> の指定されていない \u003Ccode>link\u003C/code>\u000A要素に \u003Ccode>sizes\u003C/code> 属性が指定されています"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "link:ignored updateviacache" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>When the \u003Ccode>updateviacache\u003C/code> attribute is specified, the\u000A\u003Ccode>link\u003C/code> element's \u003Ccode>rel\u003C/code> attribute must contain a\u000Alink type keyword \u003Ccode>serviceworker\u003C/code>.\u000AOtherwise the \u003Ccode>updateviacache\u003C/code> attribute is ignored.\u003C/p>",
+            "ja" : "\u003Ccode>link\u003C/code> 要素に \u003Ccode>updateviacache\u003C/code> を指定する時は、\u000A\u003Ccode>rel\u003C/code> 属性にリンク型 \u003Ccode>serviceworker\u003C/code>\u000Aを指定しなければいけません。そうでなければ、 \u003Ccode>updateviacache\u003C/code>\u000A属性は無視されます。"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "The \u003Ccode>updateviacache\u003C/code> attribute is specified to a \u003Ccode>link\u003C/code>\u000Aelement with no \u003Ccode>serviceworker\u003C/code> link type",
+            "ja" : "リンク型 \u003Ccode>serviceworker\u003C/code> の指定されていない \u003Ccode>link\u003C/code>\u000A要素に \u003Ccode>updateviacache\u003C/code> 属性が指定されています"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "link:ignored workertype" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>When the \u003Ccode>workertype\u003C/code> attribute is specified, the\u000A\u003Ccode>link\u003C/code> element's \u003Ccode>rel\u003C/code> attribute must contain a\u000Alink type keyword \u003Ccode>serviceworker\u003C/code>.\u000AOtherwise the \u003Ccode>workertype\u003C/code> attribute is ignored.\u003C/p>",
+            "ja" : "\u003Ccode>link\u003C/code> 要素に \u003Ccode>workertype\u003C/code> を指定する時は、\u000A\u003Ccode>rel\u003C/code> 属性にリンク型 \u003Ccode>serviceworker\u003C/code>\u000Aを指定しなければいけません。そうでなければ、 \u003Ccode>workertype\u003C/code>\u000A属性は無視されます。"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "The \u003Ccode>workertype\u003C/code> attribute is specified to a \u003Ccode>link\u003C/code>\u000Aelement with no \u003Ccode>serviceworker\u003C/code> link type",
+            "ja" : "リンク型 \u003Ccode>serviceworker\u003C/code> の指定されていない \u003Ccode>link\u003C/code>\u000A要素に \u003Ccode>workertype\u003C/code> 属性が指定されています"
          },
          "modules" : {
             "Web::HTML::Validator" : 1
@@ -90,16 +420,52 @@
             "Web::HTML::Validator" : 1
          }
       },
-      "link:sizes:not icon" : {
-         "default_level" : "m",
+      "non external resource crossorigin" : {
+         "default_level" : "w",
          "desc" : {
-            "en" : "\u003Cp>When the \u003Ccode>sizes\u003C/code> attribute is specified, the\u000A\u003Ccode>link\u003C/code> element's \u003Ccode>rel\u003C/code> attribute must contain a\u000Alink type keyword \u003Ccode>icon\u003C/code>.  Otherwise the \u003Ccode>sizes\u003C/code>\u000Aattribute is ignored.\u003C/p>",
-            "ja" : "\u003Ccode>link\u003C/code> 要素に \u003Ccode>sizes\u003C/code> を指定する時は、\u000A\u003Ccode>rel\u003C/code> 属性にリンク型 \u003Ccode>icon\u003C/code>\u000Aを指定しなければいけません。そうでなければ、 \u003Ccode>sizes\u003C/code>\u000A属性は無視されます。"
+            "en" : "\u003Cp>The \u003Ccode>crossorigin\u003C/code> attribute of the \u003Ccode>link\u003C/code>\u000Aelement is effective only when the element defines an external\u000Aresource link (e.g. when its \u003Ccode>rel\u003C/code> attribute is\u000A\u003Ccode>stylesheet\u003C/code>.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>link\u003C/code> 要素の \u003Ccode>crossorigin\u003C/code>\u000A属性に効果があるのは、外部資源リンクの時\u000A(\u003Ccode>rel\u003C/code> 属性が \u003Ccode>stylesheet\u003C/code> の時など) だけです。\u003C/p>"
          },
          "layer" : "content-model",
          "message" : {
-            "en" : "The \u003Ccode>sizes\u003C/code> attribute is specified to a \u003Ccode>link\u003C/code>\u000Aelement with no \u003Ccode>icon\u003C/code> link type",
-            "ja" : "リンク型 \u003Ccode>icon\u003C/code> の指定されていない \u003Ccode>link\u003C/code>\u000A要素に \u003Ccode>sizes\u003C/code> 属性が指定されています"
+            "en" : "The \u003Ccode>crossorigin\u003C/code> attribute has no effect",
+            "ja" : "この \u003Ccode>crossorigin\u003C/code> 属性には意味がありません"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         },
+         "targets" : {
+            "attr" : 1
+         }
+      },
+      "non external resource nonce" : {
+         "default_level" : "w",
+         "desc" : {
+            "en" : "\u003Cp>The \u003Ccode>nonce\u003C/code> attribute of the \u003Ccode>link\u003C/code>\u000Aelement is effective only when the element defines an external\u000Aresource link (e.g. when its \u003Ccode>rel\u003C/code> attribute is\u000A\u003Ccode>stylesheet\u003C/code>.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>link\u003C/code> 要素の \u003Ccode>nonce\u003C/code>\u000A属性に効果があるのは、外部資源リンクの時\u000A(\u003Ccode>rel\u003C/code> 属性が \u003Ccode>stylesheet\u003C/code> の時など) だけです。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "The \u003Ccode>nonce\u003C/code> attribute has no effect",
+            "ja" : "この \u003Ccode>nonce\u003C/code> 属性には意味がありません"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         },
+         "targets" : {
+            "attr" : 1
+         }
+      },
+      "non-utf-8 character encoding" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>The character encoding of an HTML document must be UTF-8.  No other\u000Aencoding is allowed.\u003C/p>",
+            "ja" : "\u003Cp>HTML 文書の文字符号化は UTF-8 でなければなりません。\u000Aそれ以外は認められていません。\u003C/p>"
+         },
+         "layer" : "charencoding",
+         "message" : {
+            "en" : "The document's character encoding is not UTF-8",
+            "ja" : "文書の文字符号化が UTF-8 ではありません"
          },
          "modules" : {
             "Web::HTML::Validator" : 1
@@ -115,6 +481,84 @@
          "message" : {
             "en" : "The element name is not a valid custom element name",
             "ja" : "要素名が妥当なカスタム要素名ではありません"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "ps element missing:dd" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>A \u003Ccode>dt\u003C/code> element must be followed by one or more\u000A\u003Ccode>dd\u003C/code> element.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>dt\u003C/code> 要素の後には1つ以上の \u003Ccode>dd\u003C/code>\u000A要素が必要です。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "There is no \u003Ccode>dd\u003C/code> element before this element",
+            "ja" : "この要素の前に \u003Ccode>dd\u003C/code> 要素がありません"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "ps element missing:dt" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>There must be a \u003Ccode>dt\u003C/code> element before a \u003Ccode>dd\u003C/code>\u000Aelement.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>dd\u003C/code> 要素の前には \u003Ccode>dt\u003C/code> 要素が必要です。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "There is no \u003Ccode>dt\u003C/code> element before this element",
+            "ja" : "この要素の前に \u003Ccode>dt\u003C/code> 要素がありません"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "sandbox duplicate allow-top-navigation" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>Only one of keywords \u003Ccode>allow-top-navigation\u003C/code> and\u000A\u003Ccode>allow-top-navigation-by-user-activation\u003C/code> can be specified\u000Ain a \u003Ccode>sandbox\u003C/code> attribute.  If both keywords are specified,\u000A\u003Ccode>allow-top-navigation-by-user-activation\u003C/code> is ignored.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>sandbox\u003C/code> 属性に \u003Ccode>allow-top-navigation\u003C/code> と\u000A\u003Ccode>allow-top-navigation-by-user-activation\u003C/code> \u000Aの両方を指定してはいけません。両方していしても、\u000A\u003Ccode>allow-top-navigation-by-user-activation\u003C/code>\u000Aは無視されます。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "Both \u003Ccode>allow-top-navigation\u003C/code> and\u000A\u003Ccode>allow-top-navigation-by-user-activation\u003C/code> are specified",
+            "ja" : "\u003Ccode>allow-top-navigation\u003C/code> と\u000A\u003Ccode>allow-top-navigation-by-user-activation\u003C/code> \u000Aの両方が指定されています"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "script charset" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>The \u003Ccode>charset\u003C/code> attribute of the \u003Ccode>script\u003C/code>\u000Aelement should not be specified.  Both the document and the script has\u000Ato be encoded in UTF-8, in which case the attribute has no effect.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>script\u003C/code> 要素の \u003Ccode>charset\u003C/code>\u000A属性は指定するべきではありません。文書もスクリプトも UTF-8\u000Aで符号化しなければなりません。その場合 \u003Ccode>charset\u003C/code>\u000A属性には意味がありません。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "The \u003Ccode>charset\u003C/code> attribute is specified",
+            "ja" : "\u003Ccode>charset\u003C/code> 属性が指定されています"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         },
+         "targets" : {
+            "attr" : 1
+         }
+      },
+      "script charset utf-8" : {
+         "default_level" : "s",
+         "desc" : {
+            "en" : "\u003Cp>The \u003Ccode>charset\u003C/code> attribute of the \u003Ccode>script\u003C/code>\u000Aelement should not be specified.  Both the document and the script has\u000Ato be encoded in UTF-8, in which case the attribute has no effect.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>script\u003C/code> 要素の \u003Ccode>charset\u003C/code>\u000A属性は指定するべきではありません。文書もスクリプトも UTF-8\u000Aで符号化しなければなりません。その場合 \u003Ccode>charset\u003C/code>\u000A属性には意味がありません。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "The \u003Ccode>charset\u003C/code> attribute is specified as UTF-8",
+            "ja" : "\u003Ccode>charset\u003C/code> 属性で UTF-8 が指定されています"
          },
          "modules" : {
             "Web::HTML::Validator" : 1
@@ -247,7 +691,7 @@
          }
       },
       "script:ignored async" : {
-         "default_level" : "w",
+         "default_level" : "m",
          "desc" : {
             "en" : "\u003Cp>The \u003Ccode>async\u003C/code> attribute of the \u003Ccode>script\u003C/code> element\u000Ais effective only when the element defines a module script, or when\u000Athe element defines a classic script and has a \u003Ccode>src\u003C/code>\u000Aattribute.\u003C/p>",
             "ja" : "\u003Cp>\u003Ccode>script\u003C/code> 要素の \u003Ccode>defer\u003C/code>\u000A属性に効果があるのは、モジュールスクリプトのときと、\u000A古典スクリプトで \u003Ccode>src\u003C/code> 属性があるときだけです。\u003C/p>"
@@ -301,7 +745,7 @@
          }
       },
       "script:ignored defer" : {
-         "default_level" : "w",
+         "default_level" : "m",
          "desc" : {
             "en" : "\u003Cp>The \u003Ccode>defer\u003C/code> attribute of the \u003Ccode>script\u003C/code>\u000Aelement is effective only when the element defines a classic script,\u000Ahas a \u003Ccode>src\u003C/code> attribute, and does not have any\u000A\u003Ccode>async\u003C/code> attribute.\u003C/p>",
             "ja" : "\u003Cp>\u003Ccode>script\u003C/code> 要素の \u003Ccode>defer\u003C/code>\u000A属性に効果があるのは、古典スクリプトで \u003Ccode>src\u003C/code>\u000A属性があり、 \u003Ccode>async\u003C/code> 属性がないときだけです。\u003C/p>"
@@ -310,6 +754,42 @@
          "message" : {
             "en" : "The \u003Ccode>defer\u003C/code> attribute has no effect",
             "ja" : "この \u003Ccode>defer\u003C/code> 属性には意味がありません"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         },
+         "targets" : {
+            "attr" : 1
+         }
+      },
+      "script:ignored integrity" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>The \u003Ccode>integrity\u003C/code> attribute of the \u003Ccode>script\u003C/code> element\u000Ais effective only when the element defines a classic script and\u000Ahas a \u003Ccode>src\u003C/code> attribute.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>script\u003C/code> 要素の \u003Ccode>integrity\u003C/code>\u000A属性に効果があるのは、\u000A古典スクリプトで \u003Ccode>src\u003C/code> 属性があるときだけです。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "The \u003Ccode>integrity\u003C/code> attribute has no effect",
+            "ja" : "この \u003Ccode>integrity\u003C/code> 属性には意味がありません"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         },
+         "targets" : {
+            "attr" : 1
+         }
+      },
+      "script:ignored nomodule" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>The \u003Ccode>nomodule\u003C/code> attribute of the \u003Ccode>script\u003C/code>\u000Aelement is effective only when the element defines a classic script.\u000AIt can't be used when the element defines a module script or a data\u000Ablock.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>script\u003C/code> 要素の \u003Ccode>nomodule\u003C/code>\u000A属性に効果があるのは、古典スクリプトのときだけです。\u000Aモジュールスクリプトやデータブロックの \u003Ccode>script\u003C/code> \u000A要素には指定できません。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "The \u003Ccode>nomodule\u003C/code> attribute has no effect",
+            "ja" : "この \u003Ccode>nomodule\u003C/code> 属性には意味がありません"
          },
          "modules" : {
             "Web::HTML::Validator" : 1
@@ -370,6 +850,36 @@
          },
          "targets" : {
             "attr" : 1
+         }
+      },
+      "style type" : {
+         "default_level" : "s",
+         "desc" : {
+            "en" : "\u003Cp>The \u003Ccode>type\u003C/code> attribute value of the \u003Ccode>style\u003C/code> element,\u000Aif specified, must be \u003Ccode>text/css\u003C/code>.  (However, it should\u000Abe omitted altogther.)\u003C/p>\u000A\u003Cp>Non-CSS style languages are not supported by Web browsers.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>style\u003C/code> 要素の \u003Ccode>type\u003C/code> 属性の値が指定される場合は、\u000A\u003Ccode>text/css\u003C/code> でなければいけません。 (ただし、\u000A\u003Ccode>type\u003C/code> 属性自体を省略するべきです。)\u003C/p>\u000A\u003Cp>Web ブラウザーは CSS 以外のスタイル言語に対応していません。\u003C/p>"
+         },
+         "layer" : "microsyntax",
+         "message" : {
+            "en" : "The style type is not \u003Ccode>text/css\u003C/code>",
+            "ja" : "スタイルの種別が \u003Ccode>text/css\u003C/code> ではありません"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "style:unclosed cdo" : {
+         "default_level" : "s",
+         "desc" : {
+            "en" : "\u003Cp>In a \u003Ccode>script\u003C/code> element, any\u000A    substring \u003Ccode>&lt;!--\u003C/code> must be closed by corresponding\u000A    substring \u003Ccode>--&gt;\u003C/code>.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>script\u003C/code> 要素の中では、\u000A    \u003Ccode>&lt;!--\u003C/code> には対応する \u003Ccode>--&gt;\u003C/code>\u000A    がなければいけません。\u003C/p>"
+         },
+         "layer" : "microsyntax",
+         "message" : {
+            "en" : "There is no \u003Ccode>--&gt;\u003C/code>",
+            "ja" : "\u003Ccode>--&gt;\u003C/code> がありません"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
          }
       },
       "tabindex:indexed" : {

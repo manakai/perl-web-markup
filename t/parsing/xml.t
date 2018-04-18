@@ -5,7 +5,7 @@ use Path::Class;
 use lib file (__FILE__)->dir->parent->parent->subdir ('lib')->stringify;
 use lib file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'lib')->stringify;
 use lib glob file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'modules', '*', 'lib')->stringify;
-use Encode;
+use Web::Encoding;
 use Test::More;
 use Test::Differences;
 use Test::HTCT::Parser;
@@ -173,7 +173,7 @@ sub _test ($$) {
       if (defined $di) {
         $subparser->di ($di);
         $subparser->parse_bytes_start ('utf-8', $parser);
-        $subparser->parse_bytes_feed (encode 'utf-8', $ip->[$di]->{data});
+        $subparser->parse_bytes_feed (encode_web_utf8 $ip->[$di]->{data});
         $subparser->parse_bytes_end;
       } else {
         $parser->cant_expand_extentref ($data, $subparser);
@@ -190,7 +190,7 @@ sub _test ($$) {
     });
 
     $p->parse_bytes_start (undef, $doc);
-    $p->parse_bytes_feed (encode 'utf-8', $ip->[$main_di]->{data});
+    $p->parse_bytes_feed (encode_web_utf8 $ip->[$main_di]->{data});
     $p->parse_bytes_end;
   } elsif (not defined $test->{element}) {
     $p->onparsed (sub {
