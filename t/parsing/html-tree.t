@@ -73,8 +73,8 @@ my $dom_class = $ENV{DOM_IMPL_CLASS} || 'Web::DOM::Implementation';
 eval qq{ require $dom_class } or die $@;
 my $dom = $dom_class->new;
 
-sub _test ($) {
-  my $test = shift;
+sub _test ($$) {
+  my ($test, $opts) = @_;
   my $data = $test->{data}->[0];
 
   if ($test->{skip}->[1]->[0]) {
@@ -191,11 +191,15 @@ for (@FILES) {
     document => {is_prefixed => 1},
     'document-fragment' => {is_prefixed => 1},
   }, sub {
-    my $test = $_[0];
+    my ($test, $opts) = @_;
     test {
-      _test ($test);
+      _test ($test, $opts);
       $_[0]->done;
-    } n => 4, name => [$file_name, Data::Dumper::qquote $test->{data}->[0]];
+    } n => 4, name => [
+      $file_name, 
+      $opts->{line_number},
+      Data::Dumper::qquote $test->{data}->[0],
+    ];
   });
 }
 
