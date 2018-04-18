@@ -64,7 +64,7 @@ t 0 1 13 14
 
 <!DOCTYPE>a
 t 0 10 11
-e 9 9
+e 9
 
 <!DOCTYPE a public ">">
 t 0 21 23
@@ -230,7 +230,7 @@ for (grep { length } split /\n\n+/, $TestData) {
     $tokenizer->parse_chars_end;
 
     eq_or_diff [map { [$_->{di}, $_->{index}] } @{$tokenizer->{_errors}}],
-        [map { [$di, $_] } @$ErrorIndexes];
+        [map { [$di, $_] } @$ErrorIndexes], 'errors';
     eq_or_diff [map {
       [$_->{di}, $_->{index}],
       map {
@@ -238,7 +238,7 @@ for (grep { length } split /\n\n+/, $TestData) {
         map { [$_->[1], $_->[2]] } @{$_->{value}};
       } @{$_->{attr_list}};
     } @{$tokenizer->{_tokens}}],
-        [map { [$di, $_] } @$TokenIndexes];
+        [map { [$di, $_] } @$TokenIndexes], 'tokens';
 
     #use Data::Dumper;
     #warn Dumper $tokenizer->{_errors};
