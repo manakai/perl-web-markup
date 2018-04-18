@@ -1098,8 +1098,8 @@ $TagName2Group->{q@textarea@} = 1;
         sub HTML_NS_ELS () { 1 }
       
 
-        ## HTML:applet,HTML:audio,HTML:style,HTML:video
-        sub APP_AUD_STY_VID_ELS () { 2 }
+        ## HTML:audio,HTML:style,HTML:video
+        sub AUD_STY_VID_ELS () { 2 }
       
 
         ## HTML:button,HTML:fieldset,HTML:input,HTML:output,HTML:select
@@ -1114,8 +1114,7 @@ $TagName2Group->{q@textarea@} = 1;
         sub OBJ_TEX_ELS () { 16 }
       
 $Element2Type->{(HTMLNS)}->{q@*@} = HTML_NS_ELS;
-$Element2Type->{(HTMLNS)}->{q@applet@} = HTML_NS_ELS | APP_AUD_STY_VID_ELS;
-$Element2Type->{(HTMLNS)}->{q@audio@} = HTML_NS_ELS | APP_AUD_STY_VID_ELS;
+$Element2Type->{(HTMLNS)}->{q@audio@} = HTML_NS_ELS | AUD_STY_VID_ELS;
 $Element2Type->{(HTMLNS)}->{q@button@} = HTML_NS_ELS | BUT_FIE_INP_OUT_SEL_ELS;
 $Element2Type->{(HTMLNS)}->{q@fieldset@} = HTML_NS_ELS | BUT_FIE_INP_OUT_SEL_ELS;
 sub HEAD_EL () { HTML_NS_ELS | 32 } $Element2Type->{(HTMLNS)}->{q@head@} = HEAD_EL;
@@ -1125,11 +1124,11 @@ $Element2Type->{(HTMLNS)}->{q@input@} = HTML_NS_ELS | BUT_FIE_INP_OUT_SEL_ELS;
 $Element2Type->{(HTMLNS)}->{q@object@} = HTML_NS_ELS | OBJ_TEX_ELS;
 $Element2Type->{(HTMLNS)}->{q@output@} = HTML_NS_ELS | BUT_FIE_INP_OUT_SEL_ELS;
 sub SELECT_EL () { HTML_NS_ELS | BUT_FIE_INP_OUT_SEL_ELS } $Element2Type->{(HTMLNS)}->{q@select@} = SELECT_EL;
-$Element2Type->{(HTMLNS)}->{q@style@} = HTML_NS_ELS | APP_AUD_STY_VID_ELS;
+$Element2Type->{(HTMLNS)}->{q@style@} = HTML_NS_ELS | AUD_STY_VID_ELS;
 sub TABLE_EL () { HTML_NS_ELS | 96 } $Element2Type->{(HTMLNS)}->{q@table@} = TABLE_EL;
 sub TEMPLATE_EL () { HTML_NS_ELS | 128 } $Element2Type->{(HTMLNS)}->{q@template@} = TEMPLATE_EL;
 $Element2Type->{(HTMLNS)}->{q@textarea@} = HTML_NS_ELS | OBJ_TEX_ELS;
-$Element2Type->{(HTMLNS)}->{q@video@} = HTML_NS_ELS | APP_AUD_STY_VID_ELS;
+$Element2Type->{(HTMLNS)}->{q@video@} = HTML_NS_ELS | AUD_STY_VID_ELS;
 sub AFTER_DOCTYPE_IM () { 1 }
 sub AFTER_ROOT_ELEMENT_IM () { 2 }
 sub BEFORE_DOCTYPE_IM () { 3 }
@@ -8910,10 +8909,6 @@ $State = B_DOCTYPE_NAME_STATE;
 $Token->{q<name>} = q@�@;
 $State = DOCTYPE_NAME_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
-
-            push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
-                            di => $DI, index => $Offset + (pos $Input) - 1};
-          
 
             push @$Errors, {type => 'no DOCTYPE name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -18517,6 +18512,17 @@ $StateActions->[A_DOCTYPE_PUBLIC_ID_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \])/gcs) {
 $State = BETWEEN_DOCTYPE_PUBLIC_AND_SYSTEM_IDS_STATE;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Token->{q<force_quirks_flag>} = 1;
+$State = BOGUS_DOCTYPE_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 } elsif ($Input =~ /\G([\"])/gcs) {
 
             push @$Errors, {type => 'no space before literal', level => 'm',
@@ -18580,6 +18586,17 @@ $StateActions->[A_DOCTYPE_PUBLIC_KWD_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \])/gcs) {
 $State = B_DOCTYPE_PUBLIC_ID_STATE;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Token->{q<force_quirks_flag>} = 1;
+$State = BOGUS_DOCTYPE_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 } elsif ($Input =~ /\G([\"])/gcs) {
 
             push @$Errors, {type => 'no space before literal', level => 'm',
@@ -18653,6 +18670,16 @@ $Token->{q<has_internal_subset_flag>} = 1;
 $DTDMode = q{internal subset};
 push @$Tokens, $Token;
 return 1 if $Token->{type} == DOCTYPE_TOKEN;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_DOCTYPE_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
@@ -18683,6 +18710,17 @@ $StateActions->[A_DOCTYPE_SYSTEM_KWD_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \])/gcs) {
 $State = B_DOCTYPE_SYSTEM_ID_STATE;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Token->{q<force_quirks_flag>} = 1;
+$State = BOGUS_DOCTYPE_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 } elsif ($Input =~ /\G([\"])/gcs) {
 
             push @$Errors, {type => 'no space before literal', level => 'm',
@@ -46987,6 +47025,17 @@ $State = DOCTYPE_PUBLIC_ID__DQ__STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 $Token->{q<public_identifier>} = '';
 $State = DOCTYPE_PUBLIC_ID__SQ__STATE;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Token->{q<force_quirks_flag>} = 1;
+$State = BOGUS_DOCTYPE_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'no DOCTYPE literal', level => 'm',
@@ -47042,6 +47091,17 @@ $State = DOCTYPE_SYSTEM_ID__DQ__STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 $Token->{q<system_identifier>} = '';
 $State = DOCTYPE_SYSTEM_ID__SQ__STATE;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Token->{q<force_quirks_flag>} = 1;
+$State = BOGUS_DOCTYPE_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'no DOCTYPE literal', level => 'm',
@@ -57991,6 +58051,17 @@ $State = DOCTYPE_SYSTEM_ID__DQ__STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 $Token->{q<system_identifier>} = '';
 $State = DOCTYPE_SYSTEM_ID__SQ__STATE;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Token->{q<force_quirks_flag>} = 1;
+$State = BOGUS_DOCTYPE_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'no DOCTYPE literal', level => 'm',
@@ -59541,7 +59612,7 @@ return 1;
 return 0;
 };
 $StateActions->[BOGUS_DOCTYPE_STATE] = sub {
-if ($Input =~ /\G([^\>\[]+)/gcs) {
+if ($Input =~ /\G([^\>\[\ ]+)/gcs) {
 
 } elsif ($Input =~ /\G([\>])/gcs) {
 $State = DATA_STATE;
@@ -59553,6 +59624,11 @@ $Token->{q<has_internal_subset_flag>} = 1;
 $DTDMode = q{internal subset};
 push @$Tokens, $Token;
 return 1 if $Token->{type} == DOCTYPE_TOKEN;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 } else {
 if ($EOF) {
 push @$Tokens, $Token;
@@ -77653,14 +77729,14 @@ sub dom_tree ($$) {
       }
 
     } elsif ($op->[0] eq 'popped') {
-      push @$Callbacks, [$self->onelementspopped, [map { $nodes->[$_->{id}] } grep { $_->{et} & (APP_AUD_STY_VID_ELS | OBJ_TEX_ELS) } @{$op->[1]}]];
+      push @$Callbacks, [$self->onelementspopped, [map { $nodes->[$_->{id}] } grep { $_->{et} & (AUD_STY_VID_ELS | OBJ_TEX_ELS) } @{$op->[1]}]];
     } elsif ($op->[0] eq 'stop-parsing') {
-      push @$Callbacks, [$self->onelementspopped, [map { $nodes->[$_->{id}] } grep { $_->{et} & (APP_AUD_STY_VID_ELS | OBJ_TEX_ELS) } @$OE]];
+      push @$Callbacks, [$self->onelementspopped, [map { $nodes->[$_->{id}] } grep { $_->{et} & (AUD_STY_VID_ELS | OBJ_TEX_ELS) } @$OE]];
       #@$OE = ();
 
       # XXX stop parsing
     } elsif ($op->[0] eq 'abort') {
-      push @$Callbacks, [$self->onelementspopped, [map { $nodes->[$_->{id}] } grep { $_->{et} & (APP_AUD_STY_VID_ELS | OBJ_TEX_ELS) } @$OE]];
+      push @$Callbacks, [$self->onelementspopped, [map { $nodes->[$_->{id}] } grep { $_->{et} & (AUD_STY_VID_ELS | OBJ_TEX_ELS) } @$OE]];
       #@$OE = ();
 
       # XXX abort

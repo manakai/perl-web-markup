@@ -974,10 +974,6 @@ $Token->{q<name>} = q@�@;
 $State = DOCTYPE_NAME_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-            push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
-                            di => $DI, index => $Offset + (pos $Input) - 1};
-          
-
             push @$Errors, {type => 'no DOCTYPE name', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
@@ -3597,6 +3593,17 @@ $State = A_DOCTYPE_NAME_STATE_P;
 $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = A_DOCTYPE_NAME_STATE_S;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Token->{q<force_quirks_flag>} = 1;
+$State = BOGUS_DOCTYPE_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
@@ -3631,6 +3638,25 @@ $State = A_DOCTYPE_NAME_STATE_PU;
 } elsif ($Input =~ /\G([u])/gcs) {
 $Temp .= $1;
 $State = A_DOCTYPE_NAME_STATE_PU;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Token->{q<force_quirks_flag>} = 1;
+$State = BOGUS_DOCTYPE_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Token->{q<force_quirks_flag>} = 1;
+$State = DATA_STATE;
+push @$Tokens, $Token;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
@@ -3666,6 +3692,25 @@ $State = A_DOCTYPE_NAME_STATE_PUB;
 } elsif ($Input =~ /\G([b])/gcs) {
 $Temp .= $1;
 $State = A_DOCTYPE_NAME_STATE_PUB;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Token->{q<force_quirks_flag>} = 1;
+$State = BOGUS_DOCTYPE_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Token->{q<force_quirks_flag>} = 1;
+$State = DATA_STATE;
+push @$Tokens, $Token;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
@@ -3701,6 +3746,25 @@ $State = A_DOCTYPE_NAME_STATE_PUBL;
 } elsif ($Input =~ /\G([l])/gcs) {
 $Temp .= $1;
 $State = A_DOCTYPE_NAME_STATE_PUBL;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Token->{q<force_quirks_flag>} = 1;
+$State = BOGUS_DOCTYPE_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Token->{q<force_quirks_flag>} = 1;
+$State = DATA_STATE;
+push @$Tokens, $Token;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
@@ -3736,6 +3800,25 @@ $State = A_DOCTYPE_NAME_STATE_PUBLI;
 } elsif ($Input =~ /\G([i])/gcs) {
 $Temp .= $1;
 $State = A_DOCTYPE_NAME_STATE_PUBLI;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Token->{q<force_quirks_flag>} = 1;
+$State = BOGUS_DOCTYPE_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Token->{q<force_quirks_flag>} = 1;
+$State = DATA_STATE;
+push @$Tokens, $Token;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
@@ -3769,6 +3852,25 @@ if ($Input =~ /\G([C])/gcs) {
 $State = A_DOCTYPE_PUBLIC_KWD_STATE;
 } elsif ($Input =~ /\G([c])/gcs) {
 $State = A_DOCTYPE_PUBLIC_KWD_STATE;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Token->{q<force_quirks_flag>} = 1;
+$State = BOGUS_DOCTYPE_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Token->{q<force_quirks_flag>} = 1;
+$State = DATA_STATE;
+push @$Tokens, $Token;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
@@ -3804,6 +3906,25 @@ $State = A_DOCTYPE_NAME_STATE_SY;
 } elsif ($Input =~ /\G([y])/gcs) {
 $Temp .= $1;
 $State = A_DOCTYPE_NAME_STATE_SY;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Token->{q<force_quirks_flag>} = 1;
+$State = BOGUS_DOCTYPE_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Token->{q<force_quirks_flag>} = 1;
+$State = DATA_STATE;
+push @$Tokens, $Token;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
@@ -3839,6 +3960,25 @@ $State = A_DOCTYPE_NAME_STATE_SYS;
 } elsif ($Input =~ /\G([s])/gcs) {
 $Temp .= $1;
 $State = A_DOCTYPE_NAME_STATE_SYS;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Token->{q<force_quirks_flag>} = 1;
+$State = BOGUS_DOCTYPE_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Token->{q<force_quirks_flag>} = 1;
+$State = DATA_STATE;
+push @$Tokens, $Token;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
@@ -3874,6 +4014,25 @@ $State = A_DOCTYPE_NAME_STATE_SYST;
 } elsif ($Input =~ /\G([t])/gcs) {
 $Temp .= $1;
 $State = A_DOCTYPE_NAME_STATE_SYST;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Token->{q<force_quirks_flag>} = 1;
+$State = BOGUS_DOCTYPE_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Token->{q<force_quirks_flag>} = 1;
+$State = DATA_STATE;
+push @$Tokens, $Token;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
@@ -3909,6 +4068,25 @@ $State = A_DOCTYPE_NAME_STATE_SYSTE;
 } elsif ($Input =~ /\G([e])/gcs) {
 $Temp .= $1;
 $State = A_DOCTYPE_NAME_STATE_SYSTE;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Token->{q<force_quirks_flag>} = 1;
+$State = BOGUS_DOCTYPE_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Token->{q<force_quirks_flag>} = 1;
+$State = DATA_STATE;
+push @$Tokens, $Token;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
@@ -3942,6 +4120,25 @@ if ($Input =~ /\G([M])/gcs) {
 $State = A_DOCTYPE_SYSTEM_KWD_STATE;
 } elsif ($Input =~ /\G([m])/gcs) {
 $State = A_DOCTYPE_SYSTEM_KWD_STATE;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Token->{q<force_quirks_flag>} = 1;
+$State = BOGUS_DOCTYPE_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Token->{q<force_quirks_flag>} = 1;
+$State = DATA_STATE;
+push @$Tokens, $Token;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
@@ -3977,6 +4174,17 @@ $State = BETWEEN_DOCTYPE_PUBLIC_AND_SYSTEM_IDS_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 $State = DATA_STATE;
 push @$Tokens, $Token;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Token->{q<force_quirks_flag>} = 1;
+$State = BOGUS_DOCTYPE_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 } elsif ($Input =~ /\G([\"])/gcs) {
 
             push @$Errors, {type => 'no space before literal', level => 'm',
@@ -4022,6 +4230,17 @@ $StateActions->[A_DOCTYPE_PUBLIC_KWD_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \])/gcs) {
 $State = B_DOCTYPE_PUBLIC_ID_STATE;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Token->{q<force_quirks_flag>} = 1;
+$State = BOGUS_DOCTYPE_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 } elsif ($Input =~ /\G([\"])/gcs) {
 
             push @$Errors, {type => 'no space before literal', level => 'm',
@@ -4077,6 +4296,16 @@ if ($Input =~ /\G([\	\\ \
 } elsif ($Input =~ /\G([\>])/gcs) {
 $State = DATA_STATE;
 push @$Tokens, $Token;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_DOCTYPE_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
@@ -4107,6 +4336,17 @@ $StateActions->[A_DOCTYPE_SYSTEM_KWD_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \])/gcs) {
 $State = B_DOCTYPE_SYSTEM_ID_STATE;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Token->{q<force_quirks_flag>} = 1;
+$State = BOGUS_DOCTYPE_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 } elsif ($Input =~ /\G([\"])/gcs) {
 
             push @$Errors, {type => 'no space before literal', level => 'm',
@@ -10362,6 +10602,17 @@ $State = DOCTYPE_PUBLIC_ID__DQ__STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 $Token->{q<public_identifier>} = '';
 $State = DOCTYPE_PUBLIC_ID__SQ__STATE;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Token->{q<force_quirks_flag>} = 1;
+$State = BOGUS_DOCTYPE_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'no DOCTYPE literal', level => 'm',
@@ -10406,6 +10657,17 @@ $State = DOCTYPE_SYSTEM_ID__DQ__STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 $Token->{q<system_identifier>} = '';
 $State = DOCTYPE_SYSTEM_ID__SQ__STATE;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Token->{q<force_quirks_flag>} = 1;
+$State = BOGUS_DOCTYPE_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'no DOCTYPE literal', level => 'm',
@@ -10799,6 +11061,17 @@ $State = DOCTYPE_SYSTEM_ID__SQ__STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 $State = DATA_STATE;
 push @$Tokens, $Token;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Token->{q<force_quirks_flag>} = 1;
+$State = BOGUS_DOCTYPE_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
@@ -10827,11 +11100,16 @@ return 1;
 return 0;
 };
 $StateActions->[BOGUS_DOCTYPE_STATE] = sub {
-if ($Input =~ /\G([^\>]+)/gcs) {
+if ($Input =~ /\G([^\>\ ]+)/gcs) {
 
 } elsif ($Input =~ /\G([\>])/gcs) {
 $State = DATA_STATE;
 push @$Tokens, $Token;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 } else {
 if ($EOF) {
 push @$Tokens, $Token;
@@ -10848,11 +11126,9 @@ return 1;
 return 0;
 };
 $StateActions->[BOGUS_COMMENT_STATE] = sub {
-if ($Input =~ /\G([^\ \\>]+)/gcs) {
+if ($Input =~ /\G([^\\>\ ]+)/gcs) {
 push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
 
-} elsif ($Input =~ /\G([\ ])/gcs) {
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 push @{$Token->{q<data>}}, [q@
 @, $DI, $Offset + (pos $Input) - (length $1) - 0];
@@ -10860,6 +11136,12 @@ $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 $State = DATA_STATE;
 push @$Tokens, $Token;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } else {
 if ($EOF) {
 push @$Tokens, $Token;
@@ -10876,10 +11158,7 @@ return 1;
 return 0;
 };
 $StateActions->[BOGUS_COMMENT_STATE_CR] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-$State = BOGUS_COMMENT_STATE;
-push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
-} elsif ($Input =~ /\G([\
+if ($Input =~ /\G([\
 ])/gcs) {
 $State = BOGUS_COMMENT_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
@@ -10889,6 +11168,13 @@ $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 $State = DATA_STATE;
 push @$Tokens, $Token;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$State = BOGUS_COMMENT_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = BOGUS_COMMENT_STATE;
 push @{$Token->{q<data>}}, [$1, $DI, $Offset + (pos $Input) - (length $1)];
@@ -13274,6 +13560,10 @@ $Token->{q<tag_name>} = $1;
                   di => $DI, index => $AnchoredIndex};
       
 $State = BOGUS_COMMENT_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 $Token->{q<data>} = [[q@�@, $DI, $Offset + (pos $Input) - length $1]];
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -13348,6 +13638,10 @@ $State = MDO_STATE_D;
                   di => $DI, index => $AnchoredIndex};
       
 $State = BOGUS_COMMENT_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 $Token->{q<data>} = [[q@�@, $DI, $Offset + (pos $Input) - length $1]];
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -13429,6 +13723,10 @@ $State = COMMENT_START_STATE;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -13515,6 +13813,10 @@ $State = MDO_STATE_DO;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -13601,6 +13903,10 @@ $State = MDO_STATE_DOC;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -13687,6 +13993,10 @@ $State = MDO_STATE_DOCT;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -13773,6 +14083,10 @@ $State = MDO_STATE_DOCTY;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -13859,6 +14173,10 @@ $State = MDO_STATE_DOCTYP;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -13943,6 +14261,10 @@ $State = DOCTYPE_STATE;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -14026,6 +14348,10 @@ $State = MDO_STATE__5BC;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -14109,6 +14435,10 @@ $State = MDO_STATE__5BCD;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -14192,6 +14522,10 @@ $State = MDO_STATE__5BCDA;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -14275,6 +14609,10 @@ $State = MDO_STATE__5BCDAT;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -14358,6 +14696,10 @@ $State = MDO_STATE__5BCDATA;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -14440,6 +14782,10 @@ $State = CDATA_SECTION_STATE;
 $Token->{q<data>} = [['', $DI, $Offset + pos $Input]];
 push @{$Token->{q<data>}}, [$Temp, $DI, $TempIndex];
 $State = BOGUS_COMMENT_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 push @{$Token->{q<data>}}, [q@�@, $DI, $Offset + (pos $Input) - (length $1) - 0];
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -23825,7 +24171,7 @@ $State = DATA_STATE;
 } else {
 if ($EOF) {
 
-            push @$Errors, {type => 'bare stago', level => 'm',
+            push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
 
@@ -23833,7 +24179,6 @@ if ($EOF) {
                           value => q@<@,
                           di => $DI, index => $AnchoredIndex};
         
-$State = DATA_STATE;
 
           push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                           di => $DI,

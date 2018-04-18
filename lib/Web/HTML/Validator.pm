@@ -3899,7 +3899,7 @@ $Element->{+HTML_NS}->{link} = {
       }
     }
 
-    for my $name (qw(sizes as scope workertype updateviacache
+    for my $name (qw(sizes as
                      color integrity)) {
       my $attr = $item->{node}->get_attribute_node_ns (undef, $name);
       next unless defined $attr;
@@ -3917,9 +3917,6 @@ $Element->{+HTML_NS}->{link} = {
         $self->{onerror}->(node => $attr,
                            # link:ignored sizes
                            # link:ignored as
-                           # link:ignored scope
-                           # link:ignored workertype
-                           # link:ignored updateviacache
                            # link:ignored color
                            # link:ignored integrity
                            type => 'link:ignored ' . $name,
@@ -7349,8 +7346,6 @@ $ElementAttrChecker->{(HTML_NS)}->{input}->{''}->{accept} = sub {
     }
   }
 }; # <input accept="">
-
-# XXX warning for inputmode="tel|email|url"
 
 $Element->{+HTML_NS}->{button} = {
   %HTMLPhrasingContentChecker,

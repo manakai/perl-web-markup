@@ -345,21 +345,6 @@
             "Web::HTML::Validator" : 1
          }
       },
-      "link:ignored scope" : {
-         "default_level" : "m",
-         "desc" : {
-            "en" : "\u003Cp>When the \u003Ccode>scope\u003C/code> attribute is specified, the\u000A\u003Ccode>link\u003C/code> element's \u003Ccode>rel\u003C/code> attribute must contain a\u000Alink type keyword \u003Ccode>serviceworker\u003C/code>.\u000AOtherwise the \u003Ccode>scope\u003C/code> attribute is ignored.\u003C/p>",
-            "ja" : "\u003Ccode>link\u003C/code> 要素に \u003Ccode>scope\u003C/code> を指定する時は、\u000A\u003Ccode>rel\u003C/code> 属性にリンク型 \u003Ccode>serviceworker\u003C/code>\u000Aを指定しなければいけません。そうでなければ、 \u003Ccode>scope\u003C/code>\u000A属性は無視されます。"
-         },
-         "layer" : "content-model",
-         "message" : {
-            "en" : "The \u003Ccode>scope\u003C/code> attribute is specified to a \u003Ccode>link\u003C/code>\u000Aelement with no \u003Ccode>serviceworker\u003C/code> link type",
-            "ja" : "リンク型 \u003Ccode>serviceworker\u003C/code> の指定されていない \u003Ccode>link\u003C/code>\u000A要素に \u003Ccode>scope\u003C/code> 属性が指定されています"
-         },
-         "modules" : {
-            "Web::HTML::Validator" : 1
-         }
-      },
       "link:ignored sizes" : {
          "default_level" : "m",
          "desc" : {
@@ -370,36 +355,6 @@
          "message" : {
             "en" : "The \u003Ccode>sizes\u003C/code> attribute is specified to a \u003Ccode>link\u003C/code>\u000Aelement with no \u003Ccode>icon\u003C/code> link type",
             "ja" : "リンク型 \u003Ccode>icon\u003C/code> の指定されていない \u003Ccode>link\u003C/code>\u000A要素に \u003Ccode>sizes\u003C/code> 属性が指定されています"
-         },
-         "modules" : {
-            "Web::HTML::Validator" : 1
-         }
-      },
-      "link:ignored updateviacache" : {
-         "default_level" : "m",
-         "desc" : {
-            "en" : "\u003Cp>When the \u003Ccode>updateviacache\u003C/code> attribute is specified, the\u000A\u003Ccode>link\u003C/code> element's \u003Ccode>rel\u003C/code> attribute must contain a\u000Alink type keyword \u003Ccode>serviceworker\u003C/code>.\u000AOtherwise the \u003Ccode>updateviacache\u003C/code> attribute is ignored.\u003C/p>",
-            "ja" : "\u003Ccode>link\u003C/code> 要素に \u003Ccode>updateviacache\u003C/code> を指定する時は、\u000A\u003Ccode>rel\u003C/code> 属性にリンク型 \u003Ccode>serviceworker\u003C/code>\u000Aを指定しなければいけません。そうでなければ、 \u003Ccode>updateviacache\u003C/code>\u000A属性は無視されます。"
-         },
-         "layer" : "content-model",
-         "message" : {
-            "en" : "The \u003Ccode>updateviacache\u003C/code> attribute is specified to a \u003Ccode>link\u003C/code>\u000Aelement with no \u003Ccode>serviceworker\u003C/code> link type",
-            "ja" : "リンク型 \u003Ccode>serviceworker\u003C/code> の指定されていない \u003Ccode>link\u003C/code>\u000A要素に \u003Ccode>updateviacache\u003C/code> 属性が指定されています"
-         },
-         "modules" : {
-            "Web::HTML::Validator" : 1
-         }
-      },
-      "link:ignored workertype" : {
-         "default_level" : "m",
-         "desc" : {
-            "en" : "\u003Cp>When the \u003Ccode>workertype\u003C/code> attribute is specified, the\u000A\u003Ccode>link\u003C/code> element's \u003Ccode>rel\u003C/code> attribute must contain a\u000Alink type keyword \u003Ccode>serviceworker\u003C/code>.\u000AOtherwise the \u003Ccode>workertype\u003C/code> attribute is ignored.\u003C/p>",
-            "ja" : "\u003Ccode>link\u003C/code> 要素に \u003Ccode>workertype\u003C/code> を指定する時は、\u000A\u003Ccode>rel\u003C/code> 属性にリンク型 \u003Ccode>serviceworker\u003C/code>\u000Aを指定しなければいけません。そうでなければ、 \u003Ccode>workertype\u003C/code>\u000A属性は無視されます。"
-         },
-         "layer" : "content-model",
-         "message" : {
-            "en" : "The \u003Ccode>workertype\u003C/code> attribute is specified to a \u003Ccode>link\u003C/code>\u000Aelement with no \u003Ccode>serviceworker\u003C/code> link type",
-            "ja" : "リンク型 \u003Ccode>serviceworker\u003C/code> の指定されていない \u003Ccode>link\u003C/code>\u000A要素に \u003Ccode>workertype\u003C/code> 属性が指定されています"
          },
          "modules" : {
             "Web::HTML::Validator" : 1
