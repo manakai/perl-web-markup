@@ -9501,6 +9501,13 @@ sub _check_node ($$) {
             }
           }
 
+          # XXXsuperglobal
+          if ($attr_ns eq '' and $attr_ln eq 'id') {
+            my $checker = $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{id};
+            $checker->($self, $attr, {}, {});
+            $type = '';
+          }
+
           if ($type eq 'common') {
             my $checker = $NamespacedAttrChecker->{$attr_ns}->{$attr_ln} ||
                 $NamespacedAttrChecker->{$attr_ns}->{''};
