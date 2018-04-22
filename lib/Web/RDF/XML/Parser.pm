@@ -347,6 +347,15 @@ sub convert_node_element ($$;%) {
                        level => LEVEL_RDF_GRAMMER,
                        node => $node);
   }
+  my $p = $node->prefix;
+  if ((not defined $p and $node->local_name =~ /^[Xx][Mm][Ll]/) or
+      (defined $p and $p =~ /^[Xx][Mm][Ll]/)) {
+    $self->onerror->(type => 'rdf:element ignored',
+                     level => 'w',
+                     node => $node);
+    $self->onnonrdfnode->($node);
+    return;
+  }
 
   my $subject;
   my $type_attr;
@@ -530,6 +539,7 @@ sub convert_property_element ($$%) {
                        level => LEVEL_RDF_GRAMMER,
                        node => $node);
   }
+  # XXX if $node->node_name =~ /^xml/i
 
   my $rdf_id_attr;
   my $dt_attr;
@@ -906,7 +916,7 @@ sub convert_property_element ($$%) {
 
 =head1 LICENSE
 
-Copyright 2008-2014 Wakaba <wakaba@suikawiki.org>.
+Copyright 2008-2018 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
