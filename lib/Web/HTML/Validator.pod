@@ -123,9 +123,6 @@ In addition, L<JE> is required.
 
 =back
 
-Also, see dependency sections of L<Web::RDF::XML::Parser> and
-L<Web::RDF::Checker>.
-
 =head1 SPECIFICATIONS
 
 =over 4
@@ -270,16 +267,6 @@ XSL Transformations (XSLT) Version 1.0 Specification Errata
 Key words "must" and "should" are to be interpreted as described in
 RFC 2119.
 
-=item RDFXML
-
-RDF/XML Syntax Specification (Revised)
-<http://www.w3.org/TR/rdf-syntax-grammar/>.
-
-RDF Errata
-<http://www.w3.org/2001/sw/RDFCore/errata#rdf-syntax-grammar>.
-
-The C<RDF> element in the RDF namespace is metadata content.
-
 =item ATOM
 
 The Atom Syndication Format <http://tools.ietf.org/html/rfc4287>,
@@ -410,23 +397,23 @@ Content Security Policy
 
 =item MIMESNIFF
 
-MIME Sniffing <http://mimesniff.spec.whatwg.org/>.
+MIME Sniffing <https://mimesniff.spec.whatwg.org/>.
 
 =item URL
 
-URL Standard <http://url.spec.whatwg.org/>.
+URL Standard <https://url.spec.whatwg.org/>.
 
 =item MANAKAI
 
 manakai DOM Extensions
-<http://suika.suikawiki.org/~wakaba/wiki/sw/n/manakai%20DOM%20Extensions>.
+<https://suika.suikawiki.org/~wakaba/wiki/sw/n/manakai%20DOM%20Extensions>.
 
 Any node MAY be used as orphan node.
 
 =item VALLANGS
 
-Handling of unknown namespaces in conformance checking
-<http://suika.suikawiki.org/www/markup/xml/validation-langs>.
+DOM Tree Validation
+<https://manakai.github.io/spec-dom/validation-langs>.
 
 =back
 
@@ -434,14 +421,15 @@ The validator also supports much more Web standards (indirectly via
 required modules), including but not limited to CSS, IETF BCP 47
 language tags, Encoding Standard, and XML 1.0 DTD.
 
-Note that HTML2, HTML3, HTML4, HTML 5.0, XML 1.1, Namespaces in XML
-1.1, C<xml:id>, XLink, XInclude, XHTML1, XHTML Modularization, Ruby
-Annotations, RSS 0.9, RDFa, XForms, XHTML2, HLink, XML Events, and
-XFrames are not considered as applicable specifications.  The module
-does not support ARIA attributes in its own namespace.  Also, the
-module does not support historical HTML features no longer part of the
-language, except for those explicitly listed in the OBSVOCAB
-specification.  See the specification for details.
+Note that HTML2, HTML3, HTML4, HTML 5.0, HTML 5.1, HTML 5.2, HTML 5.3,
+XML 1.1, Namespaces in XML 1.1, XML Base, C<xml:id>, XLink, XInclude,
+XHTML1, XHTML Modularization, Ruby Annotations, RSS 0.9, RDFa, XForms,
+XHTML2, HLink, XML Events, XFrames, and RDF/XML are not considered as
+applicable specifications.  The module does not support ARIA
+attributes in its own namespace.  Also, the module does not support
+historical HTML features no longer part of the language, except for
+those explicitly listed in the OBSVOCAB specification.  See the
+specification for details.
 
 =head1 AUTHOR
 
@@ -449,7 +437,7 @@ Wakaba <wakaba@suikawiki.org>.
 
 =head1 LICENSE
 
-Copyright 2007-2015 Wakaba <wakaba@suikawiki.org>.
+Copyright 2007-2018 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use warnings FATAL => 'recursion';
 no warnings 'utf8';
-our $VERSION = '135.0';
+our $VERSION = '136.0';
 use Scalar::Util qw(refaddr);
 use Web::HTML::Validator::_Defs;
 use Web::HTML::SourceMap;
@@ -182,7 +182,6 @@ sub _init ($) {
     name => $self->{name},
     table => [], # table objects returned by Web::HTML::Table
     term => $self->{term},
-    rdf => [],
   };
 } # _init
 
@@ -9387,15 +9386,6 @@ sub _determine_validation_mode ($$$) {
       ($parent_mode eq 'XSLT' and 0 and 'XXX is XSLT literal result element')) {
     return 'XSLT';
   }
-  if (($el->namespace_uri || '') eq RDF_NS and $el->local_name eq 'RDF') {
-    my $xmlns = $el->get_attribute_ns (XMLNS_NS, 'xmlns') || '';
-    my $rdfns = $el->get_attribute_ns (XMLNS_NS, 'rdf') || '';
-    if ($xmlns eq RSS1_NS and $rdfns eq RDF_NS) {
-      return 'RSS1';
-    } else {
-      return 'RDF';
-    }
-  }
   return 'default';
 } # _determine_validation_mode
 
@@ -9461,165 +9451,6 @@ sub _check_node ($$) {
       my $mode = $item->{validation_mode};
       if ($mode eq 'XSLT') {
         # XXX
-      } elsif ($mode eq 'RDF') {
-        my @new_item;
-        require Web::RDF::XML::Parser;
-        my $rdf = Web::RDF::XML::Parser->new;
-        $rdf->onbnodeid (sub {
-          return ++$self->{bnode_prefix} . $_[0];
-        });
-        $rdf->onerror ($self->{onerror});
-        $rdf->onattr (sub {
-          my ($attr, $type) = @_;
-          my $attr_ns = $attr->namespace_uri;
-          $attr_ns = '' unless defined $attr_ns;
-          my $attr_ln = $attr->local_name;
-
-          my $prefix = $attr->prefix;
-          if (not defined $prefix) {
-            if ($attr_ns ne '' and
-                not ($attr_ns eq XMLNS_NS and $attr_ln eq 'xmlns')) {
-              $self->{onerror}->(node => $attr,
-                                 type => 'nsattr has no prefix',
-                                 level => 'w');
-            }
-
-            # XXX warn xmlns="" in no namespace
-          } elsif ($prefix eq 'xml') {
-            if ($attr_ns ne XML_NS) {
-              $self->{onerror}->(node => $attr,
-                                 type => 'Reserved Prefixes and Namespace Names:Prefix',
-                                 text => $prefix,
-                                 level => 'w');
-            }
-          } elsif ($prefix eq 'xmlns') {
-            if ($attr_ns ne XMLNS_NS) {
-              $self->{onerror}->(node => $attr,
-                                 type => 'Reserved Prefixes and Namespace Names:Prefix',
-                                 text => $prefix,
-                                 level => 'w');
-            }
-          }
-
-          # XXXsuperglobal
-          if ($attr_ns eq '' and $attr_ln eq 'id') {
-            my $checker = $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{id};
-            $checker->($self, $attr, {}, {});
-            $type = '';
-          }
-
-          if ($type eq 'common') {
-            my $checker = $NamespacedAttrChecker->{$attr_ns}->{$attr_ln} ||
-                $NamespacedAttrChecker->{$attr_ns}->{''};
-            my $attr_def = $_Defs->{elements}->{'*'}->{'*'}->{attrs}->{$attr_ns}->{$attr_ln} || {};
-            if ($attr_def->{conforming} or $attr_ns eq XMLNS_NS) {
-              #
-            } else {
-              $self->{onerror}->(node => $attr,
-                                 type => 'attribute not defined',
-                                 level => 'm');
-            }
-            $checker->($self, $attr, {}, {}) if defined $checker;
-          } elsif ($type eq 'url') {
-            $CheckerByType->{URL}->($self, $attr, {}, {});
-          } elsif ($type eq 'rdf-id') {
-            unless ($attr->value =~ /\A\p{InNCNameStartChar}\p{InNCNameChar}*\z/) {
-              $self->{onerror}->(node => $attr,
-                                 type => 'rdf-id:syntax error',
-                                 level => 'm'); # RDF/XML grammer
-            }
-          }
-
-          $self->_check_data ($attr, 'value');
-        });
-        $rdf->onnonrdfnode (sub {
-          my $cnt = $_[0]->node_type;
-          if ($cnt == 1) { # ELEMENT_NODE
-            push @new_item,
-                {type => 'element', node => $_[0],
-                 parent_state => {},
-                 validation_mode => $self->_determine_validation_mode
-                     ($_[0], $mode)};
-          } elsif ($cnt == 3) { # TEXT_NODE
-            $self->_check_data ($_[0], 'data');
-            ## Adjacent text nodes and empty text nodes are not
-            ## round-trippable, but harmless, so not warned here.
-          } elsif ($cnt == 7) { # PROCESSING_INSTRUCTION_NODE
-            ## XXX PROCESSING_INSTRUCTION_NODE
-          } elsif ($cnt == 11) { # DOCUMENT_FRAGMENT_NODE
-            push @new_item, {type => 'document_fragment', node => $_[0]};
-          }
-        });
-        my $triple = [];
-        $rdf->ontriple (sub {
-          my %opt = @_;
-          push @$triple,
-              [$opt{node}, $opt{subject}, $opt{predicate}, $opt{object}];
-        });
-        my $lang = ($item->{node}->parent_node || $item->{node}->owner_document);
-        $lang = $lang->node_type == 1 ? $lang->get_attribute_ns (XML_NS, 'lang') : undef;
-            #XXX ->manakai_language;
-        if ($item->{node}->manakai_expanded_uri eq RDF_NS . q<RDF>) {
-          $rdf->convert_rdf_element ($item->{node}, lang => $lang);
-        } else {
-          $rdf->convert_node_element ($item->{node}, lang => $lang);
-        }
-        require Web::RDF::Checker;
-        my $checker = Web::RDF::Checker->new;
-        $checker->scripting ($self->scripting);
-        my $context;
-        $checker->onparentnode (sub { ## HTML/XML literal
-          my $element_state = {};
-          if (($_[0]->owner_document || $_[0]) eq $item->{node}->owner_document) {
-            for my $cn ($_[0]->child_nodes->to_list) {
-              my $cnt = $cn->node_type;
-              if ($cnt == 1) { # ELEMENT_NODE
-                push @new_item,
-                    {type => 'element', node => $cn,
-                     parent_state => $element_state,
-                     validation_mode => $self->_determine_validation_mode
-                         ($cn, $mode)};
-                my $ns = $cn->namespace_uri;
-                $ns = '' unless defined $ns;
-                my $ln = $cn->local_name;
-                if (($self->{minus_elements}->{$ns}->{$ln} and
-                     $self->_is_minus_element ($cn, $ns, $ln)) or
-                    ($self->{flag}->{no_interactive} and
-                     $ns eq HTML_NS and
-                     $cn->has_attribute_ns (undef, 'tabindex'))) {
-                  $self->{onerror}->(node => $cn,
-                                     type => 'element not allowed:minus',
-                                     level => 'm');
-                }
-              } elsif ($cnt == 3) { # TEXT_NODE
-                $self->_check_data ($cn, 'data');
-                ## Adjacent text nodes and empty text nodes are not
-                ## round-trippable, but harmless, so not warned here.
-              } elsif ($cnt == 7) { # PROCESSING_INSTRUCTION_NODE
-                ## XXX PROCESSING_INSTRUCTION_NODE
-              }
-            }
-          } else { ## Different document
-            my $checker = Web::HTML::Validator->new;
-            $checker->di_data_set ($self->di_data_set);
-            $checker->onerror (sub {
-              $self->{onerror}->(@_, di => -1, node => $context);
-            });
-            $checker->scripting ($self->scripting);
-            $checker->check_node ($_[0]);
-          }
-        });
-        for my $t (@$triple) {
-          $context = $t->[0];
-          $checker->onerror (sub {
-            $self->{onerror}->(@_, node => $context);
-          });
-          $checker->check_parsed_term ($t->[1]);
-          $checker->check_parsed_term ($t->[2]);
-          $checker->check_parsed_term ($t->[3]);
-        }
-        unshift @item, @new_item;
-        next;
       } else {
         # XXX if $mode eq 'RSS1'
         # XXX if $self->{rss2}
@@ -9836,9 +9667,6 @@ sub _check_node ($$) {
                   $mode = 'XSLT';
                   last MODE;
                 }
-              } elsif ($ct eq 'application/rdf+xml') {
-                $mode = 'RDF';
-                last MODE;
               } else {
                 #
               }
@@ -9861,16 +9689,6 @@ sub _check_node ($$) {
                                    text => 'xslt:version',
                                    level => 'm')
                     unless $node->has_attribute_ns (XSLT_NS, 'version');
-              } else {
-                $self->{onerror}->(node => $node,
-                                   type => 'element not allowed:root',
-                                   level => 'm');
-              }
-            } elsif ($mode eq 'RDF') {
-              #
-            } elsif ($mode eq 'RSS1') {
-              if ($nsurl eq RDF_NS and $ln eq 'RDF') {
-                #
               } else {
                 $self->{onerror}->(node => $node,
                                    type => 'element not allowed:root',
@@ -10068,7 +9886,7 @@ sub check_node ($$) {
 
 =head1 LICENSE
 
-Copyright 2007-2017 Wakaba <wakaba@suikawiki.org>.
+Copyright 2007-2018 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
