@@ -3,8 +3,8 @@ use strict;
 use warnings;
 use warnings FATAL => 'recursion';
 no warnings 'utf8';
-our $VERSION = '6.0';
-use Web::URL::Canonicalize qw(url_to_canon_url);
+our $VERSION = '7.0';
+use Web::URL;
 
 sub RDF_NS () { q<http://www.w3.org/1999/02/22-rdf-syntax-ns#> }
 sub XML_NS () { q<http://www.w3.org/XML/1998/namespace> }
@@ -267,23 +267,17 @@ my $resolve = sub {
     }
     $element = $element->parent_element;
   }
-  my $base = $_[1]->owner_document->base_uri;
+  my $base = Web::URL->parse_string ($_[1]->owner_document->base_uri);
   while (@base) {
-    $base = url_to_canon_url shift (@base), $base;
+    $base = Web::URL->parse_string (shift (@base), $base);
     last if not defined $base;
   }
-  # XXX url_to_canon_url can't handle fragment-only relative URLs...
-  my $resolved = url_to_canon_url $_[0], $base;
-  if (not defined $resolved and $_[0] =~ /^#/) {
-    return $base . $_[0];
-  } elsif (not defined $resolved and $_[0] eq '') {
-    return $base;
-  }
-  return defined $resolved ? $resolved : $_[0];
+  my $resolved = Web::URL->parse_string ($_[0], $base);
+  return defined $resolved ? $resolved->stringify : $_[0];
 }; # $resolve
 
 ## <https://dvcs.w3.org/hg/rdf/raw-file/default/rdf-xml/index.html#eventterm-blanknodeid-string-value>
-## <http://www.w3.org/TR/n-triples/#grammar-production-BLANK_NODE_LABEL>
+## <https://www.w3.org/TR/n-triples/#grammar-production-BLANK_NODE_LABEL>
 my $generate_bnodeid = sub {
   return 'g'.$_[0]->{next_id}++;
 }; # $generate_bnodeid

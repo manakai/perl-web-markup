@@ -17,6 +17,13 @@ The C<Web::RDF::XML::Parser> module is an implementation of RDF/XML.
 Using this module, RDF triples embedded within RDF/XML document or
 document fragment can be extracted.
 
+The RDF/XML format is no longer widely used.  Though this module is
+still maintained as part of the manakai project, use of it is not
+recommended.
+
+This module is B<unsuitable> for processing RSS 1.0 documents.  Use
+L<Web::Feed::Parser> instead.
+
 =head1 METHODS
 
 Following methods are available:
@@ -160,15 +167,15 @@ RDF 1.1 XML Syntax
 
 =item XMLBASE
 
-XML Base <http://www.w3.org/TR/xmlbase/>.
+XML Base <https://www.w3.org/TR/xmlbase/>.
 
 XML Base Specification Errata
-<http://www.w3.org/2009/01/xmlbase-errata>.
+<https://www.w3.org/2009/01/xmlbase-errata>.
 
 =item VALLANGS
 
-Handling of unknown namespaces in conformance checking
-<http://suika.suikawiki.org/www/markup/xml/validation-langs>.
+DOM Tree Validation
+<https://rawgit.com/manakai/spec-dom/409d6f6c0685e96c5b0d2c7aeb894ed567f0d651/validation-langs.html#rdf/xml-integration>.
 
 =back
 
@@ -178,7 +185,7 @@ Wakaba <wakaba@suikawiki.org>.
 
 =head1 LICENSE
 
-Copyright 2013-2015 Wakaba <wakaba@suikawiki.org>.
+Copyright 2013-2018 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
