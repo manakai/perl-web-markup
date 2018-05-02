@@ -65,6 +65,10 @@ for my $ns (keys %{$data->{elements}}) {
         $def->{text_type} = $def->{content_model};
         $def->{content_model} = 'text';
       }
+    } elsif ($def->{child_elements} and
+             not $def->{has_additional_content_constraints} and
+             not grep { $_->{has_additional_rules} } map { values %$_ } values %{$def->{child_elements}}) {
+      $def->{content_model} = 'props';
     }
   }
 }
