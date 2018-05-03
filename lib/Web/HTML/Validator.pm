@@ -272,6 +272,8 @@ sub FH_NS () { q<http://purl.org/syndication/history/1.0> }
 sub AT_NS () { q<http://purl.org/atompub/tombstones/1.0> }
 sub LINK_REL () { q<http://www.iana.org/assignments/relation/> }
 sub DC_NS () { q<http://purl.org/dc/elements/1.1/> }
+sub MRSS1_NS () { q<http://search.yahoo.com/mrss/> }
+sub MRSS2_NS () { q<http://search.yahoo.com/mrss> }
 
 our $_Defs;
 
@@ -9062,6 +9064,58 @@ $RSS2Element->{guid} = {
     $AnyChecker{check_end}->(@_);
   },
 }; # rss2:guid
+
+$Element->{+MRSS1_NS}->{title} =
+$Element->{+MRSS2_NS}->{title} = {
+  %AnyChecker,
+  check_start => sub {
+    my ($self, $item, $element_state) = @_;
+    $element_state->{phase}
+        = (($item->{node}->get_attribute_ns (undef, 'type') || '') eq 'html')
+            ? 'html' : 'text';
+  },
+  check_child_element => sub {
+    my ($self, $item, $child_el, $child_nsuri, $child_ln,
+        $child_is_transparent, $element_state) = @_;
+    $self->{onerror}->(node => $child_el,
+                       type => 'element not allowed:text',
+                       level => 'm');
+  },
+  check_end => sub {
+    my ($self, $item, $element_state) = @_;
+
+    $CheckDIVContent->($self, $item->{node})
+        if $element_state->{phase} eq 'html';
+
+    $AnyChecker{check_end}->(@_);
+  },
+}; # media:title
+
+$Element->{+MRSS1_NS}->{description} =
+$Element->{+MRSS2_NS}->{description} = {
+  %AnyChecker,
+  check_start => sub {
+    my ($self, $item, $element_state) = @_;
+    $element_state->{phase}
+        = (($item->{node}->get_attribute_ns (undef, 'type') || '') eq 'html')
+            ? 'html' : 'text';
+  },
+  check_child_element => sub {
+    my ($self, $item, $child_el, $child_nsuri, $child_ln,
+        $child_is_transparent, $element_state) = @_;
+    $self->{onerror}->(node => $child_el,
+                       type => 'element not allowed:text',
+                       level => 'm');
+  },
+  check_end => sub {
+    my ($self, $item, $element_state) = @_;
+
+    $CheckDIVContent->($self, $item->{node})
+        if $element_state->{phase} eq 'html';
+
+    $AnyChecker{check_end}->(@_);
+  },
+}; # media:description
 
 ## ------ Atom ------
 
