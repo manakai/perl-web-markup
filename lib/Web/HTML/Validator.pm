@@ -9405,12 +9405,6 @@ $Element->{(ATOM03_NS)}->{feed} = {
   }, # check_child_element
   check_end => sub {
     my ($self, $item, $element_state) = @_;
-    unless ($item->{node}->has_attribute_ns (undef, 'version')) {
-      $self->{onerror}->(node => $item->{node},
-                         type => 'attribute missing',
-                         text => 'version',
-                         level => 'm');
-    }
     unless ($item->{node}->has_attribute_ns (XML_NS, 'lang')) {
       $self->{onerror}->(node => $item->{node},
                          type => 'attribute missing',
@@ -9437,14 +9431,6 @@ $Element->{(ATOM03_NS)}->{feed} = {
     $PropContainerChecker{check_end}->(@_);
   }, # check_end
 }; # <atom03:feed>
-
-$ElementAttrChecker->{(ATOM03_NS)}->{feed}->{''}->{version} = sub {
-  my ($self, $attr, $item) = @_;
-  $self->{onerror}->(node => $attr,
-                     type => 'invalid attribute value',
-                     level => 'm')
-      unless $attr->value eq '0.3';
-}; # <atom03:feed version="">
 
 $ElementAttrChecker->{(ATOM_NS)}->{content}->{''}->{src} = sub {
   my ($self, $attr, $item, $element_state) = @_;
@@ -9610,16 +9596,6 @@ $Element->{+ATOM_NS}->{content} = {
 
 # XXX Atom 0.3 Content construct content validation
 
-$Element->{+ATOM_NS}->{category}->{check_attrs2} = sub {
-  my ($self, $item, $element_state) = @_;
-  unless ($item->{node}->has_attribute_ns (undef, 'term')) {
-    $self->{onerror}->(node => $item->{node},
-                       type => 'attribute missing',
-                       text => 'term',
-                       level => 'm');
-  }
-}; # <atom:category> check_attrs2
-
 ## XXXresource: |atom:icon|'s image SHOULD be 1:1 and SHOULD be small.
 
 ## XXX |atom:id| URL SHOULD be normalized.
@@ -9644,13 +9620,6 @@ $ElementAttrChecker->{(ATOM03_NS)}->{link}->{''}->{rel} = sub {
 $Element->{(ATOM_NS)}->{link}->{check_attrs2} = sub {
   my ($self, $item, $element_state) = @_;
 
-  unless ($item->{node}->has_attribute_ns (undef, 'href')) { # MUST
-    $self->{onerror}->(node => $item->{node},
-                       type => 'attribute missing',
-                       text => 'href',
-                       level => 'm');
-  }
-
   if ($item->{node}->rel eq LINK_REL . 'enclosure' and
       not $item->{node}->has_attribute_ns (undef, 'length')) {
     $self->{onerror}->(node => $item->{node},
@@ -9660,17 +9629,6 @@ $Element->{(ATOM_NS)}->{link}->{check_attrs2} = sub {
   }
 }; # <atom:link> check_attrs2
 
-$Element->{(ATOM03_NS)}->{link}->{check_attrs2} = sub {
-  my ($self, $item, $element_state) = @_;
-  for (qw(rel href)) {
-    $self->{onerror}->(node => $item->{node},
-                       type => 'attribute missing',
-                       text => $_,
-                       level => 'm')
-        unless $item->{node}->has_attribute_ns (undef, $_);
-  }
-}; # <atom03:link> check_attrs2
-
 # XXXresource dimension of |atom:logo|'s image SHOULD be 2:1.
 
 ## TODO: <thr:in-reply-to href=""> MUST be dereferencable.
@@ -9678,16 +9636,7 @@ $Element->{(ATOM03_NS)}->{link}->{check_attrs2} = sub {
 # XXX <thr:in-reply-to ref="">, <at:deleted-entry ref=""> - same rule as |atom:id|
 # XXX <atom03:generator url=""> SHOULD be dereferencable.
 
-$Element->{+THR_NS}->{'in-reply-to'}->{check_attrs2} = sub {
-  my ($self, $item, $element_state) = @_;
-  unless ($item->{node}->has_attribute_ns (undef, 'ref')) {
-    $self->{onerror}->(node => $item->{node},
-                       type => 'attribute missing',
-                       text => 'ref',
-                       level => 'm');
-  }
-}; # <thr:in-reply-to> check_attrs2
-
+$Element->{(THR_NS)}->{total} = {%HTMLTextChecker};
 $ElementTextCheckerByName->{(THR_NS)}->{total} = sub {
   ## NOTE: xsd:nonNegativeInteger
   my ($self, $value, $onerror) = @_;
@@ -9719,58 +9668,10 @@ $Element->{(APP_NS)}->{categories} = {
   }, # check_end
 }; # <app:categories>
 
-$ElementAttrChecker->{(APP_NS)}->{categories}->{''}->{fixed} = sub {
-  my ($self, $attr, $item) = @_;
-  my $value = $attr->value;
-  $self->{onerror}->(node => $item->{node},
-                     type => 'invalid attribute value',
-                     level => 'm')
-      unless $value eq 'yes' or $value eq 'no';
-}; # <app:categories fixed="">
-
-$Element->{(APP_NS)}->{service} = {%PropContainerChecker};
-$Element->{(APP_NS)}->{workspace} = {%PropContainerChecker};
-
-$Element->{(APP_NS)}->{collection} = {
-  %PropContainerChecker,
-  check_end => sub {
-    my ($self, $item, $element_state) = @_;
-    unless ($item->{node}->has_attribute_ns (undef, 'href')) {
-      $self->{onerror}->(node => $item->{node},
-                         type => 'attribute missing',
-                         text => 'href',
-                         level => 'm');
-    }
-    $PropContainerChecker{check_end}->(@_);
-  }, # check_end
-}; # <app:collection>
-
-$ElementTextCheckerByName->{(APP_NS)}->{accept} = sub {
+#$Element->{(THR_NS)}->{total} = {%HTMLTextChecker};
+#$ElementTextCheckerByName->{(APP_NS)}->{accept} = sub {
   # XXX
-}; # <app:accept> text
-
-$Element->{(APP_NS)}->{control} = {%PropContainerChecker};
-
-$ElementTextCheckerByName->{(APP_NS)}->{draft} = sub {
-  my ($self, $value, $onerror) = @_;
-  $onerror->(type => 'app:draft:bad value', level => 'm')
-      unless $value eq 'yes' or $value eq 'no';
-}; # <app:draft> text
-
-$Element->{(AT_NS)}->{'deleted-entry'} = {
-  %PropContainerChecker,
-  check_end => sub {
-    my ($self, $item, $element_state) = @_;
-    for (qw(ref when)) {
-      $self->{onerror}->(node => $item->{node},
-                         type => 'attribute missing',
-                         text => $_,
-                         level => 'm')
-          unless $item->{node}->has_attribute_ns (undef, $_);
-    }
-    $PropContainerChecker{check_end}->(@_);
-  }, # check_end
-}; # <at:deleted-entry>
+#}; # <app:accept> text
 
 ## ------ Nested document ------
 
