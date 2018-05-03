@@ -119,6 +119,10 @@ sub _test ($$$) {
     }
     $doc->_set_content_type ($1)
         if $test->{mime} and $test->{mime}->[1]->[0] =~ m{^([a-z0-9+_.-]+/[a-z0-9+_.-]+)$};
+    my $checked = $check_as_doc ? $doc : $doc->document_element;
+    if ($test->{rss2}) {
+      $doc->inner_html (q{<rss></rss>});
+    }
 
     if ($test->{issrcdoc}->[1] and $test->{issrcdoc}->[1]->[0]) {
       $doc->manakai_is_srcdoc (1);
@@ -147,7 +151,7 @@ sub _test ($$$) {
     });
     $val->scripting (not $test->{noscript});
     $val->image_viewable ($test->{'image-viewable'});
-    $val->check_node ($check_as_doc ? $doc : $doc->document_element);
+    $val->check_node ($checked);
 
     is_set_list [map {
       s/\x0A/\\n/;

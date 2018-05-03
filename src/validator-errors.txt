@@ -1501,3 +1501,87 @@ supported.  The element or attribute might or might not be conforming.
 @ja
 <p>この要素や属性の値の適合性検査には対応していません。
 この要素や属性は適合しているかもしれませんし、していないかもしれません。
+
+* rss2:person:syntax error
+
+default_level=m
+layer=microsyntax
+
+@en
+The value is not in the
+<code><var>email@address</var> (<var>name</var>)</code> format
+@ja
+値が
+<code><var>email@address</var> (<var>name</var>)</code>
+形式ではありません。
+
+@en
+<p>The text content of an RSS2 person element must be in the
+<code><var>email@address</var> (<var>name</var>)</code> format.
+
+@ja
+<p>RSS2 の人名の要素のテキスト内容は、
+<code><var>email@address</var> (<var>name</var>)</code> 
+形式でなければいけません。
+
+* rss2:image != channel
+
+default_level=s
+layer=content-model
+
+@en
+The value is different from the channel's
+@ja
+値がチャンネルのものと違います
+
+@en <p>The text content of a <code>title</code> or <code>link</code>
+element of a <code>textInput</code> element of a <code>channel</code>
+element should be same as the text content of the <code>title</code>
+or <code>link</code> element of the <code>channel</code> element of an
+RSS2 document.
+
+@ja
+<p>RSS2 文書の <code>channel</code> 要素の 
+<code>textInput</code> 要素の
+<code>title</code> 要素や <code>link</code> 要素のテキスト内容は、
+<code>channel</code> 要素の
+<code>title</code> 要素や <code>link</code> 
+要素のテキスト内容と同じでなければいけません。
+
+* child element missing:rss2:title|description
+
+default_level=m
+layer=content-model
+
+@en
+There is no <code>title</code> or <code>description</code>
+@ja
+<code>title</code> や <code>description</code> がありません
+
+@en
+<p>In an RSS2 <code>item</code> element, there must be
+<code>title</code> or <code>description</code> element, or both.
+
+@ja
+<p>RSS2 <code>item</code> 要素には
+<code>title</code> 要素と <code>description</code>
+要素の一方又は両方が必要です。
+
+* element not allowed:rss2 author dc:creator
+
+default_level=s
+layer=content-model
+
+@en
+There are both <code>author</code> and <code>dc:creator</code>
+@ja
+<code>author</code> と <code>dc:creator</code> の両方があります
+
+@en
+<p>In an RSS2 <code>item</code> element, there should not be both of
+<code>author</code> and <code>dc:creator</code> elements.
+
+@ja
+<p>RSS2 <code>item</code> 要素では
+<code>author</code> 要素と <code>dc:creator</code> 
+要素の両方があるべきではありません。

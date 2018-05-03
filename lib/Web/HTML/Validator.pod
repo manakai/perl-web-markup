@@ -301,6 +301,47 @@ The Atom Publishing Protocol <https://tools.ietf.org/html/rfc5023>.
 
 The Atom "deleted-entry" Element <http://tools.ietf.org/html/rfc6721>.
 
+=item RSS1
+
+RDF Site Summary (RSS) 1.0 <http://web.resource.org/rss/1.0/spec>.
+
+=item RSSDC
+
+RDF Site Summary 1.0 Modules: Dublin Core
+<http://web.resource.org/rss/1.0/modules/dc/>.
+
+=item DCES
+
+DCMI: Dublin Core Metadata Element Set, Version 1.1: Reference
+Description <http://dublincore.org/documents/dces/>.
+
+=item RSSCONTENT
+
+RDF Site Summary 1.0 Modules: Content
+<http://web.resource.org/rss/1.0/modules/content/>.
+
+=item HATENA
+
+はてなXML名前空間 - Hatena Developer Center
+<http://developer.hatena.ne.jp/ja/documents/other/misc/xmlns>.
+
+=item RSS2
+
+RSS 2.0 <http://www.rssboard.org/rss-specification>.
+
+=item RSSBP
+
+RSS Best Practices Profile <http://www.rssboard.org/rss-profile>.
+
+=item MEDIARSS
+
+Media RSS Specification <http://www.rssboard.org/media-rss>.
+
+=item ITUNES
+
+RSS tags for Podcasts Connect - Podcasts Connect Help
+<https://help.apple.com/itc/podcasts_connect/#/itcb54353390>.
+
 =item CSSSTYLEATTR
 
 CSS Style Attributes <http://dev.w3.org/csswg/css-style-attr/>.

@@ -165,6 +165,21 @@
             "Web::HTML::Validator" : 1
          }
       },
+      "child element missing:rss2:title|description" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>In an RSS2 \u003Ccode>item\u003C/code> element, there must be\u000A\u003Ccode>title\u003C/code> or \u003Ccode>description\u003C/code> element, or both.\u003C/p>",
+            "ja" : "\u003Cp>RSS2 \u003Ccode>item\u003C/code> 要素には\u000A\u003Ccode>title\u003C/code> 要素と \u003Ccode>description\u003C/code>\u000A要素の一方又は両方が必要です。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "There is no \u003Ccode>title\u003C/code> or \u003Ccode>description\u003C/code>",
+            "ja" : "\u003Ccode>title\u003C/code> や \u003Ccode>description\u003C/code> がありません"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
       "control name:isindex" : {
          "default_level" : "m",
          "desc" : {
@@ -265,6 +280,21 @@
          "message" : {
             "en" : "There is an element not allowed in a \u003Ccode>dl\u003C/code> element",
             "ja" : "\u003Ccode>dl\u003C/code> 要素内で認められない要素があります"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "element not allowed:rss2 author dc:creator" : {
+         "default_level" : "s",
+         "desc" : {
+            "en" : "\u003Cp>In an RSS2 \u003Ccode>item\u003C/code> element, there should not be both of\u000A\u003Ccode>author\u003C/code> and \u003Ccode>dc:creator\u003C/code> elements.\u003C/p>",
+            "ja" : "\u003Cp>RSS2 \u003Ccode>item\u003C/code> 要素では\u000A\u003Ccode>author\u003C/code> 要素と \u003Ccode>dc:creator\u003C/code> \u000A要素の両方があるべきではありません。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "There are both \u003Ccode>author\u003C/code> and \u003Ccode>dc:creator\u003C/code>",
+            "ja" : "\u003Ccode>author\u003C/code> と \u003Ccode>dc:creator\u003C/code> の両方があります"
          },
          "modules" : {
             "Web::HTML::Validator" : 1
@@ -571,6 +601,35 @@
          "message" : {
             "en" : "Namespace prefix is not \u003Ccode>rdf\u003C/code>",
             "ja" : "名前空間接頭辞が \u003Ccode>rdf\u003C/code> ではありません"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "rss2:image != channel" : {
+         "default_level" : "s",
+         "desc" : {
+            "ja" : "\u003Cp>RSS2 文書の \u003Ccode>channel\u003C/code> 要素の \u000A\u003Ccode>textInput\u003C/code> 要素の\u000A\u003Ccode>title\u003C/code> 要素や \u003Ccode>link\u003C/code> 要素のテキスト内容は、\u000A\u003Ccode>channel\u003C/code> 要素の\u000A\u003Ccode>title\u003C/code> 要素や \u003Ccode>link\u003C/code> \u000A要素のテキスト内容と同じでなければいけません。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "The value is different from the channel's",
+            "ja" : "値がチャンネルのものと違います\u000A\u000A@en \u003Cp>The text content of a \u003Ccode>title\u003C/code> or \u003Ccode>link\u003C/code>\u000Aelement of a \u003Ccode>textInput\u003C/code> element of a \u003Ccode>channel\u003C/code>\u000Aelement should be same as the text content of the \u003Ccode>title\u003C/code>\u000Aor \u003Ccode>link\u003C/code> element of the \u003Ccode>channel\u003C/code> element of an\u000ARSS2 document.\u003C/p>"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "rss2:person:syntax error" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>The text content of an RSS2 person element must be in the\u000A\u003Ccode>\u003Cvar>email@address\u003C/var> (\u003Cvar>name\u003C/var>)\u003C/code> format.\u003C/p>",
+            "ja" : "\u003Cp>RSS2 の人名の要素のテキスト内容は、\u000A\u003Ccode>\u003Cvar>email@address\u003C/var> (\u003Cvar>name\u003C/var>)\u003C/code> \u000A形式でなければいけません。\u003C/p>"
+         },
+         "layer" : "microsyntax",
+         "message" : {
+            "en" : "The value is not in the\u000A\u003Ccode>\u003Cvar>email@address\u003C/var> (\u003Cvar>name\u003C/var>)\u003C/code> format",
+            "ja" : "値が\u000A\u003Ccode>\u003Cvar>email@address\u003C/var> (\u003Cvar>name\u003C/var>)\u003C/code>\u000A形式ではありません。"
          },
          "modules" : {
             "Web::HTML::Validator" : 1
