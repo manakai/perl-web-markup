@@ -500,7 +500,7 @@ sub _check_element_attrs ($$$;%) {
         #$self->{onerror}->(node => $attr,
         #                   type => 'status:wd:attr', level => 'i')
       }
-    } else {
+    } else { # not conforming
       if ($_Defs->{namespaces}->{$el_ns}->{supported} or
           $_Defs->{namespaces}->{$attr_ns}->{supported} or
           $_Defs->{namespaces}->{$el_ns}->{obsolete} or
@@ -527,6 +527,11 @@ sub _check_element_attrs ($$$;%) {
                                level => 'm');
           }
         }
+      } else {
+        $self->{onerror}->(node => $attr,
+                           type => 'unknown attribute',
+                           level => 'u')
+            unless defined $checker;
       }
     }
 
@@ -8556,7 +8561,7 @@ $Element->{+RDF_NS}->{RDF} = {
       $element_state->{not_prop_container} = 1;
       $self->{onerror}->(node => $item->{node},
                          type => 'unknown RDF element',
-                         level => 'w');
+                         level => 'u');
     }
   }, # check_start
   check_end => sub {
@@ -8805,7 +8810,7 @@ $Element->{+RDF_NS}->{Seq} = {
       $element_state->{not_prop_container} = 1;
       $self->{onerror}->(node => $item->{node},
                          type => 'unknown RDF element',
-                         level => 'w');
+                         level => 'u');
     }
   }, # check_start
 }; # rdf:Seq
@@ -8830,7 +8835,7 @@ $Element->{+RDF_NS}->{li} = {
       $element_state->{not_prop_container} = 1;
       $self->{onerror}->(node => $item->{node},
                          type => 'unknown RDF element',
-                         level => 'w');
+                         level => 'u');
     }
   }, # check_start
 }; # rdf:li
@@ -10091,7 +10096,7 @@ sub _check_node ($$) {
           $self->{onerror}->(node => $el,
                              type => 'unknown namespace element',
                              value => $el_nsuri,
-                             level => 'w');
+                             level => 'u');
         }
       } # validation mode
 
