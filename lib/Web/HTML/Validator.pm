@@ -1540,30 +1540,6 @@ $NamespacedAttrChecker->{(XML_NS)}->{lang} = sub {
   }
 }; # xml:lang=""
 
-$NamespacedAttrChecker->{(XML_NS)}->{base} = sub {
-  my ($self, $attr) = @_;
-
-  ## XXX xml:base support will be likely removed from the Web.
-  ## XXX but maybe we can't drop it entirely to not break feed support.
-
-  my $value = $attr->value;
-  if ($value =~ /[^\x{0000}-\x{10FFFF}]/) { ## ISSUE: Should we disallow noncharacters?
-    $self->{onerror}->(node => $attr,
-                       type => 'invalid attribute value',
-                       level => 'm', # fact
-                      );
-  }
-  ## NOTE: Conformance to URI standard is not checked since there is
-  ## no author requirement on conformance in the XML Base
-  ## specification.
-
-  ## XXX If this attribute will not be removed: The attribute value
-  ## must be URL.  It does not defined as URLs for the purpose of
-  ## <base href=""> validation.  (Note that even if the attribute is
-  ## dropped for browsers, we have to continue to support it for
-  ## feeds.)
-}; # xml:base=""
-
 $NamespacedAttrChecker->{(XMLNS_NS)}->{'*'} = sub {
   my ($self, $attr) = @_;
   my $ln = $attr->local_name;
@@ -2867,8 +2843,8 @@ $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{accesskey} = sub {
   }
 }; # accesskey=""
 
-# XXX superglobal
-$ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{id} = sub {
+## Superglobal attribute id=""
+$NamespacedAttrChecker->{''}->{id} = sub {
   my ($self, $attr, $item, $element_state) = @_;
   my $value = $attr->value;
   if (length $value > 0) {
@@ -2904,24 +2880,27 @@ $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{id} = sub {
   }
 }; # id=""
 
-# XXX superglobal
-$ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{class} = sub {
+## Superglobal attribute class=""
+$NamespacedAttrChecker->{''}->{class} = sub {
   my ($self, $attr) = @_;
-    
-    ## NOTE: "set of unique space-separated tokens".
-
-    my %word;
-    for my $word (grep {length $_}
-                  split /[\x09\x0A\x0C\x0D\x20]+/, $attr->value) {
-      unless ($word{$word}) {
-        $word{$word} = 1;
+  ## NOTE: "set of unique space-separated tokens".
+  my %word;
+  for my $word (grep {length $_}
+                split /[\x09\x0A\x0C\x0D\x20]+/, $attr->value) {
+    unless ($word{$word}) {
+      $word{$word} = 1;
         push @{$self->{return}->{class}->{$word}||=[]}, $attr;
-      }
+    } else {
+      $self->{onerror}->(node => $attr,
+                         type => 'duplicate token', value => $word,
+                         level => 'w'); # not non-conforming
     }
+  } # $word
 }; # class=""
 
-# XXX superglobal
-$ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{slot} = sub {
+## Superglobal attribute slot=""
+$ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{slot} =
+$NamespacedAttrChecker->{''}->{slot} = sub {
   my ($self, $attr) = @_;
 
   ## Any value.
