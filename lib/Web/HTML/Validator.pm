@@ -503,6 +503,8 @@ sub _check_element_attrs ($$$;%) {
     } else {
       if ($_Defs->{namespaces}->{$el_ns}->{supported} or
           $_Defs->{namespaces}->{$attr_ns}->{supported} or
+          $_Defs->{namespaces}->{$el_ns}->{obsolete} or
+          $_Defs->{namespaces}->{$attr_ns}->{obsolete} or
           $Element->{$el_ns}->{$el_ln} or
           ($el_ns eq '' and $self->{is_rss2})) {
         ## "Authors must not use elements, attributes, or attribute
@@ -10091,6 +10093,7 @@ sub _check_node ($$) {
             #                   level => 'i')
           }
         } elsif ($_Defs->{namespaces}->{$el_nsuri}->{supported} or
+                 $_Defs->{namespaces}->{$el_nsuri}->{obsolete} or
                  ($el_nsuri eq '' and $self->{is_rss2})) {
           ## "Authors must not use elements, attributes, or attribute
           ## values that are not permitted by this specification or

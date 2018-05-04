@@ -129,47 +129,17 @@ In addition, L<JE> is required.
 
 =item XML
 
-Extensible Markup Language (XML) 1.0 <http://www.w3.org/TR/xml/>.
+Extensible Markup Language (XML) 1.0 <https://www.w3.org/TR/xml/>.
 
 XML 1.0 Fifth Edition Specification Errata
-<http://www.w3.org/XML/xml-V10-5e-errata>.
-
-The C<xml:lang> attribute MUST be interpreted as the C<lang> attribute
-in the XML namespace.  The C<xml:space> attribute MUST be interpreted
-as the C<space> attribute in the XML namespace.  In other words, the
-C<xml:lang> or C<xml:space> attribute in no namespace is different
-from the attributes defined in the XML specification.
-
-The C<xml:space> attribute MUST NOT be in error.
-
-The description for the C<xml:lang> attribute value in the XML
-specification is interpreted as a MUST-level requirement.
-
-Reserved element names, attribute names, and target names MUST NOT be
-used unless allowed by an applicable specification.
+<https://www.w3.org/XML/xml-V10-5e-errata>.
 
 =item XMLNS
 
-Namespaces in XML 1.0 <http://www.w3.org/TR/xml-names/>.
+Namespaces in XML 1.0 <https://www.w3.org/TR/xml-names/>.
 
 Namespaces in XML 1.0 (Third Edition) Errata
-<http://www.w3.org/XML/2009/xml-names-errata>.
-
-Requirements on the namespace name is updated as follows:
-
-  A namespace name MUST be a valid non-empty URL
-  <http://www.whatwg.org/specs/web-apps/current-work/#valid-non-empty-url>.
-  It should be an absolute URL
-  <http://url.spec.whatwg.org/#concept-absolute-url>.  For the purpose
-  of conformance of the HTML |base| element, attributes declaring XML
-  namespaces are not defined as taking URLs.
-
-=item XMLBASE
-
-XML Base <http://www.w3.org/TR/xmlbase/>.
-
-XML Base Specification Errata
-<http://www.w3.org/2009/01/xmlbase-errata>.
+<https://www.w3.org/XML/2009/xml-names-errata>.
 
 =item HTML
 
@@ -470,7 +440,7 @@ applicable specifications.  The module does not support ARIA
 attributes in its own namespace.  Also, the module does not support
 historical HTML features no longer part of the language, except for
 those explicitly listed in the OBSVOCAB specification.  See the
-specification for details.
+OBSVOCAB specification for details.
 
 =head1 AUTHOR
 

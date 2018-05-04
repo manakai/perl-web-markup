@@ -71,6 +71,18 @@ delete $data->{input}->{events};
 
 $data->{rss2_elements} = delete $data->{elements}->{rss2};
 
+for my $url (keys %{$data->{namespaces}}) {
+  my $def = $data->{namespaces}->{$url};
+  delete $def->{label};
+  delete $def->{url};
+  delete $def->{prefix};
+  delete $def->{atom_family};
+}
+for (keys %{$data->{namespaces}}) {
+  delete $data->{namespaces}->{$_} unless keys %{$data->{namespaces}->{$_}};
+}
+$data->{namespaces}->{q<http://www.w3.org/2000/xmlns/>}->{supported} = 1;
+
 for my $type (keys %{$data->{md}}) {
   delete $data->{md}->{$type}->{spec};
   delete $data->{md}->{$type}->{id};
