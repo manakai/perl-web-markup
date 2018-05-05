@@ -28,10 +28,10 @@ for my $attr (qw(xml:lang xml:space xml:base)) {
         [{type => 'unknown namespace element',
           value => '',
           node => $el,
-          level => 'w'},
-         #{type => 'attribute not defined',
-         # node => $el->attributes->[0],
-         # level => 'm'}
+          level => 'u'},
+         {type => 'unknown attribute',
+          node => $el->attributes->[0],
+          level => 'u'}
         ];
     done $c;
   } n => 1, name => [$attr, 'in no namespace'];
@@ -156,7 +156,7 @@ for my $test (
         [{type => 'unknown namespace element',
           value => '',
           node => $el,
-          level => 'w'},
+          level => 'u'},
          map { {%{$_}, node => $el->attributes->[0]} } @{$test->[1]}];
     done $c;
   } n => 1, name => [$test->[1]->[0]->{type}, $test->[1]->[0]->{text}];
@@ -217,7 +217,7 @@ test {
       [{type => 'unknown namespace element',
         value => '',
         node => $el,
-        level => 'w'},
+        level => 'u'},
        {type => 'Reserved Prefixes and Namespace Names:Prefix',
         text => 'xmlns',
         node => $el->attributes->[0],
@@ -287,12 +287,14 @@ for my $test (
         [{type => 'unknown namespace element',
           value => '',
           node => $el,
-          level => 'w'},
+          level => 'u'},
          (map { {%{$_}, node => $el->attributes->[0]} } @{$test->[1]}),
          (($el->attributes->[0]->namespace_uri || '') eq 'http://www.w3.org/XML/1998/namespace' ?
           {type => 'attribute not defined',
            node => $el->attributes->[0],
-           level => 'm'} : ()),
+           level => 'm'} : {type => 'unknown attribute',
+           node => $el->attributes->[0],
+           level => 'u'}),
         ];
     done $c;
   } n => 1, name => [$test->[1]->[0] ? $test->[1]->[0]->{type} : ()];
@@ -317,7 +319,7 @@ for my $version (qw(1.0 1.1 1.2 foo)) {
         [{type => 'unknown namespace element',
           value => '',
           node => $el,
-          level => 'w'}];
+          level => 'u'}];
     done $c;
   } n => 1, name => ['xml=""', $version];
 
@@ -339,7 +341,7 @@ for my $version (qw(1.0 1.1 1.2 foo)) {
         [{type => 'unknown namespace element',
           value => '',
           node => $el,
-          level => 'w'},
+          level => 'u'},
          {type => 'xmlns:* empty',
           node => $el->attributes->[0],
           level => 'm'}];
@@ -397,14 +399,14 @@ for my $test (
    },
    [{type => 'Reserved Prefixes and Namespace Names:Prefix', text => 'xml',
      level => 'w'},
-    {type => 'unknown namespace element', level => 'w',
+    {type => 'unknown namespace element', level => 'u',
      value => 'http://foo/'}]],
   [sub {
      return $_[0]->create_element_ns ('http://foo/', ['xmlns', 'space']);
    },
    [{type => 'Reserved Prefixes and Namespace Names:<xmlns:>',
      level => 'm'},
-    {type => 'unknown namespace element', level => 'w',
+    {type => 'unknown namespace element', level => 'u',
      value => 'http://foo/'}]],
 ) {
   test {
@@ -954,9 +956,10 @@ for my $test (
      $doc->append_child ($el);
      return {el => $el, attr => $el->attributes->[0]};
    },
-   [{type => 'unknown namespace element', level => 'w', node => 'el',
+   [{type => 'unknown namespace element', level => 'u', node => 'el',
      value => ''},
-    {type => 'attribute not defined', level => 'm', node => 'attr'},
+    #{type => 'attribute not defined', level => 'm', node => 'attr'},
+    {type => 'unknown attribute', level => 'u', node => 'attr'},
     # XXX{type => 'xslt:root literal result element', level => 's', node => 'el'},
    ]],
   [sub {
@@ -966,9 +969,12 @@ for my $test (
      $doc->append_child ($el);
      return {el => $el, attr => $el->attributes->[0]};
    },
-   [{type => 'element not defined', level => 'm', node => 'el'},
-    {type => 'attribute not defined', level => 'm', node => 'attr'},
-    {type => 'element not allowed:root', level => 'm', node => 'el'}]],
+   [#{type => 'element not defined', level => 'm', node => 'el'},
+    #{type => 'attribute not defined', level => 'm', node => 'attr'},
+    {type => 'unknown attribute', level => 'u', node => 'attr'},
+    #{type => 'element not allowed:root', level => 'm', node => 'el'},
+    {type => 'unknown namespace element', level => 'u', node => 'el', value => 'http://www.w3.org/1999/XSL/Transform'},
+   ]],
    [sub {
       my $doc = $_[0];
       $doc->manakai_is_html (1);
@@ -1207,7 +1213,7 @@ run_tests;
 
 =head1 LICENSE
 
-Copyright 2013-2015 Wakaba <wakaba@suikawiki.org>.
+Copyright 2013-2018 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

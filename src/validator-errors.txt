@@ -1302,3 +1302,311 @@ be omitted altogther.)</p>
 <code>text/css</code> でなければいけません。 (ただし、
 <code>type</code> 属性自体を省略するべきです。)</p>
 <p>Web ブラウザーは CSS 以外のスタイル言語に対応していません。</p>
+
+* unknown RDF element
+
+default_level=w
+layer=feature
+
+@en
+There is a non-RSS1 RDF/XML element
+@ja
+RSS1 以外の RDF/XML 要素があります
+
+@en
+<p>RDF/XML is not supported other than as part of RSS1.
+
+@ja
+<p>RDF/XML は RSS1 の一部として以外では対応していません。
+
+* rss1:rdf:RDF:bad prefix
+
+default_level=m
+layer=content-model
+
+@en
+Namespace prefix is not <code>rdf</code>
+@ja
+名前空間接頭辞が <code>rdf</code> ではありません
+
+@en
+<p>The namespace prefix of an RSS 1.0 <code>rdf:RDF</code> eleent
+that is a root of an RSS 1.0 document must be <code>rdf</code>.
+
+@ja
+<p>RSS 1.0 文書の根要素である RSS 1.0 <code>rdf:RDF</code> 
+要素の名前空間接頭辞は <code>rdf</code> でなければいけません。
+
+* rss1:bad rdf:resource
+
+default_level=m
+layer=content-model
+
+@en
+<code>rdf:resource</code> is different from the <code>rdf:about</code>
+(<code><var>{text}</var></code>)
+@ja
+<code>rdf:resource</code> が <code>rdf:about</code>
+(<code><var>{text}</var></code>) と異なります
+
+@en
+<p>The <code>rdf:resource</code> attribute value of the
+<code>image</code> or <code>textinput</code> element in the
+<code>channel</code> element must be equal to the
+<code>rdf:about</code> attribute value of the <code>image</code> or
+<code>textinput</code> element in the <code>rdf:RDF</code> element.
+
+@ja
+<p><code>channel</code> 要素の <code>image</code> 要素や
+<code>textinput</code> 要素の <code>rdf:resource</code> 属性値は、
+<code>rdf:RDF</code> 要素の <code>image</code> 要素や
+<code>textinput</code> 要素の <code>rdf:about</code> 
+属性値と等しくなければいけません。
+
+* rss1:no rdf:resource
+
+default_level=m
+layer=content-model
+
+@en
+There is no <code><var>{text}</var></code> whose
+<code>rdf:resource</code> is same as this <code>rdf:about</code>
+@ja
+この <code>rdf:about</code> と同じ <code>rdf:resource</code> 
+を持つ <code><var>{text}</var></code> がありません
+
+@en
+<p>The <code>rdf:resource</code> attribute value of the
+<code>rdf:li</code> element in the <code>items</code> element or
+the <code>image</code> or <code>textinput</code> element in the
+<code>channel</code> element must be equal to the
+<code>rdf:about</code> attribute value of an <code>item</code>,
+<code>image</code>, or
+<code>textinput</code> element in the <code>rdf:RDF</code> element.
+
+@ja
+<p><code>channel</code> 要素の <code>items</code> 要素内の
+<code>rdf:li</code> 要素や <code>image</code> 要素や
+<code>textinput</code> 要素の <code>rdf:resource</code> 属性値は、
+<code>rdf:RDF</code> 要素の <code>item</code> 要素や
+<code>image</code> 要素や
+<code>textinput</code> 要素の <code>rdf:about</code> 
+属性値と等しくなければいけません。
+
+* rss1:no rdf:about
+
+default_level=m
+layer=content-model
+
+@en
+There is no <code><var>{text}</var></code> whose
+<code>rdf:about</code> is same as this <code>rdf:resource</code>
+@ja
+この <code>rdf:resource</code> と同じ <code>rdf:about</code> 
+を持つ <code><var>{text}</var></code> がありません
+
+@en
+<p>The <code>rdf:resource</code> attribute value of the
+<code>rdf:li</code> element in the <code>items</code> element or
+the <code>image</code> or <code>textinput</code> element in the
+<code>channel</code> element must be equal to the
+<code>rdf:about</code> attribute value of an <code>item</code>,
+<code>image</code>, or
+<code>textinput</code> element in the <code>rdf:RDF</code> element.
+
+@ja
+<p><code>channel</code> 要素の <code>items</code> 要素内の
+<code>rdf:li</code> 要素や <code>image</code> 要素や
+<code>textinput</code> 要素の <code>rdf:resource</code> 属性値は、
+<code>rdf:RDF</code> 要素の <code>item</code> 要素や
+<code>image</code> 要素や
+<code>textinput</code> 要素の <code>rdf:about</code> 
+属性値と等しくなければいけません。
+
+* rss1:item:link ne rdf:about
+
+default_level=s
+layer=content-model
+
+@en
+The URL is different from <code>rdf:about</code>
+(<code><var>{text}</var></code>)
+@ja
+URL が <code>rdf:about</code>
+(<code><var>{text}</var></code>) と異なります
+
+@en
+<p>The URL in the <code>link</code> element should be equal to the
+<code>rdf:about</code> attribute value of the parent <code>item</code>
+or <code>textinput</code> element.
+
+@ja
+<p><code>link</code> 要素の URL は、
+親の <code>item</code> 要素や <code>textinput</code> 
+要素の <code>rdf:about</code> 属性と同じであるべきです。
+
+* rss1:duplicate rdf:about
+
+default_level=m
+layer=content-model
+
+@en
+There is another element with same <code>rdf:about</code>
+@ja
+同じ <code>rdf:about</code> の要素が他にもあります
+
+@en
+<p>The <code>rdf:about</code> attribute value of the <code>item</code>
+and <code>textinput</code> element must be unique.
+
+@ja
+<p><code>item</code> 要素や <code>textinput</code> 要素の
+<code>rdf:about</code> 属性値は他の要素の
+<code>rdf:about</code> 属性値と異なっていなければいけません。
+
+* rss1:duplicate prop
+
+default_level=m
+layer=content-model
+
+@en
+There is another element with same name
+@ja
+同じ名前の要素が他にもあります
+
+@en
+<p>In an RSS 1.0 <code>channel</code> or <code>item</code> element, a
+child element with same namespace and local name pair must not be
+inserted.
+
+@ja
+
+<p>RSS 1.0 の <code>channel</code> 要素や <code>item</code> 
+要素に同じ名前空間名と局所名の子要素を含めることはできません。
+
+* unknown value type
+
+default_level=w
+layer=microsyntax
+
+@en
+Conformance checking of value is not supported
+@ja
+値の適合性検査に対応していません
+
+@en
+<p>Conformance checking of the element or attribute value is not
+supported.  The element or attribute might or might not be conforming.
+
+@ja
+<p>この要素や属性の値の適合性検査には対応していません。
+この要素や属性は適合しているかもしれませんし、していないかもしれません。
+
+* rss2:person:syntax error
+
+default_level=m
+layer=microsyntax
+
+@en
+The value is not in the
+<code><var>email@address</var> (<var>name</var>)</code> format
+@ja
+値が
+<code><var>email@address</var> (<var>name</var>)</code>
+形式ではありません。
+
+@en
+<p>The text content of an RSS2 person element must be in the
+<code><var>email@address</var> (<var>name</var>)</code> format.
+
+@ja
+<p>RSS2 の人名の要素のテキスト内容は、
+<code><var>email@address</var> (<var>name</var>)</code> 
+形式でなければいけません。
+
+* rss2:image != channel
+
+default_level=s
+layer=content-model
+
+@en
+The value is different from the channel's
+@ja
+値がチャンネルのものと違います
+
+@en <p>The text content of a <code>title</code> or <code>link</code>
+element of a <code>textInput</code> element of a <code>channel</code>
+element should be same as the text content of the <code>title</code>
+or <code>link</code> element of the <code>channel</code> element of an
+RSS2 document.
+
+@ja
+<p>RSS2 文書の <code>channel</code> 要素の 
+<code>textInput</code> 要素の
+<code>title</code> 要素や <code>link</code> 要素のテキスト内容は、
+<code>channel</code> 要素の
+<code>title</code> 要素や <code>link</code> 
+要素のテキスト内容と同じでなければいけません。
+
+* child element missing:rss2:title|description
+
+default_level=m
+layer=content-model
+
+@en
+There is no <code>title</code> or <code>description</code>
+@ja
+<code>title</code> や <code>description</code> がありません
+
+@en
+<p>In an RSS2 <code>item</code> element, there must be
+<code>title</code> or <code>description</code> element, or both.
+
+@ja
+<p>RSS2 <code>item</code> 要素には
+<code>title</code> 要素と <code>description</code>
+要素の一方又は両方が必要です。
+
+* element not allowed:rss2 author dc:creator
+
+default_level=s
+layer=content-model
+
+@en
+There are both <code>author</code> and <code>dc:creator</code>
+@ja
+<code>author</code> と <code>dc:creator</code> の両方があります
+
+@en
+<p>In an RSS2 <code>item</code> element, there should not be both of
+<code>author</code> and <code>dc:creator</code> elements.
+
+@ja
+<p>RSS2 <code>item</code> 要素では
+<code>author</code> 要素と <code>dc:creator</code> 
+要素の両方があるべきではありません。
+
+* limited use
+
+default_level=w
+layer=content-model
+
+@en
+This is not intended for public use
+@ja
+公開の場に相応しくないものです
+
+@en
+<p>Several elements, attributes, and other protocol features are not
+inteded for public documents but can be used in internal interchange,
+document generation, data storing, and other non-public purposes.
+
+<p>These are not invalid, but should not appear in public documents.
+
+@ja
+<p>要素や属性やその他のプロトコルの機能には、
+公開文書には相応しくない、内部用途、文書生成、データ保存、
+その他非公開の目的で使うべきものもあります。
+
+<p>こうした機能を使うことは不適切ではありませんが、
+公開文書では使うべきではないものです。

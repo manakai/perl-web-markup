@@ -26,30 +26,22 @@ my $data = {
   ogp => $ogp,
 };
 
+$data->{elements}->{rss2} = $data->{rss2_elements};
+
 for my $ns (keys %{$data->{elements}}) {
   for my $ln (keys %{$data->{elements}->{$ns}}) {
     my $def = $data->{elements}->{$ns}->{$ln};
-    delete $def->{spec};
-    delete $def->{id};
-    delete $def->{desc};
-    delete $def->{start_tag};
-    delete $def->{end_tag};
-    delete $def->{interface};
-    delete $def->{auto_br};
-    delete $def->{parser_category};
-    delete $def->{parser_scoping};
-    delete $def->{parser_li_scoping};
-    delete $def->{parser_button_scoping};
-    delete $def->{parser_table_scoping};
-    delete $def->{parser_table_body_scoping};
-    delete $def->{parser_table_row_scoping};
-    delete $def->{parser_select_non_scoping};
-    delete $def->{parser_implied_end_tag};
-    delete $def->{parser_implied_end_tag_at_eof};
-    delete $def->{parser_implied_end_tag_at_body};
-    delete $def->{syntax_category};
-    delete $def->{first_newline_ignored};
-    delete $def->{lang_sensitive};
+    delete $def->{$_} for qw(
+
+      spec id desc start_tag end_tag interface auto_br parser_category
+      parser_scoping parser_li_scoping parser_button_scoping
+      parser_table_scoping parser_table_body_scoping
+      parser_table_row_scoping parser_select_non_scoping
+      parser_implied_end_tag parser_implied_end_tag_at_eof
+      parser_implied_end_tag_at_body syntax_category
+      first_newline_ignored lang_sensitive url atom_extensible
+
+    );
     for my $ns2 (keys %{$def->{attrs}}) {
       for my $ln2 (keys %{$def->{attrs}->{$ns2}}) {
         delete $def->{attrs}->{$ns2}->{$ln2}->{spec};
@@ -65,12 +57,32 @@ for my $ns (keys %{$data->{elements}}) {
         $def->{text_type} = $def->{content_model};
         $def->{content_model} = 'text';
       }
+    } elsif ($def->{child_elements} and
+             not $def->{has_additional_content_constraints} #and
+             #not grep { $_->{has_additional_rules} } map { values %$_ } values %{$def->{child_elements}}
+    ) {
+      $def->{content_model} = 'props';
     }
   }
 }
 delete $data->{input}->{idl_attrs};
 delete $data->{input}->{methods};
 delete $data->{input}->{events};
+
+$data->{rss2_elements} = delete $data->{elements}->{rss2};
+
+for my $url (keys %{$data->{namespaces}}) {
+  my $def = $data->{namespaces}->{$url};
+  delete $def->{label};
+  delete $def->{url};
+  delete $def->{prefix};
+  delete $def->{atom_family};
+}
+for (keys %{$data->{namespaces}}) {
+  delete $data->{namespaces}->{$_} unless keys %{$data->{namespaces}->{$_}};
+}
+$data->{namespaces}->{q<http://www.w3.org/2000/xmlns/>}->{supported} = 1;
+delete $data->{namespaces}->{q<http://www.w3.org/1999/02/22-rdf-syntax-ns#>}->{limited_use};
 
 for my $type (keys %{$data->{md}}) {
   delete $data->{md}->{$type}->{spec};

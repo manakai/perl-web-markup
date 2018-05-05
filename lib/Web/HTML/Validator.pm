@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use warnings FATAL => 'recursion';
 no warnings 'utf8';
-our $VERSION = '135.0';
+our $VERSION = '136.0';
 use Scalar::Util qw(refaddr);
 use Web::HTML::Validator::_Defs;
 use Web::HTML::SourceMap;
@@ -73,6 +73,8 @@ my $GetNestedOnError = sub ($$) {
 ## in
 ## <https://github.com/manakai/data-web-defs/blob/master/doc/elements.txt>.
 
+## $self->{is_rss2}      Whether it is an RSS2 document or not.
+
 ## $self->{flag}->
 ##
 ##   {has_autofocus}     Used to detect duplicate autofocus="" attributes.
@@ -114,6 +116,7 @@ my $GetNestedOnError = sub ($$) {
 ##   {ogp_has_prop}->{$prop} Set to true if the property is specified.
 ##   {ogp_required_prop}->{$prop} Set to $node if it requires $prop.
 ##   {ogtype}            The value of og:type property.
+##   {rss1_data}         RSS1 states.
 ##   {slots}->{$name}    Whether there is <slot name=$name> or not.
 
 ## $element_state
@@ -125,35 +128,44 @@ my $GetNestedOnError = sub ($$) {
 ##                   there is a non-|table| content or not.
 ##   figure_table_count If the element is a |figure| element, the number
 ##                   of |table| child elements.
-##   has_autofocus_original Used for autofocus="" scoping by |dialog|
 ##   has_datetime    Whether there is a |datetime| attribute or not.
+##   has_dc_creator  There is a child |dc:creator| or not.
 ##   has_figcaption_content The element is a |figure| element and
 ##                   there is a |figcaption| child element whose content
 ##                   has elements and/or texts other than inter-element
 ##                   whitespaces.
 ##   has_heading     Has heading content (used for <summary> validation).
-##   has_label_original Used to preserve the value of
-##                   |$self->{flag}->{has_label}| at the time of
-##                   invocation of the method |check_start| for the
-##                   element being checked.
-##   has_labelable_original Used to preserve the value of 
-##                   |$self->{flag}->{has_labelable}| at the time of
-##                   invocation of the method |check_start| for the 
-##                   element being checked.
 ##   has_palpable    Set to true if a palpable content child is found.
 ##                   (Handled specially for <ruby>.)
 ##   has_phrasing    Has phrasing content (used for <summary> validation).
+##   has_prop        Used by %PropContainerChecker.
+##   has_rss2_author There is a child RSS2 |author| or not.
+##   has_rss2_description There is a child RSS2 |description| or not.
+##   has_rss2_title  There is a child RSS2 |title| or not.
 ##   has_summary     Used by |details| element checker.
-##   in_a_href_original Used to preserve |$self->{flag}->{in_a_href}|.
 ##   in_flow_content Set to true while the content model checker is
 ##                   in the "flow content" checking mode.
 ##   in_picture      Used by |picture|/|source| element checker.
+##   is_rss1_channel Is a |channel| element in the RSS namespace or not.
+##   is_rss1_item    Is an |item| element in the RSS namespace or not.
+##   is_rss1_items   Is an |items| element in the RSS namespace or not.
+##   is_rss1_items_seq Is a |Seq| element in the RDF namespace in a
+##                   |is_rss1_items| element or not.
+##   is_rss1_rdf     Is an RSS 1.0 |rdf:RDF| element or not.
+##   is_rss1_textinput Is a |textinput| element in the RSS namespace or not.
+##   is_rss2_channel Is an RSS 2.0 |channel| element or not.
+##   is_rss2_image   Is an RSS 2.0 |image| element or not.
+##   is_rss2_item    Is an RSS 2.0 |item| element or not.
+##   not_prop_container Used by %PropContainerChecker.
 ##   phase           Content model checker state name.  Possible values
 ##                   depend on the element.
 ##   require_title   Set to 'm' (MUST) or 's' (SHOULD) if the element
 ##                   is expected to have the |title| attribute.
+##   rss2_channel_data RSS2 |channel| element and its descendants' data.
+##   rss2_skip_data  RSS2 |skip*| element and its descendants' data.
 ##   style_type      The styling language's MIME type object.
 ##   text            Text data in the element.
+##   *_original      Used to preserve |$self->{flag}->{*}|'s value.
 
 sub _init ($) {
   my $self = $_[0];
@@ -182,7 +194,6 @@ sub _init ($) {
     name => $self->{name},
     table => [], # table objects returned by Web::HTML::Table
     term => $self->{term},
-    rdf => [],
   };
 } # _init
 
@@ -251,7 +262,8 @@ sub XML_NS () { q<http://www.w3.org/XML/1998/namespace> }
 sub XMLNS_NS () { q<http://www.w3.org/2000/xmlns/> }
 sub XSLT_NS () { q<http://www.w3.org/1999/XSL/Transform> }
 sub RDF_NS () { q<http://www.w3.org/1999/02/22-rdf-syntax-ns#> }
-sub RSS1_NS () { q<http://purl.org/rss/1.0/> }
+sub RSS_NS () { q<http://purl.org/rss/1.0/> }
+sub RSS_CONTENT_NS () { q<http://purl.org/rss/1.0/modules/content/> }
 sub ATOM_NS () { q<http://www.w3.org/2005/Atom> }
 sub ATOM03_NS () { q<http://purl.org/atom/ns#> }
 sub APP_NS () { q<http://www.w3.org/2007/app> }
@@ -259,6 +271,9 @@ sub THR_NS () { q<http://purl.org/syndication/thread/1.0> }
 sub FH_NS () { q<http://purl.org/syndication/history/1.0> }
 sub AT_NS () { q<http://purl.org/atompub/tombstones/1.0> }
 sub LINK_REL () { q<http://www.iana.org/assignments/relation/> }
+sub DC_NS () { q<http://purl.org/dc/elements/1.1/> }
+sub MRSS1_NS () { q<http://search.yahoo.com/mrss/> }
+sub MRSS2_NS () { q<http://search.yahoo.com/mrss> }
 
 our $_Defs;
 
@@ -351,6 +366,8 @@ my $ElementAttrChecker = {};
 my $ItemValueChecker = {};
 my $ElementTextCheckerByType = {};
 my $ElementTextCheckerByName = {};
+our $Element = {};
+my $RSS2Element = {};
 
 sub _check_element_attrs ($$$;%) {
   my ($self, $item, $element_state, %args) = @_;
@@ -399,18 +416,27 @@ sub _check_element_attrs ($$$;%) {
       }
     }
 
-    ## $el_ns and $el_ln can be |*| but no problem.
-    my $checker =
-        $ElementAttrChecker->{$el_ns}->{$el_ln}->{$attr_ns}->{$attr_ln} ||
-        $ElementAttrChecker->{$el_ns}->{'*'}->{$attr_ns}->{$attr_ln} ||
-        $NamespacedAttrChecker->{$attr_ns}->{$attr_ln} ||
-        $NamespacedAttrChecker->{$attr_ns}->{''};
-    my $attr_def = ($_Defs->{elements}->{$el_ns}->{$el_ln} or {})->{attrs}->{$attr_ns}->{$attr_ln} ||
-        # $el_ns -> *-*
-        $_Defs->{elements}->{$el_ns}->{'*'}->{attrs}->{$attr_ns}->{$attr_ln} ||
-        $_Defs->{elements}->{'*'}->{'*'}->{attrs}->{$attr_ns}->{$attr_ln};
+    my $Ens = ($el_ns eq '' and $self->{is_rss2})
+        ? $_Defs->{rss2_elements} : $_Defs->{elements}->{$el_ns};
+
+    my $checker = $ElementAttrChecker->{$el_ns}->{$el_ln}->{$attr_ns}->{$attr_ln};
+    my $attr_def = ($Ens->{$el_ln} or {})->{attrs}->{$attr_ns}->{$attr_ln};
+    $checker ||= $CheckerByType->{$attr_def->{value_type} || ''}
+        if defined $attr_def;
+
+    $checker ||= $ElementAttrChecker->{$el_ns}->{'*'}->{$attr_ns}->{$attr_ln};
+    $attr_def ||= $Ens->{'*'}->{attrs}->{$attr_ns}->{$attr_ln};
+    $checker ||= $CheckerByType->{$attr_def->{value_type} || ''}
+        if defined $attr_def;
+
+    $checker ||= $NamespacedAttrChecker->{$attr_ns}->{$attr_ln};
+    $attr_def ||= $_Defs->{elements}->{'*'}->{'*'}->{attrs}->{$attr_ns}->{$attr_ln};
+    $checker ||= $CheckerByType->{$attr_def->{value_type} || ''}
+        if defined $attr_def;
+
+    $checker ||= $NamespacedAttrChecker->{$attr_ns}->{'*'};
+
     my $conforming = $attr_def->{conforming};
-    my $status = $attr_def->{status} || '';
     if ($allow_dataset and
         $attr_ns eq '' and
         $attr_ln =~ /^data-\p{InNCNameChar}+\z/ and
@@ -418,7 +444,6 @@ sub _check_element_attrs ($$$;%) {
       ## |data-*=""| - XML-compatible + no uppercase letter
       $checker = $CheckerByType->{any};
       $conforming = 1;
-      $status = 'REC';
     } elsif (defined $input_type and
              $attr_ns eq '' and
              keys %{$_Defs->{input}->{attrs}->{$attr_ln} or {}} and
@@ -434,10 +459,7 @@ sub _check_element_attrs ($$$;%) {
       $checker = $args{element_specific_checker}->{$attr_ln} || $checker;
     } elsif ($attr_ns eq XMLNS_NS) { # xmlns="", xmlns:*=""
       $conforming = 1;
-      $status = 'REC';
     }
-    my $value_type = $attr_def->{value_type} || '';
-    $checker ||= $CheckerByType->{$value_type};
     if ($allow_custom and
         $attr_ns eq '' and
         $attr_ln !~ /[A-Z]/ and
@@ -446,7 +468,6 @@ sub _check_element_attrs ($$$;%) {
       ## XML-compatible + no uppercase letter
       $checker ||= $CheckerByType->{any};
       $conforming = 1;
-      $status = 'REC';
       if (not $attr_def->{conforming} and
           ($attr_def->{browser} or
            (not $ElementAttrChecker->{$el_ns}->{$el_ln}->{$attr_ns}->{$attr_ln} and
@@ -465,19 +486,19 @@ sub _check_element_attrs ($$$;%) {
         ## not support the attribute.  The conformance is unknown.
         $self->{onerror}->(node => $attr,
                            type => 'unknown attribute', level => 'u');
+      } elsif ($attr_def->{limited_use} or
+               $_Defs->{namespaces}->{$attr_ns}->{limited_use}) {
+        $self->{onerror}->(node => $attr,
+                           type => 'limited use',
+                           level => 'w');
       }
-      if ($status eq 'REC' or $status eq 'CR' or $status eq 'LC') {
-        #
-      } else {
-        ## The attribute is conforming, but is in earlier stage such
-        ## that it should not be used without caution.
-        # XXX
-        #$self->{onerror}->(node => $attr,
-        #                   type => 'status:wd:attr', level => 'i')
-      }
-    } else {
+    } else { # not conforming
       if ($_Defs->{namespaces}->{$el_ns}->{supported} or
-          $_Defs->{namespaces}->{$attr_ns}->{supported}) {
+          $_Defs->{namespaces}->{$attr_ns}->{supported} or
+          $_Defs->{namespaces}->{$el_ns}->{obsolete} or
+          $_Defs->{namespaces}->{$attr_ns}->{obsolete} or
+          $Element->{$el_ns}->{$el_ln} or
+          ($el_ns eq '' and $self->{is_rss2})) {
         ## "Authors must not use elements, attributes, or attribute
         ## values that are not permitted by this specification or
         ## other applicable specifications" [HTML]
@@ -498,6 +519,11 @@ sub _check_element_attrs ($$$;%) {
                                level => 'm');
           }
         }
+      } else {
+        $self->{onerror}->(node => $attr,
+                           type => 'unknown attribute',
+                           level => 'u')
+            unless defined $checker;
       }
     }
 
@@ -505,9 +531,11 @@ sub _check_element_attrs ($$$;%) {
   } # $attr
 } # _check_element_attrs
 
-$CheckerByType->{any} = sub {};
-$CheckerByType->{text} = sub {};
-$ItemValueChecker->{text} = sub {};
+$CheckerByType->{any} = 
+$ElementTextCheckerByType->{any} =
+$CheckerByType->{text} =
+$ItemValueChecker->{text} =
+$ElementTextCheckerByType->{text} = sub { };
 
 ## Non-empty text
 $CheckerByType->{'non-empty'} =
@@ -589,6 +617,19 @@ $CheckerByType->{'case-sensitive enumerated'} = sub {
   $self->{onerror}->(node => $attr, type => 'enumerated:invalid',
                      level => 'm');
 }; # case-sensitive enumerated
+$ElementTextCheckerByType->{'case-sensitive enumerated'} = sub {
+  my ($self, $value, $onerror, $item) = @_;
+  my $def = $item->{def_data};
+  if ($def->{enumerated}->{$value} and not $value =~ /^#/) {
+    if ($def->{enumerated}->{$value}->{conforming}) {
+      return;
+    } elsif ($def->{enumerated}->{$value}->{non_conforming}) {
+      $onerror->(type => 'enumerated:non-conforming', level => 'm');
+      return;
+    }
+  }
+  $onerror->(type => 'enumerated:invalid', level => 'm');
+}; # case-sensitive enumerated
 
 ## Integer [HTML]
 $CheckerByType->{integer} = sub {
@@ -653,6 +694,17 @@ $ItemValueChecker->{'non-negative integer'} = sub {
                        level => 'm');
   }
 }; # non-negative integer
+$ElementTextCheckerByType->{'non-negative integer'} = sub {
+  my ($self, $value, $onerror) = @_;
+  if ($value =~ /\A[0-9]+\z/) {
+    #
+  } else {
+    $onerror->(type => 'nninteger:syntax error',
+               value => $value,
+               level => 'm');
+  }
+}; # non-negative integer
+
 
 ## Non-negative integer greater than zero [HTML]
 $CheckerByType->{'non-negative integer greater than zero'} = sub {
@@ -896,6 +948,16 @@ $ItemValueChecker->{'language tag'} = sub {
   my $lang = Web::LangTag->new;
   $lang->onerror (sub {
     $self->{onerror}->(value => $value, @_, node => $node);
+  });
+  my $parsed = $lang->parse_tag ($value);
+  $lang->check_parsed_tag ($parsed);
+}; # language tag
+$ElementTextCheckerByType->{'language tag'} = sub {
+  my ($self, $value, $onerror) = @_;
+  require Web::LangTag;
+  my $lang = Web::LangTag->new;
+  $lang->onerror (sub {
+    $onerror->(value => $value, @_);
   });
   my $parsed = $lang->parse_tag ($value);
   $lang->check_parsed_tag ($parsed);
@@ -1189,6 +1251,13 @@ $ItemValueChecker->{'e-mail address'} = sub {
       unless $value =~ qr/\A$ValidEmailAddress\z/o;
 }; # e-mail address
 
+$ElementTextCheckerByType->{'RSS 2.0 person'} = sub {
+  my ($self, $value, $onerror) = @_;
+  $onerror->(type => 'rss2:person:syntax error',
+             level => 's')
+      unless $value =~ qr/\A$ValidEmailAddress \([^()]*\)\z/o;
+}; # RSS 2.0 person
+
 ## E-mail address list [HTML]
 $CheckerByType->{'e-mail address list'} = sub {
   my ($self, $attr) = @_;
@@ -1371,7 +1440,7 @@ sub _dtd ($$) {
 ## specification.  (In fact most combinations of them are not even
 ## exist in standard DOM world.)
 
-$NamespacedAttrChecker->{(XML_NS)}->{''} = sub {
+$NamespacedAttrChecker->{(XML_NS)}->{'*'} = sub {
   my ($self, $attr) = @_;
   ## "Attribute not defined" error is thrown by other place.
   
@@ -1468,31 +1537,7 @@ $NamespacedAttrChecker->{(XML_NS)}->{lang} = sub {
   }
 }; # xml:lang=""
 
-$NamespacedAttrChecker->{(XML_NS)}->{base} = sub {
-  my ($self, $attr) = @_;
-
-  ## XXX xml:base support will be likely removed from the Web.
-  ## XXX but maybe we can't drop it entirely to not break feed support.
-
-  my $value = $attr->value;
-  if ($value =~ /[^\x{0000}-\x{10FFFF}]/) { ## ISSUE: Should we disallow noncharacters?
-    $self->{onerror}->(node => $attr,
-                       type => 'invalid attribute value',
-                       level => 'm', # fact
-                      );
-  }
-  ## NOTE: Conformance to URI standard is not checked since there is
-  ## no author requirement on conformance in the XML Base
-  ## specification.
-
-  ## XXX If this attribute will not be removed: The attribute value
-  ## must be URL.  It does not defined as URLs for the purpose of
-  ## <base href=""> validation.  (Note that even if the attribute is
-  ## dropped for browsers, we have to continue to support it for
-  ## feeds.)
-}; # xml:base=""
-
-$NamespacedAttrChecker->{(XMLNS_NS)}->{''} = sub {
+$NamespacedAttrChecker->{(XMLNS_NS)}->{'*'} = sub {
   my ($self, $attr) = @_;
   my $ln = $attr->local_name;
 
@@ -2624,8 +2669,6 @@ sub _is_minus_element ($$$$) {
   } # ns
 } # _is_minus_element
 
-our $Element = {};
-
 ## Check whether the labelable form-associated element is allowed to
 ## place there or not and mark the element ID, if any, might be used
 ## in the |for| attribute of a |label| element.
@@ -2797,8 +2840,8 @@ $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{accesskey} = sub {
   }
 }; # accesskey=""
 
-# XXX superglobal
-$ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{id} = sub {
+## Superglobal attribute id=""
+$NamespacedAttrChecker->{''}->{id} = sub {
   my ($self, $attr, $item, $element_state) = @_;
   my $value = $attr->value;
   if (length $value > 0) {
@@ -2834,24 +2877,27 @@ $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{id} = sub {
   }
 }; # id=""
 
-# XXX superglobal
-$ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{class} = sub {
+## Superglobal attribute class=""
+$NamespacedAttrChecker->{''}->{class} = sub {
   my ($self, $attr) = @_;
-    
-    ## NOTE: "set of unique space-separated tokens".
-
-    my %word;
-    for my $word (grep {length $_}
-                  split /[\x09\x0A\x0C\x0D\x20]+/, $attr->value) {
-      unless ($word{$word}) {
-        $word{$word} = 1;
+  ## NOTE: "set of unique space-separated tokens".
+  my %word;
+  for my $word (grep {length $_}
+                split /[\x09\x0A\x0C\x0D\x20]+/, $attr->value) {
+    unless ($word{$word}) {
+      $word{$word} = 1;
         push @{$self->{return}->{class}->{$word}||=[]}, $attr;
-      }
+    } else {
+      $self->{onerror}->(node => $attr,
+                         type => 'duplicate token', value => $word,
+                         level => 'w'); # not non-conforming
     }
+  } # $word
 }; # class=""
 
-# XXX superglobal
-$ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{slot} = sub {
+## Superglobal attribute slot=""
+$ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{slot} =
+$NamespacedAttrChecker->{''}->{slot} = sub {
   my ($self, $attr) = @_;
 
   ## Any value.
@@ -3187,13 +3233,18 @@ my %HTMLTextChecker = (
     my ($self, $item, $element_state) = @_;
     my $el_nsurl = $item->{node}->namespace_uri || '';
     my $el_ln = $item->{node}->local_name;
-    my $el_def = $_Defs->{elements}->{$el_nsurl}->{$el_ln};
+    my $tt = $item->{def_data}->{text_type};
     my $checker = $ElementTextCheckerByName->{$el_nsurl}->{$el_ln}
-        || $ElementTextCheckerByType->{$el_def->{text_type} || ''};
+        || $ElementTextCheckerByType->{$tt || ''};
     if (defined $checker) {
       my ($value, undef, $sps, undef) = node_to_text_and_tc_and_sps $item->{node};
       my $onerror = $GetNestedOnError->($self->onerror, $item->{node});
-      $checker->($self, $value, $onerror);
+      $checker->($self, $value, $onerror, $item);
+    } elsif (defined $tt) {
+      $self->{onerror}->(node => $item->{node},
+                         type => 'unknown value type',
+                         text => $tt,
+                         level => 'u');
     } # $checker
   }, # check_end
 ); # %HTMLTextChecker
@@ -3279,9 +3330,18 @@ my %PropContainerChecker = (
   check_child_element => sub {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
-    my $el_def = $_Defs->{elements}
-        ->{$item->{node}->namespace_uri || ''}->{$item->{node}->local_name};
-    my $children = $el_def->{child_elements}->{$child_nsuri}->{$child_ln};
+    return if $element_state->{not_prop_container};
+
+    if (($element_state->{phase} || '') eq 'rdfresourceref') {
+      $self->{onerror}->(node => $child_el,
+                         type => 'element not allowed',
+                         level => 'm');
+      return;
+    }
+
+    my $el_def_data = $item->{def_data};
+
+    my $children = $el_def_data->{child_elements}->{$child_nsuri}->{$child_ln};
     if (defined $children->{min}) {
       my $n = ++$element_state->{has_element}->{$child_nsuri}->{$child_ln};
       if (defined $children->{max}) { # max < +Infinity
@@ -3290,18 +3350,43 @@ my %PropContainerChecker = (
                            level => 'm')
             if $children->{max} < $n;
       }
-    } elsif ($el_def->{atom_extensible} and
-             length $child_nsuri and
-             not $_Defs->{namespaces}->{$child_nsuri}->{supported}) {
-      #
-    } else {
-      $self->{onerror}->(node => $child_el,
-                         type => 'element not allowed',
-                         level => 'm');
+      return;
     }
+
+    if ($el_def_data->{unknown_children}) {
+      if ($el_def_data->{unknown_children} eq 'nordf') {
+        if (defined $element_state->{has_prop}->{$child_nsuri}->{$child_ln}) {
+          $self->{onerror}->(node => $child_el,
+                             type => 'rss1:duplicate prop',
+                             level => 'm');
+          return;
+        } else {
+          $element_state->{has_prop}->{$child_nsuri}->{$child_ln} = 1;
+        }
+      }
+
+      if ($child_nsuri eq '') { # null namespace
+        # XXX if RSS2
+        return unless $el_def_data->{unknown_children} eq 'nordf';
+      } elsif ($_Defs->{namespaces}->{$child_nsuri}->{supported}) { # fully supported [VALLANGS]
+        #
+      } else { # partially supported or not supported [VALLANGS]
+        unless ($el_def_data->{unknown_children} eq 'nordf' and
+                ($child_nsuri eq RDF_NS or
+                 ($child_ln =~ /^[Xx][Mm][Ll]/ and not defined $child_el->prefix) or
+                 ($child_el->prefix || '') =~ /^[Xx][Mm][Ll]/)) {
+          return unless defined $_Defs->{elements}->{$child_nsuri}->{$child_ln};
+        }
+      }
+    } # unknown children
+
+    $self->{onerror}->(node => $child_el,
+                       type => 'element not allowed',
+                       level => 'm');
   }, # check_child_element
   check_child_text => sub {
     my ($self, $item, $child_node, $has_significant, $element_state) = @_;
+    return if $element_state->{not_prop_container};
     if ($has_significant) {
       $self->{onerror}->(node => $child_node,
                          type => 'character not allowed',
@@ -3310,9 +3395,11 @@ my %PropContainerChecker = (
   },
   check_end => sub {
     my ($self, $item, $element_state) = @_;
-    my $children = ($_Defs->{elements}
-        ->{$item->{node}->namespace_uri || ''}->{$item->{node}->local_name} or {})
-        ->{child_elements};
+
+    return if $element_state->{not_prop_container};
+    return if ($element_state->{phase} || '') eq 'rdfresourceref';
+
+    my $children = $item->{def_data}->{child_elements};
     for my $ns (keys %$children) {
       for my $ln (keys %{$children->{$ns} or {}}) {
         my $min = $children->{$ns}->{$ln}->{min} || 0;
@@ -3442,13 +3529,28 @@ for my $ns (keys %{$_Defs->{elements}}) {
           = $AtomTextConstruct{$_} for keys %AtomTextConstruct;
       $ElementAttrChecker->{$ns}->{$ln}->{''}->{type}
           = $AtomTextConstructTypeAttrChecker;
-    } elsif ($cm eq 'atomPersonConstruct' or $cm eq 'atom03PersonConstruct') {
+    } elsif ($cm eq 'props' or
+             $cm eq 'atomPersonConstruct' or
+             $cm eq 'atom03PersonConstruct') {
       $Element->{$ns}->{$ln eq '*' ? '' : $ln}->{$_}
           = $PropContainerChecker{$_} for keys %PropContainerChecker;
     } elsif ($cm eq 'atom03ContentConstruct') {
       $ElementAttrChecker->{$ns}->{$ln}->{''}->{mode}
           = $Atom03ContentConstructModeAttrChecker;
     }
+  }
+}
+for my $ln (keys %{$_Defs->{rss2_elements}}) {
+  my $cm = $_Defs->{rss2_elements}->{$ln}->{content_model} or next;
+  if ($cm eq 'text') {
+    $RSS2Element->{$ln eq '*' ? '' : $ln}->{$_}
+        = $HTMLTextChecker{$_} for keys %HTMLTextChecker;
+  } elsif ($cm eq 'empty') {
+    $RSS2Element->{$ln eq '*' ? '' : $ln}->{$_}
+        = $HTMLEmptyChecker{$_} for keys %HTMLEmptyChecker;
+  } elsif ($cm eq 'props') {
+    $RSS2Element->{$ln eq '*' ? '' : $ln}->{$_}
+        = $PropContainerChecker{$_} for keys %PropContainerChecker;
   }
 }
 
@@ -3550,7 +3652,11 @@ for my $ns (keys %{$_Defs->{elements}}) {
       $text_checker->('rfc3339_xs_date_time_string');
 
   $ElementTextCheckerByType->{'atom03DateConstruct'} =
+  $ElementTextCheckerByType->{'W3C-DTF'} =
       $text_checker->('w3c_dtf_string');
+
+  $ElementTextCheckerByType->{'RSS 2.0 date'} =
+      $text_checker->('rss2_date_time_string');
 
   ## <time>
   $ElementAttrChecker->{(HTML_NS)}->{time}->{''}->{datetime} = sub { };
@@ -3993,6 +4099,7 @@ $HTTPEquivChecker->{'x-ua-compatible'} = sub {
 $HTTPEquivChecker->{'content-language'} = $CheckerByType->{'language tag'};
 ## XXX set-cookie-string [OBSVOCAB]
 #$HTTPEquivChecker->{'set-cookie'}
+
 
 ## <meta name> content validators
 my $CheckerByMetadataName = { };
@@ -5063,7 +5170,6 @@ $ElementAttrChecker->{(HTML_NS)}->{$_}->{''}->{type} = sub {
                        level => 'm');
   }
 } for qw(li dir); # <li type=""> <dir type="">
-delete $ElementAttrChecker->{(HTML_NS)}->{$_}->{menu}->{type}; # XXX
 
 $ElementAttrChecker->{(HTML_NS)}->{li}->{''}->{value} = sub {
   my ($self, $attr) = @_;
@@ -7126,6 +7232,7 @@ $Element->{+HTML_NS}->{input} = {
             ## Strictly speaking, this error type is wrong.
             $self->{onerror}->(node => $attr,
                                type => 'unknown attribute',
+                               text => $value_type,
                                level => 'u');
           };
           $checker = $CheckerByType->{'e-mail address'}
@@ -7143,6 +7250,7 @@ $Element->{+HTML_NS}->{input} = {
         ## Strictly speaking, this error type is wrong.
         $self->{onerror}->(node => $attr,
                            type => 'unknown attribute',
+                           text => $value_type,
                            level => 'u');
       };
       $checker = $CheckerByType->{'floating-point number'}
@@ -8406,6 +8514,587 @@ $_Defs->{elements}->{(SVG_NS)}->{$_}->{conforming} = 1
 $_Defs->{elements}->{(MML_NS)}->{$_}->{conforming} = 1
     for qw(math mi mo mn mtext annotation-xml);
 
+## ------ RSS1 ------
+
+$Element->{+RDF_NS}->{RDF} = {
+  %PropContainerChecker,
+  check_start => sub {
+    my ($self, $item, $element_state) = @_;
+
+    $element_state->{rss1_data_original} = $self->{flag}->{rss1_data};
+    $self->{flag}->{rss1_data} = {};
+
+    ## RSS 1.0 rdf:RDF element
+    ## <https://manakai.github.io/spec-dom/validation-langs#rss-1.0-rdf:rdf-element>
+    $element_state->{is_rss1_rdf} = do {
+      #($item->{node}->namespace_uri || '') eq RDF_NS and
+      #$item->{node}->local_name eq 'RDF' and
+      (
+        (
+          defined $item->{node}->parent_node and
+          $item->{node}->parent_node->node_type == $item->{node}->DOCUMENT_NODE and
+          $item->{node}->parent_node->content_type eq 'application/rss+xml'
+        ) or (
+          ($item->{node}->prefix || '') eq 'rdf' and
+          ($item->{node}->get_attribute_ns (XMLNS_NS, 'xmlns') || '') eq RSS_NS and
+          ($item->{node}->get_attribute_ns (XMLNS_NS, 'rdf') || '') eq RDF_NS
+        )
+      )
+    };
+
+    if ($element_state->{is_rss1_rdf}) {
+      unless (($item->{node}->prefix || '') eq 'rdf') {
+        $self->{onerror}->(node => $item->{node},
+                           type => 'rss1:rdf:RDF:bad prefix',
+                           value => $item->{node}->prefix,
+                           level => 'm');
+      }
+    } else {
+      $element_state->{not_prop_container} = 1;
+      $self->{onerror}->(node => $item->{node},
+                         type => 'unknown RDF element',
+                         level => 'u');
+    }
+  }, # check_start
+  check_end => sub {
+    my ($self, $item, $element_state) = @_;
+
+    if (defined $self->{flag}->{rss1_data}->{image_about} and
+        defined $self->{flag}->{rss1_data}->{image_resource}) {
+      unless ($self->{flag}->{rss1_data}->{image_about}->value eq
+              $self->{flag}->{rss1_data}->{image_resource}->value) {
+        $self->{onerror}->(node => $self->{flag}->{rss1_data}->{image_resource},
+                           type => 'rss1:bad rdf:resource',
+                           text => $self->{flag}->{rss1_data}->{image_about}->value,
+                           level => 'm');
+      }
+    } elsif (defined $self->{flag}->{rss1_data}->{image_about} and
+             not defined $self->{flag}->{rss1_data}->{image_resource}) {
+      $self->{onerror}->(node => $self->{flag}->{rss1_data}->{image_about},
+                         type => 'rss1:no rdf:resource',
+                         text => 'image',
+                         level => 'm');
+    } elsif (not defined $self->{flag}->{rss1_data}->{image_about} and
+             defined $self->{flag}->{rss1_data}->{image_resource}) {
+      $self->{onerror}->(node => $self->{flag}->{rss1_data}->{image_resource},
+                         type => 'rss1:no rdf:about',
+                         text => 'image',
+                         level => 'm');
+    }
+
+    if (defined $self->{flag}->{rss1_data}->{textinput_about} and
+        defined $self->{flag}->{rss1_data}->{textinput_resource}) {
+      unless ($self->{flag}->{rss1_data}->{textinput_about}->value eq
+              $self->{flag}->{rss1_data}->{textinput_resource}->value) {
+        $self->{onerror}->(node => $self->{flag}->{rss1_data}->{textinput_resource},
+                           type => 'rss1:bad rdf:resource',
+                           text => $self->{flag}->{rss1_data}->{textinput_about}->value,
+                           level => 'm');
+      }
+    } elsif (defined $self->{flag}->{rss1_data}->{textinput_about} and
+             not defined $self->{flag}->{rss1_data}->{textinput_resource}) {
+      $self->{onerror}->(node => $self->{flag}->{rss1_data}->{textinput_about},
+                         type => 'rss1:no rdf:resource',
+                         text => 'textinput',
+                         level => 'm');
+    } elsif (not defined $self->{flag}->{rss1_data}->{textinput_about} and
+             defined $self->{flag}->{rss1_data}->{textinput_resource}) {
+      $self->{onerror}->(node => $self->{flag}->{rss1_data}->{textinput_resource},
+                         type => 'rss1:no rdf:about',
+                         text => 'textinput',
+                         level => 'm');
+    }
+    if (defined $self->{flag}->{rss1_data}->{textinput_about}) {
+      my $v = $self->{flag}->{rss1_data}->{textinput_about}->value;
+      if ($self->{flag}->{rss1_data}->{item_abouts}->{$v}) {
+        $self->{onerror}->(node => $self->{flag}->{rss1_data}->{textinput_about},
+                           type => 'rss1:duplicate rdf:about',
+                           level => 'm');
+      } elsif (defined $self->{flag}->{rss1_data}->{image_about} and
+               $self->{flag}->{rss1_data}->{image_about}->value eq $v) {
+        $self->{onerror}->(node => $self->{flag}->{rss1_data}->{textinput_about},
+                           type => 'rss1:duplicate rdf:about',
+                           level => 'm');
+      } elsif (defined $self->{flag}->{rss1_data}->{channel_about} and
+               $self->{flag}->{rss1_data}->{channel_about}->value eq $v) {
+        $self->{onerror}->(node => $self->{flag}->{rss1_data}->{textinput_about},
+                           type => 'rss1:duplicate rdf:about',
+                           level => 'm');
+      }
+    }
+
+    for my $url (keys %{$self->{flag}->{rss1_data}->{item_abouts} or {}}) {
+      unless (delete $self->{flag}->{rss1_data}->{item_resources}->{$url}) {
+        $self->{onerror}->(node => $self->{flag}->{rss1_data}->{item_abouts}->{$url},
+                           type => 'rss1:no rdf:resource',
+                           text => 'rdf:li',
+                           level => 'm');
+      }
+    }
+    for my $url (keys %{$self->{flag}->{rss1_data}->{item_resources} or {}}) {
+      $self->{onerror}->(node => $self->{flag}->{rss1_data}->{item_resources}->{$url},
+                         type => 'rss1:no rdf:about',
+                         text => 'item',
+                         level => 'm');
+    }
+
+    $self->{flag}->{rss1_data} = $element_state->{rss1_data_original};
+
+    $PropContainerChecker{check_end}->(@_);
+  }, # check_end
+}; # rdf:RDF
+
+$Element->{+RSS_NS}->{channel}->{check_start} = sub {
+  my ($self, $item, $element_state) = @_;
+
+  $element_state->{is_rss1_channel} = 1;
+  $self->{flag}->{rss1_data}->{channel_about}
+      = $item->{node}->get_attribute_node_ns (RDF_NS, 'about');
+
+}; # rss:channel check_start
+
+$Element->{+RSS_NS}->{image} = {
+  %PropContainerChecker,
+  check_start => sub {
+    my ($self, $item, $element_state) = @_;
+
+    $element_state->{phase}
+        = $item->{parent_state}->{is_rss1_channel} ? 'rdfresourceref' :
+          $item->{parent_state}->{is_rss1_rdf} ? 'props' : 'unknown';
+
+  }, # check_start
+  check_end => sub {
+    my ($self, $item, $element_state) = @_;
+
+    if ($element_state->{phase} eq 'rdfresourceref') {
+      my $a1 = $item->{node}->get_attribute_node_ns (RDF_NS, 'resource');
+      if (defined $a1) {
+        $self->{flag}->{rss1_data}->{image_resource} = $a1;
+      } else {
+        $self->{onerror}->(node => $item->{node},
+                           type => 'attribute missing',
+                           text => 'rdf:resource',
+                           level => 'm');
+      }
+      my $attr = $item->{node}->get_attribute_node_ns (RDF_NS, 'about');
+      $self->{onerror}->(node => $attr,
+                         type => 'attribute not allowed',
+                         level => 'm')
+          if defined $attr;
+    } elsif ($element_state->{phase} eq 'props') {
+      my $a1 = $item->{node}->get_attribute_node_ns (RDF_NS, 'about');
+      if (defined $a1) {
+        $self->{flag}->{rss1_data}->{image_about} = $a1;
+      } else {
+        $self->{onerror}->(node => $item->{node},
+                           type => 'attribute missing',
+                           text => 'rdf:about',
+                           level => 'm');
+      }
+      my $attr = $item->{node}->get_attribute_node_ns (RDF_NS, 'resource');
+      $self->{onerror}->(node => $attr,
+                         type => 'attribute not allowed',
+                         level => 'm')
+          if defined $attr;
+    }
+
+    $PropContainerChecker{check_end}->(@_);
+  }, # check_end
+}; # rss:image
+
+$Element->{+RSS_NS}->{textinput} = {
+  %PropContainerChecker,
+  check_start => sub {
+    my ($self, $item, $element_state) = @_;
+
+    $element_state->{phase}
+        = $item->{parent_state}->{is_rss1_channel} ? 'rdfresourceref' :
+          $item->{parent_state}->{is_rss1_rdf} ? 'props' : 'unknown';
+    $element_state->{is_rss1_textinput} = 1;
+
+  }, # check_start
+  check_end => sub {
+    my ($self, $item, $element_state) = @_;
+
+    if ($element_state->{phase} eq 'rdfresourceref') {
+      my $a1 = $item->{node}->get_attribute_node_ns (RDF_NS, 'resource');
+      if (defined $a1) {
+        $self->{flag}->{rss1_data}->{textinput_resource} = $a1;
+      } else {
+        $self->{onerror}->(node => $item->{node},
+                           type => 'attribute missing',
+                           text => 'rdf:resource',
+                           level => 'm');
+      }
+      my $attr = $item->{node}->get_attribute_node_ns (RDF_NS, 'about');
+      $self->{onerror}->(node => $attr,
+                         type => 'attribute not allowed',
+                         level => 'm')
+          if defined $attr;
+    } elsif ($element_state->{phase} eq 'props') {
+      my $a1 = $item->{node}->get_attribute_node_ns (RDF_NS, 'about');
+      if (defined $a1) {
+        $self->{flag}->{rss1_data}->{textinput_about} = $a1;
+      } else {
+        $self->{onerror}->(node => $item->{node},
+                           type => 'attribute missing',
+                           text => 'rdf:about',
+                           level => 'm');
+      }
+      my $attr = $item->{node}->get_attribute_node_ns (RDF_NS, 'resource');
+      $self->{onerror}->(node => $attr,
+                         type => 'attribute not allowed',
+                         level => 'm')
+          if defined $attr;
+    }
+
+    $PropContainerChecker{check_end}->(@_);
+  }, # check_end
+}; # rss:textinput
+
+$Element->{+RSS_NS}->{link}->{check_attrs2} = sub {
+  my ($self, $item, $element_state) = @_;
+
+  if ($item->{parent_state}->{is_rss1_item} or
+      $item->{parent_state}->{is_rss1_textinput}) {
+    my $about = $item->{node}->parent_node->get_attribute_ns (RDF_NS, 'about');
+    if (defined $about and
+        not $about eq $item->{node}->text_content) { # XXX child text content?
+      $self->{onerror}->(node => $item->{node},
+                         type => 'rss1:item:link ne rdf:about',
+                         text => $about,
+                         level => 's');
+    }
+  }
+
+}; # rss:link check_attrs2
+
+$Element->{+RSS_NS}->{item}->{check_attrs2} = sub {
+  my ($self, $item, $element_state) = @_;
+  $element_state->{is_rss1_item} = 1;
+
+  my $about = $item->{node}->get_attribute_node_ns (RDF_NS, 'about');
+  if (defined $about) {
+    if (defined $self->{flag}->{rss1_data}->{item_abouts}->{$about->value}) {
+      $self->{onerror}->(node => $about,
+                         type => 'rss1:item:duplicate rdf:about',
+                         level => 'm');
+    } else {
+      $self->{flag}->{rss1_data}->{item_abouts}->{$about->value} = $about;
+    }
+  }
+
+}; # rss:item check_attrs2
+
+$Element->{+RSS_NS}->{items}->{check_start} = sub {
+  my ($self, $item, $element_state) = @_;
+  $element_state->{is_rss1_items} = 1;
+}; # rss:items check_start
+
+$Element->{+RDF_NS}->{Seq} = {
+  %PropContainerChecker,
+  check_start => sub {
+    my ($self, $item, $element_state) = @_;
+
+    if ($item->{parent_state}->{is_rss1_items}) {
+      $element_state->{is_rss1_items_seq} = 1;
+    } else {
+      $element_state->{not_prop_container} = 1;
+      $self->{onerror}->(node => $item->{node},
+                         type => 'unknown RDF element',
+                         level => 'u');
+    }
+  }, # check_start
+}; # rdf:Seq
+
+$Element->{+RDF_NS}->{li} = {
+  %PropContainerChecker,
+  check_start => sub {
+    my ($self, $item, $element_state) = @_;
+
+    if ($item->{parent_state}->{is_rss1_items_seq}) {
+      my $res = $item->{node}->get_attribute_node_ns (RDF_NS, 'resource');
+      if (defined $res) {
+        if (defined $self->{flag}->{rss1_data}->{item_resources}->{$res->value}) {
+          $self->{onerror}->(node => $res,
+                             type => 'rss1:items:duplicate rdf:resource',
+                             level => 'w');
+        } else {
+          $self->{flag}->{rss1_data}->{item_resources}->{$res->value} = $res;
+        }
+      }
+    } else {
+      $element_state->{not_prop_container} = 1;
+      $self->{onerror}->(node => $item->{node},
+                         type => 'unknown RDF element',
+                         level => 'u');
+    }
+  }, # check_start
+}; # rdf:li
+
+$Element->{+RSS_NS}->{description} = {
+  %AnyChecker,
+  check_start => sub {
+    my ($self, $item, $element_state) = @_;
+    $element_state->{phase}
+        = $item->{parent_state}->{is_rss1_item} ? 'html' : 'text';
+  },
+  check_child_element => sub {
+    my ($self, $item, $child_el, $child_nsuri, $child_ln,
+        $child_is_transparent, $element_state) = @_;
+    $self->{onerror}->(node => $child_el,
+                       type => 'element not allowed:text',
+                       level => 'm');
+  },
+  check_end => sub {
+    my ($self, $item, $element_state) = @_;
+
+    $CheckDIVContent->($self, $item->{node})
+        if $element_state->{phase} eq 'html';
+
+    $AnyChecker{check_end}->(@_);
+  },
+}; # rss:description
+
+$Element->{+RSS_CONTENT_NS}->{encoded} = {
+  %AnyChecker,
+  check_child_element => sub {
+    my ($self, $item, $child_el, $child_nsuri, $child_ln,
+        $child_is_transparent, $element_state) = @_;
+    $self->{onerror}->(node => $child_el,
+                       type => 'element not allowed:text',
+                       level => 'm');
+  },
+  check_end => sub {
+    my ($self, $item, $element_state) = @_;
+
+    $CheckDIVContent->($self, $item->{node});
+
+    $AnyChecker{check_end}->(@_);
+  },
+}; # content:encoded
+
+$Element->{+DC_NS}->{creator}->{check_attrs2} = sub {
+  my ($self, $item, $element_state) = @_;
+  if ($item->{parent_state}->{has_rss2_author}) {
+    $self->{onerror}->(node => $item->{node},
+                       type => 'element not allowed:rss2 author dc:creator',
+                       level => 's');
+  }
+  $item->{parent_state}->{has_dc_creator} = 1;
+};
+
+## ------ RSS2 ------
+
+$RSS2Element->{channel}->{check_attrs2} = sub {
+  my ($self, $item, $element_state) = @_;
+  $element_state->{is_rss2_channel} = 1;
+};
+
+$RSS2Element->{channel}->{check_end} = sub {
+  my ($self, $item, $element_state) = @_;
+  
+  my $cd = $element_state->{rss2_channel_data};
+  if (defined $cd->{channel_link} and
+      defined $cd->{image_link}) {
+    unless ($cd->{channel_link}->text_content eq $cd->{image_link}->text_content) {
+      # XXX child text content
+      $self->{onerror}->(node => $cd->{image_link},
+                         type => 'rss2:image != channel',
+                         level => 's');
+    }
+  }
+  if (defined $cd->{channel_title} and
+      defined $cd->{image_title}) {
+    unless ($cd->{channel_title}->text_content eq $cd->{image_title}->text_content) {
+      # XXX child text content
+      $self->{onerror}->(node => $cd->{image_title},
+                         type => 'rss2:image != channel',
+                         level => 's');
+    }
+  }
+  
+  $PropContainerChecker{check_end}->(@_);
+};
+
+$RSS2Element->{item}->{check_attrs2} = sub {
+  my ($self, $item, $element_state) = @_;
+  $element_state->{is_rss2_item} = 1;
+};
+
+$RSS2Element->{item}->{check_end} = sub {
+  my ($self, $item, $element_state) = @_;
+
+  unless ($element_state->{has_rss2_title} or
+          $element_state->{has_rss2_description}) {
+    $self->{onerror}->(node => $item->{node},
+                       type => 'child element missing:rss2:title|description',
+                       level => 'm');
+  }
+
+  $PropContainerChecker{check_end}->(@_);
+};
+
+$RSS2Element->{image}->{check_attrs2} = sub {
+  my ($self, $item, $element_state) = @_;
+  $element_state->{is_rss2_image} = 1;
+  $element_state->{rss2_channel_data} = $item->{parent_state}->{rss2_channel_data} ||= {};
+};
+
+$RSS2Element->{link}->{check_attrs2} = sub {
+  my ($self, $item, $element_state) = @_;
+  if ($item->{parent_state}->{is_rss2_channel}) {
+    $item->{parent_state}->{rss2_channel_data}->{channel_link} = $item->{node};
+  } elsif ($item->{parent_state}->{is_rss2_image}) {
+    $item->{parent_state}->{rss2_channel_data}->{image_link} = $item->{node};
+  }
+};
+
+$RSS2Element->{title}->{check_attrs2} = sub {
+  my ($self, $item, $element_state) = @_;
+  if ($item->{parent_state}->{is_rss2_channel}) {
+    $item->{parent_state}->{rss2_channel_data}->{channel_title} = $item->{node};
+  } elsif ($item->{parent_state}->{is_rss2_image}) {
+    $item->{parent_state}->{rss2_channel_data}->{image_title} = $item->{node};
+  }
+  $item->{parent_state}->{has_rss2_description} = 1;
+};
+
+$RSS2Element->{author}->{check_attrs2} = sub {
+  my ($self, $item, $element_state) = @_;
+  if ($item->{parent_state}->{has_dc_creator}) {
+    $self->{onerror}->(node => $item->{node},
+                       type => 'element not allowed:rss2 author dc:creator',
+                       level => 's');
+  }
+  $item->{parent_state}->{has_rss2_author} = 1;
+};
+
+$RSS2Element->{description} = {
+  %AnyChecker,
+  check_start => sub {
+    my ($self, $item, $element_state) = @_;
+    $element_state->{phase}
+        = $item->{parent_state}->{is_rss2_item} ? 'html' : 'text';
+  },
+  check_child_element => sub {
+    my ($self, $item, $child_el, $child_nsuri, $child_ln,
+        $child_is_transparent, $element_state) = @_;
+    $self->{onerror}->(node => $child_el,
+                       type => 'element not allowed:text',
+                       level => 'm');
+  },
+  check_end => sub {
+    my ($self, $item, $element_state) = @_;
+
+    $CheckDIVContent->($self, $item->{node})
+        if $element_state->{phase} eq 'html';
+    $item->{parent_state}->{has_rss2_description} = 1;
+
+    $AnyChecker{check_end}->(@_);
+  },
+}; # rss2:description
+
+$RSS2Element->{day}->{check_attrs2} = sub {
+  my ($self, $item, $element_state) = @_;
+  my $v = $item->{node}->text_content; # XXX child text content
+  if ($item->{parent_state}->{rss2_skip_data}->{$v}) {
+    $self->{onerror}->(node => $item->{node},
+                       type => 'duplicate token', value => $v,
+                       level => 'm');
+  } else {
+    $item->{parent_state}->{rss2_skip_data}->{$v} = 1;
+  }
+};
+
+$RSS2Element->{hour}->{check_attrs2} = sub {
+  my ($self, $item, $element_state) = @_;
+  my $v = $item->{node}->text_content; # XXX child text content
+  if ($item->{parent_state}->{rss2_skip_data}->{$v}) {
+    $self->{onerror}->(node => $item->{node},
+                       type => 'duplicate token', value => $v,
+                       level => 'm');
+  } else {
+    $item->{parent_state}->{rss2_skip_data}->{$v} = 1;
+  }
+};
+
+$RSS2Element->{guid} = {
+  %AnyChecker,
+  check_start => sub {
+    my ($self, $item, $element_state) = @_;
+    $element_state->{phase} = ($item->{node}->get_attribute_ns (undef, 'isPermaLink') || '') eq 'true' ? 'url' : 'any';
+  },
+  check_child_element => sub {
+    my ($self, $item, $child_el, $child_nsuri, $child_ln,
+        $child_is_transparent, $element_state) = @_;
+    $self->{onerror}->(node => $child_el,
+                       type => 'element not allowed:text',
+                       level => 'm');
+  },
+  check_end => sub {
+    my ($self, $item, $element_state) = @_;
+
+    # XXX child text content
+    $ItemValueChecker->{URL}->($self, $item->{node}->text_content, $item->{node})
+        if $element_state->{phase} eq 'url';
+
+    $AnyChecker{check_end}->(@_);
+  },
+}; # rss2:guid
+
+$Element->{+MRSS1_NS}->{title} =
+$Element->{+MRSS2_NS}->{title} = {
+  %AnyChecker,
+  check_start => sub {
+    my ($self, $item, $element_state) = @_;
+    $element_state->{phase}
+        = (($item->{node}->get_attribute_ns (undef, 'type') || '') eq 'html')
+            ? 'html' : 'text';
+  },
+  check_child_element => sub {
+    my ($self, $item, $child_el, $child_nsuri, $child_ln,
+        $child_is_transparent, $element_state) = @_;
+    $self->{onerror}->(node => $child_el,
+                       type => 'element not allowed:text',
+                       level => 'm');
+  },
+  check_end => sub {
+    my ($self, $item, $element_state) = @_;
+
+    $CheckDIVContent->($self, $item->{node})
+        if $element_state->{phase} eq 'html';
+
+    $AnyChecker{check_end}->(@_);
+  },
+}; # media:title
+
+$Element->{+MRSS1_NS}->{description} =
+$Element->{+MRSS2_NS}->{description} = {
+  %AnyChecker,
+  check_start => sub {
+    my ($self, $item, $element_state) = @_;
+    $element_state->{phase}
+        = (($item->{node}->get_attribute_ns (undef, 'type') || '') eq 'html')
+            ? 'html' : 'text';
+  },
+  check_child_element => sub {
+    my ($self, $item, $child_el, $child_nsuri, $child_ln,
+        $child_is_transparent, $element_state) = @_;
+    $self->{onerror}->(node => $child_el,
+                       type => 'element not allowed:text',
+                       level => 'm');
+  },
+  check_end => sub {
+    my ($self, $item, $element_state) = @_;
+
+    $CheckDIVContent->($self, $item->{node})
+        if $element_state->{phase} eq 'html';
+
+    $AnyChecker{check_end}->(@_);
+  },
+}; # media:description
+
 ## ------ Atom ------
 
 $Element->{+ATOM_NS}->{entry} = {
@@ -8694,12 +9383,6 @@ $Element->{(ATOM03_NS)}->{feed} = {
   }, # check_child_element
   check_end => sub {
     my ($self, $item, $element_state) = @_;
-    unless ($item->{node}->has_attribute_ns (undef, 'version')) {
-      $self->{onerror}->(node => $item->{node},
-                         type => 'attribute missing',
-                         text => 'version',
-                         level => 'm');
-    }
     unless ($item->{node}->has_attribute_ns (XML_NS, 'lang')) {
       $self->{onerror}->(node => $item->{node},
                          type => 'attribute missing',
@@ -8726,14 +9409,6 @@ $Element->{(ATOM03_NS)}->{feed} = {
     $PropContainerChecker{check_end}->(@_);
   }, # check_end
 }; # <atom03:feed>
-
-$ElementAttrChecker->{(ATOM03_NS)}->{feed}->{''}->{version} = sub {
-  my ($self, $attr, $item) = @_;
-  $self->{onerror}->(node => $attr,
-                     type => 'invalid attribute value',
-                     level => 'm')
-      unless $attr->value eq '0.3';
-}; # <atom03:feed version="">
 
 $ElementAttrChecker->{(ATOM_NS)}->{content}->{''}->{src} = sub {
   my ($self, $attr, $item, $element_state) = @_;
@@ -8899,16 +9574,6 @@ $Element->{+ATOM_NS}->{content} = {
 
 # XXX Atom 0.3 Content construct content validation
 
-$Element->{+ATOM_NS}->{category}->{check_attrs2} = sub {
-  my ($self, $item, $element_state) = @_;
-  unless ($item->{node}->has_attribute_ns (undef, 'term')) {
-    $self->{onerror}->(node => $item->{node},
-                       type => 'attribute missing',
-                       text => 'term',
-                       level => 'm');
-  }
-}; # <atom:category> check_attrs2
-
 ## XXXresource: |atom:icon|'s image SHOULD be 1:1 and SHOULD be small.
 
 ## XXX |atom:id| URL SHOULD be normalized.
@@ -8933,13 +9598,6 @@ $ElementAttrChecker->{(ATOM03_NS)}->{link}->{''}->{rel} = sub {
 $Element->{(ATOM_NS)}->{link}->{check_attrs2} = sub {
   my ($self, $item, $element_state) = @_;
 
-  unless ($item->{node}->has_attribute_ns (undef, 'href')) { # MUST
-    $self->{onerror}->(node => $item->{node},
-                       type => 'attribute missing',
-                       text => 'href',
-                       level => 'm');
-  }
-
   if ($item->{node}->rel eq LINK_REL . 'enclosure' and
       not $item->{node}->has_attribute_ns (undef, 'length')) {
     $self->{onerror}->(node => $item->{node},
@@ -8949,17 +9607,6 @@ $Element->{(ATOM_NS)}->{link}->{check_attrs2} = sub {
   }
 }; # <atom:link> check_attrs2
 
-$Element->{(ATOM03_NS)}->{link}->{check_attrs2} = sub {
-  my ($self, $item, $element_state) = @_;
-  for (qw(rel href)) {
-    $self->{onerror}->(node => $item->{node},
-                       type => 'attribute missing',
-                       text => $_,
-                       level => 'm')
-        unless $item->{node}->has_attribute_ns (undef, $_);
-  }
-}; # <atom03:link> check_attrs2
-
 # XXXresource dimension of |atom:logo|'s image SHOULD be 2:1.
 
 ## TODO: <thr:in-reply-to href=""> MUST be dereferencable.
@@ -8967,16 +9614,7 @@ $Element->{(ATOM03_NS)}->{link}->{check_attrs2} = sub {
 # XXX <thr:in-reply-to ref="">, <at:deleted-entry ref=""> - same rule as |atom:id|
 # XXX <atom03:generator url=""> SHOULD be dereferencable.
 
-$Element->{+THR_NS}->{'in-reply-to'}->{check_attrs2} = sub {
-  my ($self, $item, $element_state) = @_;
-  unless ($item->{node}->has_attribute_ns (undef, 'ref')) {
-    $self->{onerror}->(node => $item->{node},
-                       type => 'attribute missing',
-                       text => 'ref',
-                       level => 'm');
-  }
-}; # <thr:in-reply-to> check_attrs2
-
+$Element->{(THR_NS)}->{total} = {%HTMLTextChecker};
 $ElementTextCheckerByName->{(THR_NS)}->{total} = sub {
   ## NOTE: xsd:nonNegativeInteger
   my ($self, $value, $onerror) = @_;
@@ -9008,58 +9646,10 @@ $Element->{(APP_NS)}->{categories} = {
   }, # check_end
 }; # <app:categories>
 
-$ElementAttrChecker->{(APP_NS)}->{categories}->{''}->{fixed} = sub {
-  my ($self, $attr, $item) = @_;
-  my $value = $attr->value;
-  $self->{onerror}->(node => $item->{node},
-                     type => 'invalid attribute value',
-                     level => 'm')
-      unless $value eq 'yes' or $value eq 'no';
-}; # <app:categories fixed="">
-
-$Element->{(APP_NS)}->{service} = {%PropContainerChecker};
-$Element->{(APP_NS)}->{workspace} = {%PropContainerChecker};
-
-$Element->{(APP_NS)}->{collection} = {
-  %PropContainerChecker,
-  check_end => sub {
-    my ($self, $item, $element_state) = @_;
-    unless ($item->{node}->has_attribute_ns (undef, 'href')) {
-      $self->{onerror}->(node => $item->{node},
-                         type => 'attribute missing',
-                         text => 'href',
-                         level => 'm');
-    }
-    $PropContainerChecker{check_end}->(@_);
-  }, # check_end
-}; # <app:collection>
-
-$ElementTextCheckerByName->{(APP_NS)}->{accept} = sub {
+#$Element->{(THR_NS)}->{total} = {%HTMLTextChecker};
+#$ElementTextCheckerByName->{(APP_NS)}->{accept} = sub {
   # XXX
-}; # <app:accept> text
-
-$Element->{(APP_NS)}->{control} = {%PropContainerChecker};
-
-$ElementTextCheckerByName->{(APP_NS)}->{draft} = sub {
-  my ($self, $value, $onerror) = @_;
-  $onerror->(type => 'app:draft:bad value', level => 'm')
-      unless $value eq 'yes' or $value eq 'no';
-}; # <app:draft> text
-
-$Element->{(AT_NS)}->{'deleted-entry'} = {
-  %PropContainerChecker,
-  check_end => sub {
-    my ($self, $item, $element_state) = @_;
-    for (qw(ref when)) {
-      $self->{onerror}->(node => $item->{node},
-                         type => 'attribute missing',
-                         text => $_,
-                         level => 'm')
-          unless $item->{node}->has_attribute_ns (undef, $_);
-    }
-    $PropContainerChecker{check_end}->(@_);
-  }, # check_end
-}; # <at:deleted-entry>
+#}; # <app:accept> text
 
 ## ------ Nested document ------
 
@@ -9135,8 +9725,7 @@ $ElementAttrChecker->{(HTML_NS)}->{iframe}->{''}->{srcdoc} = sub {
   $checker->check_node ($doc);
 }; # <iframe srcdoc="">
 
-## For Atom Text construct with type=html and <atom:content type=html>
-## elements
+## For HTML fragment content [VALLANGS]
 $CheckDIVContent = sub {
   my ($self, $node) = @_;
   require Web::DOM::Document;
@@ -9170,6 +9759,8 @@ $CheckDIVContent = sub {
   $checker->onerror ($onerror);
   $checker->di_data_set ($dids);
   $checker->check_node ($div);
+
+  # XXX RSS2BP: SHOULD NOT have relative URL
 }; # $CheckDIVContent
 
 # XXX unserializable waring for any children
@@ -9387,15 +9978,6 @@ sub _determine_validation_mode ($$$) {
       ($parent_mode eq 'XSLT' and 0 and 'XXX is XSLT literal result element')) {
     return 'XSLT';
   }
-  if (($el->namespace_uri || '') eq RDF_NS and $el->local_name eq 'RDF') {
-    my $xmlns = $el->get_attribute_ns (XMLNS_NS, 'xmlns') || '';
-    my $rdfns = $el->get_attribute_ns (XMLNS_NS, 'rdf') || '';
-    if ($xmlns eq RSS1_NS and $rdfns eq RDF_NS) {
-      return 'RSS1';
-    } else {
-      return 'RDF';
-    }
-  }
   return 'default';
 } # _determine_validation_mode
 
@@ -9427,11 +10009,20 @@ sub _check_node ($$) {
       my $el_ln = $el->local_name;
       
       my $element_state = {};
-      my $e_eldef = $Element->{$el_nsuri}->{$el_ln} ||
-          ($el_ln =~ /-/ ? $Element->{$el_nsuri}->{'*-*'} : undef);
-      my $eldef = $e_eldef ||
-          $Element->{$el_nsuri}->{''} ||
-          $ElementDefault;
+
+      my $Dns = ($el_nsuri eq '' and $self->{is_rss2})
+          ? $RSS2Element : $Element->{$el_nsuri};
+      my $Ens = ($el_nsuri eq '' and $self->{is_rss2})
+          ? $_Defs->{rss2_elements} : $_Defs->{elements}->{$el_nsuri};
+      my $e_eldef = $Dns->{$el_ln};
+      my $el_def_data = $Ens->{$el_ln};
+      if ($el_ln =~ /-/) {
+        $e_eldef ||= $Dns->{'*-*'};
+        $el_def_data ||= $Ens->{'*-*'};
+      }
+      my $eldef = $e_eldef || $Element->{$el_nsuri}->{''} || $ElementDefault;
+      $el_def_data ||= {};
+      $item->{def_data} = $el_def_data;
 
       my $prefix = $el->prefix;
       if (defined $prefix and $prefix eq 'xml') {
@@ -9453,205 +10044,35 @@ sub _check_node ($$) {
                            level => 'w');
       }
 
-      my $el_def = $_Defs->{elements}->{$el_nsuri}->{$el_ln};
-      $el_def ||= $_Defs->{elements}->{$el_nsuri}->{'*-*'} if $el_ln =~ /-/;
-      $el_def ||= {};
-
       ## <http://suika.suikawiki.org/www/markup/xml/validation-langs#checking-an-element>.
       my $mode = $item->{validation_mode};
       if ($mode eq 'XSLT') {
         # XXX
-      } elsif ($mode eq 'RDF') {
-        my @new_item;
-        require Web::RDF::XML::Parser;
-        my $rdf = Web::RDF::XML::Parser->new;
-        $rdf->onbnodeid (sub {
-          return ++$self->{bnode_prefix} . $_[0];
-        });
-        $rdf->onerror ($self->{onerror});
-        $rdf->onattr (sub {
-          my ($attr, $type) = @_;
-          my $attr_ns = $attr->namespace_uri;
-          $attr_ns = '' unless defined $attr_ns;
-          my $attr_ln = $attr->local_name;
-
-          my $prefix = $attr->prefix;
-          if (not defined $prefix) {
-            if ($attr_ns ne '' and
-                not ($attr_ns eq XMLNS_NS and $attr_ln eq 'xmlns')) {
-              $self->{onerror}->(node => $attr,
-                                 type => 'nsattr has no prefix',
-                                 level => 'w');
-            }
-
-            # XXX warn xmlns="" in no namespace
-          } elsif ($prefix eq 'xml') {
-            if ($attr_ns ne XML_NS) {
-              $self->{onerror}->(node => $attr,
-                                 type => 'Reserved Prefixes and Namespace Names:Prefix',
-                                 text => $prefix,
-                                 level => 'w');
-            }
-          } elsif ($prefix eq 'xmlns') {
-            if ($attr_ns ne XMLNS_NS) {
-              $self->{onerror}->(node => $attr,
-                                 type => 'Reserved Prefixes and Namespace Names:Prefix',
-                                 text => $prefix,
-                                 level => 'w');
-            }
-          }
-
-          # XXXsuperglobal
-          if ($attr_ns eq '' and $attr_ln eq 'id') {
-            my $checker = $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{id};
-            $checker->($self, $attr, {}, {});
-            $type = '';
-          }
-
-          if ($type eq 'common') {
-            my $checker = $NamespacedAttrChecker->{$attr_ns}->{$attr_ln} ||
-                $NamespacedAttrChecker->{$attr_ns}->{''};
-            my $attr_def = $_Defs->{elements}->{'*'}->{'*'}->{attrs}->{$attr_ns}->{$attr_ln} || {};
-            if ($attr_def->{conforming} or $attr_ns eq XMLNS_NS) {
-              #
-            } else {
-              $self->{onerror}->(node => $attr,
-                                 type => 'attribute not defined',
-                                 level => 'm');
-            }
-            $checker->($self, $attr, {}, {}) if defined $checker;
-          } elsif ($type eq 'url') {
-            $CheckerByType->{URL}->($self, $attr, {}, {});
-          } elsif ($type eq 'rdf-id') {
-            unless ($attr->value =~ /\A\p{InNCNameStartChar}\p{InNCNameChar}*\z/) {
-              $self->{onerror}->(node => $attr,
-                                 type => 'rdf-id:syntax error',
-                                 level => 'm'); # RDF/XML grammer
-            }
-          }
-
-          $self->_check_data ($attr, 'value');
-        });
-        $rdf->onnonrdfnode (sub {
-          my $cnt = $_[0]->node_type;
-          if ($cnt == 1) { # ELEMENT_NODE
-            push @new_item,
-                {type => 'element', node => $_[0],
-                 parent_state => {},
-                 validation_mode => $self->_determine_validation_mode
-                     ($_[0], $mode)};
-          } elsif ($cnt == 3) { # TEXT_NODE
-            $self->_check_data ($_[0], 'data');
-            ## Adjacent text nodes and empty text nodes are not
-            ## round-trippable, but harmless, so not warned here.
-          } elsif ($cnt == 7) { # PROCESSING_INSTRUCTION_NODE
-            ## XXX PROCESSING_INSTRUCTION_NODE
-          } elsif ($cnt == 11) { # DOCUMENT_FRAGMENT_NODE
-            push @new_item, {type => 'document_fragment', node => $_[0]};
-          }
-        });
-        my $triple = [];
-        $rdf->ontriple (sub {
-          my %opt = @_;
-          push @$triple,
-              [$opt{node}, $opt{subject}, $opt{predicate}, $opt{object}];
-        });
-        my $lang = ($item->{node}->parent_node || $item->{node}->owner_document);
-        $lang = $lang->node_type == 1 ? $lang->get_attribute_ns (XML_NS, 'lang') : undef;
-            #XXX ->manakai_language;
-        if ($item->{node}->manakai_expanded_uri eq RDF_NS . q<RDF>) {
-          $rdf->convert_rdf_element ($item->{node}, lang => $lang);
-        } else {
-          $rdf->convert_node_element ($item->{node}, lang => $lang);
-        }
-        require Web::RDF::Checker;
-        my $checker = Web::RDF::Checker->new;
-        $checker->scripting ($self->scripting);
-        my $context;
-        $checker->onparentnode (sub { ## HTML/XML literal
-          my $element_state = {};
-          if (($_[0]->owner_document || $_[0]) eq $item->{node}->owner_document) {
-            for my $cn ($_[0]->child_nodes->to_list) {
-              my $cnt = $cn->node_type;
-              if ($cnt == 1) { # ELEMENT_NODE
-                push @new_item,
-                    {type => 'element', node => $cn,
-                     parent_state => $element_state,
-                     validation_mode => $self->_determine_validation_mode
-                         ($cn, $mode)};
-                my $ns = $cn->namespace_uri;
-                $ns = '' unless defined $ns;
-                my $ln = $cn->local_name;
-                if (($self->{minus_elements}->{$ns}->{$ln} and
-                     $self->_is_minus_element ($cn, $ns, $ln)) or
-                    ($self->{flag}->{no_interactive} and
-                     $ns eq HTML_NS and
-                     $cn->has_attribute_ns (undef, 'tabindex'))) {
-                  $self->{onerror}->(node => $cn,
-                                     type => 'element not allowed:minus',
-                                     level => 'm');
-                }
-              } elsif ($cnt == 3) { # TEXT_NODE
-                $self->_check_data ($cn, 'data');
-                ## Adjacent text nodes and empty text nodes are not
-                ## round-trippable, but harmless, so not warned here.
-              } elsif ($cnt == 7) { # PROCESSING_INSTRUCTION_NODE
-                ## XXX PROCESSING_INSTRUCTION_NODE
-              }
-            }
-          } else { ## Different document
-            my $checker = Web::HTML::Validator->new;
-            $checker->di_data_set ($self->di_data_set);
-            $checker->onerror (sub {
-              $self->{onerror}->(@_, di => -1, node => $context);
-            });
-            $checker->scripting ($self->scripting);
-            $checker->check_node ($_[0]);
-          }
-        });
-        for my $t (@$triple) {
-          $context = $t->[0];
-          $checker->onerror (sub {
-            $self->{onerror}->(@_, node => $context);
-          });
-          $checker->check_parsed_term ($t->[1]);
-          $checker->check_parsed_term ($t->[2]);
-          $checker->check_parsed_term ($t->[3]);
-        }
-        unshift @item, @new_item;
-        next;
       } else {
-        # XXX if $mode eq 'RSS1'
-        # XXX if $self->{rss2}
-
-        if ($el_def->{conforming}) {
+        if ($el_def_data->{conforming}) {
           unless (defined $e_eldef) {
             ## Though the element is conforming, we does not support
             ## the validation of the element yet.
             $self->{onerror}->(node => $el,
                                type => 'unknown element',
                                level => 'u');
+          } elsif ($el_def_data->{limited_use} or
+                   $_Defs->{namespaces}->{$el_nsuri}->{limited_use}) {
+            $self->{onerror}->(node => $el,
+                               type => 'limited use',
+                               level => 'w');
           }
-          my $status = $el_def->{status} || '';
-          if ($status eq 'REC' or $status eq 'CR' or $status eq 'LC') {
-            #
-          } else {
-            ## The element is conforming, but is in earlier stage such
-            ## that it should not be used without caution.
-            # XXX
-            #$self->{onerror}->(node => $el,
-            #                   type => 'status:wd:element',
-            #                   level => 'i')
-          }
-        } elsif ($_Defs->{namespaces}->{$el_nsuri}->{supported}) {
+        } elsif ($_Defs->{namespaces}->{$el_nsuri}->{supported} or
+                 $_Defs->{namespaces}->{$el_nsuri}->{obsolete} or
+                 ($el_nsuri eq '' and $self->{is_rss2})) {
           ## "Authors must not use elements, attributes, or attribute
           ## values that are not permitted by this specification or
           ## other applicable specifications" [HTML]
-          if ($el_def->{preferred}) {
+          if ($el_def_data->{preferred}) {
             $self->{onerror}->(node => $el,
                                type => 'element:obsolete',
                                level => 'm',
-                               preferred => $el_def->{preferred});
+                               preferred => $el_def_data->{preferred});
           } else {
             $self->{onerror}->(node => $el,
                                type => 'element not defined',
@@ -9661,9 +10082,21 @@ sub _check_node ($$) {
           $self->{onerror}->(node => $el,
                              type => 'unknown namespace element',
                              value => $el_nsuri,
-                             level => 'w');
+                             level => 'u');
         }
       } # validation mode
+
+      for my $ans (keys %{$el_def_data->{attrs}}) {
+        for my $aln (keys %{$el_def_data->{attrs}->{$ans}}) {
+          if ($el_def_data->{attrs}->{$ans}->{$aln}->{required}) {
+            $self->{onerror}->(node => $item->{node},
+                               type => 'attribute missing',
+                               text => $aln,
+                               level => 'm')
+                unless $item->{node}->has_attribute_ns ($ans, $aln);
+          }
+        }
+      }
 
       my @new_item;
       my $disallowed = $item->{disallowed} ||
@@ -9731,7 +10164,7 @@ sub _check_node ($$) {
       push @new_item, {type => '_remove_minus_elements',
                        element_state => $element_state}
           if $disallowed;
-      my $cm = $el_def->{content_model} || '';
+      my $cm = $el_def_data->{content_model} || '';
       push @new_item, {type => 'check_palpable_content',
                        node => $el,
                        element_state => $element_state}
@@ -9836,9 +10269,6 @@ sub _check_node ($$) {
                   $mode = 'XSLT';
                   last MODE;
                 }
-              } elsif ($ct eq 'application/rdf+xml') {
-                $mode = 'RDF';
-                last MODE;
               } else {
                 #
               }
@@ -9866,21 +10296,9 @@ sub _check_node ($$) {
                                    type => 'element not allowed:root',
                                    level => 'm');
               }
-            } elsif ($mode eq 'RDF') {
-              #
-            } elsif ($mode eq 'RSS1') {
-              if ($nsurl eq RDF_NS and $ln eq 'RDF') {
-                #
-              } else {
-                $self->{onerror}->(node => $node,
-                                   type => 'element not allowed:root',
-                                   level => 'm');
-              }
             } else { # default
               if (($_Defs->{elements}->{$nsurl}->{$ln} or {})->{root}) {
                 #
-              } elsif ($nsurl eq '' and $ln eq 'rss') {
-                # XXX $self->{rss2} = 1;
               } elsif ($_Defs->{namespaces}->{$nsurl}->{supported}) {
                 $self->{onerror}->(node => $node,
                                    type => 'element not allowed:root',
@@ -10037,6 +10455,12 @@ sub check_node ($$) {
   my ($self, $node) = @_;
   $self->onerror;
   $self->_init;
+
+  ## RSS2 document
+  ## <https://manakai.github.io/spec-dom/validation-langs#rss2-document>.
+  my $de = ($node->owner_document || $node)->document_element;
+  $self->{is_rss2} = (defined $de and $de->manakai_element_type_match (undef, 'rss'));
+
   my $nt = $node->node_type;
   if ($nt == 1) { # ELEMENT_NODE
     $self->_check_node
@@ -10068,7 +10492,7 @@ sub check_node ($$) {
 
 =head1 LICENSE
 
-Copyright 2007-2017 Wakaba <wakaba@suikawiki.org>.
+Copyright 2007-2018 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

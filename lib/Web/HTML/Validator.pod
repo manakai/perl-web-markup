@@ -123,56 +123,23 @@ In addition, L<JE> is required.
 
 =back
 
-Also, see dependency sections of L<Web::RDF::XML::Parser> and
-L<Web::RDF::Checker>.
-
 =head1 SPECIFICATIONS
 
 =over 4
 
 =item XML
 
-Extensible Markup Language (XML) 1.0 <http://www.w3.org/TR/xml/>.
+Extensible Markup Language (XML) 1.0 <https://www.w3.org/TR/xml/>.
 
 XML 1.0 Fifth Edition Specification Errata
-<http://www.w3.org/XML/xml-V10-5e-errata>.
-
-The C<xml:lang> attribute MUST be interpreted as the C<lang> attribute
-in the XML namespace.  The C<xml:space> attribute MUST be interpreted
-as the C<space> attribute in the XML namespace.  In other words, the
-C<xml:lang> or C<xml:space> attribute in no namespace is different
-from the attributes defined in the XML specification.
-
-The C<xml:space> attribute MUST NOT be in error.
-
-The description for the C<xml:lang> attribute value in the XML
-specification is interpreted as a MUST-level requirement.
-
-Reserved element names, attribute names, and target names MUST NOT be
-used unless allowed by an applicable specification.
+<https://www.w3.org/XML/xml-V10-5e-errata>.
 
 =item XMLNS
 
-Namespaces in XML 1.0 <http://www.w3.org/TR/xml-names/>.
+Namespaces in XML 1.0 <https://www.w3.org/TR/xml-names/>.
 
 Namespaces in XML 1.0 (Third Edition) Errata
-<http://www.w3.org/XML/2009/xml-names-errata>.
-
-Requirements on the namespace name is updated as follows:
-
-  A namespace name MUST be a valid non-empty URL
-  <http://www.whatwg.org/specs/web-apps/current-work/#valid-non-empty-url>.
-  It should be an absolute URL
-  <http://url.spec.whatwg.org/#concept-absolute-url>.  For the purpose
-  of conformance of the HTML |base| element, attributes declaring XML
-  namespaces are not defined as taking URLs.
-
-=item XMLBASE
-
-XML Base <http://www.w3.org/TR/xmlbase/>.
-
-XML Base Specification Errata
-<http://www.w3.org/2009/01/xmlbase-errata>.
+<https://www.w3.org/XML/2009/xml-names-errata>.
 
 =item HTML
 
@@ -270,16 +237,6 @@ XSL Transformations (XSLT) Version 1.0 Specification Errata
 Key words "must" and "should" are to be interpreted as described in
 RFC 2119.
 
-=item RDFXML
-
-RDF/XML Syntax Specification (Revised)
-<http://www.w3.org/TR/rdf-syntax-grammar/>.
-
-RDF Errata
-<http://www.w3.org/2001/sw/RDFCore/errata#rdf-syntax-grammar>.
-
-The C<RDF> element in the RDF namespace is metadata content.
-
 =item ATOM
 
 The Atom Syndication Format <http://tools.ietf.org/html/rfc4287>,
@@ -313,6 +270,47 @@ The Atom Publishing Protocol <https://tools.ietf.org/html/rfc5023>.
 =item ATOMDELETED
 
 The Atom "deleted-entry" Element <http://tools.ietf.org/html/rfc6721>.
+
+=item RSS1
+
+RDF Site Summary (RSS) 1.0 <http://web.resource.org/rss/1.0/spec>.
+
+=item RSSDC
+
+RDF Site Summary 1.0 Modules: Dublin Core
+<http://web.resource.org/rss/1.0/modules/dc/>.
+
+=item DCES
+
+DCMI: Dublin Core Metadata Element Set, Version 1.1: Reference
+Description <http://dublincore.org/documents/dces/>.
+
+=item RSSCONTENT
+
+RDF Site Summary 1.0 Modules: Content
+<http://web.resource.org/rss/1.0/modules/content/>.
+
+=item HATENA
+
+はてなXML名前空間 - Hatena Developer Center
+<http://developer.hatena.ne.jp/ja/documents/other/misc/xmlns>.
+
+=item RSS2
+
+RSS 2.0 <http://www.rssboard.org/rss-specification>.
+
+=item RSSBP
+
+RSS Best Practices Profile <http://www.rssboard.org/rss-profile>.
+
+=item MEDIARSS
+
+Media RSS Specification <http://www.rssboard.org/media-rss>.
+
+=item ITUNES
+
+RSS tags for Podcasts Connect - Podcasts Connect Help
+<https://help.apple.com/itc/podcasts_connect/#/itcb54353390>.
 
 =item CSSSTYLEATTR
 
@@ -410,23 +408,23 @@ Content Security Policy
 
 =item MIMESNIFF
 
-MIME Sniffing <http://mimesniff.spec.whatwg.org/>.
+MIME Sniffing <https://mimesniff.spec.whatwg.org/>.
 
 =item URL
 
-URL Standard <http://url.spec.whatwg.org/>.
+URL Standard <https://url.spec.whatwg.org/>.
 
 =item MANAKAI
 
 manakai DOM Extensions
-<http://suika.suikawiki.org/~wakaba/wiki/sw/n/manakai%20DOM%20Extensions>.
+<https://suika.suikawiki.org/~wakaba/wiki/sw/n/manakai%20DOM%20Extensions>.
 
 Any node MAY be used as orphan node.
 
 =item VALLANGS
 
-Handling of unknown namespaces in conformance checking
-<http://suika.suikawiki.org/www/markup/xml/validation-langs>.
+DOM Tree Validation
+<https://manakai.github.io/spec-dom/validation-langs>.
 
 =back
 
@@ -434,14 +432,15 @@ The validator also supports much more Web standards (indirectly via
 required modules), including but not limited to CSS, IETF BCP 47
 language tags, Encoding Standard, and XML 1.0 DTD.
 
-Note that HTML2, HTML3, HTML4, HTML 5.0, XML 1.1, Namespaces in XML
-1.1, C<xml:id>, XLink, XInclude, XHTML1, XHTML Modularization, Ruby
-Annotations, RSS 0.9, RDFa, XForms, XHTML2, HLink, XML Events, and
-XFrames are not considered as applicable specifications.  The module
-does not support ARIA attributes in its own namespace.  Also, the
-module does not support historical HTML features no longer part of the
-language, except for those explicitly listed in the OBSVOCAB
-specification.  See the specification for details.
+Note that HTML2, HTML3, HTML4, HTML 5.0, HTML 5.1, HTML 5.2, HTML 5.3,
+XML 1.1, Namespaces in XML 1.1, XML Base, C<xml:id>, XLink, XInclude,
+XHTML1, XHTML Modularization, Ruby Annotations, RSS 0.9, RDFa, XForms,
+XHTML2, HLink, XML Events, XFrames, and RDF/XML are not considered as
+applicable specifications.  The module does not support ARIA
+attributes in its own namespace.  Also, the module does not support
+historical HTML features no longer part of the language, except for
+those explicitly listed in the OBSVOCAB specification.  See the
+OBSVOCAB specification for details.
 
 =head1 AUTHOR
 
@@ -449,7 +448,7 @@ Wakaba <wakaba@suikawiki.org>.
 
 =head1 LICENSE
 
-Copyright 2007-2015 Wakaba <wakaba@suikawiki.org>.
+Copyright 2007-2018 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

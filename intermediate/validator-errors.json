@@ -165,6 +165,21 @@
             "Web::HTML::Validator" : 1
          }
       },
+      "child element missing:rss2:title|description" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>In an RSS2 \u003Ccode>item\u003C/code> element, there must be\u000A\u003Ccode>title\u003C/code> or \u003Ccode>description\u003C/code> element, or both.\u003C/p>",
+            "ja" : "\u003Cp>RSS2 \u003Ccode>item\u003C/code> 要素には\u000A\u003Ccode>title\u003C/code> 要素と \u003Ccode>description\u003C/code>\u000A要素の一方又は両方が必要です。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "There is no \u003Ccode>title\u003C/code> or \u003Ccode>description\u003C/code>",
+            "ja" : "\u003Ccode>title\u003C/code> や \u003Ccode>description\u003C/code> がありません"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
       "control name:isindex" : {
          "default_level" : "m",
          "desc" : {
@@ -265,6 +280,21 @@
          "message" : {
             "en" : "There is an element not allowed in a \u003Ccode>dl\u003C/code> element",
             "ja" : "\u003Ccode>dl\u003C/code> 要素内で認められない要素があります"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "element not allowed:rss2 author dc:creator" : {
+         "default_level" : "s",
+         "desc" : {
+            "en" : "\u003Cp>In an RSS2 \u003Ccode>item\u003C/code> element, there should not be both of\u000A\u003Ccode>author\u003C/code> and \u003Ccode>dc:creator\u003C/code> elements.\u003C/p>",
+            "ja" : "\u003Cp>RSS2 \u003Ccode>item\u003C/code> 要素では\u000A\u003Ccode>author\u003C/code> 要素と \u003Ccode>dc:creator\u003C/code> \u000A要素の両方があるべきではありません。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "There are both \u003Ccode>author\u003C/code> and \u003Ccode>dc:creator\u003C/code>",
+            "ja" : "\u003Ccode>author\u003C/code> と \u003Ccode>dc:creator\u003C/code> の両方があります"
          },
          "modules" : {
             "Web::HTML::Validator" : 1
@@ -466,6 +496,140 @@
          "message" : {
             "en" : "There is no \u003Ccode>dt\u003C/code> element before this element",
             "ja" : "この要素の前に \u003Ccode>dt\u003C/code> 要素がありません"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "rss1:bad rdf:resource" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>The \u003Ccode>rdf:resource\u003C/code> attribute value of the\u000A\u003Ccode>image\u003C/code> or \u003Ccode>textinput\u003C/code> element in the\u000A\u003Ccode>channel\u003C/code> element must be equal to the\u000A\u003Ccode>rdf:about\u003C/code> attribute value of the \u003Ccode>image\u003C/code> or\u000A\u003Ccode>textinput\u003C/code> element in the \u003Ccode>rdf:RDF\u003C/code> element.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>channel\u003C/code> 要素の \u003Ccode>image\u003C/code> 要素や\u000A\u003Ccode>textinput\u003C/code> 要素の \u003Ccode>rdf:resource\u003C/code> 属性値は、\u000A\u003Ccode>rdf:RDF\u003C/code> 要素の \u003Ccode>image\u003C/code> 要素や\u000A\u003Ccode>textinput\u003C/code> 要素の \u003Ccode>rdf:about\u003C/code> \u000A属性値と等しくなければいけません。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "\u003Ccode>rdf:resource\u003C/code> is different from the \u003Ccode>rdf:about\u003C/code>\u000A(\u003Ccode>\u003Cvar>{text}\u003C/var>\u003C/code>)",
+            "ja" : "\u003Ccode>rdf:resource\u003C/code> が \u003Ccode>rdf:about\u003C/code>\u000A(\u003Ccode>\u003Cvar>{text}\u003C/var>\u003C/code>) と異なります"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "rss1:duplicate prop" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>In an RSS 1.0 \u003Ccode>channel\u003C/code> or \u003Ccode>item\u003C/code> element, a\u000Achild element with same namespace and local name pair must not be\u000Ainserted.\u003C/p>",
+            "ja" : "\u003Cp>RSS 1.0 の \u003Ccode>channel\u003C/code> 要素や \u003Ccode>item\u003C/code> \u000A要素に同じ名前空間名と局所名の子要素を含めることはできません。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "There is another element with same name",
+            "ja" : "同じ名前の要素が他にもあります"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "rss1:duplicate rdf:about" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>The \u003Ccode>rdf:about\u003C/code> attribute value of the \u003Ccode>item\u003C/code>\u000Aand \u003Ccode>textinput\u003C/code> element must be unique.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>item\u003C/code> 要素や \u003Ccode>textinput\u003C/code> 要素の\u000A\u003Ccode>rdf:about\u003C/code> 属性値は他の要素の\u000A\u003Ccode>rdf:about\u003C/code> 属性値と異なっていなければいけません。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "There is another element with same \u003Ccode>rdf:about\u003C/code>",
+            "ja" : "同じ \u003Ccode>rdf:about\u003C/code> の要素が他にもあります"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "rss1:item:link ne rdf:about" : {
+         "default_level" : "s",
+         "desc" : {
+            "en" : "\u003Cp>The URL in the \u003Ccode>link\u003C/code> element should be equal to the\u000A\u003Ccode>rdf:about\u003C/code> attribute value of the parent \u003Ccode>item\u003C/code>\u000Aor \u003Ccode>textinput\u003C/code> element.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>link\u003C/code> 要素の URL は、\u000A親の \u003Ccode>item\u003C/code> 要素や \u003Ccode>textinput\u003C/code> \u000A要素の \u003Ccode>rdf:about\u003C/code> 属性と同じであるべきです。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "The URL is different from \u003Ccode>rdf:about\u003C/code>\u000A(\u003Ccode>\u003Cvar>{text}\u003C/var>\u003C/code>)",
+            "ja" : "URL が \u003Ccode>rdf:about\u003C/code>\u000A(\u003Ccode>\u003Cvar>{text}\u003C/var>\u003C/code>) と異なります"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "rss1:no rdf:about" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>The \u003Ccode>rdf:resource\u003C/code> attribute value of the\u000A\u003Ccode>rdf:li\u003C/code> element in the \u003Ccode>items\u003C/code> element or\u000Athe \u003Ccode>image\u003C/code> or \u003Ccode>textinput\u003C/code> element in the\u000A\u003Ccode>channel\u003C/code> element must be equal to the\u000A\u003Ccode>rdf:about\u003C/code> attribute value of an \u003Ccode>item\u003C/code>,\u000A\u003Ccode>image\u003C/code>, or\u000A\u003Ccode>textinput\u003C/code> element in the \u003Ccode>rdf:RDF\u003C/code> element.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>channel\u003C/code> 要素の \u003Ccode>items\u003C/code> 要素内の\u000A\u003Ccode>rdf:li\u003C/code> 要素や \u003Ccode>image\u003C/code> 要素や\u000A\u003Ccode>textinput\u003C/code> 要素の \u003Ccode>rdf:resource\u003C/code> 属性値は、\u000A\u003Ccode>rdf:RDF\u003C/code> 要素の \u003Ccode>item\u003C/code> 要素や\u000A\u003Ccode>image\u003C/code> 要素や\u000A\u003Ccode>textinput\u003C/code> 要素の \u003Ccode>rdf:about\u003C/code> \u000A属性値と等しくなければいけません。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "There is no \u003Ccode>\u003Cvar>{text}\u003C/var>\u003C/code> whose\u000A\u003Ccode>rdf:about\u003C/code> is same as this \u003Ccode>rdf:resource\u003C/code>",
+            "ja" : "この \u003Ccode>rdf:resource\u003C/code> と同じ \u003Ccode>rdf:about\u003C/code> \u000Aを持つ \u003Ccode>\u003Cvar>{text}\u003C/var>\u003C/code> がありません"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "rss1:no rdf:resource" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>The \u003Ccode>rdf:resource\u003C/code> attribute value of the\u000A\u003Ccode>rdf:li\u003C/code> element in the \u003Ccode>items\u003C/code> element or\u000Athe \u003Ccode>image\u003C/code> or \u003Ccode>textinput\u003C/code> element in the\u000A\u003Ccode>channel\u003C/code> element must be equal to the\u000A\u003Ccode>rdf:about\u003C/code> attribute value of an \u003Ccode>item\u003C/code>,\u000A\u003Ccode>image\u003C/code>, or\u000A\u003Ccode>textinput\u003C/code> element in the \u003Ccode>rdf:RDF\u003C/code> element.\u003C/p>",
+            "ja" : "\u003Cp>\u003Ccode>channel\u003C/code> 要素の \u003Ccode>items\u003C/code> 要素内の\u000A\u003Ccode>rdf:li\u003C/code> 要素や \u003Ccode>image\u003C/code> 要素や\u000A\u003Ccode>textinput\u003C/code> 要素の \u003Ccode>rdf:resource\u003C/code> 属性値は、\u000A\u003Ccode>rdf:RDF\u003C/code> 要素の \u003Ccode>item\u003C/code> 要素や\u000A\u003Ccode>image\u003C/code> 要素や\u000A\u003Ccode>textinput\u003C/code> 要素の \u003Ccode>rdf:about\u003C/code> \u000A属性値と等しくなければいけません。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "There is no \u003Ccode>\u003Cvar>{text}\u003C/var>\u003C/code> whose\u000A\u003Ccode>rdf:resource\u003C/code> is same as this \u003Ccode>rdf:about\u003C/code>",
+            "ja" : "この \u003Ccode>rdf:about\u003C/code> と同じ \u003Ccode>rdf:resource\u003C/code> \u000Aを持つ \u003Ccode>\u003Cvar>{text}\u003C/var>\u003C/code> がありません"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "rss1:rdf:RDF:bad prefix" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>The namespace prefix of an RSS 1.0 \u003Ccode>rdf:RDF\u003C/code> eleent\u000Athat is a root of an RSS 1.0 document must be \u003Ccode>rdf\u003C/code>.\u003C/p>",
+            "ja" : "\u003Cp>RSS 1.0 文書の根要素である RSS 1.0 \u003Ccode>rdf:RDF\u003C/code> \u000A要素の名前空間接頭辞は \u003Ccode>rdf\u003C/code> でなければいけません。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "Namespace prefix is not \u003Ccode>rdf\u003C/code>",
+            "ja" : "名前空間接頭辞が \u003Ccode>rdf\u003C/code> ではありません"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "rss2:image != channel" : {
+         "default_level" : "s",
+         "desc" : {
+            "ja" : "\u003Cp>RSS2 文書の \u003Ccode>channel\u003C/code> 要素の \u000A\u003Ccode>textInput\u003C/code> 要素の\u000A\u003Ccode>title\u003C/code> 要素や \u003Ccode>link\u003C/code> 要素のテキスト内容は、\u000A\u003Ccode>channel\u003C/code> 要素の\u000A\u003Ccode>title\u003C/code> 要素や \u003Ccode>link\u003C/code> \u000A要素のテキスト内容と同じでなければいけません。\u003C/p>"
+         },
+         "layer" : "content-model",
+         "message" : {
+            "en" : "The value is different from the channel's",
+            "ja" : "値がチャンネルのものと違います\u000A\u000A@en \u003Cp>The text content of a \u003Ccode>title\u003C/code> or \u003Ccode>link\u003C/code>\u000Aelement of a \u003Ccode>textInput\u003C/code> element of a \u003Ccode>channel\u003C/code>\u000Aelement should be same as the text content of the \u003Ccode>title\u003C/code>\u000Aor \u003Ccode>link\u003C/code> element of the \u003Ccode>channel\u003C/code> element of an\u000ARSS2 document.\u003C/p>"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "rss2:person:syntax error" : {
+         "default_level" : "m",
+         "desc" : {
+            "en" : "\u003Cp>The text content of an RSS2 person element must be in the\u000A\u003Ccode>\u003Cvar>email@address\u003C/var> (\u003Cvar>name\u003C/var>)\u003C/code> format.\u003C/p>",
+            "ja" : "\u003Cp>RSS2 の人名の要素のテキスト内容は、\u000A\u003Ccode>\u003Cvar>email@address\u003C/var> (\u003Cvar>name\u003C/var>)\u003C/code> \u000A形式でなければいけません。\u003C/p>"
+         },
+         "layer" : "microsyntax",
+         "message" : {
+            "en" : "The value is not in the\u000A\u003Ccode>\u003Cvar>email@address\u003C/var> (\u003Cvar>name\u003C/var>)\u003C/code> format",
+            "ja" : "値が\u000A\u003Ccode>\u003Cvar>email@address\u003C/var> (\u003Cvar>name\u003C/var>)\u003C/code>\u000A形式ではありません。"
          },
          "modules" : {
             "Web::HTML::Validator" : 1
@@ -852,6 +1016,21 @@
             "Web::HTML::Validator" : 1
          }
       },
+      "unknown RDF element" : {
+         "default_level" : "w",
+         "desc" : {
+            "en" : "\u003Cp>RDF/XML is not supported other than as part of RSS1.\u003C/p>",
+            "ja" : "\u003Cp>RDF/XML は RSS1 の一部として以外では対応していません。\u003C/p>"
+         },
+         "layer" : "feature",
+         "message" : {
+            "en" : "There is a non-RSS1 RDF/XML element",
+            "ja" : "RSS1 以外の RDF/XML 要素があります"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
       "unknown script lang" : {
          "default_level" : "u",
          "desc" : {
@@ -862,6 +1041,21 @@
          "message" : {
             "en" : "Validation of the scripting language or\u000Adata block \u003Ccode>\u003Cvar>{value}\u003C/var>\u003C/code> is not supported",
             "ja" : "スクリプト言語またはデータブロック\u000A\u003Ccode>\u003Cvar>{value}\u003C/var>\u003C/code>  の妥当性検証には対応していません"
+         },
+         "modules" : {
+            "Web::HTML::Validator" : 1
+         }
+      },
+      "unknown value type" : {
+         "default_level" : "w",
+         "desc" : {
+            "en" : "\u003Cp>Conformance checking of the element or attribute value is not\u000Asupported.  The element or attribute might or might not be conforming.\u003C/p>",
+            "ja" : "\u003Cp>この要素や属性の値の適合性検査には対応していません。\u000Aこの要素や属性は適合しているかもしれませんし、していないかもしれません。\u003C/p>"
+         },
+         "layer" : "microsyntax",
+         "message" : {
+            "en" : "Conformance checking of value is not supported",
+            "ja" : "値の適合性検査に対応していません"
          },
          "modules" : {
             "Web::HTML::Validator" : 1
