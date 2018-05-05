@@ -25,7 +25,7 @@ test {
     type => 'xml:no DTD validation',
     node => $doc,
   }, {
-    level => 'w',
+    level => 'u',
     type => 'unknown namespace element',
     node => $doc->document_element,
     value => '',
@@ -51,7 +51,7 @@ test {
     node => $doc->document_element,
     value => 'p',
   }, {
-    level => 'w',
+    level => 'u',
     type => 'unknown namespace element',
     node => $doc->document_element,
     value => '',
@@ -76,7 +76,7 @@ test {
     node => $doc->document_element,
     value => 'p',
   }, {
-    level => 'w',
+    level => 'u',
     type => 'unknown namespace element',
     node => $doc->document_element,
     value => '',
@@ -96,7 +96,7 @@ test {
   });
   $val->check_node ($doc);
   eq_or_diff $errors, [{
-    level => 'w',
+    level => 'u',
     type => 'unknown namespace element',
     node => $doc->document_element,
     value => '',
@@ -108,7 +108,7 @@ run_tests;
 
 =head1 LICENSE
 
-Copyright 2015 Wakaba <wakaba@suikawiki.org>.
+Copyright 2015-2018 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
