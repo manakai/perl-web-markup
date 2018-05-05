@@ -1585,3 +1585,28 @@ There are both <code>author</code> and <code>dc:creator</code>
 <p>RSS2 <code>item</code> 要素では
 <code>author</code> 要素と <code>dc:creator</code> 
 要素の両方があるべきではありません。
+
+* limited use
+
+default_level=w
+layer=content-model
+
+@en
+This is not intended for public use
+@ja
+公開の場に相応しくないものです
+
+@en
+<p>Several elements, attributes, and other protocol features are not
+inteded for public documents but can be used in internal interchange,
+document generation, data storing, and other non-public purposes.
+
+<p>These are not invalid, but should not appear in public documents.
+
+@ja
+<p>要素や属性やその他のプロトコルの機能には、
+公開文書には相応しくない、内部用途、文書生成、データ保存、
+その他非公開の目的で使うべきものもあります。
+
+<p>こうした機能を使うことは不適切ではありませんが、
+公開文書では使うべきではないものです。

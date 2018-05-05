@@ -82,6 +82,7 @@ for (keys %{$data->{namespaces}}) {
   delete $data->{namespaces}->{$_} unless keys %{$data->{namespaces}->{$_}};
 }
 $data->{namespaces}->{q<http://www.w3.org/2000/xmlns/>}->{supported} = 1;
+delete $data->{namespaces}->{q<http://www.w3.org/1999/02/22-rdf-syntax-ns#>}->{limited_use};
 
 for my $type (keys %{$data->{md}}) {
   delete $data->{md}->{$type}->{spec};

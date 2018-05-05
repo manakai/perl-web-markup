@@ -437,7 +437,6 @@ sub _check_element_attrs ($$$;%) {
     $checker ||= $NamespacedAttrChecker->{$attr_ns}->{'*'};
 
     my $conforming = $attr_def->{conforming};
-    my $status = $attr_def->{status} || '';
     if ($allow_dataset and
         $attr_ns eq '' and
         $attr_ln =~ /^data-\p{InNCNameChar}+\z/ and
@@ -445,7 +444,6 @@ sub _check_element_attrs ($$$;%) {
       ## |data-*=""| - XML-compatible + no uppercase letter
       $checker = $CheckerByType->{any};
       $conforming = 1;
-      $status = 'REC';
     } elsif (defined $input_type and
              $attr_ns eq '' and
              keys %{$_Defs->{input}->{attrs}->{$attr_ln} or {}} and
@@ -461,7 +459,6 @@ sub _check_element_attrs ($$$;%) {
       $checker = $args{element_specific_checker}->{$attr_ln} || $checker;
     } elsif ($attr_ns eq XMLNS_NS) { # xmlns="", xmlns:*=""
       $conforming = 1;
-      $status = 'REC';
     }
     if ($allow_custom and
         $attr_ns eq '' and
@@ -471,7 +468,6 @@ sub _check_element_attrs ($$$;%) {
       ## XML-compatible + no uppercase letter
       $checker ||= $CheckerByType->{any};
       $conforming = 1;
-      $status = 'REC';
       if (not $attr_def->{conforming} and
           ($attr_def->{browser} or
            (not $ElementAttrChecker->{$el_ns}->{$el_ln}->{$attr_ns}->{$attr_ln} and
@@ -490,15 +486,11 @@ sub _check_element_attrs ($$$;%) {
         ## not support the attribute.  The conformance is unknown.
         $self->{onerror}->(node => $attr,
                            type => 'unknown attribute', level => 'u');
-      }
-      if ($status eq 'REC' or $status eq 'CR' or $status eq 'LC') {
-        #
-      } else {
-        ## The attribute is conforming, but is in earlier stage such
-        ## that it should not be used without caution.
-        # XXX
-        #$self->{onerror}->(node => $attr,
-        #                   type => 'status:wd:attr', level => 'i')
+      } elsif ($attr_def->{limited_use} or
+               $_Defs->{namespaces}->{$attr_ns}->{limited_use}) {
+        $self->{onerror}->(node => $attr,
+                           type => 'limited use',
+                           level => 'w');
       }
     } else { # not conforming
       if ($_Defs->{namespaces}->{$el_ns}->{supported} or
@@ -10064,17 +10056,11 @@ sub _check_node ($$) {
             $self->{onerror}->(node => $el,
                                type => 'unknown element',
                                level => 'u');
-          }
-          my $status = $el_def_data->{status} || '';
-          if ($status eq 'REC' or $status eq 'CR' or $status eq 'LC') {
-            #
-          } else {
-            ## The element is conforming, but is in earlier stage such
-            ## that it should not be used without caution.
-            # XXX
-            #$self->{onerror}->(node => $el,
-            #                   type => 'status:wd:element',
-            #                   level => 'i')
+          } elsif ($el_def_data->{limited_use} or
+                   $_Defs->{namespaces}->{$el_nsuri}->{limited_use}) {
+            $self->{onerror}->(node => $el,
+                               type => 'limited use',
+                               level => 'w');
           }
         } elsif ($_Defs->{namespaces}->{$el_nsuri}->{supported} or
                  $_Defs->{namespaces}->{$el_nsuri}->{obsolete} or
