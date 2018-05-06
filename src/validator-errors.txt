@@ -1610,3 +1610,21 @@ document generation, data storing, and other non-public purposes.
 
 <p>こうした機能を使うことは不適切ではありませんが、
 公開文書では使うべきではないものです。
+
+* xslt:root literal result element
+
+default_level=s
+layer=content-model
+
+@en
+The document MIME type is not XSLT
+@ja
+文書の MIME 型が XSLT ではありません
+
+@en
+<p>When a document is a simplified XSLT stylesheet, its MIME type
+should be an XSLT MIME type, e.g. <code>application/xslt+xml</code>.
+
+@ja
+<p>文書が簡潔な XSLT スタイルシートの時は、 MIMEが 型は
+<code>application/xslt+xml</code> など XSLT の MIME 型とするべきです。
