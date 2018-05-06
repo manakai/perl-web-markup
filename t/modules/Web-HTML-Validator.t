@@ -949,32 +949,6 @@ for my $test (
    },
    [{type => 'root text', level => 'm', node => 'p'},
     {type => 'no document element', level => 'w', node => 'doc'}]],
-  [sub {
-     my $doc = $_[0];
-     my $el = $doc->create_element_ns (undef, 'foo');
-     $el->set_attribute_ns ('http://www.w3.org/1999/XSL/Transform', 'xsl:version', '1.0');
-     $doc->append_child ($el);
-     return {el => $el, attr => $el->attributes->[0]};
-   },
-   [{type => 'unknown namespace element', level => 'u', node => 'el',
-     value => ''},
-    #{type => 'attribute not defined', level => 'm', node => 'attr'},
-    {type => 'unknown attribute', level => 'u', node => 'attr'},
-    # XXX{type => 'xslt:root literal result element', level => 's', node => 'el'},
-   ]],
-  [sub {
-     my $doc = $_[0];
-     my $el = $doc->create_element_ns ('http://www.w3.org/1999/XSL/Transform', 'foo');
-     $el->set_attribute_ns ('http://www.w3.org/1999/XSL/Transform', 'xsl:version', '1.0');
-     $doc->append_child ($el);
-     return {el => $el, attr => $el->attributes->[0]};
-   },
-   [#{type => 'element not defined', level => 'm', node => 'el'},
-    #{type => 'attribute not defined', level => 'm', node => 'attr'},
-    {type => 'unknown attribute', level => 'u', node => 'attr'},
-    #{type => 'element not allowed:root', level => 'm', node => 'el'},
-    {type => 'unknown namespace element', level => 'u', node => 'el', value => 'http://www.w3.org/1999/XSL/Transform'},
-   ]],
    [sub {
       my $doc = $_[0];
       $doc->manakai_is_html (1);
@@ -1208,6 +1182,65 @@ test {
   is $index, 49;
   done $c;
 } n => 4, name => 'di_data_set has source document data';
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $pi = $doc->create_processing_instruction ('a', 'b');
+  my $val = new Web::HTML::Validator;
+  my $errors = [];
+  $val->onerror (sub {
+    my %args = @_;
+    push @$errors, \%args;
+  });
+  $val->check_node ($pi);
+  eq_or_diff $errors, [{
+    type => 'unknown pi',
+    level => 'u',
+    node => $pi,
+  }];
+  done $c;
+} n => 1, name => 'PI validation';
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $pi = $doc->create_processing_instruction ('Xml-x', 'b');
+  my $val = new Web::HTML::Validator;
+  my $errors = [];
+  $val->onerror (sub {
+    my %args = @_;
+    push @$errors, \%args;
+  });
+  $val->check_node ($pi);
+  eq_or_diff $errors, [{
+    type => 'pi not defined',
+    level => 'm',
+    node => $pi,
+  }];
+  done $c;
+} n => 1, name => 'PI validation';
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $df = $doc->create_document_fragment;
+  my $pi = $doc->create_processing_instruction ('Xml-x', 'b');
+  $df->append_child ($pi);
+  my $val = new Web::HTML::Validator;
+  my $errors = [];
+  $val->onerror (sub {
+    my %args = @_;
+    push @$errors, \%args;
+  });
+  $val->check_node ($df);
+  eq_or_diff $errors, [{
+    type => 'pi not defined',
+    level => 'm',
+    node => $pi,
+  }];
+  done $c;
+} n => 1, name => 'PI validation';
 
 run_tests;
 

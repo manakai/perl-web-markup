@@ -228,8 +228,6 @@ sub _terminate ($) {
 ## XXX warning "xmlns" attribute in no namespace
 ## XXX warning attribute name duplication
 ## XXX warning Comment.data =~ /--/ or =~ /-\z/
-## XXX warning PI.target == xml
-## XXX warning PI.data =~ /\?>/ or =~ /^<S>/
 ## XXX warning attribute definition's properties
 ## XXX must?? system ID has to be URL
 ##   MUST VersionNum http://www.w3.org/TR/xml/#xmldoc
@@ -244,12 +242,11 @@ sub _terminate ($) {
 ## MUST be NCName [XMLNS].
 ## XXX prefix SHOULD NOT begin with "xml" in upper or lower case [XMLNS]
 ## XXX warn if element and attribute names starts with "xml:" [XML]
-## XXX warn if PI target starts with "xml-" [XML]
 ## XXX warn if attribute definition is not serializable
 
 ## XXX In HTML documents
 ##   warning doctype name, pubid, sysid
-##   warning PI, element type definition, attribute definition
+##   warning element type definition, attribute definition
 ##   warning comment data
 ##   warning pubid/sysid chars
 ##   warning non-ASCII element names
@@ -9710,6 +9707,36 @@ $Element->{+XSLT_NS}->{output}->{check_attrs2} = sub {
       if defined $attr;
 }; # <xsl:output> check_attrs2
 
+## ------ PIs ------
+
+sub _check_pi ($$$) {
+  my ($self, $node, $parent_state) = @_;
+
+  ## [VALLANGS]
+  my $target = $node->target;
+  if ($target eq 'xml-stylesheet') {
+    # XXX 
+    $self->{onerror}->(node => $node,
+                       type => 'unknown pi',
+                       level => 'u');
+  } elsif ($target =~ /^[Xx][Mm][Ll]-/) {
+    $self->{onerror}->(node => $node,
+                       type => 'pi not defined',
+                       level => 'm');
+  } elsif ($target =~ /\A[Xx][Mm][Ll]\z/) {
+    # XXX warn (unserializable)
+  } else {
+    $self->{onerror}->(node => $node,
+                       type => 'unknown pi',
+                       level => 'u');
+  }
+
+  # XXX not serializable if HTML document
+  ## XXX warning PI.target == xml
+  ## XXX warning PI.data =~ /\?>/ or =~ /^<S>/
+
+} # _check_pi
+
 ## ------ Nested document ------
 
 sub _check_fallback_html ($$$$) {
@@ -10124,7 +10151,7 @@ sub _check_node ($$) {
           ## Adjacent text nodes and empty text nodes are not
           ## round-trippable, but harmless, so not warned here.
         } elsif ($child_nt == 7) { # PROCESSING_INSTRUCTION_NODE
-          ## XXX PROCESSING_INSTRUCTION_NODE
+          $self->_check_pi ($child, $element_state);
         } # $child_nt
       } # $child
       
@@ -10270,6 +10297,7 @@ sub _check_node ($$) {
               }
             }
             # XXX $doc->content_type vs root element
+            # XXX     - should be text/xml, application/xml, xslt mime type if XSLT
           } # first element child
           push @new_item, {type => 'element', node => $node,
                            is_root_literal_result => $is_root_literal_result,
@@ -10292,9 +10320,11 @@ sub _check_node ($$) {
                              type => 'root text',
                              level => 'm'); # [MANAKAI] [DOM]
           $self->_check_data ($node, 'data');
+        } elsif ($nt == 7) { # PROCESSING_INSTRUCTION_NODE
+          $self->_check_pi ($node, $parent_state);
         }
         
-        # XXX PI, Comment validation
+        # XXX Comment validation
       } # $node
       
       $self->{onerror}->(node => $item->{node},
@@ -10325,8 +10355,10 @@ sub _check_node ($$) {
                            is_root => 1};
         } elsif ($nt == 3) { # TEXT_NODE
           $self->_check_data ($node, 'data');
+        } elsif ($nt == 7) { # PROCESSING_INSTRUCTION_NODE
+          $self->_check_pi ($node, $parent_state);
         }
-        # XXX Comment PI
+        # XXX Comment
       } # $node
       unshift @item, @new_item;
     } else {
@@ -10432,8 +10464,10 @@ sub check_node ($$) {
   } elsif ($nt == 11) { # DOCUMENT_FRAGMENT_NODE
     # XXX shadow root
     $self->_check_node ([{type => 'document_fragment', node => $node}]);
+  } elsif ($nt == 7) { # PROCESSING_INSTRUCTION_NODE
+    $self->_check_pi ($node, {});
   }
-  # XXX PI Comment DocumentType Entity Notation ElementTypeDefinition AttributeDefinition
+  # XXX Comment DocumentType Entity Notation ElementTypeDefinition AttributeDefinition
   $self->_check_refs;
   $self->_validate_microdata;
   $self->_validate_aria ([$node]);
