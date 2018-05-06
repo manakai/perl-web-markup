@@ -146,7 +146,7 @@ sub _test ($$$) {
           #(($opt{di} || 0) == 0 ? (defined $opt{line} ? $opt{line} . ';' .$opt{column} . ';' : '') : '') .
           get_node_path ($opt{node}) . ';' . $opt{type} .
           (defined $opt{text} ? ';' . $opt{text} : '') .
-          (defined $opt{level} ? ';'.$opt{level} : '');
+          ';'.$opt{level}.($opt{in_template} ? '[t]' : '');
       }
     });
     $val->scripting (not $test->{noscript});

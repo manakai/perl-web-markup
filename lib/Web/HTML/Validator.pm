@@ -107,7 +107,7 @@ my $GetNestedOnError = sub ($$) {
 ##   {in_head}           Set to true if there is an ancestor |head| element.
 ##   {in_media}          Set to true if there is an ancestor media element.
 ##   {in_phrasing}       Set to true if in phrasing content expecting element.
-##   {is_template}       The checker is in the template content mode.
+##   {is_template}       The checker is in the template mode [VALLANGS].
 ##   {no_interactive}    Set to true if no interactive content is allowed.
 ##   {node_is_hyperlink}->{refaddr $node}
 ##                       Whether $node creates a hyperlink link or not.
@@ -3807,7 +3807,6 @@ $Element->{+HTML_NS}->{html} = {
 
 $Element->{+HTML_NS}->{head} = {
   %AnyChecker,
-  ## $item->{is_template} - It is actually a template content, not |head|
   ## $item->{is_noscript} - It is actually a |noscript|, not |head|
   check_start => sub {
     my ($self, $item, $element_state) = @_;
@@ -3822,7 +3821,7 @@ $Element->{+HTML_NS}->{head} = {
         $self->{onerror}->(node => $child_el,
                            type => 'element not allowed:head noscript',
                            level => 'm');
-      } elsif (not $element_state->{has_title} or $item->{is_template}) {
+      } elsif (not $element_state->{has_title}) {
         $element_state->{has_title} = 1;
       } else {
         $self->{onerror}->(node => $child_el,
@@ -3858,7 +3857,6 @@ $Element->{+HTML_NS}->{head} = {
   check_end => sub {
     my ($self, $item, $element_state) = @_;
     if (not $element_state->{has_title} and
-        not $item->{is_template} and
         not $item->{is_noscript}) {
       my $el = $item->{node};
       my $od = $el->owner_document;
@@ -5020,7 +5018,7 @@ $Element->{+HTML_NS}->{slot} = {
       $self->{flag}->{slots}->{$value} = 1;
     }
 
-    unless ($self->{flag}->{is_template}) { # XXX or in_shadow_tree
+    unless ($self->{flag}->{XXX_in_shadow_tree}) {
       $self->{onerror}->(node => $item->{node},
                          type => 'light slot',
                          level => 'w');
@@ -6712,7 +6710,7 @@ $Element->{+HTML_NS}->{area} = {
   }, # check_attrs2
   check_start => sub {
     my ($self, $item, $element_state) = @_;
-    if (not ($self->{flag}->{in_map} or $self->{flag}->{is_template}) and
+    if (not $self->{flag}->{in_map} and
         $item->{node}->manakai_parent_element) {
       $self->{onerror}->(node => $item->{node},
                          type => 'element not allowed:area',
@@ -9772,99 +9770,18 @@ $Element->{+HTML_NS}->{template} = {
     my $df = $item->{node}->content;
     my @children = @{$df->child_nodes};
 
-    my $model;
-    my $has_flow;
-    for my $child (@children) {
-      if ($child->node_type == 1) { # ELEMENT_NODE
-        my $ns = $child->namespace_uri || '';
-        my $ln = $child->local_name;
-
-        if ($ns eq HTML_NS) {
-          $model = {
-            li => 'ul', #'ulol',
-            dt => 'dl',
-            dd => 'dl',
-            figcaption => 'figure',
-            rt => 'ruby',
-            rp => 'ruby',
-            param => 'object',
-            source => 'video', #'media',
-            track => 'video', #'media',
-            col => 'colgroup',
-            tbody => 'table',
-            thead => 'table',
-            tfoot => 'table',
-            th => 'tr',
-            td => 'tr',
-            legend => 'fieldset',
-            optgroup => 'select',
-            option => 'select',
-            summary => 'details',
-            style => 'metadata',
-          }->{$ln};
-          last if defined $model;
-
-          if ($ln eq 'tr') {
-            $model = 'table'; #tr-container
-            #not last;
-          }
-        }
-        if ($_Defs->{categories}->{'metadata content'}->{elements}->{$ns}->{$ln} and
-            not $_Defs->{categories}->{'flow content'}->{elements}->{$ns}->{$ln} and
-            not $_Defs->{categories}->{'flow content'}->{elements_with_exceptions}->{$ns}->{$ln}) {
-          ## Metadata content
-          $model = 'metadata';
-          last;
-        }
-
-        if (not $_Defs->{categories}->{'metadata content'}->{elements}->{$ns}->{$ln}) {
-          $has_flow = 1;
-        }
-
-        ## Metadata content (<link> <meta> <script> <template>), flow
-        ## content, figure, ruby, object, media, table (<script>
-        ## <template>), colgroup (<script> <template>), table body
-        ## (<script> <template>), tr (<script> <template>), fieldset,
-        ## details
-        #
-      } elsif ($child->node_type == 3) { # TEXT_NODE
-        if ($child->data =~ /[^\x09\x0A\x0C\x0D\x20]/) { # non-space chars
-          ## Flow content, figure, ruby, object, media
-          $has_flow = 1;
-        }
-      }
-    } # $child
-
-    my $container;
-    if (not defined $model) {
-      ## Flow content or metadata content
-      $container = $df->owner_document->create_element_ns
-          (HTML_NS, $has_flow ? 'body' : 'head');
-    } elsif ($model eq 'metadata') {
-      $container = $df->owner_document->create_element_ns (HTML_NS, 'head');
-    } else {
-      $container = $df->owner_document->create_element_ns (HTML_NS, $model);
-      $container->set_attribute_ns (undef, data => 'http://test/') if $model eq 'object';
-    }
-
     my $checker = Web::HTML::Validator->new;
     $checker->_init;
     $checker->di_data_set ($self->di_data_set);
     $checker->scripting ($self->scripting);
     $checker->{flag}->{is_template} = 1;
+
     my $onerror = $self->onerror;
-    my $node = $item->{node};
     $checker->onerror (sub {
-      my %args = @_;
-      $args{node} = $node if $args{node} eq $container;
-      $onerror->(%args);
+      $onerror->(@_, in_template => 1);
     });
 
-    $checker->_check_node
-        ([{type => 'element', node => $container, parent_state => {},
-           is_template => 1,
-           content => \@children,
-           validation_mode => 'default'}]);
+    $checker->_check_node ([{type => 'document_fragment', node => $df}]);
 
     $checker->_check_refs;
     $checker->_validate_microdata;
@@ -10170,8 +10087,7 @@ sub _check_node ($$) {
                        element_state => $element_state}
           if ($cm eq 'flow content' or
               $cm eq 'phrasing content' or
-              $cm eq 'transparent') and
-             not $item->{is_template};
+              $cm eq 'transparent');
       
       unshift @item, @new_item;
     } elsif ($item->{type} eq '_add_minus_elements') {
@@ -10369,7 +10285,8 @@ sub _check_node ($$) {
           push @new_item, {type => 'element', node => $node,
                            parent_state => $parent_state,
                            validation_mode => $self->_determine_validation_mode
-                               ($node, 'default')};
+                               ($node, 'default'),
+                           is_root => 1};
         } elsif ($nt == 3) { # TEXT_NODE
           $self->_check_data ($node, 'data');
         }
@@ -10475,6 +10392,7 @@ sub check_node ($$) {
   } elsif ($nt == 2) { # ATTRIBUTE_NODE
     $self->_check_data ($node, 'value');
   } elsif ($nt == 11) { # DOCUMENT_FRAGMENT_NODE
+    # XXX shadow root
     $self->_check_node ([{type => 'document_fragment', node => $node}]);
   }
   # XXX PI Comment DocumentType Entity Notation ElementTypeDefinition AttributeDefinition
