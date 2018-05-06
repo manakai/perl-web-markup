@@ -10314,7 +10314,7 @@ sub _check_node ($$) {
           } else {
             $has_doctype = 1;
           }
-          # XXX check the node
+          # XXX check the node, child PIs
         } elsif ($nt == 3) { # TEXT_NODE
           $self->{onerror}->(node => $node,
                              type => 'root text',
