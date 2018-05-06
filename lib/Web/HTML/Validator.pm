@@ -26,9 +26,9 @@ sub di_data_set ($;$) {
 
 sub onerror ($;$) {
   if (@_ > 1) {
-    $_[0]->{onerror} = $_[1];
+    $_[0]->{_onerror} = $_[1];
   }
-  return $_[0]->{onerror} ||= sub {
+  $_[0]->{_onerror} ||= sub {
     my %args = @_;
     return if $args{level} eq 'mh';
     warn sprintf "%s%s%s%s (%s)%s\n",
@@ -36,10 +36,11 @@ sub onerror ($;$) {
         $args{type},
         defined $args{text} ? ' ' . $args{text} : '',
         defined $args{value} ? ' "' . $args{value} . '"' : '',
-        $args{level},
+        $args{level} . ($args{in_template} ? ' (in template)' : ''),
         (defined $args{column} ? sprintf ' at line %d column %d%s',
                                      $args{line}, $args{column}, (defined $args{di} ? ' document #' . $args{di} : '') : '');
   };
+  return $_[0]->{onerror};
 } # onerror
 
 my $GetNestedOnError = sub ($$) {
@@ -107,7 +108,8 @@ my $GetNestedOnError = sub ($$) {
 ##   {in_head}           Set to true if there is an ancestor |head| element.
 ##   {in_media}          Set to true if there is an ancestor media element.
 ##   {in_phrasing}       Set to true if in phrasing content expecting element.
-##   {is_template}       The checker is in the template content mode.
+##   {is_template}       The checker is in the template mode [VALLANGS].
+##   {is_xslt_stylesheet} The document is an XSLT stylesheet [VALLANGS].
 ##   {no_interactive}    Set to true if no interactive content is allowed.
 ##   {node_is_hyperlink}->{refaddr $node}
 ##                       Whether $node creates a hyperlink link or not.
@@ -195,6 +197,13 @@ sub _init ($) {
     table => [], # table objects returned by Web::HTML::Table
     term => $self->{term},
   };
+  $self->{onerror} = sub {
+    if ($self->{flag}->{is_template}) {
+      $self->{_onerror}->(@_, in_template => 1);
+    } else {
+      $self->{_onerror}->(@_);
+    }
+  };
 } # _init
 
 sub _terminate ($) {
@@ -210,6 +219,7 @@ sub _terminate ($) {
   delete $self->{top_level_item_elements};
   delete $self->{itemprop_els};
   delete $self->{flag};
+  delete $self->{onerror};
 } # _terminate
 
 ## For XML documents c.f. <http://www.whatwg.org/specs/web-apps/current-work/#serializing-xhtml-fragments>
@@ -218,8 +228,6 @@ sub _terminate ($) {
 ## XXX warning "xmlns" attribute in no namespace
 ## XXX warning attribute name duplication
 ## XXX warning Comment.data =~ /--/ or =~ /-\z/
-## XXX warning PI.target == xml
-## XXX warning PI.data =~ /\?>/ or =~ /^<S>/
 ## XXX warning attribute definition's properties
 ## XXX must?? system ID has to be URL
 ##   MUST VersionNum http://www.w3.org/TR/xml/#xmldoc
@@ -234,12 +242,11 @@ sub _terminate ($) {
 ## MUST be NCName [XMLNS].
 ## XXX prefix SHOULD NOT begin with "xml" in upper or lower case [XMLNS]
 ## XXX warn if element and attribute names starts with "xml:" [XML]
-## XXX warn if PI target starts with "xml-" [XML]
 ## XXX warn if attribute definition is not serializable
 
 ## XXX In HTML documents
 ##   warning doctype name, pubid, sysid
-##   warning PI, element type definition, attribute definition
+##   warning element type definition, attribute definition
 ##   warning comment data
 ##   warning pubid/sysid chars
 ##   warning non-ASCII element names
@@ -493,7 +500,7 @@ sub _check_element_attrs ($$$;%) {
                            level => 'w');
       }
     } else { # not conforming
-      if ($_Defs->{namespaces}->{$el_ns}->{supported} or
+      if (($_Defs->{namespaces}->{$el_ns}->{supported} and not $el_ns eq XSLT_NS) or
           $_Defs->{namespaces}->{$attr_ns}->{supported} or
           $_Defs->{namespaces}->{$el_ns}->{obsolete} or
           $_Defs->{namespaces}->{$attr_ns}->{obsolete} or
@@ -3807,7 +3814,6 @@ $Element->{+HTML_NS}->{html} = {
 
 $Element->{+HTML_NS}->{head} = {
   %AnyChecker,
-  ## $item->{is_template} - It is actually a template content, not |head|
   ## $item->{is_noscript} - It is actually a |noscript|, not |head|
   check_start => sub {
     my ($self, $item, $element_state) = @_;
@@ -3822,7 +3828,7 @@ $Element->{+HTML_NS}->{head} = {
         $self->{onerror}->(node => $child_el,
                            type => 'element not allowed:head noscript',
                            level => 'm');
-      } elsif (not $element_state->{has_title} or $item->{is_template}) {
+      } elsif (not $element_state->{has_title}) {
         $element_state->{has_title} = 1;
       } else {
         $self->{onerror}->(node => $child_el,
@@ -3858,7 +3864,6 @@ $Element->{+HTML_NS}->{head} = {
   check_end => sub {
     my ($self, $item, $element_state) = @_;
     if (not $element_state->{has_title} and
-        not $item->{is_template} and
         not $item->{is_noscript}) {
       my $el = $item->{node};
       my $od = $el->owner_document;
@@ -5020,7 +5025,7 @@ $Element->{+HTML_NS}->{slot} = {
       $self->{flag}->{slots}->{$value} = 1;
     }
 
-    unless ($self->{flag}->{is_template}) { # XXX or in_shadow_tree
+    unless ($self->{flag}->{XXX_in_shadow_tree}) {
       $self->{onerror}->(node => $item->{node},
                          type => 'light slot',
                          level => 'w');
@@ -6712,7 +6717,7 @@ $Element->{+HTML_NS}->{area} = {
   }, # check_attrs2
   check_start => sub {
     my ($self, $item, $element_state) = @_;
-    if (not ($self->{flag}->{in_map} or $self->{flag}->{is_template}) and
+    if (not $self->{flag}->{in_map} and
         $item->{node}->manakai_parent_element) {
       $self->{onerror}->(node => $item->{node},
                          type => 'element not allowed:area',
@@ -9651,6 +9656,87 @@ $Element->{(APP_NS)}->{categories} = {
   # XXX
 #}; # <app:accept> text
 
+## ------ XSLT1 ------
+
+# XXX attribute validation with AVT
+# XXX extension elements
+# XXX stylesheet/transform content
+# XXX template content
+# XXX for-each content
+# XXX choose content
+# XXX template/@mode MUST NOT if no template/@match
+# XXX warn xml:lang and xml:space on XSLT elements
+
+$NamespacedAttrChecker->{+XSLT_NS}->{version} = sub {
+  my ($self, $attr, $item, $element_state) = @_;
+  my $value = $attr->value;
+  unless ($value eq '1.0') {
+    $self->{onerror}->(node => $attr,
+                       type => 'enumerated:invalid',
+                       level => 'm');
+  }
+  $self->{onerror}->(node => $attr,
+                     type => 'attribute not allowed',
+                     level => 'm')
+      unless $item->{is_root_literal_result};
+}; # xsl:version
+
+$NamespacedAttrChecker->{+XSLT_NS}->{'extension-element-prefixes'} = sub {
+  my ($self, $attr, $item, $element_state) = @_;
+  # XXX 
+  $self->{onerror}->(node => $attr,
+                     type => 'unknown attribute',
+                     level => 'u');
+}; # xsl:extension-element-prefixes
+
+$NamespacedAttrChecker->{+XSLT_NS}->{'exclude-result-prefixes'} = sub {
+  my ($self, $attr, $item, $element_state) = @_;
+  # XXX 
+  $self->{onerror}->(node => $attr,
+                     type => 'unknown attribute',
+                     level => 'u');
+}; # xsl:exclude-result-prefixes
+
+$Element->{+XSLT_NS}->{output}->{check_attrs2} = sub {
+  my ($self, $item, $element_state) = @_;
+
+  my $attr = $item->{node}->get_attribute_node_ns (undef, 'version');
+  $self->{onerror}->(node => $attr,
+                     type => 'attribute not allowed',
+                     level => 's')
+      if defined $attr;
+}; # <xsl:output> check_attrs2
+
+## ------ PIs ------
+
+sub _check_pi ($$$) {
+  my ($self, $node, $parent_state) = @_;
+
+  ## [VALLANGS]
+  my $target = $node->target;
+  if ($target eq 'xml-stylesheet') {
+    # XXX 
+    $self->{onerror}->(node => $node,
+                       type => 'unknown pi',
+                       level => 'u');
+  } elsif ($target =~ /^[Xx][Mm][Ll]-/) {
+    $self->{onerror}->(node => $node,
+                       type => 'pi not defined',
+                       level => 'm');
+  } elsif ($target =~ /\A[Xx][Mm][Ll]\z/) {
+    # XXX warn (unserializable)
+  } else {
+    $self->{onerror}->(node => $node,
+                       type => 'unknown pi',
+                       level => 'u');
+  }
+
+  # XXX not serializable if HTML document
+  ## XXX warning PI.target == xml
+  ## XXX warning PI.data =~ /\?>/ or =~ /^<S>/
+
+} # _check_pi
+
 ## ------ Nested document ------
 
 sub _check_fallback_html ($$$$) {
@@ -9691,8 +9777,7 @@ sub _check_fallback_html ($$$$) {
       ([{type => 'element', node => $container, parent_state => {},
          disallowed => $disallowed,
          content => $children,
-         is_noscript => $container_ln eq 'head',
-         validation_mode => 'default'}]);
+         is_noscript => $container_ln eq 'head'}]);
 
   $checker->_validate_microdata;
   $checker->_validate_aria ($children);
@@ -9772,99 +9857,15 @@ $Element->{+HTML_NS}->{template} = {
     my $df = $item->{node}->content;
     my @children = @{$df->child_nodes};
 
-    my $model;
-    my $has_flow;
-    for my $child (@children) {
-      if ($child->node_type == 1) { # ELEMENT_NODE
-        my $ns = $child->namespace_uri || '';
-        my $ln = $child->local_name;
-
-        if ($ns eq HTML_NS) {
-          $model = {
-            li => 'ul', #'ulol',
-            dt => 'dl',
-            dd => 'dl',
-            figcaption => 'figure',
-            rt => 'ruby',
-            rp => 'ruby',
-            param => 'object',
-            source => 'video', #'media',
-            track => 'video', #'media',
-            col => 'colgroup',
-            tbody => 'table',
-            thead => 'table',
-            tfoot => 'table',
-            th => 'tr',
-            td => 'tr',
-            legend => 'fieldset',
-            optgroup => 'select',
-            option => 'select',
-            summary => 'details',
-            style => 'metadata',
-          }->{$ln};
-          last if defined $model;
-
-          if ($ln eq 'tr') {
-            $model = 'table'; #tr-container
-            #not last;
-          }
-        }
-        if ($_Defs->{categories}->{'metadata content'}->{elements}->{$ns}->{$ln} and
-            not $_Defs->{categories}->{'flow content'}->{elements}->{$ns}->{$ln} and
-            not $_Defs->{categories}->{'flow content'}->{elements_with_exceptions}->{$ns}->{$ln}) {
-          ## Metadata content
-          $model = 'metadata';
-          last;
-        }
-
-        if (not $_Defs->{categories}->{'metadata content'}->{elements}->{$ns}->{$ln}) {
-          $has_flow = 1;
-        }
-
-        ## Metadata content (<link> <meta> <script> <template>), flow
-        ## content, figure, ruby, object, media, table (<script>
-        ## <template>), colgroup (<script> <template>), table body
-        ## (<script> <template>), tr (<script> <template>), fieldset,
-        ## details
-        #
-      } elsif ($child->node_type == 3) { # TEXT_NODE
-        if ($child->data =~ /[^\x09\x0A\x0C\x0D\x20]/) { # non-space chars
-          ## Flow content, figure, ruby, object, media
-          $has_flow = 1;
-        }
-      }
-    } # $child
-
-    my $container;
-    if (not defined $model) {
-      ## Flow content or metadata content
-      $container = $df->owner_document->create_element_ns
-          (HTML_NS, $has_flow ? 'body' : 'head');
-    } elsif ($model eq 'metadata') {
-      $container = $df->owner_document->create_element_ns (HTML_NS, 'head');
-    } else {
-      $container = $df->owner_document->create_element_ns (HTML_NS, $model);
-      $container->set_attribute_ns (undef, data => 'http://test/') if $model eq 'object';
-    }
-
     my $checker = Web::HTML::Validator->new;
     $checker->_init;
     $checker->di_data_set ($self->di_data_set);
     $checker->scripting ($self->scripting);
-    $checker->{flag}->{is_template} = 1;
-    my $onerror = $self->onerror;
-    my $node = $item->{node};
-    $checker->onerror (sub {
-      my %args = @_;
-      $args{node} = $node if $args{node} eq $container;
-      $onerror->(%args);
-    });
+    $checker->onerror ($self->onerror);
+    $checker->{flag}->{is_template} = 1
+        unless $self->{flag}->{is_xslt_stylesheet};
 
-    $checker->_check_node
-        ([{type => 'element', node => $container, parent_state => {},
-           is_template => 1,
-           content => \@children,
-           validation_mode => 'default'}]);
+    $checker->_check_node ([{type => 'document_fragment', node => $df}]);
 
     $checker->_check_refs;
     $checker->_validate_microdata;
@@ -9971,16 +9972,6 @@ sub _check_doc_charset ($$) {
 
 ## ------ Nodes ------
 
-## <http://suika.suikawiki.org/www/markup/xml/validation-langs#determine-the-validation-mode>
-sub _determine_validation_mode ($$$) {
-  my ($self, $el, $parent_mode) = @_;
-  if ((0 and 'XXX is XSLT element') or
-      ($parent_mode eq 'XSLT' and 0 and 'XXX is XSLT literal result element')) {
-    return 'XSLT';
-  }
-  return 'default';
-} # _determine_validation_mode
-
 sub _check_node ($$) {
   my $self = $_[0];
   my @item = (@{$_[1]});
@@ -10000,9 +9991,9 @@ sub _check_node ($$) {
       ##   content         Chlildren (optional)
       ##   is_template     Is template content (boolean)
       ##   is_noscript     Is |noscript| in |head| (boolean)
+      ##   is_root_literal_result Is XSLT literal result element root (boolean)
       ##   disallowed      Disallowed descendant list (optional)
       ##   parent_state    State hashref for the parent of the element node
-      ##   validation_mode Validation mode for the element node
       my $el = $item->{node};
       my $el_nsuri = $el->namespace_uri;
       $el_nsuri = '' if not defined $el_nsuri;
@@ -10044,47 +10035,41 @@ sub _check_node ($$) {
                            level => 'w');
       }
 
-      ## <http://suika.suikawiki.org/www/markup/xml/validation-langs#checking-an-element>.
-      my $mode = $item->{validation_mode};
-      if ($mode eq 'XSLT') {
-        # XXX
-      } else {
-        if ($el_def_data->{conforming}) {
-          unless (defined $e_eldef) {
-            ## Though the element is conforming, we does not support
-            ## the validation of the element yet.
-            $self->{onerror}->(node => $el,
-                               type => 'unknown element',
-                               level => 'u');
-          } elsif ($el_def_data->{limited_use} or
-                   $_Defs->{namespaces}->{$el_nsuri}->{limited_use}) {
-            $self->{onerror}->(node => $el,
-                               type => 'limited use',
-                               level => 'w');
-          }
-        } elsif ($_Defs->{namespaces}->{$el_nsuri}->{supported} or
-                 $_Defs->{namespaces}->{$el_nsuri}->{obsolete} or
-                 ($el_nsuri eq '' and $self->{is_rss2})) {
-          ## "Authors must not use elements, attributes, or attribute
-          ## values that are not permitted by this specification or
-          ## other applicable specifications" [HTML]
-          if ($el_def_data->{preferred}) {
-            $self->{onerror}->(node => $el,
-                               type => 'element:obsolete',
-                               level => 'm',
-                               preferred => $el_def_data->{preferred});
-          } else {
-            $self->{onerror}->(node => $el,
-                               type => 'element not defined',
-                               level => 'm');
-          }
+      if ($el_def_data->{conforming}) {
+        unless (defined $e_eldef) {
+          ## Though the element is conforming, we does not support the
+          ## validation of the element yet.
+          $self->{onerror}->(node => $el,
+                             type => 'unknown element',
+                             level => 'u');
+        } elsif ($el_def_data->{limited_use} or
+                 $_Defs->{namespaces}->{$el_nsuri}->{limited_use}) {
+          $self->{onerror}->(node => $el,
+                             type => 'limited use',
+                             level => 'w');
+        }
+      } elsif ($_Defs->{namespaces}->{$el_nsuri}->{supported} or
+               $_Defs->{namespaces}->{$el_nsuri}->{obsolete} or
+               ($el_nsuri eq '' and $self->{is_rss2})) {
+        ## "Authors must not use elements, attributes, or attribute
+        ## values that are not permitted by this specification or
+        ## other applicable specifications" [HTML]
+        if ($el_def_data->{preferred}) {
+          $self->{onerror}->(node => $el,
+                             type => 'element:obsolete',
+                             level => 'm',
+                             preferred => $el_def_data->{preferred});
         } else {
           $self->{onerror}->(node => $el,
-                             type => 'unknown namespace element',
-                             value => $el_nsuri,
-                             level => 'u');
+                             type => 'element not defined',
+                             level => 'm');
         }
-      } # validation mode
+      } else {
+        $self->{onerror}->(node => $el,
+                           type => 'unknown namespace element',
+                           value => $el_nsuri,
+                           level => 'u');
+      }
 
       for my $ans (keys %{$el_def_data->{attrs}}) {
         for my $aln (keys %{$el_def_data->{attrs}->{$ans}}) {
@@ -10122,18 +10107,18 @@ sub _check_node ($$) {
           $child_nsuri = '' unless defined $child_nsuri;
           my $child_ln = $child->local_name;
 
+          my $child_is_hidden = ($child_nsuri eq HTML_NS and
+                                 $child->has_attribute_ns (undef, 'hidden'));
+
           if ($element_state->{has_palpable}) {
             #
           } elsif ($_Defs->{categories}->{'palpable content'}->{elements}->{$child_nsuri}->{$child_ln} or
                    ($child_nsuri eq HTML_NS and $child_ln =~ /-/)) {
-            $element_state->{has_palpable} = 1
-                if not $child_nsuri eq HTML_NS or
-                   not $child->has_attribute_ns (undef, 'hidden');
+            $element_state->{has_palpable} = 1 unless $child_is_hidden;
           } elsif ($_Defs->{categories}->{'palpable content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln}) {
             $element_state->{has_palpable} = 1
-                if $IsPalpableContent->{$child_nsuri}->{$child_ln}->($child) and
-                   (not $child_nsuri eq HTML_NS or
-                    not $child->has_attribute_ns (undef, 'hidden'));
+                if not $child_is_hidden and
+                   $IsPalpableContent->{$child_nsuri}->{$child_ln}->($child);
           }
 
           push @new_item, {type => 'check_child_element',
@@ -10142,10 +10127,20 @@ sub _check_node ($$) {
                                     $child_nsuri, $child_ln,
                                     0,
                                     $element_state, $element_state]};
+
+          my $old_it;
+          push @new_item,
+              [sub {
+                 $old_it = $self->{flag}->{is_template};
+                 $self->{flag}->{is_template} = 1;
+               }]
+                  if $child_is_hidden;
+
           push @new_item, {type => 'element', node => $child,
-                           parent_state => $element_state,
-                           validation_mode => $self->_determine_validation_mode
-                               ($child, $item->{validation_mode})};
+                           parent_state => $element_state};
+
+          push @new_item, [sub { $self->{flag}->{is_template} = $old_it }]
+              if $child_is_hidden;
         } elsif ($child_nt == 3) { # TEXT_NODE
           my $has_significant = ($child->data =~ /[^\x09\x0A\x0C\x0D\x20]/);
           push @new_item, [$eldef->{check_child_text},
@@ -10156,7 +10151,7 @@ sub _check_node ($$) {
           ## Adjacent text nodes and empty text nodes are not
           ## round-trippable, but harmless, so not warned here.
         } elsif ($child_nt == 7) { # PROCESSING_INSTRUCTION_NODE
-          ## XXX PROCESSING_INSTRUCTION_NODE
+          $self->_check_pi ($child, $element_state);
         } # $child_nt
       } # $child
       
@@ -10170,8 +10165,7 @@ sub _check_node ($$) {
                        element_state => $element_state}
           if ($cm eq 'flow content' or
               $cm eq 'phrasing content' or
-              $cm eq 'transparent') and
-             not $item->{is_template};
+              $cm eq 'transparent');
       
       unshift @item, @new_item;
     } elsif ($item->{type} eq '_add_minus_elements') {
@@ -10244,6 +10238,7 @@ sub _check_node ($$) {
         my $nt = $node->node_type;
         if ($nt == 1) { # ELEMENT_NODE
           my $mode = 'default';
+          my $is_root_literal_result;
           if ($has_element) {
             $self->{onerror}->(node => $node,
                                type => 'duplicate document element',
@@ -10251,62 +10246,48 @@ sub _check_node ($$) {
           } else {
             $has_element = 1;
 
-            my $ct = $item->{node}->content_type;
+            my $mime = $item->{node}->content_type;
             my $nsurl = $node->namespace_uri;
             $nsurl = '' if not defined $nsurl;
             my $ln = $node->local_name;
 
-            ## <http://suika.suikawiki.org/www/markup/xml/validation-langs#determine-the-validation-mode>.
-            MODE: {
-              if ($ct eq 'application/xml' or $ct eq 'text/xml') {
-                if (0 and 'XXX is XSLT literal result element' and
-                    $node->has_attribute_ns (XSLT_NS, 'version')) {
-                  $mode = 'XSLT';
-                  last MODE;
-                }
-              } elsif ($ct eq 'application/xslt+xml' or $ct eq 'text/xsl') {
-                if (0 and 'XXX is XSLT literal result element') {
-                  $mode = 'XSLT';
-                  last MODE;
-                }
-              } else {
-                #
-              }
-              $mode = $self->_determine_validation_mode
-                  ($node, $parent_state->{validation_mode} || 'default');
-            } # MODE
+            ## XSLT stylesheet [VALLANGS]
+            if (($nsurl eq XSLT_NS and $ln eq 'stylesheet') or
+                ($nsurl eq XSLT_NS and $ln eq 'transform')) {
+              $self->{flag}->{is_xslt_stylesheet} = 1;
+            } elsif ($mime eq 'application/xslt+xml' or
+                     $mime eq 'text/xsl' or
+                     $node->has_attribute_ns (XSLT_NS, 'version')) {
+              $self->{flag}->{is_xslt_stylesheet} = 1;
+              ## This should be a literal result element.
+              $is_root_literal_result = 1;
 
-            ## <http://suika.suikawiki.org/www/markup/xml/validation-langs#document-element>.
-            if ($mode eq 'XSLT') {
-              if ($nsurl eq XSLT_NS and
-                  ($_Defs->{elements}->{$nsurl}->{$ln} or {})->{root}) {
-                #
-              } elsif (0 and 'XXX is XSLT literal result element') {
-                $self->{onerror}->(node => $node,
-                                   type => 'xslt:root literal result element', # XXX
-                                   level => 's')
-                    unless $ct eq 'application/xslt+xml' or $ct eq 'text/xsl';
-                $self->{onerror}->(node => $node,
-                                   type => 'attribute missing',
-                                   text => 'xslt:version',
-                                   level => 'm')
-                    unless $node->has_attribute_ns (XSLT_NS, 'version');
-              } else {
-                $self->{onerror}->(node => $node,
-                                   type => 'element not allowed:root',
-                                   level => 'm');
-              }
-            } else { # default
-              if (($_Defs->{elements}->{$nsurl}->{$ln} or {})->{root}) {
-                #
-              } elsif ($_Defs->{namespaces}->{$nsurl}->{supported}) {
-                $self->{onerror}->(node => $node,
-                                   type => 'element not allowed:root',
-                                   level => 'm');
-              } else {
-                #
-              }
-            } # $mode
+              $self->{onerror}->(node => $node,
+                                 type => 'element not allowed',
+                                 level => 'm')
+                  if $nsurl eq XSLT_NS;
+              
+              # XXX this MUST NOT be an extension element
+
+              $self->{onerror}->(node => $node,
+                                 type => 'xslt:root literal result element',
+                                 level => 's')
+                  unless $mime eq 'application/xslt+xml' or
+                         $mime eq 'text/xsl';
+              $self->{onerror}->(node => $node,
+                                 type => 'attribute missing',
+                                 text => 'xslt:version',
+                                 level => 'm')
+                  unless $node->has_attribute_ns (XSLT_NS, 'version');
+            } elsif (($_Defs->{elements}->{$nsurl}->{$ln} or {})->{root}) {
+              #
+            } elsif ($_Defs->{namespaces}->{$nsurl}->{supported}) {
+              $self->{onerror}->(node => $node,
+                                 type => 'element not allowed:root',
+                                 level => 'm');
+            } else { # unknown element
+              #
+            }
 
             unless ($nsurl eq HTML_NS and $ln eq 'html') {
               if ($item->{node}->manakai_is_html) {
@@ -10316,10 +10297,11 @@ sub _check_node ($$) {
               }
             }
             # XXX $doc->content_type vs root element
+            # XXX     - should be text/xml, application/xml, xslt mime type if XSLT
           } # first element child
           push @new_item, {type => 'element', node => $node,
-                           parent_state => $parent_state,
-                           validation_mode => $mode};
+                           is_root_literal_result => $is_root_literal_result,
+                           parent_state => $parent_state};
         } elsif ($nt == 10) { # DOCUMENT_TYPE_NODE
           if ($has_element) {
             $self->{onerror}->(node => $node,
@@ -10332,15 +10314,17 @@ sub _check_node ($$) {
           } else {
             $has_doctype = 1;
           }
-          # XXX check the node
+          # XXX check the node, child PIs
         } elsif ($nt == 3) { # TEXT_NODE
           $self->{onerror}->(node => $node,
                              type => 'root text',
                              level => 'm'); # [MANAKAI] [DOM]
           $self->_check_data ($node, 'data');
+        } elsif ($nt == 7) { # PROCESSING_INSTRUCTION_NODE
+          $self->_check_pi ($node, $parent_state);
         }
         
-        # XXX PI, Comment validation
+        # XXX Comment validation
       } # $node
       
       $self->{onerror}->(node => $item->{node},
@@ -10368,12 +10352,13 @@ sub _check_node ($$) {
         if ($nt == 1) { # ELEMENT_NODE
           push @new_item, {type => 'element', node => $node,
                            parent_state => $parent_state,
-                           validation_mode => $self->_determine_validation_mode
-                               ($node, 'default')};
+                           is_root => 1};
         } elsif ($nt == 3) { # TEXT_NODE
           $self->_check_data ($node, 'data');
+        } elsif ($nt == 7) { # PROCESSING_INSTRUCTION_NODE
+          $self->_check_pi ($node, $parent_state);
         }
-        # XXX Comment PI
+        # XXX Comment
       } # $node
       unshift @item, @new_item;
     } else {
@@ -10463,11 +10448,13 @@ sub check_node ($$) {
 
   my $nt = $node->node_type;
   if ($nt == 1) { # ELEMENT_NODE
+    my $is_hidden = (($node->namespace_uri || '') eq HTML_NS and
+                     $node->has_attribute_ns (undef, 'hidden'));
+    $self->{flag}->{is_template} = 1 if $is_hidden;
+
     $self->_check_node
         ([{type => 'element', node => $node, parent_state => {},
-           is_root => 1,
-           validation_mode => $self->_determine_validation_mode
-           ($node, 'default')}]);
+           is_root => 1}]);
   } elsif ($nt == 9) { # DOCUMENT_NODE
     $self->_check_node ([{type => 'document', node => $node}]);
   } elsif ($nt == 3) { # TEXT_NODE
@@ -10475,9 +10462,12 @@ sub check_node ($$) {
   } elsif ($nt == 2) { # ATTRIBUTE_NODE
     $self->_check_data ($node, 'value');
   } elsif ($nt == 11) { # DOCUMENT_FRAGMENT_NODE
+    # XXX shadow root
     $self->_check_node ([{type => 'document_fragment', node => $node}]);
+  } elsif ($nt == 7) { # PROCESSING_INSTRUCTION_NODE
+    $self->_check_pi ($node, {});
   }
-  # XXX PI Comment DocumentType Entity Notation ElementTypeDefinition AttributeDefinition
+  # XXX Comment DocumentType Entity Notation ElementTypeDefinition AttributeDefinition
   $self->_check_refs;
   $self->_validate_microdata;
   $self->_validate_aria ([$node]);
