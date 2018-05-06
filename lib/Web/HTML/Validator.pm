@@ -26,9 +26,9 @@ sub di_data_set ($;$) {
 
 sub onerror ($;$) {
   if (@_ > 1) {
-    $_[0]->{onerror} = $_[1];
+    $_[0]->{_onerror} = $_[1];
   }
-  return $_[0]->{onerror} ||= sub {
+  $_[0]->{_onerror} ||= sub {
     my %args = @_;
     return if $args{level} eq 'mh';
     warn sprintf "%s%s%s%s (%s)%s\n",
@@ -36,10 +36,11 @@ sub onerror ($;$) {
         $args{type},
         defined $args{text} ? ' ' . $args{text} : '',
         defined $args{value} ? ' "' . $args{value} . '"' : '',
-        $args{level},
+        $args{level} . ($args{in_template} ? ' (in template)' : ''),
         (defined $args{column} ? sprintf ' at line %d column %d%s',
                                      $args{line}, $args{column}, (defined $args{di} ? ' document #' . $args{di} : '') : '');
   };
+  return $_[0]->{onerror};
 } # onerror
 
 my $GetNestedOnError = sub ($$) {
@@ -195,6 +196,13 @@ sub _init ($) {
     table => [], # table objects returned by Web::HTML::Table
     term => $self->{term},
   };
+  $self->{onerror} = sub {
+    if ($self->{flag}->{is_template}) {
+      $self->{_onerror}->(@_, in_template => 1);
+    } else {
+      $self->{_onerror}->(@_);
+    }
+  };
 } # _init
 
 sub _terminate ($) {
@@ -210,6 +218,7 @@ sub _terminate ($) {
   delete $self->{top_level_item_elements};
   delete $self->{itemprop_els};
   delete $self->{flag};
+  delete $self->{onerror};
 } # _terminate
 
 ## For XML documents c.f. <http://www.whatwg.org/specs/web-apps/current-work/#serializing-xhtml-fragments>
@@ -9774,12 +9783,8 @@ $Element->{+HTML_NS}->{template} = {
     $checker->_init;
     $checker->di_data_set ($self->di_data_set);
     $checker->scripting ($self->scripting);
+    $checker->onerror ($self->onerror);
     $checker->{flag}->{is_template} = 1;
-
-    my $onerror = $self->onerror;
-    $checker->onerror (sub {
-      $onerror->(@_, in_template => 1);
-    });
 
     $checker->_check_node ([{type => 'document_fragment', node => $df}]);
 
@@ -10039,18 +10044,18 @@ sub _check_node ($$) {
           $child_nsuri = '' unless defined $child_nsuri;
           my $child_ln = $child->local_name;
 
+          my $child_is_hidden = ($child_nsuri eq HTML_NS and
+                                 $child->has_attribute_ns (undef, 'hidden'));
+
           if ($element_state->{has_palpable}) {
             #
           } elsif ($_Defs->{categories}->{'palpable content'}->{elements}->{$child_nsuri}->{$child_ln} or
                    ($child_nsuri eq HTML_NS and $child_ln =~ /-/)) {
-            $element_state->{has_palpable} = 1
-                if not $child_nsuri eq HTML_NS or
-                   not $child->has_attribute_ns (undef, 'hidden');
+            $element_state->{has_palpable} = 1 unless $child_is_hidden;
           } elsif ($_Defs->{categories}->{'palpable content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln}) {
             $element_state->{has_palpable} = 1
-                if $IsPalpableContent->{$child_nsuri}->{$child_ln}->($child) and
-                   (not $child_nsuri eq HTML_NS or
-                    not $child->has_attribute_ns (undef, 'hidden'));
+                if not $child_is_hidden and
+                   $IsPalpableContent->{$child_nsuri}->{$child_ln}->($child);
           }
 
           push @new_item, {type => 'check_child_element',
@@ -10059,10 +10064,22 @@ sub _check_node ($$) {
                                     $child_nsuri, $child_ln,
                                     0,
                                     $element_state, $element_state]};
+
+          my $old_it;
+          push @new_item,
+              [sub {
+                 $old_it = $self->{flag}->{is_template};
+                 $self->{flag}->{is_template} = 1;
+               }]
+                  if $child_is_hidden;
+
           push @new_item, {type => 'element', node => $child,
                            parent_state => $element_state,
                            validation_mode => $self->_determine_validation_mode
-                               ($child, $item->{validation_mode})};
+                           ($child, $item->{validation_mode})};
+
+          push @new_item, [sub { $self->{flag}->{is_template} = $old_it }]
+              if $child_is_hidden;
         } elsif ($child_nt == 3) { # TEXT_NODE
           my $has_significant = ($child->data =~ /[^\x09\x0A\x0C\x0D\x20]/);
           push @new_item, [$eldef->{check_child_text},
@@ -10380,6 +10397,10 @@ sub check_node ($$) {
 
   my $nt = $node->node_type;
   if ($nt == 1) { # ELEMENT_NODE
+    my $is_hidden = (($node->namespace_uri || '') eq HTML_NS and
+                     $node->has_attribute_ns (undef, 'hidden'));
+    $self->{flag}->{is_template} = 1 if $is_hidden;
+
     $self->_check_node
         ([{type => 'element', node => $node, parent_state => {},
            is_root => 1,
