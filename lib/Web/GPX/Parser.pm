@@ -2,7 +2,7 @@ package Web::GPX::Parser;
 use strict;
 use warnings;
 our $VERSION = '2.0';
-use Web::URL::Canonicalize qw(url_to_canon_url);
+use Web::URL;
 use Web::DateTime::Parser;
 
 sub new ($) {
@@ -108,7 +108,8 @@ sub _gpx ($$) {
                 if (not defined $license->{url}) {
                   my $text = ctc $ggc;
                   if (length $text) {
-                    $license->{url} = url_to_canon_url $text, $ggc->base_uri; # or undef
+                    $license->{url} = Web::URL->parse_string
+                        ($text, Web::URL->parse_string ($ggc->base_uri)); # or undef
                   }
                 }
               }
@@ -316,7 +317,8 @@ sub _link ($$$) {
 
   my $text = $el->get_attribute ('href');
   return undef if not defined $text;
-  my $u = url_to_canon_url $text, $el->base_uri; # or undef
+  my $u = Web::URL->parse_string
+      ($text, Web::URL->parse_string ($el->base_uri)); # or undef
   return undef if not defined $u;
   
   my $v = {url => $u};
