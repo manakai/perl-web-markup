@@ -142,6 +142,7 @@ sub _point ($$) {
   my $point = {links => []};
   $point->{lat} = lat ($el->get_attribute ('lat'));
   $point->{lon} = lon ($el->get_attribute ('lon'));
+  $point->{road_type} = $el->get_attribute_ns ('data:,gpx', 'road'); # can be invalid value
   for my $child ($el->children->to_list) {
     my $ln = $child->local_name;
     if ($ln eq 'name' or
