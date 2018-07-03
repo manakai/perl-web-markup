@@ -30,6 +30,8 @@ sub cleanup ($) {
       cleanup $parsed->{$_};
     } elsif (UNIVERSAL::isa ($parsed->{$_}, 'Web::DateTime')) {
       $parsed->{$_} = $parsed->{$_}->to_global_date_and_time_string;
+    } elsif (UNIVERSAL::isa ($parsed->{$_}, 'Web::DateTime::TimeZone')) {
+      $parsed->{$_} = $parsed->{$_}->to_offset_string;
     }
   }
 } # cleanup

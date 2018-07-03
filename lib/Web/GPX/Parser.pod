@@ -101,6 +101,12 @@ document.  There is always a C<routes> member in the data strucuture.
 The timestamp of the GPX document, if any.  The value, if any, is a
 L<Web::DateTime> object representing the time.
 
+=item $tz = $parsed->{time_zone_offset}
+
+The time-zone offset of the GPX document, if any.  The value, if any,
+is a L<Web::DateTime::TimeZone> object representing the time-zone
+offset.
+
 =item ($track, ...) = @{$parsed->{tracks}}
 
 Zero or more track data structures, representing tracks in the GPX

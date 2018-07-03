@@ -6,7 +6,9 @@ use Web::URL::Canonicalize qw(url_to_canon_url);
 use Web::DateTime::Parser;
 
 sub new ($) {
-  return bless {}, $_[0];
+  my $dtparser = Web::DateTime::Parser->new;
+  $dtparser->onerror (sub { });
+  return bless {dtparser => $dtparser}, $_[0];
 } # new
 
 sub parse_document ($$) {
@@ -48,6 +50,11 @@ sub _gpx ($$) {
   my $ds = {waypoints => [], routes => [], tracks => [], links => []};
   my $creator = $el->get_attribute ('creator');
   $ds->{generator} = $creator if defined $creator and length $creator;
+  my $offset = $el->get_attribute_ns ('data:,gpx', 'tzoffset');
+  if (defined $offset and length $offset) {
+    $offset = $self->{dtparser}->parse_time_zone_offset_string ($offset);
+    $ds->{time_zone_offset} = $offset if defined $offset;
+  }
   for my $child ($el->children->to_list) {
     my $ln = $child->local_name;
     if ($ln eq 'wpt') {
@@ -326,9 +333,7 @@ sub _link ($$$) {
 
 sub _time ($$) {
   my ($self, $el) = @_;
-  my $parser = Web::DateTime::Parser->new;
-  $parser->onerror (sub { });
-  return $parser->parse_global_date_and_time_string (ctc $el); # or undef
+  return $self->{dtparser}->parse_global_date_and_time_string (ctc $el); # or undef
 } # _time
 
 1;
