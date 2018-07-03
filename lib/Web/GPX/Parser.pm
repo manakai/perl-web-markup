@@ -78,7 +78,7 @@ sub _gpx ($$) {
               if ($ln eq 'name') {
                 $person->{name} = $self->_string ($ggc) if not defined $person->{name};
               } elsif ($ln eq 'link') {
-                $person->{url} = $self->_url ($ggc) if not defined $person->{url};
+                $self->_link ($ggc => $person);
               } elsif ($ln eq 'email') {
                 if (not defined $person->{email}) {
                   my $id = $ggc->get_attribute ('id');
@@ -309,15 +309,16 @@ sub _number ($$) {
 
 sub _url ($$) {
   my ($self, $el) = @_;
-  my $text = $el->get_attribute ('href');
-  return undef if not defined $text;
-  return url_to_canon_url $text, $el->base_uri; # or undef
 } # _url
 
 sub _link ($$$) {
   my ($self, $el, $dest) = @_;
-  my $u = $self->_url ($el);
+
+  my $text = $el->get_attribute ('href');
+  return undef if not defined $text;
+  my $u = url_to_canon_url $text, $el->base_uri; # or undef
   return undef if not defined $u;
+  
   my $v = {url => $u};
   for my $c ($el->children->to_list) {
     my $ln = $c->local_name;
@@ -325,8 +326,6 @@ sub _link ($$$) {
       $v->{text} = $self->_string ($c) if not defined $v->{text};
     } elsif ($ln eq 'type') {
       $v->{mime_type} = $self->_string ($c) if not defined $v->{mime_type};
-    } elsif ($ln eq 'link') {
-      $v->{url} = $self->_url ($c) if not defined $v->{url};
     }
   }
   push @{$dest->{links}}, $v;
