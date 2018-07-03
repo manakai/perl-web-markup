@@ -1,7 +1,7 @@
 package Web::GPX::Parser;
 use strict;
 use warnings;
-our $VERSION = '1.0';
+our $VERSION = '2.0';
 use Web::URL::Canonicalize qw(url_to_canon_url);
 use Web::DateTime::Parser;
 
@@ -45,7 +45,7 @@ sub lon ($) {
 
 sub _gpx ($$) {
   my ($self, $el) = @_;
-  my $ds = {waypoints => [], routes => [], tracks => []};
+  my $ds = {waypoints => [], routes => [], tracks => [], links => []};
   my $creator = $el->get_attribute ('creator');
   $ds->{generator} = $creator if defined $creator and length $creator;
   for my $child ($el->children->to_list) {
@@ -62,7 +62,7 @@ sub _gpx ($$) {
         if ($ln eq 'name' or $ln eq 'desc' or $ln eq 'keywords') {
           $ds->{$ln} = $self->_string ($gc) if not defined $ds->{$ln};
         } elsif ($ln eq 'link') {
-          $ds->{page_url} = $self->_url ($gc) if not defined $ds->{page_url};
+          $self->_link ($gc => $ds);
         } elsif ($ln eq 'author') {
           if (not defined $ds->{author}) {
             $ds->{author} = my $person = {};
@@ -71,7 +71,7 @@ sub _gpx ($$) {
               if ($ln eq 'name') {
                 $person->{name} = $self->_string ($ggc) if not defined $person->{name};
               } elsif ($ln eq 'link') {
-                $person->{page_url} = $self->_url ($ggc) if not defined $person->{page_url};
+                $person->{url} = $self->_url ($ggc) if not defined $person->{url};
               } elsif ($ln eq 'email') {
                 if (not defined $person->{email}) {
                   my $id = $ggc->get_attribute ('id');
@@ -98,10 +98,10 @@ sub _gpx ($$) {
                   }
                 }
               } elsif ($ln eq 'license') {
-                if (not defined $license->{page_url}) {
+                if (not defined $license->{url}) {
                   my $text = ctc $ggc;
                   if (length $text) {
-                    $license->{page_url} = url_to_canon_url $text, $ggc->base_uri; # or undef
+                    $license->{url} = url_to_canon_url $text, $ggc->base_uri; # or undef
                   }
                 }
               }
@@ -132,7 +132,7 @@ sub _gpx ($$) {
 
 sub _point ($$) {
   my ($self, $el) = @_;
-  my $point = {};
+  my $point = {links => []};
   $point->{lat} = lat ($el->get_attribute ('lat'));
   $point->{lon} = lon ($el->get_attribute ('lon'));
   for my $child ($el->children->to_list) {
@@ -153,8 +153,7 @@ sub _point ($$) {
       $point->{symbol_name} = $self->_string ($child)
           if not defined $point->{symbol_name};
     } elsif ($ln eq 'link') {
-      $point->{page_url} = $self->_url ($child)
-          if not defined $point->{page_url};
+      $self->_link ($child => $point);
     } elsif ($ln eq 'time') {
       $point->{timestamp} = $self->_time ($child)
           if not defined $point->{timestamp};
@@ -226,7 +225,7 @@ sub _point ($$) {
 
 sub _route ($$) {
   my ($self, $el) = @_;
-  my $route = {points => []};
+  my $route = {points => [], links => []};
   for my $child ($el->children->to_list) {
     my $ln = $child->local_name;
     if ($ln eq 'name' or $ln eq 'desc' or $ln eq 'type') {
@@ -239,8 +238,7 @@ sub _route ($$) {
       $route->{source} = $self->_string ($child)
           if not defined $route->{source};
     } elsif ($ln eq 'link') {
-      $route->{page_url} = $self->_url ($child)
-          if not defined $route->{page_url};
+      $self->_link ($child => $route);
     } elsif ($ln eq 'number') {
       $route->{number} = $self->_uint ($child)
           if not defined $route->{number};
@@ -253,7 +251,7 @@ sub _route ($$) {
 
 sub _track ($$) {
   my ($self, $el) = @_;
-  my $track = {segments => []};
+  my $track = {segments => [], links => []};
   for my $child ($el->children->to_list) {
     my $ln = $child->local_name;
     if ($ln eq 'name' or $ln eq 'desc' or $ln eq 'type') {
@@ -266,8 +264,7 @@ sub _track ($$) {
       $track->{source} = $self->_string ($child)
           if not defined $track->{source};
     } elsif ($ln eq 'link') {
-      $track->{page_url} = $self->_url ($child)
-          if not defined $track->{page_url};
+      $self->_link ($child => $track);
     } elsif ($ln eq 'number') {
       $track->{number} = $self->_uint ($child)
           if not defined $track->{number};
@@ -309,6 +306,24 @@ sub _url ($$) {
   return url_to_canon_url $text, $el->base_uri; # or undef
 } # _url
 
+sub _link ($$$) {
+  my ($self, $el, $dest) = @_;
+  my $u = $self->_url ($el);
+  return undef if not defined $u;
+  my $v = {url => $u};
+  for my $c ($el->children->to_list) {
+    my $ln = $c->local_name;
+    if ($ln eq 'text') {
+      $v->{text} = $self->_string ($c) if not defined $v->{text};
+    } elsif ($ln eq 'type') {
+      $v->{mime_type} = $self->_string ($c) if not defined $v->{mime_type};
+    } elsif ($ln eq 'link') {
+      $v->{url} = $self->_url ($c) if not defined $v->{url};
+    }
+  }
+  push @{$dest->{links}}, $v;
+} # _link
+
 sub _time ($$) {
   my ($self, $el) = @_;
   my $parser = Web::DateTime::Parser->new;
@@ -320,7 +335,7 @@ sub _time ($$) {
 
 =head1 LICENSE
 
-Copyright 2016 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2018 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
