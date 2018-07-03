@@ -43,7 +43,7 @@ L<Web::DOM::Document> module
 =head1 PARSED DATA STRUCTURE
 
 A GPX document, after parsing, is represented as a Perl hash reference
-I<$parsed>, which has zero or more of folloging key/value pairs:
+I<$parsed>, which has zero or more of following key/value pairs:
 
 =over 4
 
@@ -69,6 +69,10 @@ The keywords of the GPX document, if any.
 A licenes data structure, representing the license of the GPX
 document, if any.
 
+=item ($link, ...) = @{$parsed->{links}}
+
+Zero or more links associated with the GPX document.
+
 =item $number = $parsed->{max_lat}
 
 The maximum latitude of the target area of the GPX document, if any.
@@ -87,43 +91,42 @@ Note that it might be less than C<< $parsed->{min_lon} >>.
 
 The minimum longitude of the target area of the GPX document, if any.
 
-=item $url = $parsed->{page_url}
+=item ($route, ...) = @{$parsed->{routes}}
 
-The canonicalized absolute URL of the Web page associated with the GPX
-document, if any.
-
-=item $arrayref_of_routes = $parsed->{routes}
-
-The array reference of zero or more route data structures,
-representing routes in the GPX document.  There is always a C<routes>
-member in the data strucuture.
+Zero or more route data structures, representing routes in the GPX
+document.  There is always a C<routes> member in the data strucuture.
 
 =item $timestamp = $parsed->{timestamp}
 
 The timestamp of the GPX document, if any.  The value, if any, is a
 L<Web::DateTime> object representing the time.
 
-=item $arrayref_of_tracks = $parsed->{tracks}
+=item $tz = $parsed->{time_zone_offset}
 
-The array reference of zero or more track data structures,
-representing tracks in the GPX document.  There is always a C<tracks>
-member in the data strucuture.
+The time-zone offset of the GPX document, if any.  The value, if any,
+is a L<Web::DateTime::TimeZone> object representing the time-zone
+offset.
+
+=item ($track, ...) = @{$parsed->{tracks}}
+
+Zero or more track data structures, representing tracks in the GPX
+document.  There is always a C<tracks> member in the data strucuture.
 
 =item $timestamp = $parsed->{updated}
 
 The modified time of the GPX document, if any.  The value, if any, is
 a L<Web::DateTime> object representing the time.
 
-=item $arrayref_of_points = $parsed->{waypoints}
+=item ($point, ...) = @{$parsed->{waypoints}}
 
-The array reference of zero or more point data structures,
-representing waypoints in the GPX document.  There is always a
-C<waypoints> member in the data strucuture.
+Zero or more point data structures, representing waypoints in the GPX
+document.  There is always a C<waypoints> member in the data
+strucuture.
 
 =back
 
 A point is represented as a Perl hash reference I<$point>, which has
-zero or more of folloging key/value pairs:
+zero or more of following key/value pairs:
 
 =over 4
 
@@ -187,6 +190,10 @@ The latitude of the point, if any.
 
 The longitude of the point, if any.
 
+=item ($link, ...) = @{$point->{links}}
+
+Zero or more links associated with the point.
+
 =item $number = $point->{magnetic_variation}
 
 The magnetic variation of the point, if any.
@@ -195,11 +202,6 @@ The magnetic variation of the point, if any.
 
 The name of the point, if any.
 
-=item $url = $point->{page_url}
-
-The canonicalized absolute URL of the Web page associated with the
-point, if any.
-
 =item $number = $point->{pdop}
 
 The "pdop" value of the point, if any.
@@ -207,6 +209,11 @@ The "pdop" value of the point, if any.
 =item $number = $point->{power}
 
 The power value for the point, if any.
+
+=item $string = $point->{road_type}
+
+The road type of the point, if any.  Note that the value might not be
+a valid road type string.
 
 =item $integer = $point->{satelite_count}
 
@@ -248,7 +255,7 @@ The water temperature for the point, if any.
 =back
 
 A route is represented as a Perl hash reference I<$route>, which has
-zero or more of folloging key/value pairs:
+zero or more of following key/value pairs:
 
 =over 4
 
@@ -260,6 +267,10 @@ The comment of the route, if any.
 
 The desc of the route, if any.
 
+=item ($links, ...) = @{$route->{links}}
+
+The links associated with the route.
+
 =item $string = $route->{name}
 
 The name of the route, if any.
@@ -268,16 +279,10 @@ The name of the route, if any.
 
 The number of the route, if any.
 
-=item $url = $route->{page_url}
+=item ($point, ...) = @{$route->{points}}
 
-The canonicalized absolute URL of the Web page associated with the
-route, if any.
-
-=item $arrayref_of_points = $route->{points}
-
-The array reference of zero or more point data structures,
-representing the points in the route.  There is always a C<points>
-member in the data strucuture.
+Zero or more point data structures, representing the points in the
+route.  There is always a C<points> member in the data strucuture.
 
 =item $string = $route->{source}
 
@@ -290,7 +295,7 @@ The type of the route, if any.
 =back
 
 A track is represented as a Perl hash reference I<$track>, which has
-zero or more of folloging key/value pairs:
+zero or more of following key/value pairs:
 
 =over 4
 
@@ -302,6 +307,10 @@ The comment of the route, if any.
 
 The desc of the route, if any.
 
+=item ($link, ...) = @{$track->{links}}
+
+Zero or more links associated with the track.
+
 =item $string = $track->{name}
 
 The name of the route, if any.
@@ -310,16 +319,11 @@ The name of the route, if any.
 
 The number of the route, if any.
 
-=item $url = $track->{page_url}
+=item ($segment, ...) = @{$track->{segments}]
 
-The canonicalized absolute URL of the Web page associated with the
-route, if any.
-
-=item $arrayref_of_segments = $track->{segments}
-
-The array reference of zero or more track segment data structures,
-representing the segments in the track.  There is always a C<segments>
-member in the data strucuture.
+Zero or more track segment data structures, representing the segments
+in the track.  There is always a C<segments> member in the data
+strucuture.
 
 =item $string = $track->{source}
 
@@ -332,20 +336,19 @@ The type of the route, if any.
 =back
 
 A track segment is represented as a Perl hash reference I<$segment>,
-which has zero or more of folloging key/value pair:
+which has zero or more of following key/value pair:
 
 =over 4
 
-=item $arrayref_of_points = $segment->{points}
+=item ($point, ...) = @{$segment->{points}}
 
-The array reference of zero or more point data structures,
-representing the points in the route.  There is always a C<points>
-member in the data strucuture.
+Zero or more point data structures, representing the points in the
+route.  There is always a C<points> member in the data strucuture.
 
 =back
 
 A person is represented as a Perl hash reference I<$person>, which has
-zero or more of folloging key/value pairs:
+zero or more of following key/value pairs:
 
 =over 4
 
@@ -358,14 +361,33 @@ might not be a valid email address.
 
 The name of the person, if any.
 
-=item $url = $person->{page_url}
+=item $url = $person->{url}
 
 The canonicalized absolute URL of the Web page of the person, if any.
 
 =back
 
+A link is represented as a Perl hash reference I<$link>, which has one
+or more of following key/value pairs:
+
+=over 4
+
+=item $string = $person->{text}
+
+The link label text of the link, if any.
+
+=item $string = $person->{mime_type}
+
+The advisory MIME type string of the link, if any.
+
+=item $url = $person->{url}
+
+The canonicalized absolute URL of the link destination.
+
+=back
+
 A license is represented as a Perl hash reference I<$licenes>, which
-has zero or more of folloging key/value pairs:
+has zero or more of following key/value pairs:
 
 =over 4
 
@@ -373,7 +395,7 @@ has zero or more of folloging key/value pairs:
 
 The license holder, if any.
 
-=item $url = $license->{page_url}
+=item $url = $license->{url}
 
 The canonicalized absolute URL of the Web page of the license, if any.
 
@@ -393,7 +415,7 @@ Wakaba <wakaba@suikawiki.org>.
 
 =head1 LICENSE
 
-Copyright 2016 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2018 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
