@@ -210,6 +210,11 @@ The "pdop" value of the point, if any.
 
 The power value for the point, if any.
 
+=item $string = $point->{road_type}
+
+The road type of the point, if any.  Note that the value might not be
+a valid road type string.
+
 =item $integer = $point->{satelite_count}
 
 The number of satelites for the point, if any.
