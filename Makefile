@@ -12,7 +12,7 @@ clean: clean-json-ps
 
 data: intermediate/validator-errors.json
 
-updatenightly: update-submodules dataautoupdate-commit
+updatenightly: update-submodules dataautoupdate-commit updatenightly-ci
 
 update-submodules: local/bin/pmbp.pl
 	curl https://gist.githubusercontent.com/wakaba/34a71d3137a52abb562d/raw/gistfile1.txt | sh
@@ -22,6 +22,9 @@ update-submodules: local/bin/pmbp.pl
 
 dataautoupdate-commit: clean all
 	git add lib
+
+updatenightly-ci:
+	$(CURL) -sSLf https://raw.githubusercontent.com/wakaba/ciconfig/master/ciconfig | RUN_GIT=1 REMOVE_UNUSED=1 perl
 
 ## ------ Setup ------
 
