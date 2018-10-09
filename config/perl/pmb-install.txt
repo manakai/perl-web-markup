@@ -1,5 +1,5 @@
 Algorithm::Diff~1.1903
-AnyEvent::Handle
+AnyEvent::Socket
 Capture::Tiny~0.48
 Carp~1.50
 Data::Dumper~2.172
