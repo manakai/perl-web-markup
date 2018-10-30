@@ -1,11 +1,11 @@
 use strict;
 use warnings;
-use Path::Class;
+use Path::Tiny;
 BEGIN {
-  require (file (__FILE__)->dir->file ('content-checker.pl')->stringify);
+  require (path (__FILE__)->parent->child ('content-checker.pl')->absolute->stringify);
 }
 
-test_files (glob file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'tests', 'html', 'validation')->file('*.dat')->stringify);
+test_files (grep { /\.dat$/ } map { $_->stringify } path (__FILE__)->parent->parent->parent->child ('t_deps/tests/html/validation')->children (qr(\.dat$)));
 
 Test::X1::run_tests;
 
