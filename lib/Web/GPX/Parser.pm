@@ -45,6 +45,15 @@ sub lon ($) {
   return 0+$v;
 } # lon
 
+sub nn_number_value ($) {
+  return undef unless defined $_[0];
+  return undef unless $_[0] =~ /^[\x09\x0A\x0C\x0D\x20]*([+-]?[0-9]*(?:\.[0-9]+|)(?:[Ee][+-]?[0-9]+|))/;
+  my $v = $1;
+  return undef unless $v =~ /[0-9]/;
+  return undef unless $v >= 0;
+  return 0+$v;
+} # nn_number_value
+
 sub _gpx ($$) {
   my ($self, $el) = @_;
   my $ds = {waypoints => [], routes => [], tracks => [], links => []};
@@ -144,6 +153,7 @@ sub _point ($$) {
   $point->{lat} = lat ($el->get_attribute ('lat'));
   $point->{lon} = lon ($el->get_attribute ('lon'));
   $point->{road_type} = $el->get_attribute_ns ('data:,gpx', 'road'); # can be invalid value
+  $point->{to_distance} = nn_number_value ($el->get_attribute_ns ('data:,gpx', 'todistance'));
   for my $child ($el->children->to_list) {
     my $ln = $child->local_name;
     if ($ln eq 'name' or

@@ -162,6 +162,10 @@ The DGPS ID for the point, if any.
 
 The distance value for the point, if any.
 
+=item $number = $point->{to_distance}
+
+The to-distance value for the point, if any.
+
 =item $number = $point->{elevation}
 
 The elevation of the point, if any.
