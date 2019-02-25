@@ -5,7 +5,6 @@ Carp~1.50
 Data::Dumper~2.172
 Date::Parse~2.30
 Digest::SHA~6.02
-Encode~2.98
 Exporter~5.73
 JE~0.066
 JSON~2.97001
