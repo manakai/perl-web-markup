@@ -2,7 +2,7 @@ package Web::HTML::Serializer;
 use strict;
 use warnings;
 no warnings 'utf8';
-our $VERSION = '12.0';
+our $VERSION = '13.0';
 use Web::HTML::_SyntaxDefs;
 
 sub new ($) {
@@ -41,7 +41,9 @@ sub _in_cdata ($$) {
 sub get_inner_html ($$) {
   my ($self, $node) = @_;
 
-  ## Step 1
+  return \'' if not ref $node eq 'ARRAY' and
+      $Web::HTML::_SyntaxDefs->{void}->{$node->namespace_uri // ''}->{$node->local_name // ''};
+  
   my $s = '';
   
   ## Step 2
@@ -151,7 +153,7 @@ sub get_inner_html ($$) {
 
 =head1 LICENSE
 
-Copyright 2007-2016 Wakaba <wakaba@suikawiki.org>.
+Copyright 2007-2019 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

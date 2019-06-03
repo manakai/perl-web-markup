@@ -2,8 +2,8 @@ use strict;
 use warnings;
 use Path::Tiny;
 use lib path (__FILE__)->parent->parent->parent->child ('lib')->stringify;
-use lib path (__FILE__)->parent->parent->parent->child ('t_deps', 'lib')->stringify;
-use lib glob path (__FILE__)->parent->parent->parent->child ('t_deps', 'modules', '*', 'lib')->stringify;
+use lib path (__FILE__)->parent->parent->parent->child ('t_deps/lib')->stringify;
+use lib glob path (__FILE__)->parent->parent->parent->child ('t_deps/modules/*/lib')->stringify;
 use Test::More;
 use Test::X1;
 use Web::HTML::Serializer;
@@ -285,8 +285,18 @@ for my $tag_name (qw(
     $p->remove_child ($el4);
     $p->append_child ($el5);
     is ${Web::HTML::Serializer->new->get_inner_html ($p)}, qq{<$tag_name></$tag_name>};
-    done $c;
+   done $c;
   } n => 5, name => 'void_elements';
+
+  test {
+    my $c = shift;
+    my ($doc, undef) = create_el_from_html ("");
+    my $el = $doc->create_element ($tag_name);
+    my $div = $doc->create_element ('div');
+    $el->append_child ($div);
+    is ${Web::HTML::Serializer->new->get_inner_html ($el)}, qq{};
+    done $c;
+  } n => 1, name => 'void element inner html';
 }
 
 for my $tag_name (qw(textarea pre listing)) {
@@ -454,7 +464,7 @@ run_tests;
 
 =head1 LICENSE
 
-Copyright 2009-2016 Wakaba <wakaba@suikawiki.org>.
+Copyright 2009-2019 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
