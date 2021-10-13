@@ -60,7 +60,7 @@ A GPX parser.
 
 =head1 DEPENDENCY
 
-These modules require Perl 5.10 or later.  They requires L<Encode>,
+These modules require Perl 5.14 or later.  They requires L<Encode>,
 which is included in the Perl distribution, and modules from the
 perl-web-encodings package
 <https://github.com/manakai/perl-web-encodings>, which is a submodule
@@ -119,7 +119,7 @@ Wakaba <wakaba@suikawiki.org>.
 
 =head1 LICENSE
 
-Copyright 2007-2016 Wakaba <wakaba@suikawiki.org>.
+Copyright 2007-2021 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
