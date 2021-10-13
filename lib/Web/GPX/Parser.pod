@@ -210,6 +210,11 @@ The name of the point, if any.
 
 The "pdop" value of the point, if any.
 
+=item $string = $point->{point_role}
+
+The point role of the point, if any.  Note that the value might not be
+a valid point role string.
+
 =item $number = $point->{power}
 
 The power value for the point, if any.
@@ -419,7 +424,7 @@ Wakaba <wakaba@suikawiki.org>.
 
 =head1 LICENSE
 
-Copyright 2016-2018 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2021 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
