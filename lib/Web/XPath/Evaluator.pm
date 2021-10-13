@@ -305,7 +305,9 @@ sub to_string ($$) {
       my $n = $value->{value};
       for (my $i = 0; ; $i++) {
         my $f = sprintf '%.'.$i.'f', $n;
-        if ($f == $n) {
+        if ($f eq '-0') { # depending on perl version and platform, true
+          return {type => 'string', value => '0'};
+        } elsif ($f == $n) {
           $f =~ s/0+\z//;
           $f =~ s/\.\z//;
           return {type => 'string', value => $f || '0'};
@@ -748,7 +750,7 @@ sub evaluate ($$$;%) {
 
 =head1 LICENSE
 
-Copyright 2013-2016 Wakaba <wakaba@suikawiki.org>.
+Copyright 2013-2021 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
