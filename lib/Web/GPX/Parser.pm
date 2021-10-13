@@ -153,6 +153,7 @@ sub _point ($$) {
   $point->{lat} = lat ($el->get_attribute ('lat'));
   $point->{lon} = lon ($el->get_attribute ('lon'));
   $point->{road_type} = $el->get_attribute_ns ('data:,gpx', 'road'); # can be invalid value
+  $point->{point_role} = $el->get_attribute_ns ('data:,gpx', 'pointrole'); # can be invalid value
   $point->{to_distance} = nn_number_value ($el->get_attribute_ns ('data:,gpx', 'todistance'));
   for my $child ($el->children->to_list) {
     my $ln = $child->local_name;
@@ -352,7 +353,7 @@ sub _time ($$) {
 
 =head1 LICENSE
 
-Copyright 2016-2018 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2021 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
